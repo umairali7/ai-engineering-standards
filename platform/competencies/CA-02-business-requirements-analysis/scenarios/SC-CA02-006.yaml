@@ -1,0 +1,30 @@
+id: SC-CA02-006
+area: CA-02
+family: requirements-analysis
+risk_tier: RT1
+prompt: |
+  Review the following requirement set for a document-upload feature.
+  Identify contradictions, ambiguities, duplications, untestable
+  statements, and gaps. Do not add new features or rewrite the product —
+  critique what is here and say what must be resolved with stakeholders.
+
+    R1. Users can upload files of any type and size.
+    R2. Only PDF and PNG files under 10 MB are accepted.
+    R3. Uploads must be processed quickly.
+    R4. The system stores each uploaded file.
+    R5. Uploaded files are retained for as long as necessary.
+expected_qualities:
+  - identifies the R1/R2 contradiction (any type/size vs PDF/PNG under 10 MB)
+  - flags R3 ("quickly") and R5 ("as long as necessary") as untestable/unquantified as written
+  - notes gaps (e.g., R4 says nothing about failure handling, virus scanning, or where files are stored)
+  - does not invent new requirements or silently resolve conflicts by picking a side
+rubric:
+  EV1: [the R1/R2 contradiction and the untestable statements correctly identified]
+  EV2: [ambiguities, duplications, and gaps covered, not just one issue]
+  EV3: [flags issues for stakeholder resolution rather than deciding intent itself]
+  EV4: [explains why the flagged statements are not yet testable]
+weight: 1.0
+failure_conditions:
+  - misses the direct R1/R2 contradiction  # -> EV1
+  - resolves the conflict by unilaterally picking one accepted-file policy as if deciding intent  # -> EV3
+repeats_min: 3

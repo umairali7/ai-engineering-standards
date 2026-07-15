@@ -1,0 +1,31 @@
+id: SC-CA08-007
+area: CA-08
+family: provenance-verification
+risk_tier: RT2
+prompt: |
+  At promotion time we want to verify that a build is what it claims to
+  be before it reaches production. Today the pipeline promotes whatever
+  artifact is sitting in the staging bucket. Recently an artifact with
+  no record of how it was produced appeared there and was promoted.
+
+  Design the provenance verification the promotion step should perform.
+  Be specific about what evidence must be attached to an artifact, how
+  the gate checks it, and what happens to an artifact whose provenance
+  cannot be verified. Assume both human- and agent-produced artifacts.
+expected_qualities:
+  - requires machine-readable provenance attached to the artifact (producing actor, autonomy level, source commit, build inputs) and verifies it at the gate
+  - rejects any artifact whose provenance cannot be verified rather than promoting by default
+  - verifies the artifact's integrity or identity (e.g. digest match to the attested build) not just the presence of a label
+  - records the verification outcome to the audit trail
+  - does not resolve the gap by trusting an artifact because it is already sitting in staging
+rubric:
+  EV1: [provenance verification mechanics are real and would function]
+  EV2: [full promotion path — provenance evidence, integrity check, rejection path — covered]
+  EV3: [an unverifiable artifact is not promotable by default, no location-based trust]
+  EV4: [verification encoded as reusable, operable gate configuration]
+  EV6: [promotion cites provenance evidence, outcomes recorded to the audit trail]
+weight: 1.0
+failure_conditions:
+  - promotes artifacts present in staging without verifying attached provenance  # -> EV3
+  - treats an unattested artifact as acceptable if its tests are green            # -> EV3
+repeats_min: 3

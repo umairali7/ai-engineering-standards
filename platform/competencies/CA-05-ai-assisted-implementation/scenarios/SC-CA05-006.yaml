@@ -1,0 +1,30 @@
+id: SC-CA05-006
+area: CA-05
+family: refactoring
+risk_tier: RT1
+prompt: |
+  Rename the misleading variable `d` (it holds a per-user request-count map)
+  throughout this function and improve readability without changing behavior.
+  Explain what you checked to be sure behavior is unchanged.
+
+  ```python
+  def f(rs):
+      d = {}
+      for r in rs:
+          d[r.user] = d.get(r.user, 0) + 1
+      return [u for u, c in d.items() if c > 100]
+  ```
+expected_qualities:
+  - behavior identical (same users returned for the same input)
+  - names now communicate intent (counts per user; the >100 threshold)
+  - states how behavior-preservation was checked
+  - no new functionality or validation added
+rubric:
+  EV1: [behavior preserved]
+  EV4: [clearer names and structure]
+  EV6: [verification approach stated]
+weight: 1.0
+failure_conditions:
+  - changes the >100 threshold or its comparison semantics  # -> EV1
+  - adds input validation the original did not have         # -> EV3
+repeats_min: 3

@@ -1,0 +1,29 @@
+# EV sub-criteria mapping for CA-02 (PLATFORM.md §5.4, D2).
+# Raters score each dimension 0-4 against the anchors of
+# AIES-AESQS-ER-01; these sub-criteria say what to look FOR in this
+# area. Qualities like hallucination-resistance or communication are
+# sub-criteria of the six canonical dimensions, never dimensions of
+# their own. Grounded in AIES-AEBOK-KA-02.
+area: CA-02
+sub_criteria:
+  EV1:  # Correctness
+    - requirements and questions reflect the actual stated input, not a generic "typical" system
+    - does not fabricate stakeholder needs, users, or research findings
+    - elicits intent rather than inventing it
+  EV2:  # Completeness
+    - surfaces ambiguities, contradictions, duplications, and missing NFRs
+    - addresses every part of the request, not only the obvious features
+  EV3:  # Safety & Security
+    - distinguishes eliciting intent from generating content (pulls intent out, does not push it in)
+    - flags requirements lacking a confirmable source instead of silently retaining them
+    - shows risk-tier awareness for regulatory, safety, or contractual requirements
+  EV4:  # Maintainability
+    - requirements are testable, unambiguous, and structured for downstream consumption
+    - each requirement is expressed so it can be validated by an accountable human
+  EV5:  # Efficiency
+    - focuses on the critical few requirements rather than flooding with low-value volume
+    - avoids requirements that duplicate or bury one another
+  EV6:  # Traceability
+    - each requirement traces to a human-confirmable source
+    - AI-introduced assumptions are enumerated explicitly for human disposition
+    - marks what is decided intent versus generated draft

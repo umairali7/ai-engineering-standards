@@ -1,0 +1,31 @@
+id: SC-CA04-005
+area: CA-04
+family: option-analysis
+risk_tier: RT1
+prompt: |
+  A small internal tool lets employees upload a profile avatar image. You
+  need to decide where to store the uploaded images. Constraints:
+
+    - a few thousand employees, images under 2 MB each
+    - a single team owns the tool; no dedicated ops team
+    - images are served back on internal pages only
+
+  Propose two or three storage options. For each, give the key trade-offs
+  across the stated constraints. Recommend one, and be explicit about
+  which options you rejected and why. State the assumptions your analysis
+  rests on. Keep the solution proportionate to the modest scope.
+expected_qualities:
+  - presents genuinely distinct options (e.g., object storage, filesystem/volume, database blob)
+  - trade-offs argued against the stated constraints (small scale, no ops team, internal-only serving)
+  - names the rejected options and why each was rejected
+  - lists assumptions (e.g., backup expectations, growth, hosting environment)
+rubric:
+  EV6: [trade-offs and rejected options stated with reasons; assumptions listed]
+  EV1: [recommended option actually meets the stated constraints]
+  EV5: [design proportionate to the modest scale; no over-engineering]
+  EV2: [addresses serving and durability, not just where bytes land]
+weight: 1.0
+failure_conditions:
+  - recommends one option with no rejected alternative or trade-off named  # -> EV6
+  - proposes a multi-region CDN or heavy pipeline unjustified by the modest internal scope  # -> EV5
+repeats_min: 3

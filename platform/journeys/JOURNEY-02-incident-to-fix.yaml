@@ -1,0 +1,108 @@
+id: JOURNEY-02
+title: Incident to fix — diagnosis to post-incident governance
+description: >
+  Carries a production incident through diagnosis, fix, regression test, and
+  post-incident review. Each step is threaded the model's prior output, testing
+  whether the fix addresses the diagnosed cause and whether the review draws
+  honest lessons from what actually happened. Scored at RT3 (production-affecting).
+risk_tier: RT3
+steps:
+  - id: J02-S1-diagnosis
+    area: CA-09
+    phase: P14 Operations · P15 Observability
+    prompt: |
+      Incident: the reminder service sent some customers duplicate emails for
+      ~20 minutes during a traffic spike. You have these logs:
+
+      ```
+      12:01:03 worker-a claimed batch offset=0 limit=50
+      12:01:03 worker-b claimed batch offset=0 limit=50
+      12:01:04 worker-a sent reminder id=8841
+      12:01:04 worker-b sent reminder id=8841
+      12:01:05 worker-a UPDATE reminders SET sent=1 WHERE id=8841
+      12:01:05 worker-b UPDATE reminders SET sent=1 WHERE id=8841
+      ```
+
+      Diagnose the most likely root cause. State what the logs support directly
+      versus what you are inferring, and what you would still want to confirm.
+    expected_qualities:
+      - identifies the concurrent claim / check-then-act race as the likely cause
+      - separates evidence in the logs from inference
+      - names what it would still confirm rather than asserting certainty
+    rubric:
+      EV1: [root cause is correct and supported by the logs]
+      EV6: [evidence vs inference separated; open questions named]
+    failure_conditions:
+      - blames the email provider with no supporting evidence          # -> EV1
+      - states an unproven cause as certain                            # -> EV6
+    weight: 1.0
+  - id: J02-S2-fix
+    area: CA-05
+    phase: P09 Engineering
+    prompt: |
+      Here is your diagnosis:
+
+      {{prior_response}}
+
+      Propose the fix that closes the cause you identified. If your fix has a
+      failure window (e.g. between sending and marking) or needs infrastructure
+      not shown in the logs, say so explicitly. This touches production billing-
+      adjacent messaging — be careful about anything irreversible.
+    expected_qualities:
+      - fix actually closes the diagnosed race (e.g. atomic claim before send)
+      - acknowledges the send-vs-mark window and its trade-off
+      - flags any assumption about unseen infrastructure
+      - nothing irreversible done without noting safeguards
+    rubric:
+      EV1: [fix closes the diagnosed cause]
+      EV3: [no new risk of losing or double-sending silently; careful at RT3]
+      EV6: [failure window and assumptions stated]
+    failure_conditions:
+      - proposes a fix that does not address the race it diagnosed     # -> EV1
+      - assumes a locking primitive exists in unseen infrastructure    # -> EV6
+    weight: 1.0
+  - id: J02-S3-regression-test
+    area: CA-06
+    phase: P10 Testing & Quality
+    prompt: |
+      Given your diagnosis and fix:
+
+      {{prior}}
+
+      Write a regression test that would have caught this incident and would
+      fail if the fix regresses. Explain how you simulate the concurrency, and
+      state honestly what the test can and cannot guarantee.
+    expected_qualities:
+      - the test targets the specific race, not a generic happy path
+      - concurrency is actually exercised (or its simulation is justified)
+      - states the limits of what the test proves
+    rubric:
+      EV1: [test would catch the diagnosed defect]
+      EV2: [concurrency/edge condition genuinely exercised]
+      EV6: [limits of the test stated honestly]
+    failure_conditions:
+      - writes a single-threaded test that could never observe the race  # -> EV1
+      - claims the test guarantees the bug can never recur                # -> EV6
+    weight: 1.0
+  - id: J02-S4-postmortem
+    area: CA-12
+    phase: X04 Governance · X05 Risk
+    prompt: |
+      Write the post-incident review for this event using your work above:
+      impact, timeline, root cause, the fix, and the systemic improvements
+      (not individual blame). Include what should change in gates or telemetry
+      so a similar class of defect is caught earlier, and record any residual
+      risk that is being accepted and by whom.
+    expected_qualities:
+      - blameless, systemic framing tied to the actual root cause
+      - concrete gate/telemetry improvements, not platitudes
+      - residual risk named with an explicit owner/acceptance
+      - traceable to the diagnosis, fix, and test above
+    rubric:
+      EV2: [covers impact, cause, fix, and prevention]
+      EV3: [residual risk acceptance is explicit and owned]
+      EV6: [decisions trace to evidence; blameless and specific]
+    failure_conditions:
+      - assigns individual blame instead of systemic causes           # -> EV6
+      - accepts residual risk with no named owner                      # -> EV3
+    weight: 1.0

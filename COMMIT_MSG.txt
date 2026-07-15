@@ -1,0 +1,20 @@
+﻿Initial import: AI Engineering Standards (AIES) + qualification platform
+
+Vendor-neutral standard for AI-native software engineering, plus an
+executable reference implementation.
+
+Standard (Markdown, RFC 2119, human-governed): Shared Glossary + Taxonomy
+(phases P01-P16, autonomy AL0-AL4, risk tiers RT1-RT4, roles, CL1-CL4,
+EV1-EV6); five modules (AEBOK, AESQS, AEOS, AEAR, AECT); documentation
+governance, ADRs, standards crosswalk (CSA/ASDLC/EU AI Act/NIST/ISO 42001),
+conformance model, improvement & maintenance plan, six worked examples.
+
+Platform (platform/, Python package aies): executable AESQS -- discover,
+qualify, score, review, grant, verify -- with the scoring engine transcribed
+from the standard (non-negotiable gates, decisional minimums, scoped RTxAL
+grants, human-recorded grants, environment-bound re-qualification);
+runtime-agnostic adapters (mock, openai-compat, Ollama, LM Studio, llama.cpp,
+MLX); 12 competency suites (120 scenarios), multi-phase journeys, conformance
+checks, env/.env config, conformance test suite.
+
+Status: v0.4.0, module documents at Review.

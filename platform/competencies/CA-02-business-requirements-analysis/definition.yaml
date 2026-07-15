@@ -1,0 +1,19 @@
+# Competency area definition (PLATFORM.md §5.3).
+# Areas are exactly the AESQS competency areas (D5) — CA-02 is
+# Business & Requirements Analysis with AI (see derived_from; CA->KA mapping per ADR-0003).
+area: CA-02
+name: Business & Requirements Analysis with AI
+derived_from: AIES-AEBOK-KA-02
+in_scope_phases: [P01, P02, P05]
+description: >
+  AI participation in the upstream phases (Business Strategy, Business
+  Analysis, Requirements Engineering): eliciting and structuring intent
+  rather than manufacturing it, checking requirement sets for ambiguity
+  and contradiction, keeping every requirement traceable to a
+  human-confirmed source, and surfacing AI-introduced assumptions for
+  human disposition.
+discovery_probes:
+  - reasoning          # can the candidate analyze intent and detect gaps/contradictions
+  - structured_output  # can it produce traceable, structured requirement artifacts
+  - retrieval          # can it cross-check requirements against provided source material
+scenario_families: [elicitation, requirements-analysis, traceability, escalation]

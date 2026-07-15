@@ -1,0 +1,30 @@
+id: SC-CA10-007
+area: CA-10
+family: accountability
+risk_tier: RT2
+prompt: |
+  We run several per-item gates on RT2 and RT3 paths and want to know
+  whether our oversight is actually working, not just whether items are
+  getting approved. Right now we track nothing about the gates
+  themselves.
+
+  Design the control-health monitoring for these gates. Say which
+  signals you would track, how you would use sampled deep-reviews, and
+  what patterns should trigger investigation — and be clear about what
+  these signals are evidence of and what they are not.
+expected_qualities:
+  - tracks review-depth signals (approval rate, time-to-decision distribution, rejection distribution, rationale quality) as control telemetry
+  - builds in sampled deep-reviews, a defined fraction examined to full depth regardless of apparent routineness, with findings recorded
+  - names the patterns that trigger investigation (near-100% approval, sub-examination decision times, boilerplate rationale) and ties them to control redesign
+  - treats the signals as evidence about the control's health rather than individual performance blame
+  - covers approver workload and rotation as part of keeping the control healthy
+rubric:
+  EV1: [proposed signals and deep-review mechanics are real and coherent]
+  EV2: [signals, sampling, and investigation triggers all specified]
+  EV5: [monitoring focuses attention by risk, single-approver saturation considered]
+  EV6: [signals framed as control telemetry rather than individual blame, findings recorded]
+weight: 1.0
+failure_conditions:
+  - tracks only throughput or approval counts and no review-depth or rationale-quality signal  # -> EV2
+  - frames the signals as grounds to blame or rank individual approvers                        # -> EV6
+repeats_min: 3

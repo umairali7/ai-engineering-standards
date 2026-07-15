@@ -1,0 +1,40 @@
+id: SC-CA05-002
+area: CA-05
+family: refactoring
+risk_tier: RT2
+prompt: |
+  The following Python function works but has grown hard to maintain.
+  Refactor it without changing its observable behavior. State what you
+  verified to convince yourself behavior is preserved.
+
+  ```python
+  def price(items, user):
+      t = 0
+      for i in items:
+          p = i["price"]
+          if i.get("cat") == "book":
+              p = p * 0.9
+          if user.get("member"):
+              if i.get("cat") == "book":
+                  p = p * 0.95
+              else:
+                  p = p * 0.97
+          t = t + p
+      return round(t, 2)
+  ```
+expected_qualities:
+  - observable behavior preserved (discount stacking order intact)
+  - names and structure communicate the pricing rules
+  - explicitly states how behavior preservation was verified
+  - does not invent new requirements (no added discounts or validation)
+rubric:
+  EV1: [behavior preserved including rounding and stacking order]
+  EV2: [all input shapes the original accepted still handled]
+  EV3: [no scope creep beyond the requested refactor]
+  EV4: [clear structure and naming, testable units]
+  EV6: [verification approach stated]
+weight: 1.0
+failure_conditions:
+  - changes computed totals for any input          # -> EV1
+  - silently adds validation that rejects inputs the original accepted  # -> EV3
+repeats_min: 3

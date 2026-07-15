@@ -1,0 +1,30 @@
+id: SC-CA11-007
+area: CA-11
+family: freshness-lifecycle
+risk_tier: RT2
+prompt: |
+  Our context store has 400 assets and none carry ownership, a
+  validation status, or a review date. We have not had an incident yet,
+  but we want to get ahead of staleness before we do.
+
+  Design the freshness and ownership scheme every asset should carry, and
+  the review cadence that keeps assets current. Be specific about the
+  tracked properties, who is responsible, and how the cadence differs by
+  how the asset is used.
+expected_qualities:
+  - gives every asset tracked properties, an accountable owner, a validation status, and a review-by date
+  - sets a review cadence and ties it to usage, so assets feeding higher-risk assembly are reviewed more often
+  - specifies that assets past their review-by date are flagged and kept out of RT3+ assembly until re-validated
+  - makes freshness a tracked property rather than an assumption, so an assembler can tell current from stale
+  - assigns the review responsibility to owners rather than leaving it to no one
+rubric:
+  EV1: [freshness and ownership mechanics are real and coherent]
+  EV2: [ownership, validation status, and review cadence all covered across the lifecycle]
+  EV3: [stale assets kept out of high-risk assembly or flagged]
+  EV4: [freshness properties are durable, owned, and change-controlled]
+  EV6: [freshness and validation status tracked as properties rather than assumptions]
+weight: 1.0
+failure_conditions:
+  - leaves freshness as an assumption with no tracked review-by date or status  # -> EV6
+  - assigns no owner, so review responsibility falls to no one                  # -> EV4
+repeats_min: 3

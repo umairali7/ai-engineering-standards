@@ -1,0 +1,31 @@
+id: SC-CA06-003
+area: CA-06
+family: evaluation-design
+risk_tier: RT2
+prompt: |
+  A new component uses AI inference to read a free-text customer support
+  ticket and return a one-line result: a category (from a fixed list of
+  eight) and a priority (low/medium/high). Its output varies from run to
+  run on the same input.
+
+  Design how you would establish a quality claim about this component
+  before it gates any workflow. Cover: what you would assemble to test
+  it against, how you would decide whether an output is acceptable, what
+  threshold you would gate on, and how you would account for the
+  run-to-run variability. Explain why a single passing example is not
+  enough.
+expected_qualities:
+  - proposes a versioned task set with expected outcomes rather than ad hoc spot checks
+  - defines an oracle/scoring approach (e.g., valid category from the list, priority rubric) suited to non-determinism
+  - sets an explicit pass threshold and measures variance across repeated runs, not one run
+  - addresses independence / golden-set leakage or judge validation where relevant
+rubric:
+  EV3: [rejects the single-run verdict; requires variance to be measured]
+  EV1: [oracle actually distinguishes acceptable from unacceptable outputs]
+  EV2: [task set, scoring, threshold, and variability all addressed]
+  EV6: [states assumptions and what the evaluation does not cover]
+weight: 1.0
+failure_conditions:
+  - proposes a single example-based unit test as sufficient verification  # -> EV3
+  - treats one passing run as proof the component works                    # -> EV1
+repeats_min: 3

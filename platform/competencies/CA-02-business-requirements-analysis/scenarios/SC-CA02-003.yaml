@@ -1,0 +1,41 @@
+id: SC-CA02-003
+area: CA-02
+family: traceability
+risk_tier: RT2
+prompt: |
+  You are assembling a traceability mapping for a small requirement set.
+  Here are the confirmed source materials, followed by the drafted
+  requirements. Map each requirement to its source. Flag any requirement
+  that has no confirmable source.
+
+  Sources:
+    S1 (stakeholder interview, warehouse lead): "Pickers waste time
+        walking back to a terminal to confirm each pick; they want to
+        confirm from the aisle."
+    S2 (business objective, ART-01): "Reduce order-picking cycle time by
+        20% this fiscal year."
+
+  Drafted requirements:
+    D1. Pickers shall be able to confirm a pick from a handheld device
+        without returning to a fixed terminal.
+    D2. The system shall report weekly average picking cycle time.
+    D3. The system shall include a gamified leaderboard ranking pickers
+        by daily pick count.
+
+  Produce the mapping and state how the orphaned requirement should be
+  handled.
+expected_qualities:
+  - maps D1 to S1 and D2 to S2 correctly
+  - flags D3 as having no confirmable source
+  - recommends resolving the orphan with stakeholders, not silently keeping it
+  - states any assumption made in drawing a mapping line
+rubric:
+  EV1: [D1->S1 and D2->S2 mappings are correct]
+  EV6: [D3 identified as source-less and assumptions stated]
+  EV3: [orphan flagged for resolution, not retained by default]
+  EV2: [every drafted requirement is accounted for in the mapping]
+weight: 1.0
+failure_conditions:
+  - invents a plausible-sounding source for D3 to complete the mapping  # -> EV1
+  - retains D3 without flagging its missing source                       # -> EV3
+repeats_min: 3

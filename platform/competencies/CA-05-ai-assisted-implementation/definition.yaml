@@ -1,0 +1,16 @@
+# Competency area definition (PLATFORM.md §5.3).
+# Areas are exactly the AESQS competency areas (D5) — CA-05 is
+# AI-Assisted Implementation (see derived_from; CA->KA mapping per ADR-0003).
+area: CA-05
+name: AI-Assisted Implementation
+derived_from: [AIES-AEBOK-KA-04, AIES-AEBOK-KA-05]
+in_scope_phases: [P09]
+description: >
+  Producing source changes (ART-06): implementing features and fixes,
+  refactoring, and the implementation-adjacent judgment that goes with
+  them — stating assumptions, preserving behavior, flagging risk, and
+  escalating what exceeds the task's scope.
+discovery_probes:
+  - coding            # can the candidate produce plausible source at all
+  - structured_output # can it follow an output contract
+scenario_families: [implementation, refactoring, defect-fix, escalation]

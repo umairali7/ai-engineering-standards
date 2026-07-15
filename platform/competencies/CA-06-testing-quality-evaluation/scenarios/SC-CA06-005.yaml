@@ -1,0 +1,36 @@
+id: SC-CA06-005
+area: CA-06
+family: test-design
+risk_tier: RT1
+prompt: |
+  Write a test suite (in Python) for a function with this specification.
+  Derive the tests from the specification, not from any particular
+  implementation.
+
+  Specification for `split_bill(total_cents, num_people)`:
+    - `total_cents` is a non-negative integer number of cents.
+    - `num_people` is an integer >= 1.
+    - Returns a list of `num_people` non-negative integer amounts (cents).
+    - The amounts must sum exactly to `total_cents`.
+    - The amounts must be as equal as possible; when the total does not
+      divide evenly, the leftover cents are distributed one per person to
+      the first people in the list.
+    - If `num_people` < 1, raise ValueError.
+
+  Note which requirement each test exercises, and call out any boundary or
+  edge cases you cover.
+expected_qualities:
+  - tests derive from the specification, not from an assumed implementation's output
+  - covers boundaries (exact division, non-even split with remainder distribution, total of 0, num_people == 1, num_people < 1 raises)
+  - asserts the sum-equals-total invariant and the "as equal as possible" remainder placement
+  - each test is mapped to the requirement it exercises and uses real testing constructs
+rubric:
+  EV1: [assertions encode the spec's intended behavior, including the sum and remainder rules]
+  EV2: [boundary and error cases covered, not just an even split]
+  EV6: [tests mapped to the requirements they exercise]
+  EV4: [tests are isolated, clearly named, and deterministic]
+weight: 1.0
+failure_conditions:
+  - omits the remainder-distribution case where the total does not divide evenly  # -> EV2
+  - writes assertions that pass for any list summing near the total rather than encoding the exact-sum and remainder rules  # -> EV1
+repeats_min: 3

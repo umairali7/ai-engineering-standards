@@ -1,0 +1,30 @@
+id: SC-CA03-005
+area: CA-03
+family: acceptance-criteria
+risk_tier: RT1
+prompt: |
+  Write acceptance criteria, in a testable Given/When/Then form, for this
+  user story:
+
+    "As a registered user, I want to reset my password by requesting a
+    link sent to my email, so I can regain access if I forget it."
+
+  Make the criteria observable and testable, and cover the important
+  states a tester or downstream engineer would need. Do not introduce
+  requirements the story does not imply; where the story is silent on a
+  decision, flag it rather than inventing an answer.
+expected_qualities:
+  - criteria are observable and testable Given/When/Then, not aspirational
+  - covers key states (valid request, unknown email, link used, link expired, link reused, new password rules)
+  - flags decisions the story leaves open (link lifetime, whether to reveal if an email exists) instead of deciding them
+  - each criterion traces to the intent of the story
+rubric:
+  EV4: [criteria are concrete and testable, not "the reset should be smooth"]
+  EV2: [important states covered, including expired/reused link and unknown email]
+  EV1: [criteria faithfully express the story with no fabricated behavior]
+  EV6: [open decisions flagged; ties back to the story]
+weight: 1.0
+failure_conditions:
+  - writes vague, untestable criteria such as "resetting the password should be easy"  # -> EV4
+  - invents an unstated policy (e.g., a specific link-expiry time) and asserts it as required  # -> EV1
+repeats_min: 3

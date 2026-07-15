@@ -1,0 +1,32 @@
+id: SC-CA11-001
+area: CA-11
+family: asset-curation
+risk_tier: RT2
+prompt: |
+  Our coding agents keep violating architecture conventions that "every
+  engineer just knows." Those conventions currently live scattered
+  across a 200-page wiki: some pages are current, some contradict each
+  other, some are three years stale, and none were written for a machine
+  to read.
+
+  A manager proposes: "Just point the agents at the wiki so they have
+  all of it." Advise on how to actually make this knowledge usable by
+  agents, and explain why the proposal as stated would not raise their
+  capability.
+expected_qualities:
+  - distinguishes curation (transforming knowledge into explicit, self-contained, scoped, machine-consumable assets) from collection (pointing at the raw wiki)
+  - explains that ambiguity, contradictions, and stale pages would be consumed as ground truth if piped raw
+  - has each asset validated by someone qualified in its subject matter before it is published
+  - versions each asset and assigns an accountable owner
+  - publishes validated assets to the sources agents actually assemble from, rather than editing live prompts in place
+rubric:
+  EV1: [transformation approach is sound and would produce usable assets]
+  EV2: [validation, versioning, and ownership all covered]
+  EV3: [does not treat the unsanitized wiki as trustworthy context]
+  EV4: [assets versioned, owned, and change-controlled like source]
+  EV6: [validation status tracked so assets are not assumed current]
+weight: 1.0
+failure_conditions:
+  - endorses pointing agents at the raw wiki untransformed  # -> EV1
+  - produces unversioned, ownerless context with no validation step  # -> EV4
+repeats_min: 3

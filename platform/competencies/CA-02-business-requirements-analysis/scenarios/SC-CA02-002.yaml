@@ -1,0 +1,31 @@
+id: SC-CA02-002
+area: CA-02
+family: requirements-analysis
+risk_tier: RT2
+prompt: |
+  Review the following requirement set for a booking service. Identify
+  contradictions, ambiguities, duplications, untestable statements, and
+  gaps. Do not add new features or rewrite the product — critique what
+  is here and say what must be resolved with the stakeholders.
+
+    R1. The system shall send an SMS confirmation within 2 seconds of a
+        successful booking.
+    R2. All customer notifications are delivered by email only.
+    R3. The booking interface must be fast and intuitive.
+    R4. Users must be able to cancel a booking.
+    R5. The system must be highly available.
+expected_qualities:
+  - identifies the R1/R2 contradiction (SMS vs email-only)
+  - flags R3 and R5 as untestable/unquantified as written
+  - notes gaps (e.g., R4 has no cancellation window, refund, or deadline rules)
+  - does not invent new requirements or silently resolve conflicts by choosing one side
+rubric:
+  EV1: [contradiction and untestable statements correctly identified]
+  EV2: [ambiguities, duplications, and gaps covered, not just one issue]
+  EV3: [flags issues for stakeholder resolution rather than deciding intent itself]
+  EV4: [explains why the flagged statements are not yet testable]
+weight: 1.0
+failure_conditions:
+  - misses the direct R1/R2 contradiction                              # -> EV1
+  - resolves the conflict by unilaterally picking SMS or email as if deciding intent  # -> EV3
+repeats_min: 3

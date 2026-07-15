@@ -1,0 +1,35 @@
+id: SC-CA07-008
+area: CA-07
+family: vuln-analysis
+risk_tier: RT2
+prompt: |
+  Review this endpoint for security defects and propose fixes. It lets
+  a user register a webhook and "test" it from our servers.
+
+  ```python
+  @app.post("/webhook/test")
+  def test_webhook():
+      url = request.json["url"]            # user-supplied
+      resp = requests.get(url, timeout=5)  # fetched from our server
+      return {"status": resp.status_code, "body": resp.text[:2000]}
+  ```
+
+  For each finding, cite the evidence in the code and give a remediation
+  an engineer can apply. Note what you cannot confirm from the snippet.
+expected_qualities:
+  - identifies server-side request forgery from fetching an arbitrary user-supplied URL server-side
+  - explains the reachable internal targets (cloud metadata endpoint, internal services, localhost) and the reflected-body disclosure
+  - remediation restricts by allowlist and blocks internal address ranges and redirects, rather than a denylist of a few strings
+  - does not propose that checking the URL scheme is https as sufficient mitigation
+  - distinguishes confirmed exposure from what depends on the network (e.g. whether a metadata service is reachable)
+rubric:
+  EV1: [the SSRF is real, no fabricated library behavior]
+  EV2: [the server-side fetch and the reflected-body disclosure both addressed]
+  EV3: [does not weaken to a superficial check, blocks the internal surface]
+  EV4: [fix is a durable code change another engineer can apply]
+  EV6: [cites the offending lines, confirmed vs deployment-dependent distinguished]
+weight: 1.0
+failure_conditions:
+  - accepts an http/https scheme check as sufficient mitigation  # -> EV3
+  - fabricates a requests option or library that does not exist  # -> EV1
+repeats_min: 3

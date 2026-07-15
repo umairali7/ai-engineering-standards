@@ -1,0 +1,13 @@
+.DS_Store
+*.pyc
+# platform build/runtime artifacts
+__pycache__/
+*.egg-info/
+.pytest_cache/
+aies-workspace/
+
+# platform result index (derived, rebuildable)
+*.sqlite
+
+# local env files (secrets, endpoints) — never commit; see platform/.env.example
+.env

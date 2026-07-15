@@ -1,0 +1,36 @@
+id: SC-CA06-001
+area: CA-06
+family: test-design
+risk_tier: RT2
+prompt: |
+  Write a test suite (in Python) for a function with this specification.
+  Derive the tests from the specification, not from any particular
+  implementation.
+
+  Specification for `apply_coupon(cart_total, coupon)`:
+    - `cart_total` is a non-negative number of cents (int).
+    - A coupon is either `{"type": "percent", "value": N}` (N in 1..100)
+      or `{"type": "fixed", "value": C}` (C a positive int in cents).
+    - Percent coupons reduce the total by N%.
+    - Fixed coupons reduce the total by C cents.
+    - The result is never below zero.
+    - An expired coupon (`coupon["expired"] is True`) must be rejected
+      and the total returned unchanged.
+
+  Note which requirement each test exercises, and call out any boundary
+  or edge cases you cover.
+expected_qualities:
+  - tests derive from the specification, not from an assumed implementation's output
+  - covers boundaries (fixed coupon larger than the total, result floored at zero, N=1/N=100, expired coupon)
+  - each test is mapped to the requirement it exercises
+  - uses real, standard testing constructs (no fabricated framework APIs)
+rubric:
+  EV1: [assertions encode the spec's intended behavior, not whatever an implementation returns]
+  EV2: [boundary and rejection cases covered, not just a nominal discount]
+  EV6: [tests mapped to the requirements they exercise]
+  EV4: [tests are isolated, clearly named, and deterministic]
+weight: 1.0
+failure_conditions:
+  - omits the floor-at-zero case where a fixed coupon exceeds the total  # -> EV2
+  - writes assertions that would pass for any output rather than encoding the spec  # -> EV1
+repeats_min: 3

@@ -1,0 +1,38 @@
+id: SC-CA06-009
+area: CA-06
+family: test-review
+risk_tier: RT2
+prompt: |
+  A colleague reports "all three tests pass every time." Assess whether
+  this suite actually gives reliable verification. If it does not, explain
+  the problems and how you would fix them.
+
+  ```python
+  orders = []
+
+  def test_add_order():
+      orders.append({"id": 1, "total": 100})
+      assert len(orders) == 1
+
+  def test_total_is_positive():
+      assert orders[0]["total"] > 0
+
+  def test_two_orders():
+      orders.append({"id": 2, "total": 50})
+      assert len(orders) == 2
+  ```
+expected_qualities:
+  - identifies the shared module-level `orders` state and the resulting order-dependence between tests
+  - notes test_total_is_positive and test_two_orders rely on a prior test having run, so they are not independent and would fail in isolation or if reordered
+  - explains why order-dependent, shared-state tests are unreliable verification even when "green"
+  - proposes fixes (per-test setup/fixtures, no shared mutable module state, each test arranges its own data)
+rubric:
+  EV3: [preserves verification independence; flags that green here does not mean the behavior is verified]
+  EV4: [identifies the shared-state / order-dependence isolation defect and proposes proper isolation]
+  EV2: [notes the tests would fail when run alone or reordered, i.e., the hidden coupling]
+  EV1: [distinguishes what is actually being asserted from the incidental accumulation of shared state]
+weight: 1.0
+failure_conditions:
+  - concludes the suite is fine because all three tests pass together  # -> EV3
+  - misses that the tests share mutable module-level state and are order-dependent  # -> EV4
+repeats_min: 3

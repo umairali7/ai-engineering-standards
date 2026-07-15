@@ -1,0 +1,10 @@
+name: startup
+description: Velocity-conscious evaluation for low-regulation contexts
+# A profile is a weighting preset (PLATFORM.md 5.2). Gates and
+# statistical minimums are engine constants per AIES-AESQS-CS-01
+# and CANNOT be expressed or relaxed here (PLATFORM.md D3).
+area_weights:
+  CA-05: 1.5
+dimension_weight_adjustments:
+  EV5: +0.05
+  EV4: -0.05

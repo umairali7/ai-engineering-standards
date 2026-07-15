@@ -1,0 +1,30 @@
+id: SC-CA04-003
+area: CA-04
+family: decision-record
+risk_tier: RT2
+prompt: |
+  Your team has decided to move the payments component out of the main
+  application process and run it as a separate deployable behind a
+  versioned, machine-verifiable contract, instead of keeping it as an
+  in-process module. The motivations were isolating a high-risk
+  component and letting agents change other parts of the system without
+  touching payments.
+
+  Write an Architecture Decision Record for this choice. Capture the
+  context, the decision, the rationale, the alternatives you rejected
+  and why, and the consequences (including any new operational cost).
+expected_qualities:
+  - records context, decision, rationale, consequences in ADR form
+  - names the rejected alternative (in-process module) and why it was rejected
+  - connects the decision to isolating the high-risk (payments) component and enabling safer agent work
+  - acknowledges the trade-off / new cost introduced (e.g., network boundary, deployment/ops overhead)
+rubric:
+  EV6: [rejected alternatives and rationale recorded; the "why" is captured as decision capital]
+  EV3: [decision framed around isolating the high-risk component behind an enforced boundary]
+  EV4: [contract-first, agent-legible structure is explicit]
+  EV2: [consequences and new operational costs stated, not just benefits]
+weight: 1.0
+failure_conditions:
+  - records only the decision and its upside, with no rejected alternative or rationale  # -> EV6
+  - presents the split as free, ignoring the added network/operational cost              # -> EV2
+repeats_min: 3

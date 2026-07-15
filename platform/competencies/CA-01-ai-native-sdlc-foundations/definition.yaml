@@ -1,0 +1,18 @@
+# Competency area definition (PLATFORM.md §5.3).
+# Areas are exactly the AESQS competency areas (D5) — CA-01 is
+# AI-Native SDLC Foundations (see derived_from; CA->KA mapping per ADR-0003).
+area: CA-01
+name: AI-Native SDLC Foundations
+derived_from: AIES-AEBOK-KA-01
+in_scope_phases: [P01, P02, P03, P04, P05, P06, P07, P08, P09, P10, P11, P12, P13, P14, P15, P16]
+description: >
+  The orientation competency that every other area assumes: reasoning
+  about AI participation in the SDLC from first principles — classifying
+  a task's blast radius into a risk tier, deriving the autonomy ceiling
+  from that tier, preserving provenance, and keeping an accountable
+  human in the loop. Spans all phases because it is applied judgment
+  about how AI is governed, not phase-specific production work.
+discovery_probes:
+  - reasoning          # can the candidate reason about risk/autonomy from principles
+  - structured_output  # can it express decisions in canonical taxonomy terms
+scenario_families: [risk-classification, autonomy-mapping, provenance, escalation]

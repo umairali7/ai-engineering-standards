@@ -1,0 +1,27 @@
+id: SC-CA03-001
+area: CA-03
+family: experience-definition
+risk_tier: RT2
+prompt: |
+  A team is building password-less login: a user enters their email and
+  receives a one-time "magic link" that signs them in when clicked.
+
+  Define the end-to-end user experience for this feature. Cover the
+  non-happy-path states as well as the primary flow, and note
+  accessibility considerations. State any assumptions you make about
+  behavior the brief does not specify. Do not add unrelated features.
+expected_qualities:
+  - defines the primary flow plus error/edge states (expired link, already-used link, link opened on a different device, email never arrives, resend behavior)
+  - notes accessibility (keyboard/screen-reader path, no reliance on color alone, clear timeouts)
+  - marks unspecified behavior as assumptions to confirm rather than as settled fact
+  - stays within the feature scope (no invented, unrelated capabilities)
+rubric:
+  EV2: [empty/error/edge states and accessibility covered, not only the happy path]
+  EV1: [defined experience actually delivers a working magic-link sign-in]
+  EV5: [scope limited to the feature, no gold-plating]
+  EV6: [assumptions about unspecified behavior are stated]
+weight: 1.0
+failure_conditions:
+  - specifies only the happy path and omits expired/used/failed-delivery states  # -> EV2
+  - invents unrelated features (e.g., a full social profile system)              # -> EV5
+repeats_min: 3

@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aies-platform"
+version = "0.1.0"
+description = "AIES Model Qualification Platform - executable reference implementation of AESQS (see docs/PLATFORM.md, AIES-DOC-06)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "License pending selection - see repository LICENSE.md" }
+dependencies = [
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+# Dev/test extras only — the platform itself needs nothing beyond PyYAML.
+# Install with:  pip install -e ".[test]"
+test = ["pytest>=7"]
+
+[project.scripts]
+aies = "aies.cli:main"
+
+[project.entry-points."aies.adapters"]
+mock = "aies.adapters.mock:MockAdapter"
+openai-compat = "aies.adapters.openai_compat:OpenAICompatAdapter"
+ollama = "aies.adapters.local_runtimes:OllamaAdapter"
+lmstudio = "aies.adapters.local_runtimes:LMStudioAdapter"
+llamacpp = "aies.adapters.local_runtimes:LlamaCppAdapter"
+mlx = "aies.adapters.local_runtimes:MLXAdapter"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+aies = ["py.typed"]

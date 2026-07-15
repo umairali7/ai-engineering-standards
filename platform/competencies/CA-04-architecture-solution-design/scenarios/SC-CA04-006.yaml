@@ -1,0 +1,31 @@
+id: SC-CA04-006
+area: CA-04
+family: design-review
+risk_tier: RT1
+prompt: |
+  Review the following proposed design and critique it for failure modes
+  and operational burden, then propose improvements. Do not assume
+  infrastructure that is not described; if a recommendation depends on
+  something not shown, say so.
+
+    Proposed design: a nightly cron job downloads a `products.csv` file
+    from a partner's FTP server, then for every row runs
+    `INSERT INTO products (...)`. If the job is re-run, or the same file
+    is delivered twice, the rows are inserted again. There is no check for
+    whether a row already exists, and if the job fails halfway it is
+    simply started again from the top.
+expected_qualities:
+  - identifies the non-idempotency (re-runs and duplicate deliveries create duplicate rows)
+  - flags the half-failure/restart behavior producing partial then duplicated data
+  - notes missing handling for a missing/malformed/empty CSV or FTP unavailability
+  - proposes concrete improvements (idempotent upsert on a stable key, transactional or resumable load) without assuming unseen infrastructure
+rubric:
+  EV2: [failure modes and re-run/partial-failure behavior addressed, not just the happy path]
+  EV1: [does not assert a deduplication or staging layer already exists]
+  EV4: [proposes an explicit idempotency key / upsert contract rather than a vague "add checks"]
+  EV5: [improvements proportionate to a simple nightly import]
+weight: 1.0
+failure_conditions:
+  - approves the design as fine and misses the duplicate-insertion / non-idempotency problem  # -> EV2
+  - proposes a fix that assumes a message queue or dedup service the prompt never mentions  # -> EV1
+repeats_min: 3

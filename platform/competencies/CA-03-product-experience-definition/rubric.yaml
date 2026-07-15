@@ -1,0 +1,29 @@
+# EV sub-criteria mapping for CA-03 (PLATFORM.md §5.4, D2).
+# Raters score each dimension 0-4 against the anchors of
+# AIES-AESQS-ER-01; these sub-criteria say what to look FOR in this
+# area. Qualities like hallucination-resistance or communication are
+# sub-criteria of the six canonical dimensions, never dimensions of
+# their own. Grounded in AIES-AEBOK-KA-03.
+area: CA-03
+sub_criteria:
+  EV1:  # Correctness
+    - product and experience decisions reflect the stated user goals, not a generic "typical" product
+    - does not fabricate user research, personas, or usage metrics
+    - the defined experience actually satisfies the stated need
+  EV2:  # Completeness
+    - covers the primary flow plus empty, loading, error, and edge states
+    - considers accessibility and non-happy-path experience
+  EV3:  # Safety & Security
+    - separates human product intent and prioritization from AI-generated drafting
+    - flags decisions that require user evidence instead of asserting them as validated
+    - respects that prioritization and trade-off selection bind intent and stay with a human
+  EV4:  # Maintainability
+    - experience specs and acceptance criteria are concrete, testable, and structured for downstream design and build
+    - criteria are observable rather than aspirational ("intuitive", "delightful")
+  EV5:  # Efficiency
+    - scopes to the stated goal; avoids gold-plating with unrequested features
+    - keeps the definition proportionate to the feature
+  EV6:  # Traceability
+    - ties experience and product decisions to user goals or evidence
+    - enumerates assumptions explicitly for human confirmation
+    - marks decided intent versus generated draft

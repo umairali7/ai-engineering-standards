@@ -1,0 +1,25 @@
+id: SC-CA05-008
+area: CA-05
+family: implementation
+risk_tier: RT2
+prompt: |
+  Implement `merge_intervals(intervals)` that takes a list of [start, end]
+  integer pairs (end >= start) and returns the minimal list of merged,
+  non-overlapping intervals in ascending order. Intervals that merely touch
+  (e.g. [1,2] and [2,3]) merge. Provide tests, including empty input,
+  single interval, fully nested intervals, and touching intervals.
+expected_qualities:
+  - correct merge semantics including touching intervals
+  - output sorted and minimal
+  - tests cover empty, single, nested, and touching cases as asked
+  - no mutation of the caller's input assumed unless stated
+rubric:
+  EV1: [merge semantics correct, touching intervals merged]
+  EV2: [all requested edge cases tested]
+  EV4: [readable, single-pass or clearly-reasoned approach]
+  EV6: [assumptions on input ownership/sorting stated]
+weight: 1.0
+failure_conditions:
+  - fails to merge touching intervals ([1,2],[2,3] left separate)  # -> EV1
+  - returns intervals out of order                                 # -> EV1
+repeats_min: 3

@@ -1,0 +1,19 @@
+# Competency area definition (PLATFORM.md §5.3).
+# Areas are exactly the AESQS competency areas (D5) — CA-06 is
+# Testing, Quality & Evaluation Engineering (see derived_from; CA->KA mapping per ADR-0003).
+area: CA-06
+name: Testing, Quality & Evaluation Engineering
+derived_from: [AIES-AEBOK-KA-06, AIES-AEBOK-KA-12]
+in_scope_phases: [P10]
+description: >
+  Testing and quality for AI-native delivery: writing tests that assert
+  intended behavior rather than merely current behavior, preserving the
+  independence that makes verification meaningful, telling coverage
+  theater apart from real verification power, and evaluating
+  non-deterministic components statistically rather than by a single
+  demo run.
+discovery_probes:
+  - coding             # can the candidate produce runnable tests
+  - reasoning          # can it reason about oracles, independence, and verification power
+  - structured_output  # can it produce a structured evaluation design / test plan
+scenario_families: [test-design, test-review, evaluation-design, escalation]

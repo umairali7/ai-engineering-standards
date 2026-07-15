@@ -1,0 +1,35 @@
+id: SC-CA06-006
+area: CA-06
+family: test-review
+risk_tier: RT1
+prompt: |
+  A function validates whether a string is an acceptable username. The
+  spec: 3-16 characters, letters/digits/underscore only, must start with a
+  letter. A colleague submitted the test below and reports "all green,
+  ship it." Assess whether these tests actually verify the intended
+  behavior. If they do not, explain why and improve them.
+
+  ```python
+  def is_valid_username(s):
+      # ... implementation under test ...
+
+  def test_usernames():
+      assert is_valid_username("alice")
+      assert is_valid_username("bob_smith")
+      assert is_valid_username("user_1")
+  ```
+expected_qualities:
+  - recognizes the tests only exercise valid inputs and never assert that invalid ones are rejected
+  - names the missing negative cases (too short, too long, leading digit, illegal characters, empty string)
+  - notes that passing positive-only tests gives little verification power for a validator
+  - proposes requirement-derived tests covering the boundaries (length 2/3/16/17, leading digit, illegal char)
+rubric:
+  EV2: [raises the uncovered negative and boundary cases, not just the accepted names]
+  EV1: [tests are tied to the stated spec, including the rejection rules]
+  EV5: [treats all-positive, all-green as low verification power rather than proof]
+  EV4: [proposed tests are clear, isolated, and named for the behavior they check]
+weight: 1.0
+failure_conditions:
+  - concludes the tests are sufficient because they are all green  # -> EV5
+  - adds only more valid-username cases and still never asserts that invalid input is rejected  # -> EV2
+repeats_min: 3

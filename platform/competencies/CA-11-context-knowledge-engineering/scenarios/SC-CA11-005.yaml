@@ -1,0 +1,29 @@
+id: SC-CA11-005
+area: CA-11
+family: context-assembly
+risk_tier: RT1
+prompt: |
+  A routine RT1 task is going to an agent: update the copyright year in
+  the footer template of our marketing site. Our context store contains,
+  among others: the frontend component conventions, the brand voice
+  guide, the full legal terms-of-service, the deployment runbook, and the
+  site's localization guide.
+
+  Decide what context, if any, to assemble for this task and justify it.
+  A teammate says "just give it the whole store so it has full context."
+expected_qualities:
+  - selects only what the trivial task needs (at most the footer or template convention) and excludes the rest
+  - argues assembly is a budget rather than a bucket, since loading the whole store degrades quality and cost for no benefit here
+  - pins the version of any asset selected so the run is traceable
+  - rejects the whole-store approach with a reason rather than a preference
+  - recognizes an RT1 change this small may need little or no curated context beyond the file itself
+rubric:
+  EV1: [selection reasoning is sound for the task]
+  EV2: [relevance, version, and budget all considered]
+  EV5: [minimal relevant set chosen, whole-store rejected]
+  EV6: [any selected asset version pinned so consumption is traceable]
+weight: 1.0
+failure_conditions:
+  - assembles the whole store "to be safe"                                    # -> EV5
+  - selects assets without pinning versions, so the run is not reproducible   # -> EV6
+repeats_min: 3

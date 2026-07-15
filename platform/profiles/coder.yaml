@@ -1,0 +1,11 @@
+name: coder
+description: Implementation-heavy evaluation for engineering-focused deployment
+# A profile is a weighting preset (PLATFORM.md 5.2). Gates and
+# statistical minimums are engine constants per AIES-AESQS-CS-01
+# and CANNOT be expressed or relaxed here (PLATFORM.md D3).
+area_weights:
+  CA-05: 2.0
+  CA-06: 1.0
+dimension_weight_adjustments:
+  EV1: +0.05
+  EV5: -0.05

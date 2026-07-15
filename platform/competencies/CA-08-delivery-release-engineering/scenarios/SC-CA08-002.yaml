@@ -1,0 +1,31 @@
+id: SC-CA08-002
+area: CA-08
+family: release-strategy
+risk_tier: RT2
+prompt: |
+  An agent has produced a change to our payment-capture service that
+  reworks how we call the downstream card processor. It passed review
+  and verification and is ready to ship. This is a high-consequence,
+  reversible change to a service that handles money.
+
+  Design the release for this change. Cover how it reaches production,
+  how you would detect that it is misbehaving after release, and what
+  happens if it is. State any assumptions about infrastructure you
+  cannot see from this description.
+expected_qualities:
+  - releases progressively (canary or staged rollout) rather than all at once
+  - defines automated health signals that decide whether exposure continues
+  - requires a tested rollback path in place before promotion, given the risk
+  - ties the rollback trigger to pre-agreed telemetry thresholds, restoring safety before diagnosis
+  - states infrastructure assumptions (e.g., availability of feature flags or traffic splitting) instead of presuming them
+rubric:
+  EV1: [release and rollback mechanics described are technically real]
+  EV2: [reaching prod, detecting misbehavior, and reverting are all covered]
+  EV3: [rollback path tested before promotion; no big-bang release of the payment change]
+  EV5: [release strategy proportionate to the change's risk and reversibility]
+  EV6: [infrastructure assumptions stated explicitly]
+weight: 1.0
+failure_conditions:
+  - proposes a single big-bang deploy of the payment change with no progressive exposure  # -> EV3
+  - claims rollback safety without a tested rollback path                                  # -> EV3
+repeats_min: 3

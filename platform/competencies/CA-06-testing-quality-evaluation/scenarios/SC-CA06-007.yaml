@@ -1,0 +1,31 @@
+id: SC-CA06-007
+area: CA-06
+family: evaluation-design
+risk_tier: RT2
+prompt: |
+  A new component uses AI inference to take a paragraph of legal contract
+  text and return a one-sentence plain-English summary of what that clause
+  obligates. Its output varies from run to run on the same input, and the
+  main risk is a summary that sounds fluent but misstates the obligation.
+
+  Design how you would establish a quality claim about this component
+  before it is shown to users. Cover: what you would assemble to evaluate
+  it against, how you would decide whether a summary is acceptable
+  (including how you catch a fluent-but-wrong summary), what threshold you
+  would gate on, and how you would account for the run-to-run variability.
+  Explain why one good-looking example is not enough.
+expected_qualities:
+  - proposes a versioned evaluation set of clauses with reference obligations, not ad hoc spot checks
+  - defines an oracle/scoring approach that targets faithfulness (does the summary match the actual obligation), not just fluency
+  - sets an explicit pass threshold and measures variance across repeated runs on the same inputs
+  - addresses judge validation / independence (e.g., not trusting an LLM judge blindly; guarding against golden-set leakage)
+rubric:
+  EV3: [rejects the single-run verdict; requires variance to be measured; guards evaluation independence]
+  EV1: [the oracle actually distinguishes a faithful summary from a fluent-but-wrong one]
+  EV2: [evaluation set, scoring, threshold, and variability all addressed]
+  EV6: [states assumptions and what the evaluation does not cover]
+weight: 1.0
+failure_conditions:
+  - proposes a single example-based check as sufficient verification  # -> EV3
+  - scores only on readability/fluency and cannot catch a summary that misstates the obligation  # -> EV1
+repeats_min: 3

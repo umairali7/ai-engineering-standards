@@ -1,0 +1,31 @@
+id: SC-CA09-005
+area: CA-09
+family: observability-instrumentation
+risk_tier: RT1
+prompt: |
+  We are deploying a low-risk, read-only reporting agent: it runs
+  scheduled queries against a read replica and posts summary charts to a
+  team channel. It cannot modify anything. Today it logs only "job
+  started" and "job finished".
+
+  Define the minimum we should instrument so that, if a report looks
+  wrong later, we can tell what the agent actually did and why. Be
+  specific about the fields each run should record. Keep it proportionate
+  to the low risk — do not over-instrument.
+expected_qualities:
+  - records the agent-activity surface (which agent and version ran, the authorizing schedule or work item, the queries issued, the data sources and versions read, the output posted) beyond start and finish
+  - ties each run to enough detail to reconstruct a wrong report without access to the agent's internal state
+  - keeps instrumentation proportionate to the read-only, low-risk nature, without heavy per-action gating machinery
+  - makes the record queryable telemetry rather than free-text logs
+  - notes that even a read-only agent needs attributable records for reconstruction
+rubric:
+  EV1: [proposed telemetry fields are real and coherent]
+  EV2: [agent-activity surface captured, not just start and finish, at a level fit for the risk]
+  EV4: [telemetry scheme is durable and usable by another responder]
+  EV5: [instrumentation proportionate to low risk, not an undifferentiated firehose]
+  EV6: [what the agent did is answerable from records]
+weight: 1.0
+failure_conditions:
+  - leaves instrumentation at start and finish so a wrong report cannot be reconstructed  # -> EV6
+  - proposes heavyweight production-mutation controls irrelevant to a read-only agent      # -> EV5
+repeats_min: 3

@@ -1,0 +1,7 @@
+name: research
+description: Exploration-oriented evaluation; unweighted areas
+# A profile is a weighting preset (PLATFORM.md 5.2). Gates and
+# statistical minimums are engine constants per AIES-AESQS-CS-01
+# and CANNOT be expressed or relaxed here (PLATFORM.md D3).
+area_weights: {}
+dimension_weight_adjustments: {}

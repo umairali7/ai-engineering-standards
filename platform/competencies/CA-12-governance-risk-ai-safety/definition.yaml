@@ -1,0 +1,20 @@
+# Competency area definition (PLATFORM.md §5.3).
+# Areas are exactly the AESQS competency areas (D5) — CA-12 is
+# Governance, Risk & AI Safety (see derived_from; CA->KA mapping per ADR-0003).
+area: CA-12
+name: Governance, Risk & AI Safety
+derived_from: [AIES-AEBOK-KA-01, AIES-AEBOK-KA-11]
+in_scope_phases: [X03, X04, X05, X06]
+description: >
+  Keeping the operating model honest over time: risk-tiering and the
+  risk-acceptance mechanism, evidence-driven autonomy adjustment,
+  guardrails as enforced controls, and incident governance with a
+  mandatory learning loop — plus the governance judgment that goes with
+  it: adjusting autonomy only on evidence, refusing risk acceptances the
+  standard prohibits, keeping every decision traceable to policy and a
+  recorded risk acceptance, and escalating rather than signing away a
+  control.
+discovery_probes:
+  - reasoning          # can the candidate reason about policy, risk, and evidence
+  - structured_output  # can it follow an output contract
+scenario_families: [risk-acceptance, autonomy-governance, incident-governance, escalation]

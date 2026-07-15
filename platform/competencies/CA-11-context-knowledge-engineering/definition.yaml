@@ -1,0 +1,19 @@
+# Competency area definition (PLATFORM.md §5.3).
+# Areas are exactly the AESQS competency areas (D5) — CA-11 is
+# Context & Knowledge Engineering (see derived_from; CA->KA mapping per ADR-0003).
+area: CA-11
+name: Context & Knowledge Engineering
+derived_from: AIES-AEBOK-KA-10
+in_scope_phases: [X08, X09]
+description: >
+  Curating organizational knowledge into governed context assets:
+  transforming human knowledge into machine-consumable form, assembling
+  the minimal relevant set per task, and managing freshness and
+  lifecycle — plus the knowledge judgment that goes with it: treating
+  context assets as versioned owned artifacts, protecting the store as a
+  security-sensitive surface, keeping stale assets out of high-risk
+  assembly, and escalating rather than injecting unvalidated content.
+discovery_probes:
+  - retrieval          # can the candidate reason about assembling context for a task
+  - structured_output  # can it follow an output contract
+scenario_families: [asset-curation, context-assembly, freshness-lifecycle, escalation]

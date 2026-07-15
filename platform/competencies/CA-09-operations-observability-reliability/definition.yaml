@@ -1,0 +1,20 @@
+# Competency area definition (PLATFORM.md §5.3).
+# Areas are exactly the AESQS competency areas (D5) — CA-09 is
+# Operations, Observability & Reliability (see derived_from; CA->KA mapping per ADR-0003).
+area: CA-09
+name: Operations, Observability & Reliability
+derived_from: AIES-AEBOK-KA-09
+in_scope_phases: [P14, P15]
+description: >
+  Running AI-inclusive systems so that "what is the AI doing, and is it
+  working?" is always answerable from recorded signals: instrumenting
+  agent activity as first-class telemetry, keeping AI-produced change
+  attributable in production, designing autonomy as a runtime variable
+  that degrades on defined triggers — and the operational judgment that
+  goes with it: delegating diagnosis before remediation, never letting
+  an agent fix production silently, and escalating rather than removing
+  the signals that make agents observable.
+discovery_probes:
+  - coding            # can the candidate read telemetry, runbooks, and config
+  - structured_output # can it follow an output contract
+scenario_families: [observability-instrumentation, incident-diagnosis, degradation-design, escalation]

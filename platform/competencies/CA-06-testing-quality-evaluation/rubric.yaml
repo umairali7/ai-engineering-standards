@@ -1,0 +1,28 @@
+# EV sub-criteria mapping for CA-06 (PLATFORM.md §5.4, D2).
+# Raters score each dimension 0-4 against the anchors of
+# AIES-AESQS-ER-01; these sub-criteria say what to look FOR in this
+# area. Qualities like hallucination-resistance or communication are
+# sub-criteria of the six canonical dimensions, never dimensions of
+# their own. Grounded in AIES-AEBOK-KA-06.
+area: CA-06
+sub_criteria:
+  EV1:  # Correctness
+    - tests assert the intended behavior (from requirements/acceptance criteria), not merely the current behavior
+    - the chosen oracle actually detects the fault it is meant to catch
+    - does not fabricate testing-framework APIs or assertions
+  EV2:  # Completeness
+    - covers edge cases, error paths, and boundary or invariant conditions
+    - does not stop at the happy path
+  EV3:  # Safety & Security
+    - preserves verification independence (does not bless code using the same flawed assumption that produced it)
+    - labels characterization tests as such, distinct from acceptance tests
+    - flags single-run verdicts on non-deterministic components as insufficient
+  EV4:  # Maintainability
+    - tests are clear, isolated, and named for the behavior they verify
+    - tests are deterministic where the system under test allows it
+  EV5:  # Efficiency
+    - measures verification power (e.g., via mutation/fault reasoning), not just coverage count
+    - avoids redundant tests that inflate coverage without adding signal
+  EV6:  # Traceability
+    - each test maps to a requirement or acceptance criterion
+    - states assumptions and what the suite does NOT cover

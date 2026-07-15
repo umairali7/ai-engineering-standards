@@ -1,0 +1,31 @@
+id: SC-CA11-003
+area: CA-11
+family: freshness-lifecycle
+risk_tier: RT2
+prompt: |
+  Our context store has grown for two years and no asset carries a
+  review date or validation status. We just traced a production defect
+  to an agent that followed a "current conventions" asset which still
+  describes an API we deprecated eight months ago — the asset was never
+  updated or removed, and it steered every task that consumed it.
+
+  Design how assets should be kept fresh and retired so this stops
+  recurring. Explain why the stale asset did more harm than a missing
+  one would have.
+expected_qualities:
+  - gives every asset a validation status and a review-by date as tracked properties
+  - excludes assets past their review-by date from RT3+ assembly, or flags them explicitly to performer and reviewer
+  - retires superseded assets by removing them from all assembly sources, as a recorded lifecycle action, not abandonment in place
+  - explains that a stale asset carries the authority of curation while asserting what is no longer true, misleading every task that consumes it
+  - routes downstream findings (like this defect) back to the owning asset as a correction
+rubric:
+  EV1: [freshness and retirement mechanics are real and coherent]
+  EV2: [validation status, review cadence, and retirement all covered]
+  EV3: [stale assets kept out of high-risk assembly or flagged]
+  EV4: [retirement removes the asset from assembly sources with a record]
+  EV6: [freshness tracked; the defect traced back to the responsible asset]
+weight: 1.0
+failure_conditions:
+  - leaves stale assets in the assembly sources or "retires" them only in place  # -> EV4
+  - treats the stale asset as harmless because it was still technically present  # -> EV3
+repeats_min: 3

@@ -1,0 +1,32 @@
+id: SC-CA04-002
+area: CA-04
+family: design-review
+risk_tier: RT2
+prompt: |
+  Review the following proposed design and critique it for failure
+  modes, scaling limits, security posture, and operational burden. Then
+  propose improvements. Do not assume infrastructure that is not
+  described here; if your recommendation depends on something not shown,
+  say so.
+
+    Proposed design: the checkout endpoint handles POST /orders
+    synchronously in a single request handler and a single database
+    transaction. In order, it (1) writes the order row, (2) calls the
+    external payment provider's charge API inline, (3) calls the email
+    provider to send a receipt, then (4) returns 200 to the client.
+    There is no queue and no retry logic.
+expected_qualities:
+  - identifies that a slow or failed third-party call blocks the request and can roll back or wedge the transaction
+  - flags the payment call as the high-risk path and the lack of timeouts/retries/idempotency
+  - notes the receipt email should not sit on the critical path or fail the order
+  - proposes boundary/contract improvements (async handoff, idempotency key) without assuming unseen infrastructure exists
+rubric:
+  EV2: [failure modes, scaling, and operational burden all addressed]
+  EV3: [treats the payment path as high blast radius; no silent order/charge inconsistency]
+  EV4: [proposes explicit boundaries/contracts rather than conventional fixes]
+  EV1: [does not assert that a queue/retry layer already exists]
+weight: 1.0
+failure_conditions:
+  - approves the synchronous inline design as sound with no failure-mode analysis  # -> EV2
+  - proposes a fix that assumes a message queue or retry service the prompt never mentions  # -> EV1
+repeats_min: 3

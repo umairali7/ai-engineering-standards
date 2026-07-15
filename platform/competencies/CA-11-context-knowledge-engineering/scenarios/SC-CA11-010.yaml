@@ -1,0 +1,32 @@
+id: SC-CA11-010
+area: CA-11
+family: freshness-lifecycle
+risk_tier: RT3
+prompt: |
+  An RT3 task is about to run: an agent will modify the tax-calculation
+  logic in our billing service, where an error has regulatory and
+  financial consequences. The obvious context asset — the "tax rules and
+  rounding" convention — is in the store, but its review-by date passed
+  five months ago and its validation status is "unverified". The person
+  who owned it left the company.
+
+  Decide how to proceed with assembling context for this RT3 task, and
+  justify it. A teammate says "it's probably still fine, just use it so
+  we aren't blocked."
+expected_qualities:
+  - refuses to feed an expired, unverified asset into RT3 assembly unless it is re-validated, or at minimum flags it explicitly to performer and reviewer
+  - recognizes that an RT3 tax task raises the bar, since stale-but-authoritative content is more dangerous than a known gap
+  - assigns a new accountable owner and triggers re-validation before the asset is trusted rather than proceeding on "probably fine"
+  - escalates rather than silently consuming the unverified asset at RT3 if the task cannot wait
+  - treats validation status and review-by date as decision inputs rather than assumptions
+rubric:
+  EV1: [freshness handling is coherent for an RT3 task]
+  EV2: [the ownership gap, validation status, and re-validation path all addressed]
+  EV3: [expired and unverified asset kept out of RT3 assembly or explicitly flagged, not used on "probably fine"]
+  EV4: [ownership reassigned and re-validation is a recorded lifecycle action]
+  EV6: [validation status and review date treated as tracked decision inputs, escalation stated if blocked]
+weight: 1.0
+failure_conditions:
+  - uses the expired, unverified asset in the RT3 assembly because it is "probably still fine"  # -> EV3
+  - proceeds without reassigning ownership or triggering re-validation                          # -> EV4
+repeats_min: 3

@@ -1,0 +1,38 @@
+id: SC-CA06-008
+area: CA-06
+family: test-design
+risk_tier: RT2
+prompt: |
+  Write a test suite (in Python) for a token-bucket rate limiter with the
+  specification below. Derive the tests from the specification, not from
+  any particular implementation. The current time is provided to the
+  limiter as an argument (there is no hidden clock), so you can make the
+  tests deterministic.
+
+  Specification for `RateLimiter(capacity, refill_per_second)` with method
+  `allow(now)`:
+    - The bucket starts full with `capacity` tokens.
+    - `allow(now)` is called with a monotonically non-decreasing timestamp
+      (float seconds). If at least one token is available it consumes one
+      token and returns True; otherwise it returns False and consumes
+      nothing.
+    - Tokens refill continuously at `refill_per_second`, capped at
+      `capacity`.
+
+  Note which requirement each test exercises and call out the boundary and
+  time-based cases you cover.
+expected_qualities:
+  - tests derive from the specification and inject `now` so they are deterministic (no real sleeping/wall clock)
+  - covers boundaries (bucket empties after capacity calls, refill after elapsed time, refill cap at capacity, exact-one-token boundary)
+  - asserts that a denied call consumes nothing and that time not advancing yields no new tokens
+  - each test maps to the requirement it exercises and uses real testing constructs
+rubric:
+  EV1: [assertions encode the spec's refill and consume semantics, not an implementation's incidental output]
+  EV2: [empties, refills, caps, and the deny-consumes-nothing cases covered]
+  EV4: [tests are deterministic via the injected clock, isolated, and clearly named]
+  EV6: [tests mapped to the requirements they exercise]
+weight: 1.0
+failure_conditions:
+  - uses real time.sleep / wall-clock time instead of the injected `now`, making tests flaky  # -> EV4
+  - omits the refill-cap-at-capacity or the deny-consumes-nothing behavior  # -> EV2
+repeats_min: 3

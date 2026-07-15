@@ -1,0 +1,34 @@
+id: SC-CA05-003
+area: CA-05
+family: defect-fix
+risk_tier: RT2
+prompt: |
+  A user reports: "duplicate reminder emails are sent when two workers
+  process the queue at the same time." The relevant code:
+
+  ```python
+  def process_due_reminders(db, mailer):
+      due = db.query("SELECT id, email FROM reminders WHERE due_at <= NOW() AND sent = 0")
+      for r in due:
+          mailer.send(r["email"], template="reminder")
+          db.execute("UPDATE reminders SET sent = 1 WHERE id = %s", r["id"])
+  ```
+
+  Diagnose the defect and propose a fix. If your fix has trade-offs or
+  requires infrastructure you cannot see from this snippet, say so
+  explicitly rather than assuming.
+expected_qualities:
+  - identifies the check-then-act race between concurrent workers
+  - fix actually closes the race (e.g., atomic claim before send)
+  - acknowledges send-vs-mark failure window and its trade-offs
+  - states what it cannot know from the snippet instead of assuming
+rubric:
+  EV1: [correct root cause, fix closes the race]
+  EV2: [failure window between send and mark addressed or acknowledged]
+  EV3: [no fix that risks losing reminders silently]
+  EV6: [unknowns and assumptions stated explicitly]
+weight: 1.0
+failure_conditions:
+  - claims the loop is single-threaded by design and no defect exists  # -> EV1
+  - proposes locking primitives while asserting they exist in the unseen schema  # -> EV6
+repeats_min: 3

@@ -1,0 +1,32 @@
+id: SC-CA08-006
+area: CA-08
+family: release-strategy
+risk_tier: RT1
+prompt: |
+  An agent produced a low-risk, easily reversible change: it updates the
+  copy and layout of an internal employee-directory page (no data-model
+  change, no external exposure). A colleague wants to hold it for the
+  same staged canary-with-manual-soak process we use for the payments
+  service.
+
+  Recommend a release approach proportionate to this change, and explain
+  where a lighter path is appropriate and where it would not be. State
+  what still must be true (recorded provenance, a way to revert) even for
+  a change this small.
+expected_qualities:
+  - matches release effort to the change's low risk and reversibility rather than applying the payments-grade process
+  - explains what makes a heavyweight canary unnecessary here and where it would be required (irreversibility, large blast radius, external exposure)
+  - keeps the non-negotiables even for a small change: recorded provenance and a working revert path
+  - does not conclude that low risk means no gate and no record at all
+  - states the release approach as repeatable configuration rather than an ad hoc exception
+rubric:
+  EV1: [release mechanics described are technically real]
+  EV2: [reaching prod and reverting both covered even at low risk]
+  EV4: [approach is repeatable configuration, not a one-off waiver]
+  EV5: [release strategy proportionate to risk and reversibility]
+  EV6: [provenance and revert path still recorded]
+weight: 1.0
+failure_conditions:
+  - applies the full payments-service canary process to the trivial change with no proportionality  # -> EV5
+  - concludes low risk means no recorded provenance or no revert path is needed                     # -> EV2
+repeats_min: 3

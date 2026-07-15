@@ -1,0 +1,29 @@
+# EV sub-criteria mapping for CA-04 (PLATFORM.md §5.4, D2).
+# Raters score each dimension 0-4 against the anchors of
+# AIES-AESQS-ER-01; these sub-criteria say what to look FOR in this
+# area. Qualities like hallucination-resistance or communication are
+# sub-criteria of the six canonical dimensions, never dimensions of
+# their own. Grounded in AIES-AEBOK-KA-04.
+area: CA-04
+sub_criteria:
+  EV1:  # Correctness
+    - the design satisfies the stated requirements and quality attributes
+    - does not fabricate the behavior or capabilities of systems it cannot see
+    - reasoning about the design is technically sound
+  EV2:  # Completeness
+    - addresses failure modes, scaling limits, security posture, and operational burden
+    - covers the stated non-functional requirements, not only the happy-path structure
+  EV3:  # Safety & Security
+    - respects blast-radius / risk topology and isolates high-tier components
+    - enforces boundaries technically (contracts, separate deployables) rather than by convention
+    - leaves option selection that binds risk to a human architect
+  EV4:  # Maintainability
+    - proposes agent-legible structure: explicit contracts, invariants, and conventions
+    - uses contract-first decomposition so components can change behind stable interfaces
+  EV5:  # Efficiency
+    - the design is proportionate — simplest structure that meets the constraints
+    - avoids over-engineering and gratuitous components
+  EV6:  # Traceability
+    - records the decision and its rationale in ADR form
+    - states trade-offs and the rejected alternatives with the reason each was rejected
+    - identifies assumptions and the information sources the analysis relied on

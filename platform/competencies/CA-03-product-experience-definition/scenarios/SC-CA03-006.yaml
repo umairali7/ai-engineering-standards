@@ -1,0 +1,28 @@
+id: SC-CA03-006
+area: CA-03
+family: experience-definition
+risk_tier: RT1
+prompt: |
+  A team is adding a "download my data as a CSV" button to an account
+  settings page. The user clicks it and receives a CSV of their activity
+  history.
+
+  Define the end-to-end user experience for this feature. Cover the
+  non-happy-path states as well as the primary flow, and note
+  accessibility considerations. State any assumptions you make about
+  behavior the brief does not specify. Do not add unrelated features.
+expected_qualities:
+  - defines the primary flow plus edge states (empty history, very large export, generation delay/loading, generation failure, repeated clicks)
+  - notes accessibility (keyboard operable control, screen-reader status for progress/completion, no color-only cues)
+  - marks unspecified behavior (delivery method, whether it is synchronous, retention of the file) as assumptions to confirm
+  - stays within scope (no invented, unrelated capabilities)
+rubric:
+  EV2: [empty/large/loading/error states and accessibility covered, not only the happy path]
+  EV1: [the defined experience actually delivers a usable CSV export]
+  EV5: [scope limited to the export feature, no gold-plating]
+  EV6: [assumptions about unspecified behavior are stated]
+weight: 1.0
+failure_conditions:
+  - specifies only the successful-download path and omits empty/large/failed-generation states  # -> EV2
+  - invents unrelated features (e.g., a scheduled-export subscription system)  # -> EV5
+repeats_min: 3

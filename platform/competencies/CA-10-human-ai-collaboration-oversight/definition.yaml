@@ -1,0 +1,19 @@
+# Competency area definition (PLATFORM.md §5.3).
+# Areas are exactly the AESQS competency areas (D5) — CA-10 is
+# Human-AI Collaboration & Oversight (see derived_from; CA->KA mapping per ADR-0003).
+area: CA-10
+name: Human-AI Collaboration & Oversight
+derived_from: AIES-AEBOK-KA-11
+in_scope_phases: [X07]
+description: >
+  Designing oversight as a discipline rather than a formality: gates a
+  human can actually judge, reviews sized for the reviewer, and control
+  health that is measured — plus the collaboration judgment that goes
+  with it: keeping accountability attached to a named human, never
+  delegating approval authority to an AI, treating rubber-stamping as a
+  measurable control failure, and escalating rather than converting an
+  autonomy grant into de facto self-approval.
+discovery_probes:
+  - reasoning          # can the candidate reason about control design and failure modes
+  - structured_output  # can it follow an output contract
+scenario_families: [gate-design, review-ergonomics, accountability, escalation]

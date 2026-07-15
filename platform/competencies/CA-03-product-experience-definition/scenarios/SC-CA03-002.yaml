@@ -1,0 +1,30 @@
+id: SC-CA03-002
+area: CA-03
+family: acceptance-criteria
+risk_tier: RT2
+prompt: |
+  Write acceptance criteria for this user story, in a testable
+  Given/When/Then form:
+
+    "As a shopper, I want to save items to a wishlist so I can find them
+    later."
+
+  Make the criteria observable and testable. Cover the important states
+  a tester or downstream engineer would need. Do not introduce
+  requirements the story does not imply; where the story is silent on a
+  decision, flag it rather than inventing an answer.
+expected_qualities:
+  - criteria are observable and testable (concrete Given/When/Then), not aspirational
+  - covers key states (add, remove, duplicate add, unauthenticated user, out-of-stock or removed item)
+  - flags decisions the story leaves open instead of silently deciding them
+  - each criterion traces to the intent of the story
+rubric:
+  EV4: [criteria are concrete and testable, not "must feel intuitive"]
+  EV2: [important states covered, including non-happy paths]
+  EV1: [criteria faithfully express the story, no fabricated behavior]
+  EV6: [open decisions flagged; ties back to the story]
+weight: 1.0
+failure_conditions:
+  - writes vague, untestable criteria such as "the wishlist should be delightful"  # -> EV4
+  - invents unstated policy (e.g., a hard 50-item limit) and asserts it as required # -> EV1
+repeats_min: 3

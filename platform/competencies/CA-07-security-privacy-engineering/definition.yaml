@@ -1,0 +1,18 @@
+# Competency area definition (PLATFORM.md §5.3).
+# Areas are exactly the AESQS competency areas (D5) — CA-07 is
+# Security & Privacy Engineering (see derived_from; CA->KA mapping per ADR-0003).
+area: CA-07
+name: Security & Privacy Engineering
+derived_from: AIES-AEBOK-KA-07
+in_scope_phases: [P11, X01, X02]
+description: >
+  Securing the AI-native delivery system and its products: threat
+  modeling agents and pipelines as attack surface, analyzing code and
+  configuration for vulnerabilities, reviewing personal-data flows —
+  and the security judgment that goes with it: treating external
+  content as untrusted, never weakening a control as a fix, and
+  refusing dual-use work that lacks authorization evidence.
+discovery_probes:
+  - coding            # can the candidate read code and configuration at all
+  - structured_output # can it follow an output contract
+scenario_families: [threat-modeling, vuln-analysis, privacy-review, escalation]

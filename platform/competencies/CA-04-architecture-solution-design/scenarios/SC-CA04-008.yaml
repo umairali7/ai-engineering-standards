@@ -1,0 +1,31 @@
+id: SC-CA04-008
+area: CA-04
+family: design-review
+risk_tier: RT2
+prompt: |
+  Review the following proposed design and critique it for failure modes,
+  security posture, and operational burden, then propose improvements. Do
+  not assume infrastructure that is not described; if a recommendation
+  depends on something not shown, say so.
+
+    Proposed design: to reduce database load, each API server caches the
+    result of a user's permission check in local process memory for 10
+    minutes. On every request the server reads the cached permission set
+    if present; it only re-queries the authorization database after the
+    10-minute entry expires. Permission changes (including revoking a
+    user's access) are written to that database directly.
+expected_qualities:
+  - identifies the stale-permission window: a revoked user keeps access for up to 10 minutes on servers holding a cached entry
+  - treats authorization as a high-blast-radius / security-sensitive path, not a generic cache
+  - notes the per-process cache means different servers can disagree, and there is no invalidation on revocation
+  - proposes improvements (shorter/again-checked TTL, explicit invalidation or revocation propagation, deny-on-sensitive-actions) without assuming an unseen cache-invalidation bus exists
+rubric:
+  EV3: [treats permission caching as a security/blast-radius concern; the revocation-staleness risk is central]
+  EV2: [failure modes, per-server divergence, and operational burden addressed]
+  EV1: [does not assert a cache-invalidation or pub/sub mechanism already exists]
+  EV4: [proposes an explicit invalidation/revocation contract rather than only lowering the TTL]
+weight: 1.0
+failure_conditions:
+  - approves the cache as a sound performance win and misses the revoked-access staleness window  # -> EV3
+  - proposes a fix that assumes a cache-invalidation event bus the prompt never mentions  # -> EV1
+repeats_min: 3

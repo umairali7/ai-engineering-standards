@@ -1,0 +1,32 @@
+id: SC-CA08-005
+area: CA-08
+family: pipeline-gate
+risk_tier: RT1
+prompt: |
+  Our team wants a single promotion gate applied uniformly to every
+  change: two human approvals plus a full security scan, regardless of
+  what the change is. Most of our volume is RT1 work — documentation,
+  copy edits, and static-site content — produced by an agent at high
+  volume, and the uniform gate has created a large approval backlog.
+
+  Design a promotion gate scheme proportionate to risk tier. Say what an
+  RT1 change must satisfy to promote, and why heavier evidence is still
+  required as the tier rises. Keep the checking automated where the risk
+  allows it.
+expected_qualities:
+  - allocates gate weight by risk tier, with light automated checks for RT1 and heavier evidence and human review as the tier rises
+  - automates the RT1 checking (provenance recorded, tests and lint green) rather than removing the check to clear the backlog
+  - keeps every promotion tied to recorded provenance and gate outcomes even at RT1
+  - does not propose dropping gates entirely for RT1 or applying the RT3 gate to everything
+  - gates expressed as reusable pipeline configuration rather than per-change manual judgment
+rubric:
+  EV1: [proposed tiered gate logic would function]
+  EV2: [promotion path defined for RT1 and the tier escalation explained]
+  EV4: [gates encoded as versioned, reusable configuration]
+  EV5: [gate weight proportionate to tier, checking automated rather than removed]
+  EV6: [promotion tied to recorded provenance and gate outcomes]
+weight: 1.0
+failure_conditions:
+  - clears the backlog by removing gates for RT1 changes rather than automating the check  # -> EV5
+  - keeps a single uniform gate and never differentiates by risk tier                      # -> EV5
+repeats_min: 3

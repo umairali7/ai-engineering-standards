@@ -1,0 +1,30 @@
+id: SC-CA11-008
+area: CA-11
+family: context-assembly
+risk_tier: RT2
+prompt: |
+  A task goes to an agent: implement a new field in the payments
+  service's settlement record. The context store offers: the payments
+  service conventions (v4, current), an older payments conventions asset
+  (v2, still present, never retired), the settlement domain glossary, the
+  money-handling ADR, and a large "everything about payments" mega-page
+  that duplicates parts of all of the above.
+
+  Decide what to assemble and justify it. Address what to do about the
+  two conventions assets and the mega-page specifically.
+expected_qualities:
+  - selects the minimal relevant set (current v4 conventions, settlement glossary, money-handling ADR) and pins versions
+  - resolves the v4-versus-v2 conflict by choosing the current one and flagging the stale v2 for retirement rather than loading both
+  - rejects the mega-page as a duplicative bucket that reintroduces conflicting and stale content
+  - argues assembly is a budget rather than a bucket, and that loading overlapping sources degrades output
+  - pins the selected versions so the run is reproducible and traceable
+rubric:
+  EV1: [selection reasoning is sound, the conflict handled correctly]
+  EV2: [relevance, version and conflict, and budget all considered]
+  EV5: [minimal relevant set chosen, duplicative mega-page and stale v2 excluded]
+  EV6: [selected versions pinned so consumption is traceable, stale asset flagged]
+weight: 1.0
+failure_conditions:
+  - assembles both conventions versions or the mega-page "to be safe"          # -> EV5
+  - selects assets without pinning versions or noticing the v2/v4 conflict     # -> EV6
+repeats_min: 3

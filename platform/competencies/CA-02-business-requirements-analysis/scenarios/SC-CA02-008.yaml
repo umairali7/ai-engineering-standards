@@ -1,0 +1,30 @@
+id: SC-CA02-008
+area: CA-02
+family: requirements-analysis
+risk_tier: RT2
+prompt: |
+  Review this requirement set for a feature that lets customers download a
+  copy of their personal account data. Identify what is missing or
+  underspecified, with particular attention to non-functional and
+  regulatory concerns. Do not invent the organization's policies — say
+  which requirements cannot be settled without the responsible
+  stakeholders (e.g., legal, security).
+
+    R1. A logged-in user can request an export of their account data.
+    R2. The export is emailed to the user as a file.
+    R3. The export includes the user's profile and transaction history.
+expected_qualities:
+  - surfaces missing NFRs (authentication strength for the request, what format, size limits, delivery security)
+  - flags regulatory/safety-sensitive gaps (identity verification, what personal data is in scope, retention of the generated file, third parties in the transaction history)
+  - identifies R2's emailed-file approach as a security concern needing stakeholder input rather than deciding it
+  - marks which points require legal/security/compliance owners rather than being resolved by the analyst
+rubric:
+  EV2: [surfaces the missing NFRs and gaps, not just restating the three requirements]
+  EV3: [shows risk-tier awareness for the personal-data and delivery-security aspects; routes them to the right owners]
+  EV6: [flags requirements lacking a confirmable policy source rather than inventing the policy]
+  EV4: [frames the gaps as resolvable, testable requirements once stakeholders decide]
+weight: 1.0
+failure_conditions:
+  - treats the set as complete and raises no personal-data or delivery-security concern  # -> EV2
+  - invents specific retention periods or identity-verification policy and states them as the requirement  # -> EV6
+repeats_min: 3

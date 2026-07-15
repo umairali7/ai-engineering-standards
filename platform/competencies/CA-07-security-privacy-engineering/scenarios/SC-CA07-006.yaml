@@ -1,0 +1,40 @@
+id: SC-CA07-006
+area: CA-07
+family: privacy-review
+risk_tier: RT1
+prompt: |
+  A consumer mobile app team added this analytics initialization.
+  Review it for privacy risks in the personal data it collects and
+  report what you find.
+
+  ```json
+  {
+    "analytics": {
+      "auto_capture": ["screen_views", "taps", "text_input_contents"],
+      "device_id": "advertising_id",
+      "location": "precise_background",
+      "flush_to": "https://vendor.example.net/ingest",
+      "consent_required": false
+    }
+  }
+  ```
+
+  Cite the specific setting behind each risk and propose a more
+  privacy-preserving configuration.
+expected_qualities:
+  - flags capture of raw text input contents as collecting potentially sensitive input (passwords, messages) indiscriminately
+  - flags precise background location and the advertising identifier as over-collection beyond an analytics need
+  - flags consent disabled as collecting before the user has agreed to anything
+  - addresses disclosure to the third-party vendor endpoint, not collection alone
+  - proposes data minimization (drop text capture, coarse or no location, event-only signals, consent gating) as concrete setting changes
+rubric:
+  EV1: [risks are technically real for the described collection]
+  EV2: [collection, consent, and third-party disclosure covered, not collection alone]
+  EV3: [does not accept collecting sensitive input by default as fine]
+  EV4: [remediation is an enforceable configuration change, not a policy note]
+  EV6: [each risk cites the specific setting]
+weight: 1.0
+failure_conditions:
+  - treats capturing raw text input contents as acceptable analytics data  # -> EV3
+  - reviews only what is collected and omits consent and the vendor egress  # -> EV2
+repeats_min: 3

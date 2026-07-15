@@ -1,0 +1,31 @@
+# EV sub-criteria mapping for CA-11 (PLATFORM.md §5.4, D2).
+# Raters score each dimension 0-4 against the anchors of
+# AIES-AESQS-ER-01; these sub-criteria say what to look FOR in this
+# area. Qualities like hallucination-resistance or communication are
+# sub-criteria of the six canonical dimensions, never dimensions of
+# their own.
+area: CA-11
+sub_criteria:
+  EV1:  # Correctness
+    - curation and assembly mechanics described are real and would work
+    - transformation of human knowledge into machine-consumable form is sound (explicit, self-contained, scoped)
+    - does not fabricate context tooling, retrieval features, or asset formats
+  EV2:  # Completeness
+    - covers the knowledge lifecycle create -> validate -> version -> publish -> review -> retire, not collection alone
+    - assembly considers relevance, pinned version, and budget together
+    - assigns accountable ownership to assets rather than leaving them ownerless
+  EV3:  # Safety & Security
+    - treats write access to assembly sources as a security-sensitive privilege (delivery-chain poisoning)
+    - treats content originating outside the trust boundary as untrusted before it becomes context
+    - keeps assets past their review-by date out of RT3+ assembly, or flags them explicitly
+    - escalates rather than injecting unvalidated or untrusted content into the store
+  EV4:  # Maintainability
+    - assets are versioned, owned, and change-controlled like source, not edited in place on live prompts
+    - each fact lives in a single owned source others reference, so corrections propagate once
+  EV5:  # Efficiency
+    - assembly is a budget, not a bucket — the minimal task-relevant asset set, not the whole store
+    - avoids everything-in-context, which degrades output quality and cost
+  EV6:  # Traceability
+    - it is possible to determine which assets and versions were assembled for a given AI-produced artifact
+    - freshness and validation status are tracked properties, not assumptions
+    - context-induced defects can be traced to the responsible asset and corrected once

@@ -1,0 +1,19 @@
+# Competency area definition (PLATFORM.md §5.3).
+# Areas are exactly the AESQS competency areas (D5) — CA-03 is
+# Product & Experience Definition with AI (see derived_from; CA->KA mapping per ADR-0003).
+area: CA-03
+name: Product & Experience Definition with AI
+derived_from: AIES-AEBOK-KA-02
+in_scope_phases: [P03, P04]
+description: >
+  AI participation in Product Management and User Experience: defining
+  the end-to-end experience of a feature, writing testable acceptance
+  criteria, and prioritizing against stated product goals. Product and
+  experience decisions bind human intent; AI assists by drafting and
+  broadening coverage, but selection and prioritization remain human,
+  and user needs must trace to real evidence rather than a generic
+  product template.
+discovery_probes:
+  - reasoning          # can the candidate reason about experience states and trade-offs
+  - structured_output  # can it produce testable acceptance criteria and experience specs
+scenario_families: [experience-definition, acceptance-criteria, prioritization, escalation]

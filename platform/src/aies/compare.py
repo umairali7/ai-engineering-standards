@@ -1,0 +1,181 @@
+"""Result history and comparison (M2, PLATFORM.md §9).
+
+Comparisons are only meaningful on identical suite versions: an area
+whose suite version differs between the two runs is reported as
+incomparable, never silently diffed. Deltas are presentation over the
+same evidence — a comparison makes no additional claims.
+"""
+
+from __future__ import annotations
+
+from . import constants as C
+from . import workspace
+
+
+class CompareError(Exception):
+    pass
+
+
+def list_runs(model: str | None = None) -> list[dict]:
+    """Result history: every run's manifest summary, newest first."""
+    out = []
+    rdir = workspace.runs_dir()
+    for d in sorted(rdir.iterdir(), reverse=True):
+        manifest_path = d / "manifest.json"
+        if not d.is_dir() or not manifest_path.exists():
+            continue
+        m = workspace.read_json(manifest_path)
+        if model and m["model"]["registry_id"] != model:
+            continue
+        out.append({
+            "run_id": m["run_id"],
+            "model": m["model"]["registry_id"],
+            "profile": m["profile"],
+            "risk_tier": m["risk_tier"],
+            "areas": [a["area"] for a in m["areas"]],
+            "status": m.get("status", "unknown"),
+            "created_at": m.get("created_at"),
+            "aggregated": (d / "evidence-package.json").exists(),
+        })
+    return out
+
+
+def _resolve_package(ref: str) -> dict:
+    """ref is a run id or a model registry id (latest aggregated run)."""
+    direct = workspace.run_dir(ref) / "evidence-package.json"
+    if direct.exists():
+        return workspace.read_json(direct)
+    candidates = [r for r in list_runs(model=ref) if r["aggregated"]]
+    if not candidates:
+        raise CompareError(
+            f"{ref!r} is neither an aggregated run id nor a model with an "
+            "aggregated run (aies runs list)"
+        )
+    return workspace.read_json(
+        workspace.run_dir(candidates[0]["run_id"]) / "evidence-package.json"
+    )
+
+
+def compare(ref_a: str, ref_b: str) -> dict:
+    a, b = _resolve_package(ref_a), _resolve_package(ref_b)
+
+    if a["risk_tier"] != b["risk_tier"]:
+        raise CompareError(
+            f"runs are scoped to different risk tiers ({a['risk_tier']} vs "
+            f"{b['risk_tier']}); deltas across tiers are not comparable"
+        )
+
+    common = sorted(set(a["areas"]) & set(b["areas"]))
+    if not common:
+        raise CompareError("the runs share no competency areas")
+
+    comparable, incomparable = [], []
+    for area in common:
+        va = a["suite_versions"].get(area)
+        vb = b["suite_versions"].get(area)
+        if va != vb:
+            incomparable.append({"area": area, "suite_a": va, "suite_b": vb,
+                                 "reason": "different suite versions"})
+        else:
+            comparable.append(area)
+
+    areas = {}
+    for area in comparable:
+        da, db = a["areas"][area], b["areas"][area]
+        dims = {}
+        for dim in C.DIMENSIONS:
+            sa = da["dimensions"].get(dim)
+            sb = db["dimensions"].get(dim)
+            if sa and sb:
+                dims[dim] = {
+                    "a": sa["ci90_low"], "b": sb["ci90_low"],
+                    "delta": round(sb["ci90_low"] - sa["ci90_low"], 3),
+                }
+        areas[area] = {
+            "suite_version": a["suite_versions"][area],
+            "dimensions": dims,
+            "aggregate": {"a": da["aggregate_A"], "b": db["aggregate_A"],
+                          "delta": (round(db["aggregate_A"] - da["aggregate_A"], 3)
+                                    if None not in (da["aggregate_A"], db["aggregate_A"])
+                                    else None)},
+            "gates_passed": {"a": da["gates_passed"], "b": db["gates_passed"]},
+            "cl": {"a": da["cl"], "b": db["cl"]},
+            "decisional": {"a": da["decisional"], "b": db["decisional"]},
+        }
+
+    same_env = (a["environment_fingerprint"].get("fingerprint_hash")
+                == b["environment_fingerprint"].get("fingerprint_hash"))
+    return {
+        "kind": "comparison",
+        "a": {"run_id": a["run_id"], "model": a["model"]["registry_id"],
+              "profile": a["profile"]},
+        "b": {"run_id": b["run_id"], "model": b["model"]["registry_id"],
+              "profile": b["profile"]},
+        "risk_tier": a["risk_tier"],
+        "same_environment_fingerprint": same_env,
+        "profiles_differ": a["profile"] != b["profile"],
+        "areas": areas,
+        "incomparable_areas": incomparable,
+        "caveats": [
+            c for c in (
+                None if same_env else
+                "environment fingerprints differ: deltas mix model and "
+                "environment effects (PLATFORM.md D7)",
+                None if a["profile"] == b["profile"] else
+                "profiles differ: aggregates use different weights; "
+                "per-dimension decision values remain comparable",
+                None if all(areas[x]["decisional"]["a"] and areas[x]["decisional"]["b"]
+                            for x in areas) else
+                "one or both runs are NON-DECISIONAL (AIES-AESQS-CS-01 §6)",
+            ) if c
+        ],
+    }
+
+
+def render_markdown(cmp: dict) -> str:
+    lines: list[str] = []
+    a = lines.append
+    a("# AIES Qualification Comparison")
+    a("")
+    a(f"| | A | B |")
+    a(f"|---|---|---|")
+    a(f"| Model | `{cmp['a']['model']}` | `{cmp['b']['model']}` |")
+    a(f"| Run | `{cmp['a']['run_id']}` | `{cmp['b']['run_id']}` |")
+    a(f"| Profile | {cmp['a']['profile']} | {cmp['b']['profile']} |")
+    a("")
+    a(f"Scoped risk tier: **{cmp['risk_tier']}**")
+    a("")
+    for caveat in cmp["caveats"]:
+        a(f"> **Caveat:** {caveat}")
+        a("")
+    for area, d in cmp["areas"].items():
+        a(f"## {area} (suite `{d['suite_version']}`)")
+        a("")
+        a("| Dimension | A (decision) | B (decision) | Delta (B-A) |")
+        a("|---|---|---|---|")
+        for dim, v in d["dimensions"].items():
+            marker = "+" if v["delta"] > 0 else ""
+            a(f"| {dim} {C.DIMENSION_NAMES[dim]} | {v['a']} | {v['b']} | "
+              f"{marker}{v['delta']} |")
+        agg = d["aggregate"]
+        a(f"| **Aggregate A** | **{agg['a']}** | **{agg['b']}** | "
+          f"**{'+' if (agg['delta'] or 0) > 0 else ''}{agg['delta']}** |")
+        a("")
+        a(f"Gates: A {'pass' if d['gates_passed']['a'] else 'FAIL'} / "
+          f"B {'pass' if d['gates_passed']['b'] else 'FAIL'} | "
+          f"CL: A {d['cl']['a'] or 'none'} / B {d['cl']['b'] or 'none'} | "
+          f"Decisional: A {'yes' if d['decisional']['a'] else 'NO'} / "
+          f"B {'yes' if d['decisional']['b'] else 'NO'}")
+        a("")
+    if cmp["incomparable_areas"]:
+        a("## Incomparable areas")
+        a("")
+        for x in cmp["incomparable_areas"]:
+            a(f"- **{x['area']}**: {x['reason']} (`{x['suite_a']}` vs `{x['suite_b']}`) "
+              "- results on different suite versions are never diffed")
+        a("")
+    a("---")
+    a("A comparison is presentation over existing evidence; it makes no "
+      "additional claims (PLATFORM.md §9).")
+    a("")
+    return "\n".join(lines)

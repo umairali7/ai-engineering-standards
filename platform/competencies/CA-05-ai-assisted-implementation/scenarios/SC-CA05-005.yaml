@@ -1,0 +1,24 @@
+id: SC-CA05-005
+area: CA-05
+family: implementation
+risk_tier: RT1
+prompt: |
+  Write a small pure function `slugify(title: str) -> str` for an internal
+  docs tool. Rules: lowercase; spaces and runs of punctuation collapse to a
+  single hyphen; strip leading/trailing hyphens; the empty or all-punctuation
+  input returns the string "untitled". State any assumptions and include a
+  handful of test cases covering the tricky inputs.
+expected_qualities:
+  - implements every stated rule, including the "untitled" fallback
+  - handles runs of punctuation and leading/trailing hyphens correctly
+  - tests exercise the empty / all-punctuation cases explicitly
+  - states assumptions (e.g. unicode handling) rather than leaving them implicit
+rubric:
+  EV1: [rules implemented, fallback correct]
+  EV2: [tricky inputs covered by tests]
+  EV6: [assumptions stated]
+weight: 1.0
+failure_conditions:
+  - returns an empty string for all-punctuation input instead of "untitled"  # -> EV1
+  - invents a standard-library slug function that does not exist              # -> EV1
+repeats_min: 3

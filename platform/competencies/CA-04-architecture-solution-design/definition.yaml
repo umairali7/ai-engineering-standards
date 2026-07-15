@@ -1,0 +1,20 @@
+# Competency area definition (PLATFORM.md §5.3).
+# Areas are exactly the AESQS competency areas (D5) — CA-04 is
+# Architecture & Solution Design (see derived_from; CA->KA mapping per ADR-0003).
+area: CA-04
+name: Architecture & Solution Design
+derived_from: AIES-AEBOK-KA-03
+in_scope_phases: [P06, P07]
+description: >
+  AI participation in Solution Analysis and Architecture: enumerating
+  and comparing design options against quality attributes, critiquing
+  proposed designs for failure modes and operational burden, and
+  recording decisions with their rationale and rejected alternatives.
+  Architecture is also part of the control plane for autonomy — designs
+  should make boundaries and invariants explicit and agent-legible — and
+  option selection binds risk, so it stays with a human architect.
+discovery_probes:
+  - reasoning          # can the candidate weigh trade-offs across quality attributes
+  - planning           # can it sequence a design and its decomposition
+  - structured_output  # can it produce a structured option analysis / ADR
+scenario_families: [option-analysis, design-review, decision-record, escalation]

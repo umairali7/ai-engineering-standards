@@ -1,0 +1,18 @@
+# Competency area definition (PLATFORM.md §5.3).
+# Areas are exactly the AESQS competency areas (D5) — CA-08 is
+# Delivery & Release Engineering (see derived_from; CA->KA mapping per ADR-0003).
+area: CA-08
+name: Delivery & Release Engineering
+derived_from: AIES-AEBOK-KA-08
+in_scope_phases: [P12, P13]
+description: >
+  Building the pipeline as the enforcement layer for AI-native delivery:
+  encoding risk-tier policy as automated gates, verifying provenance at
+  promotion, releasing AI-produced change progressively with tested
+  rollback — and the release judgment that goes with it: promoting on
+  evidence rather than author, never removing a check to unblock flow,
+  and protecting the gates from the actors they gate.
+discovery_probes:
+  - coding            # can the candidate read and write pipeline/gate configuration
+  - structured_output # can it follow an output contract
+scenario_families: [pipeline-gate, release-strategy, provenance-verification, escalation]

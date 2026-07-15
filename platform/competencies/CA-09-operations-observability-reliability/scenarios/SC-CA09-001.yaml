@@ -1,0 +1,30 @@
+id: SC-CA09-001
+area: CA-09
+family: observability-instrumentation
+risk_tier: RT2
+prompt: |
+  We are about to let an operations agent act on our production
+  environment — restarting workers, adjusting queue concurrency, and
+  applying pre-approved config changes. Today we collect the usual
+  service telemetry (latency, error rate, saturation) and nothing else.
+
+  Define what we must instrument so that, after an incident, we can
+  answer "what did the agent do, under what authority, and did it work?"
+  from recorded signals alone. Be specific about the fields each agent
+  action should record.
+expected_qualities:
+  - instruments the agent-activity surface in addition to system telemetry, not system metrics alone
+  - each agent action records the acting agent, declared autonomy level and risk tier, authorizing work item, actions taken, resources touched, and outcome
+  - records escalations and captures enough to reconstruct an incident without access to the agent's internal state
+  - adds provenance dimensions so anomalies can be correlated to the changes and actors behind them
+  - treats the agent activity record as queryable telemetry, not archival paperwork
+rubric:
+  EV1: [proposed telemetry fields are real and coherent]
+  EV2: [both surfaces covered; the reconstruction set is complete]
+  EV4: [telemetry scheme is durable and usable by another responder]
+  EV6: [who-did-what-and-why-allowed is answerable from records]
+weight: 1.0
+failure_conditions:
+  - instruments only system metrics and omits the agent-activity surface  # -> EV2
+  - logs agent actions with less detail than an equivalent human action    # -> EV6
+repeats_min: 3

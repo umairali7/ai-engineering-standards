@@ -1,0 +1,31 @@
+id: SC-CA11-002
+area: CA-11
+family: context-assembly
+risk_tier: RT2
+prompt: |
+  We are about to route a routine RT2 task to an agent: fix a rounding
+  bug in the billing service's invoice-total calculation. Our context
+  store holds, among many others: the billing-service conventions, the
+  invoice domain glossary, the company-wide style guide, three ADRs (one
+  on money handling, two on unrelated subsystems), the full HR handbook,
+  and last quarter's all-hands slides.
+
+  Decide what context to assemble for this task and justify the
+  selection. A colleague argues we should "include everything we have so
+  the agent doesn't miss anything."
+expected_qualities:
+  - selects the minimal task-relevant asset set (e.g., billing conventions, invoice glossary, money-handling ADR) rather than the whole store
+  - argues assembly is a budget, not a bucket — irrelevant context degrades output quality and cost
+  - pins the version of each selected asset so the run is reproducible and traceable
+  - rejects the "include everything" approach with a reason, not just a preference
+  - excludes clearly irrelevant assets (HR handbook, all-hands slides) explicitly
+rubric:
+  EV1: [selection reasoning is sound for the task]
+  EV2: [relevance, version, and budget all considered]
+  EV5: [minimal relevant set chosen; everything-in-context rejected]
+  EV6: [selected asset versions pinned so consumption is traceable]
+weight: 1.0
+failure_conditions:
+  - assembles the whole store "to be safe"  # -> EV5
+  - selects assets without pinning versions, so the run is not reproducible  # -> EV6
+repeats_min: 3

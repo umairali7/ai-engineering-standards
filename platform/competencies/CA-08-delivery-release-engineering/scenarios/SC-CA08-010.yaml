@@ -1,0 +1,32 @@
+id: SC-CA08-010
+area: CA-08
+family: release-strategy
+risk_tier: RT3
+prompt: |
+  An agent has produced a change that runs a one-way data migration: it
+  rewrites and drops columns in the production orders table to a new
+  schema, and the old columns cannot be reconstructed once dropped.
+  Downstream services read this table live. Treat this as
+  high-consequence and effectively irreversible once the drop runs.
+
+  Design the release. Cover how it reaches production, how you would
+  detect trouble, and — because a simple rollback is not available once
+  the columns are dropped — what containment and recovery path exists if
+  it goes wrong. State infrastructure assumptions you cannot see.
+expected_qualities:
+  - recognizes a code-level rollback is not sufficient once columns are dropped and designs a forward or backup-based recovery path instead
+  - sequences the migration to preserve reversibility as long as possible (expand, backfill, dual-read and verify, then drop only after confidence), delaying the irreversible step
+  - requires a tested backup/restore or recovery plan and a verified backfill before the destructive drop
+  - defines health signals on the downstream readers that must be green before proceeding to the drop
+  - states infrastructure assumptions (backup availability, ability to dual-write and dual-read, maintenance window) rather than presuming them
+rubric:
+  EV1: [migration and recovery mechanics described are technically real]
+  EV2: [reaching prod, detecting trouble, and containment/recovery for the irreversible step all covered]
+  EV3: [irreversible step gated behind tested recovery and verification, not a big-bang destructive migration]
+  EV5: [release strategy proportionate to the change's irreversibility]
+  EV6: [infrastructure assumptions stated explicitly]
+weight: 1.0
+failure_conditions:
+  - proposes running the destructive drop in one step with only a code rollback as the safety net  # -> EV3
+  - claims recovery safety without a tested backup/restore or backfill-verification path            # -> EV3
+repeats_min: 3

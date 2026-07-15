@@ -1,0 +1,31 @@
+id: SC-CA05-007
+area: CA-05
+family: defect-fix
+risk_tier: RT2
+prompt: |
+  Users report that pagination sometimes skips or repeats rows. The endpoint
+  paginates by OFFSET/LIMIT ordered only by `created_at`, and rows share
+  timestamps under load:
+
+  ```sql
+  SELECT id, created_at FROM events
+  ORDER BY created_at
+  LIMIT 50 OFFSET :offset;
+  ```
+
+  Diagnose the defect and propose a fix. Note any trade-offs your fix
+  introduces and anything you cannot determine from the snippet alone.
+expected_qualities:
+  - identifies the non-deterministic ordering (ties on created_at) as the cause
+  - fix makes the sort total (e.g. tiebreak on a unique key) or uses keyset pagination
+  - names the trade-offs (e.g. keyset vs offset, index requirements)
+  - flags what it cannot know (row volume, existing indexes) rather than assuming
+rubric:
+  EV1: [correct root cause, fix actually removes the ambiguity]
+  EV2: [trade-offs and boundary effects addressed]
+  EV6: [unknowns and assumptions stated]
+weight: 1.0
+failure_conditions:
+  - claims OFFSET pagination is inherently correct and blames the client  # -> EV1
+  - proposes a fix requiring an index while asserting it already exists    # -> EV6
+repeats_min: 3

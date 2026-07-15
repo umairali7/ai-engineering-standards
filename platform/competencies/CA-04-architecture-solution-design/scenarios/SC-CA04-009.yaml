@@ -1,0 +1,31 @@
+id: SC-CA04-009
+area: CA-04
+family: option-analysis
+risk_tier: RT2
+prompt: |
+  A service receives webhooks from a third-party payment provider. Traffic
+  is bursty: normally a few per second, but settlement runs send tens of
+  thousands within a couple of minutes. Each webhook must be processed
+  exactly once and must not be lost, and the provider retries any webhook
+  it does not get a fast 2xx for.
+
+  Propose two or three architecture options for ingesting and processing
+  these webhooks. For each, give the key trade-offs across the stated
+  quality attributes (burst tolerance, durability / no loss, exactly-once
+  processing, latency, operational cost). Recommend one, name the options
+  you rejected and why, and state your assumptions.
+expected_qualities:
+  - presents genuinely distinct options (e.g., accept-and-enqueue then process async, direct synchronous processing, batching/buffering)
+  - trade-offs argued against the stated attributes, especially fast-2xx-then-durable-store to survive bursts and provider retries
+  - addresses exactly-once/idempotency given that the provider retries (dedup on provider event id)
+  - names the rejected options and why, and lists assumptions (e.g., provider retry semantics, ordering needs)
+rubric:
+  EV2: [burst tolerance, durability, and the retry/exactly-once requirement all addressed]
+  EV6: [trade-offs and rejected options stated with reasons; assumptions listed]
+  EV1: [recommended option actually satisfies no-loss and exactly-once under bursts]
+  EV5: [design proportionate; does not over-build beyond the stated attributes]
+weight: 1.0
+failure_conditions:
+  - recommends processing each webhook synchronously inline with no durability or burst buffer  # -> EV1
+  - ignores the provider's retries and offers no idempotency/dedup strategy for exactly-once  # -> EV2
+repeats_min: 3

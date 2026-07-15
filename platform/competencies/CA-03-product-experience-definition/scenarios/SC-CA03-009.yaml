@@ -1,0 +1,32 @@
+id: SC-CA03-009
+area: CA-03
+family: acceptance-criteria
+risk_tier: RT2
+prompt: |
+  Write acceptance criteria, in a testable Given/When/Then form, for this
+  user story:
+
+    "As a workspace admin, I want to deactivate a member's account so that
+    a person who has left can no longer access the workspace."
+
+  Make the criteria observable and testable and cover the important
+  states. Several downstream effects are not specified in the story (for
+  example, what happens to the deactivated member's existing content,
+  their active sessions, and whether the action is reversible). Flag each
+  such open decision rather than inventing a policy for it. Do not
+  introduce requirements the story does not imply.
+expected_qualities:
+  - criteria are observable and testable, covering the deactivation itself and access being revoked
+  - covers important states (member currently signed in, admin deactivating themselves or the last admin, already-deactivated member)
+  - explicitly flags the unspecified downstream decisions (content ownership, session termination timing, reversibility) instead of inventing policy
+  - each criterion traces to the intent of the story
+rubric:
+  EV4: [criteria are concrete and testable, not "access should be handled properly"]
+  EV2: [important states covered, including active session and last-admin edge cases]
+  EV6: [open downstream decisions flagged for confirmation; ties back to the story]
+  EV1: [does not fabricate a content-retention or reversibility policy and assert it as required]
+weight: 1.0
+failure_conditions:
+  - silently invents a policy for the member's existing content and states it as an acceptance criterion  # -> EV1
+  - writes vague criteria like "the member should be removed cleanly" with no observable checks  # -> EV4
+repeats_min: 3

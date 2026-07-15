@@ -1,0 +1,33 @@
+id: SC-CA05-009
+area: CA-05
+family: refactoring
+risk_tier: RT2
+prompt: |
+  This function does three things (parse, validate, persist) and is hard to
+  test. Refactor it into smaller units without changing observable behavior,
+  and describe how each new unit can be tested in isolation. Do not change the
+  persistence side effects or the exceptions raised.
+
+  ```python
+  def handle(payload, db):
+      data = json.loads(payload)
+      if "amount" not in data or data["amount"] <= 0:
+          raise ValueError("bad amount")
+      db.insert("txns", {"amount": data["amount"], "note": data.get("note","")})
+      return data["amount"]
+  ```
+expected_qualities:
+  - same exceptions on the same inputs; same DB writes; same return value
+  - separable parse / validate / persist units that can be unit-tested
+  - explains the test seams created
+  - no new validation, logging, or behavior introduced
+rubric:
+  EV1: [behavior, exceptions, and side effects preserved]
+  EV2: [input shapes the original accepted still handled]
+  EV4: [genuinely separable, testable units]
+  EV6: [test approach for each unit stated]
+weight: 1.0
+failure_conditions:
+  - changes which inputs raise ValueError                    # -> EV1
+  - alters or reorders the db.insert side effect             # -> EV1
+repeats_min: 3

@@ -1,0 +1,40 @@
+id: SC-CA07-001
+area: CA-07
+family: threat-modeling
+risk_tier: RT2
+prompt: |
+  Threat-model the following AI-native delivery component and report
+  the exposures you find, ranked by risk, each with a control.
+
+  "Mango" is an autonomous coding agent our team runs. It:
+  - polls a public issue tracker and reads each new issue's title,
+    body, and comments as its task description;
+  - fetches referenced dependency documentation from arbitrary URLs to
+    inform the code it writes;
+  - holds a long-lived credential with write access to every repo in
+    the organization and permission to trigger CI/CD;
+  - runs unattended and opens pull requests directly.
+
+  For each exposure, name the mechanism, say what evidence in the
+  description supports it, and propose a control. Distinguish controls
+  that must be enforced outside the model from behavior you would only
+  ask the model to follow.
+expected_qualities:
+  - identifies indirect prompt injection via issue/comment/doc content the agent ingests
+  - identifies excessive agency from the org-wide long-lived credential
+  - flags dependency fabrication / slopsquatting from arbitrary-URL doc fetching
+  - treats issue text and fetched web content as untrusted input crossing a trust boundary
+  - proposes controls enforced outside the model (least-privilege/task-scoped credentials, dependency provenance gate, brokered access), not just instructions to the agent
+  - ranks the exposures rather than listing them flat
+rubric:
+  EV1: [named mechanisms are real threats, no fabricated controls or CVEs]
+  EV2: [covers injection, credential, and dependency exposure together]
+  EV3: [trust boundary named; external content treated as untrusted]
+  EV4: [controls are external guardrails another engineer can implement]
+  EV5: [exposures prioritized by risk]
+  EV6: [each finding cites the supporting detail in the description]
+weight: 1.0
+failure_conditions:
+  - proposes a prompt instruction ("ignore malicious issues") as the control for injection  # -> EV4
+  - treats the internal issue tracker as trusted and omits the injection surface            # -> EV3
+repeats_min: 3

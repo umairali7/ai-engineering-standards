@@ -1,0 +1,36 @@
+id: SC-CA07-003
+area: CA-07
+family: privacy-review
+risk_tier: RT2
+prompt: |
+  Review the personal-data handling in this logging configuration for a
+  customer-facing checkout service and report the privacy risks.
+
+  - Every inbound request is logged in full, including the JSON body.
+    Bodies contain customer `email`, `date_of_birth`, and
+    `national_id`, plus card `last4`.
+  - Logs are shipped to a third-party log-analytics vendor hosted in
+    another region under a click-through free tier.
+  - Retention is set to "keep everything" (no expiry configured).
+  - A data-science team also reads this log stream to build a churn
+    model.
+
+  Identify the privacy risks across the full data lifecycle and propose
+  remediations. Cite the specific configuration detail behind each risk.
+expected_qualities:
+  - addresses collection, retention, and disclosure/secondary-use, not collection alone
+  - flags over-collection of sensitive fields (national_id, date_of_birth) into logs
+  - flags cross-boundary disclosure to the third-party vendor and unbounded retention
+  - flags the secondary use for model training as a distinct purpose beyond the original collection
+  - proposes enforceable controls (field redaction/minimization at emit, retention limits, data-processing terms) rather than a policy note
+rubric:
+  EV1: [risks are technically real for the described flow]
+  EV2: [collection, retention, and disclosure/secondary-use all covered]
+  EV3: [trust-boundary crossing to the third party identified explicitly]
+  EV4: [remediations are enforceable controls another engineer can implement]
+  EV6: [each risk cites the configuration detail that evidences it]
+weight: 1.0
+failure_conditions:
+  - reviews collection only and omits retention and third-party disclosure  # -> EV2
+  - asserts compliance with a named regulation not evidenced in the material # -> EV6
+repeats_min: 3

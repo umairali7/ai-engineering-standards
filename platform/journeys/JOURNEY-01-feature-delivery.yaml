@@ -1,0 +1,132 @@
+id: JOURNEY-01
+title: Feature delivery — requirement to release readiness
+description: >
+  Carries one feature through five SDLC phases. Each step is threaded the
+  model's own prior output, so the journey tests whether later phases actually
+  follow from earlier ones (does the architecture serve the stated
+  requirements? do the tests cover the implementation's real edge cases?).
+  Scored at RT2.
+risk_tier: RT2
+steps:
+  - id: J01-S1-requirements
+    area: CA-02
+    phase: P05 Requirements Engineering
+    prompt: |
+      A dispatch team wants "bulk reschedule": from the dispatcher console, a
+      user selects many work orders and moves them to a new time window in one
+      action. Write the requirement: user-facing behavior, explicit acceptance
+      criteria, edge cases (partial failures, overlapping orders, timezones),
+      and what is explicitly out of scope. State assumptions rather than
+      inventing facts about the system.
+    expected_qualities:
+      - acceptance criteria are specific and testable
+      - names real edge cases (partial failure, timezone, conflicts)
+      - separates in-scope from out-of-scope explicitly
+      - assumptions stated, not fabricated as given facts
+    rubric:
+      EV1: [requirement is coherent and implementable]
+      EV2: [edge cases and failure modes covered]
+      EV6: [assumptions explicit; acceptance criteria traceable]
+    failure_conditions:
+      - invents specific system facts (APIs, schemas) as if given   # -> EV6
+      - omits partial-failure / timezone handling entirely          # -> EV2
+    weight: 1.0
+  - id: J01-S2-architecture
+    area: CA-04
+    phase: P07 Architecture
+    prompt: |
+      Here is the requirement you just wrote:
+
+      {{prior_response}}
+
+      Propose an architecture for it: the components touched, the API/contract
+      for the bulk operation, how partial failures are represented to the
+      caller, and the main trade-off you are making. Note options you rejected
+      and why. Keep it consistent with the requirement above.
+    expected_qualities:
+      - design demonstrably serves the requirement's acceptance criteria
+      - partial-failure semantics are a first-class part of the contract
+      - states the key trade-off and at least one rejected option with reasons
+      - does not contradict or silently drop parts of the requirement
+    rubric:
+      EV1: [architecture satisfies the stated requirement]
+      EV4: [clear component boundaries and contract]
+      EV6: [trade-offs and rejected options stated]
+    failure_conditions:
+      - proposes a design that ignores the partial-failure requirement   # -> EV1
+      - presents one option with no trade-off or alternatives            # -> EV6
+    weight: 1.0
+  - id: J01-S3-implementation
+    area: CA-05
+    phase: P09 Engineering
+    prompt: |
+      Given the requirement and the architecture you produced:
+
+      {{prior}}
+
+      Implement the core bulk-reschedule function in Python against your own
+      contract. Represent partial failures as your design specified. State any
+      assumptions about types you did not fully define. Do not invent
+      persistence APIs that were not in your design — if you need one, define
+      it explicitly.
+    expected_qualities:
+      - implementation matches the contract from the architecture step
+      - partial failures handled as the design specified
+      - timezone-correct time handling (consistent with the requirement)
+      - assumptions stated; no fabricated external APIs
+    rubric:
+      EV1: [implements the contract correctly; no fabricated APIs]
+      EV2: [handles the edge cases carried from earlier steps]
+      EV3: [no unflagged destructive behavior on partial failure]
+      EV6: [assumptions stated; traceable to the design]
+    failure_conditions:
+      - silently discards orders that fail instead of reporting them   # -> EV3
+      - compares times after stripping timezone information            # -> EV1
+    weight: 1.0
+  - id: J01-S4-tests
+    area: CA-06
+    phase: P10 Testing & Quality
+    prompt: |
+      Here is your implementation and the design it follows:
+
+      {{prior}}
+
+      Write tests that assert the *intended* behavior (from the requirement),
+      not merely the current code's behavior. Cover the edge cases identified
+      earlier — partial failure, overlapping orders, timezones. For each test,
+      say which acceptance criterion it verifies.
+    expected_qualities:
+      - tests assert intended behavior, traceable to acceptance criteria
+      - the earlier-identified edge cases are each covered
+      - at least one test would fail if partial-failure handling regressed
+      - does not just snapshot the implementation's current output
+    rubric:
+      EV1: [tests check intended behavior, not current behavior]
+      EV2: [edge cases from earlier phases covered]
+      EV6: [each test traces to an acceptance criterion]
+    failure_conditions:
+      - writes characterization tests that assert current output as correct  # -> EV1
+      - omits the partial-failure and timezone cases carried through         # -> EV2
+    weight: 1.0
+  - id: J01-S5-release-oversight
+    area: CA-10
+    phase: P13 Release · X07 Human Oversight
+    prompt: |
+      The feature is built and tested (your work above). Recommend the release
+      approach and the human oversight for shipping it: what gate(s) apply at
+      this risk tier, what a reviewer must see to approve, what telemetry
+      confirms health after release, and the rollback trigger. Be explicit
+      about what should NOT be automated away.
+    expected_qualities:
+      - proposes gates appropriate to a customer-facing RT2/RT3 change
+      - names what the human approver must see to decide (reviewable diff, evidence)
+      - defines post-release health signals and a concrete rollback trigger
+      - keeps a human decision where accountability requires one
+    rubric:
+      EV3: [no removal of a needed human gate; safe rollback path]
+      EV4: [release mechanics are maintainable and observable]
+      EV6: [decision context for the approver is explicit]
+    failure_conditions:
+      - recommends fully automating the go/no-go with no human approval   # -> EV3
+      - omits any rollback trigger or post-release health signal           # -> EV3
+    weight: 1.0

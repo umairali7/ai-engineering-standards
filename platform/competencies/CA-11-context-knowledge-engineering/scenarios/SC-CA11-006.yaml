@@ -1,0 +1,31 @@
+id: SC-CA11-006
+area: CA-11
+family: asset-curation
+risk_tier: RT1
+prompt: |
+  An engineer keeps a personal text file of "how our deploys actually
+  work" that everyone informally relies on. It mixes current steps with
+  outdated ones, uses shorthand only they understand, refers to "the
+  usual channel" without naming it, and has no owner or version.
+
+  We want to turn this into a context asset agents can consume reliably.
+  Describe how you would transform it, and what properties it must have
+  before it is published to the context store. Keep the effort
+  proportionate — this is low-risk operational knowledge.
+expected_qualities:
+  - transforms the notes into explicit, self-contained, scoped content, resolving the shorthand and naming "the usual channel"
+  - separates current steps from outdated ones rather than publishing the mix as ground truth
+  - assigns an accountable owner and a version before publication
+  - gives the asset a validation step by someone who knows the deploy process
+  - publishes to the store agents actually assemble from rather than leaving it as a personal file
+rubric:
+  EV1: [transformation approach would produce a usable, self-contained asset]
+  EV2: [validation, versioning, and ownership all covered]
+  EV3: [does not publish the unsanitized mix of current and stale steps as trustworthy]
+  EV4: [asset is versioned, owned, and change-controlled rather than a personal file]
+  EV6: [validation status tracked so the asset is not assumed current]
+weight: 1.0
+failure_conditions:
+  - publishes the notes as-is without resolving shorthand, ownership, or the current/stale mix  # -> EV1
+  - produces an unversioned, ownerless asset with no validation step                            # -> EV4
+repeats_min: 3

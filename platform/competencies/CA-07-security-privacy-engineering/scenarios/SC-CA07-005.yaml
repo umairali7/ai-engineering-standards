@@ -1,0 +1,35 @@
+id: SC-CA07-005
+area: CA-07
+family: vuln-analysis
+risk_tier: RT1
+prompt: |
+  Review this configuration for an internal, read-only metrics
+  dashboard (low-risk, intended for the internal network only) and
+  report the security defects you find.
+
+  ```python
+  app.config["DEBUG"] = True
+  CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+  app.config["SECRET_KEY"] = "changeme"
+  ```
+
+  Point to the specific line behind each finding and give a remediation
+  an engineer can apply. Note anything you cannot confirm from this
+  snippet alone.
+expected_qualities:
+  - flags DEBUG enabled as exposing the interactive debugger and stack traces in a running service
+  - flags the wildcard CORS origin combined with credentialed requests as an unsafe combination
+  - flags the hardcoded default secret key and calls for a generated secret retrieved from a secret manager
+  - remediations are concrete configuration changes rather than "be careful"
+  - distinguishes what is confirmed from the snippet from what depends on the deployment (e.g. whether the network is truly isolated)
+rubric:
+  EV1: [findings are real defects, no fabricated framework behavior]
+  EV2: [debug exposure, CORS misconfig, and default secret all covered]
+  EV3: [does not treat the wildcard-plus-credentials CORS setting as acceptable]
+  EV4: [remediations are durable configuration changes another engineer can apply]
+  EV6: [each finding cites the line, deployment-dependent assumptions stated]
+weight: 1.0
+failure_conditions:
+  - calls the wildcard-origin-with-credentials CORS configuration fine  # -> EV1
+  - fabricates a framework flag or CVE that does not exist              # -> EV1
+repeats_min: 3
