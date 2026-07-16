@@ -556,6 +556,42 @@ deployment name (`lmstudio-…`, `llamacpp-…`, `mlx-…`).
 Copy-paste starting points, grouped by task. Run `aies help` for the full
 command tree (alphabetical) and `aies <command> --help` for every option.
 
+### Recommended path for a first real run
+
+**Step 0 — once, so the fixes are active and runs are fast**
+```
+pip install -e ".[test]"                 # installs certifi (fixes TLS on macOS)
+export ANTHROPIC_API_KEY=<key>           # if your judge is a cloud model
+export AIES_MAX_TOKENS=1024              # cap output so local models don't crawl
+```
+
+**Step 1 — validate cheaply: re-score a run you already collected, with a strong
+independent judge (no re-collection), then read it**
+```
+aies review <run-id> --model-reviewer claude-opus-4-8-native --parallel 8
+aies qualify --resume <run-id>
+aies capabilities <run-id>               # per-area profile
+aies transcript   <run-id>               # do the scores match the answers?
+```
+
+**Step 2 — a real capability profile across the SDLC.** Start focused, then sweep:
+```
+# a few roles first, modest repeats:
+aies qualify <deployment> --rt 2 --area CA-05 --area CA-07 --area CA-02 \
+  --repeats 3 --parallel 1 --judge claude-opus-4-8-native
+# the full sweep when you're ready (slower):
+aies qualify <deployment> --rt 2 --all-areas --repeats 5 \
+  --parallel 1 --judge claude-opus-4-8-native
+aies capabilities <new-run-id>
+```
+
+> **Tuning for a local server:** keep `--parallel 1` if it rejects/drops
+> concurrent calls (common for a single-GPU server); use an **independent**
+> judge (not the subject's sibling) to avoid inflated scores; raise `--repeats`
+> until an area reaches its decisional minimum (≥ 20/30/50/100 for RT1–RT4).
+
+### Grouped recipes
+
 **Setup & discovery**
 ```
 aies doctor                              # which runtimes are reachable
