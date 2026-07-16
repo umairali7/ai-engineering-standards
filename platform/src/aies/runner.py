@@ -26,6 +26,16 @@ def competencies_dir() -> Path:
     return Path(__file__).resolve().parent.parent.parent / "competencies"
 
 
+def all_area_codes() -> list[str]:
+    """Every competency area code shipped under competencies/ (CA-01…CA-12),
+    sorted. Used by `qualify --all-areas` to profile a deployment across the
+    whole SDLC."""
+    base = competencies_dir()
+    codes = {"-".join(d.name.split("-")[:2])
+             for d in base.iterdir() if d.is_dir() and d.name.startswith("CA-")}
+    return sorted(codes)
+
+
 def _suite_version(area_dir: Path) -> str:
     """Suite version = digest of all scenario content, so any content
     change yields a new version and results are only comparable on

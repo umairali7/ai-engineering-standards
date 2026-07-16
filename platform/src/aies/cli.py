@@ -232,6 +232,36 @@ def cmd_report(args) -> int:
     return 0
 
 
+def cmd_capabilities(args) -> int:
+    """Per-area capability profile of an aggregated run/deployment."""
+    from . import capabilities, compare
+    try:
+        prof = capabilities.capability_profile(args.ref)
+    except compare.CompareError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+    if args.json:
+        _out(prof, True)
+        return 0
+    print(f"Capability profile — {prof['subject']}  "
+          f"({prof['risk_tier']}, {prof['profile']} profile)")
+    if "model" in prof["rater_kinds"]:
+        print("  judge-produced evidence — not a grant")
+    print()
+    print(f"  {'AREA':6} {'ROLE / SDLC PHASE':34} {'CL':4} {'AGG':5} "
+          f"{'AL':4} GATES  SAMPLE")
+    for r in prof["areas"]:
+        gate = "PASS " if r["gates_passed"] else "FAIL "
+        sample = ("decisional" if r["decisional"]
+                  else f"NON-DEC {r['n_scored']}/{r['min_sample']}")
+        print(f"  {r['area']:6} {r['name'][:34]:34} {r['cl']:4} "
+              f"{r['aggregate']:.2f}  {(r['al_at_rt'] or '-'):4} {gate} {sample}")
+    print("\n  CL = competency level · AGG = weighted aggregate · "
+          f"AL = autonomy ceiling at {prof['risk_tier']}. Read across areas for "
+          "strengths/gaps (e.g. strong coder, weak security). See GUIDE §5.2b.")
+    return 0
+
+
 def cmd_transcript(args) -> int:
     from . import transcript
     try:
@@ -715,12 +745,12 @@ def _not_yet(milestone: str):
 
 
 _EPILOG = """\
-commands by stage:
-  setup & discovery   doctor · discover · runtime · deployment (registry)
-  qualification       qualify · benchmark · score · review · transcript · runs · compare
-  judging             judge available · judge list · judge history   (the judge pool + track record)
-  decision & audit    grant · verify · conform · qualification · report · dashboard
-  reference           profile · plugins · journey · index
+commands by stage (each group alphabetical):
+  setup & discovery   deployment · discover · doctor · runtime
+  qualification       benchmark · capabilities · compare · qualify · review · runs · score · transcript
+  judging             judge available · judge history · judge list   (the judge pool + track record)
+  decision & audit    conform · dashboard · grant · qualification · report · verify
+  reference           index · journey · plugins · profile
 
 typical workflow:
   aies doctor                                  validate env, detect runtimes
@@ -729,6 +759,10 @@ typical workflow:
   aies qualify <deployment> --profile coder --rt 2 --area CA-05 --judge <judge-dep>
                                                auto-score with a judge model -> report
   aies transcript <run>                        read the whole run: task + answer + score per item
+
+  # profile a deployment across the whole SDLC (planner/coder/security/…):
+  aies qualify <deployment> --all-areas --rt 2 --judge <judge-dep>
+  aies capabilities <run>                       per-area CL + autonomy, side by side
 
   # manual scoring (a human rates the answers) — omit --judge:
   aies qualify <deployment> --profile enterprise --rt 2 --area CA-05
@@ -745,6 +779,18 @@ typical workflow:
   aies conform check statement.yaml            check a conformance claim
 
   aies qualify <deployment> --journey JOURNEY-01   run a multi-phase journey instead
+
+handy:
+  aies doctor                                  which runtimes are reachable
+  aies deployment list                         what is registered
+  aies deployment add ./judge.yaml             register a new deployment
+  aies deployment update ./judge.yaml          fix an existing one in place (same id)
+  aies judge available                         judges you have registered (roles:[judge])
+  aies judge list                              judges used, with parse rate
+  aies capabilities <run>                      per-area profile: planner/coder/security/…
+  aies transcript <run> --area CA-07           read one area's answers + scores
+  aies compare <depA> <depB>                   diff two deployments area-by-area
+  aies runs                                    result history
 
 Run `aies <command> --help` for a command's options. The platform prepares
 evidence; a human records every grant. Docs: platform/GUIDE.md.
@@ -795,6 +841,9 @@ def build_parser() -> argparse.ArgumentParser:
                    help="scoped risk tier")
     q.add_argument("--area", action="append", default=None,
                    help="competency area (repeatable); default CA-05")
+    q.add_argument("--all-areas", action="store_true",
+                   help="qualify across ALL competency areas CA-01…CA-12 "
+                        "(a full SDLC capability profile; see `aies capabilities`)")
     q.add_argument("--journey", default=None, metavar="JOURNEY_ID",
                    help="run a multi-phase journey instead of area suites")
     q.add_argument("--judge", default=None, metavar="DEPLOYMENT",
@@ -818,6 +867,8 @@ def build_parser() -> argparse.ArgumentParser:
     b.add_argument("--profile", default="enterprise")
     b.add_argument("--rt", type=int, choices=(1, 2, 3, 4), default=2)
     b.add_argument("--area", action="append", default=None)
+    b.add_argument("--all-areas", action="store_true",
+                   help="benchmark across ALL competency areas CA-01…CA-12")
     b.add_argument("--repeats", type=int, default=None)
     b.add_argument("--parallel", type=int, default=None, metavar="N")
     b.add_argument("--runtime", default=None)
@@ -846,6 +897,12 @@ def build_parser() -> argparse.ArgumentParser:
     tr.add_argument("--write", action="store_true",
                     help="write transcript.md into the run directory")
     tr.set_defaults(func=cmd_transcript)
+
+    cap = common(sub.add_parser("capabilities", help="per-area capability profile "
+                                "of an aggregated run/deployment (planner/coder/"
+                                "security…, one CL + autonomy level per area)"))
+    cap.add_argument("ref", help="run id, or deployment id (its latest aggregated run)")
+    cap.set_defaults(func=cmd_capabilities)
 
     pr = common(sub.add_parser("profiles", help="list/show/validate weighting profiles"))
     prsub = pr.add_subparsers(dest="profiles_cmd", required=True)
@@ -1004,7 +1061,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _qualify_defaults(args) -> None:
-    if getattr(args, "area", None) in (None, []):
+    if getattr(args, "all_areas", False):
+        from . import runner
+        args.area = runner.all_area_codes()
+    elif getattr(args, "area", None) in (None, []):
         args.area = ["CA-05"]
     if getattr(args, "resume", None) is None and not getattr(args, "model", None):
         raise SystemExit("error: a model registry id is required unless --resume is used")
@@ -1025,15 +1085,16 @@ def command_tree_text(parser) -> str:
     if top is None:
         return ""
     hmap = {ca.dest: (ca.help or "") for ca in top._choices_actions}
-    out = ["", "FULL COMMAND TREE  (aies <command> [subcommand] [options])", ""]
-    for name, sp in top.choices.items():
+    out = ["", "FULL COMMAND TREE  (aies <command> [subcommand] [options])",
+           "  commands and subcommands are listed alphabetically", ""]
+    for name, sp in sorted(top.choices.items()):
         if name == "help":
             continue
         out.append(f"  {name:15}{hmap.get(name, '')}")
         sub = _subparsers_action(sp)
         if sub is not None:
             smap = {ca.dest: (ca.help or "") for ca in sub._choices_actions}
-            for sname, ssp in sub.choices.items():
+            for sname, ssp in sorted(sub.choices.items()):
                 usage = " ".join(ssp.format_usage().split()).replace("usage: ", "")
                 extra = f"  — {smap[sname]}" if smap.get(sname) else ""
                 out.append(f"      {sname:13} {usage}{extra}")

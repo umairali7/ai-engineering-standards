@@ -144,6 +144,16 @@ scores per EV dimension and a rater, then `aies score <run>` and
 Read the whole run in one view: `aies transcript <run-id>` — per item the task,
 the model's answer, and its scores/findings together.
 
+### I don't understand what the scores mean (good planner? coder? security?)
+Two axes: **competency area** (CA-01…CA-12) is *what kind of work* — the
+planner/coder/security axis, one score + CL + autonomy envelope per area — and
+**EV1–EV6** are *how good* the answers are within an area (Correctness,
+Completeness, Safety & Security, Maintainability, Efficiency, Traceability). A
+CA-05 run only tells you about the **coder** role. To profile across the SDLC,
+qualify several `--area`s and read the per-area blocks. Note EV3 (is *this
+answer* safe?) is not CA-07 (can it *do* security engineering?). Full explanation
+with the CA→role/phase table: [GUIDE.md §5.2b](GUIDE.md).
+
 ### The report says NON-DECISIONAL
 Fewer scored items than the risk-tier minimum. Increase `--repeats` (or combine
 runs) until the area reaches its minimum; the gate is intentional.

@@ -64,6 +64,7 @@ The `aies` command exposes the pipeline as composable verbs:
 | `compare` | Compare qualification results across models, runs, or environments on the same suite versions. | `aies compare acme-7b-q4 beta-13b-q5 --profile coder` |
 | `report` | Render an evidence package or Qualification Record as Markdown or JSON (HTML/PDF in M3). | `aies report run-2031 --format markdown` |
 | `transcript` | Render a whole run in one readable view — per item the task, the model's answer, and its scores/findings — so a reviewer need not open per-response records. | `aies transcript run-2031` |
+| `capabilities` | Per-area capability profile of an aggregated run/deployment — every competency area (CA-01…CA-12) it was scored on, with its CL, weighted aggregate, autonomy level at the scoped tier, gate result, and decisional status, side by side. Answers "good planner/coder/security?". Pairs with `qualify --all-areas`. | `aies capabilities run-2031` |
 | `judge` | Judge track record derived from model-kind ratings across runs: `judge list` (deployments that have judged, runs judged, responses scored, parse rate, self-judged/unregistered flags) and `judge history` (one row per judged run). | `aies judge list` |
 | `profiles` | List, show, validate, and scaffold weighting profiles (§5.2). | `aies profiles show enterprise` |
 | `plugins` | List installed runtime plugins, their versions, and the capabilities each declares. | `aies plugins list` |
