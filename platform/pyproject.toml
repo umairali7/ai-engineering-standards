@@ -11,6 +11,10 @@ requires-python = ">=3.10"
 license = { text = "License pending selection - see repository LICENSE.md" }
 dependencies = [
     "PyYAML>=6.0",
+    # CA bundle for TLS verification of HTTPS endpoints. Without it, a
+    # freshly-installed Python (notably python.org builds on macOS) cannot
+    # verify certs and every HTTPS call fails with CERTIFICATE_VERIFY_FAILED.
+    "certifi>=2023.7.22",
 ]
 
 [project.optional-dependencies]

@@ -67,6 +67,37 @@ def test_parallel_matches_serial(ws, tmp_path):
         assert s[name]["scenario_id"] == p[name]["scenario_id"]
 
 
+def test_partial_failure_preserves_successes_and_raises(ws, tmp_path, monkeypatch):
+    """A mid-run inference failure must NOT discard responses already
+    collected, and must raise a single informative error (not a bare one)."""
+    from aies import runner, workspace
+    from aies.adapters.base import GenerationResponse
+
+    _, scenarios, sv = runner.load_area("CA-05")
+
+    calls = {"n": 0}
+    def flaky(self, request):
+        calls["n"] += 1
+        if calls["n"] == 2:            # the 2nd call fails, others succeed
+            raise RuntimeError("could not reach http://x/v1/chat/completions within 300s")
+        return GenerationResponse(text="ok answer", usage={}, raw={})
+    from aies.adapters import mock as mockmod
+    monkeypatch.setattr(mockmod.MockAdapter, "generate", flaky)
+    adapter = mockmod.MockAdapter(); adapter.load({"id": "demo"})
+
+    run_id = "run-partial"
+    (workspace.run_dir(run_id) / "responses").mkdir(parents=True, exist_ok=True)
+
+    with pytest.raises(runner.SuiteError) as ei:
+        runner.execute_suite(run_id, {"id": "demo", "provenance": {}}, adapter,
+                             scenarios, sv, {}, repeats=2, workers=1)
+    msg = str(ei.value)
+    assert "were saved to" in msg and "300s" in msg      # actionable, names the cause
+    # the successful responses are on disk despite the failure
+    saved = list((workspace.run_dir(run_id) / "responses").glob("*.json"))
+    assert len(saved) >= 1
+
+
 def test_parallel_record_count(ws, tmp_path):
     from aies import engine, workspace
     _register(tmp_path)

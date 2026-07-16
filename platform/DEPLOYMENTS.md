@@ -61,6 +61,9 @@ runtime_config:
   base_url: http://localhost:8080/v1
   model: Qwen3.5-122B-A10B
 context_window: 262144
+roles: [subject]               # optional, advisory: how you use this deployment
+                               #   (subject and/or judge). NOT the Taxonomy's
+                               #   ROLE-01…14; surfaces in `aies judge available`.
 parameters_default:            # generation defaults for this deployment
   temperature: 0.6
   max_tokens: 32768
@@ -70,12 +73,24 @@ provenance:
 ```
 
 ```
-aies discover                       # auto-register what your runtimes serve
-aies deployment list                # what is registered
-aies deployment inspect local-qwen  # the full manifest
-aies deployment add ./local-qwen.yaml
-aies deployment retire local-qwen   # ids are retired, never deleted/reused
+aies discover                        # auto-register what your runtimes serve
+aies deployment list                 # what is registered
+aies deployment inspect local-qwen   # the full manifest
+aies deployment add ./local-qwen.yaml    # register a NEW deployment
+aies deployment update ./local-qwen.yaml # edit an EXISTING one in place (same id)
+aies deployment retire local-qwen    # soft-mark; id stays reserved for audit
+aies deployment remove local-qwen    # hard-delete; frees the id to reuse
 ```
+
+`add` only registers new ids (it refuses an id that already exists). To fix a
+manifest — a wrong endpoint, an `api_key_env` typo, changed generation defaults,
+or adding `roles: [judge]` — use `update`, which overwrites the entry in place
+and keeps the id. `update` warns when a field that defines the deployment's
+behavioral identity (runtime, model, quantization, `runtime_config`) changed,
+because prior qualifications for that id may no longer describe what now runs —
+the environment fingerprint (D7) will flag it on `aies qualification verify`.
+`remove` deletes an entry outright (freeing the id); `retire` is the softer,
+audit-preserving path that keeps the id reserved.
 
 When a bare model name maps to several deployments (e.g. the same model on MLX
 *and* Ollama), the platform requires the deployment id or a `--runtime` filter —
@@ -98,6 +113,21 @@ status:    active | conditional | denied | invalidated | revoked | superseded
 re-checks the environment fingerprint and **invalidates** the grant if the
 deployment's model, quantization, runtime, or host changed (D7). The record is
 the durable, queryable audit trail — everything else references it.
+
+## Judges are deployments too
+
+A **judge** — the model that scores a run under `aies qualify --judge` — is not
+a special kind of object. It is an ordinary deployment in this same registry,
+and the subject and the judge are drawn from the same pool. Because a deployment
+is `model × runtime × config × endpoint`, running the judge in the cloud, on
+this machine, or on another machine on your network is **only a difference of
+`base_url`** — the engine calls an endpoint and never learns where it lives.
+
+Copy-paste manifests for all three are in
+[`examples/deployments/`](examples/deployments/README.md). Register one with
+`aies deployment add <file>` and pass it as `--judge <its-id>`. Prefer a
+different, capable deployment over `--judge self` (a model grading its own
+output is biased and warned against).
 
 ## Related Documents
 

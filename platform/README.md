@@ -34,6 +34,8 @@ See also [DEPLOYMENTS.md](DEPLOYMENTS.md) (qualify deployments, not models),
 [PROFILES.md](PROFILES.md) (the weighting presets),
 [RUNTIMES.md](RUNTIMES.md) (the runtime interface and shipped adapters), and
 [JOURNEYS.md](JOURNEYS.md) (multi-phase scenarios that test lifecycle depth).
+Hit a snag? [TROUBLESHOOTING.md](TROUBLESHOOTING.md) covers the common
+endpoint, TLS, auth, performance, and judge issues.
 
 **The full cycle:** `discover` → `qualify` → `score` (human, and
 optionally a model reviewer) → `review` (assembles the peer-review

@@ -1,0 +1,22 @@
+# Example judge deployment: a model running locally on THIS machine.
+#
+# Same shape as the others — base_url just points at localhost. Useful when
+# you want an independent second model (not the subject itself) to score a
+# run without any cloud dependency or cost.
+#
+# Register + use:
+#   aies deployment add examples/deployments/judge-local.yaml
+#   aies qualify local-qwen --rt 2 --judge judge-local-mixtral --parallel 8
+
+id: judge-local-mixtral
+family: mixtral
+model: mixtral-8x7b-instruct
+runtime: openai-compat
+roles: [judge]                    # advisory: shows up in `aies judge available`
+context_window: 32768
+runtime_config:
+  base_url: http://localhost:11434/v1     # e.g. Ollama / vLLM / LM Studio
+  model: mixtral-8x7b-instruct
+provenance:
+  source: "served locally"
+  checksum: "sha256:endpoint-served"

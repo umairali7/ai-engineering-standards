@@ -83,9 +83,16 @@ def _parse_scores(text: str) -> tuple[dict[str, int], list[str]] | None:
 
 
 def run_model_review(run_id: str, reviewer_deployment: str,
-                     runtime: str | None = None) -> dict:
+                     runtime: str | None = None, workers: int = 1) -> dict:
     """Have a reviewer deployment score every response in a run; ingest the
-    parseable ones as model-kind ratings. Returns a summary."""
+    parseable ones as model-kind ratings. Returns a summary.
+
+    `workers > 1` issues the judge's per-response calls concurrently (the
+    scoring phase is otherwise the sequential half of `qualify --judge`).
+    Results are processed in canonical response order regardless of
+    `workers`, and the reviewer adapter MUST be safe for concurrent
+    generate() calls — the built-in adapters are (they hold no per-call
+    state after load())."""
     from . import registry
     rdir = workspace.run_dir(run_id)
     responses = sorted((rdir / "responses").glob("*.json"))
@@ -99,12 +106,21 @@ def run_model_review(run_id: str, reviewer_deployment: str,
     recs = [workspace.read_json(p) for p in responses]
     prompts = _scenario_prompts({r["area"] for r in recs})
 
-    items, parsed, failed = [], 0, 0
-    for rec in recs:
+    def _score_one(rec: dict):
         task = prompts.get(rec["scenario_id"], "(scenario prompt unavailable)")
         reply = adapter.generate(GenerationRequest(
             prompt=_review_prompt(task, rec["raw_response"], rec["area"])))
-        result = _parse_scores(reply.text)
+        return rec, _parse_scores(reply.text)
+
+    if workers and workers > 1:
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            scored = list(pool.map(_score_one, recs))  # preserves recs order
+    else:
+        scored = [_score_one(rec) for rec in recs]
+
+    items, parsed, failed = [], 0, 0
+    for rec, result in scored:
         if result is None:
             failed += 1
             continue

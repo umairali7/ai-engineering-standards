@@ -58,11 +58,13 @@ The `aies` command exposes the pipeline as composable verbs:
 | `discover` | Scan installed runtimes and register the deployments they serve as named registry entries (§5.1, D11). Idempotent. | `aies discover` |
 | `registry` | Manage deployment entries: add, list, show, update, retire (IDs never reused). | `aies registry add ./deployments/local-qwen.yaml` |
 | `doctor` | Validate and fingerprint the environment; **detect installed runtimes** and, per runtime, availability, version, and what it serves; report readiness; write the fingerprint used by later stages. | `aies doctor --json` |
-| `qualify` | Run the full pipeline (stages 2–6) for one **deployment** (by id, or by model name disambiguated with `--runtime`) against a profile and scope, producing a decision-ready evidence package. | `aies qualify local-qwen --profile enterprise --rt 2` |
+| `qualify` | Run the full pipeline (stages 2–6) for one **deployment** (by id, or by model name disambiguated with `--runtime`) against a profile and scope, producing a decision-ready evidence package. With `--judge <deployment>` (or `$AIES_JUDGE`) the responses are auto-scored by a judge model and the report is produced directly — no manual scoring step; without it, a human scores the generated scoresheet. | `aies qualify local-qwen --profile enterprise --rt 2 --judge gpt-oss` |
 | `benchmark` | Execute one or more scenario suites (stage 4 only), with repeat counts and parallelism, appending evidence records. | `aies benchmark acme-7b-q4 --area CA-05 --repeats 5` |
 | `review` | Orchestrate multi-model peer review over an existing evidence package and assemble the human review package. | `aies review run-2031 --reviewer rev-model --moderator mod-model` |
 | `compare` | Compare qualification results across models, runs, or environments on the same suite versions. | `aies compare acme-7b-q4 beta-13b-q5 --profile coder` |
 | `report` | Render an evidence package or Qualification Record as Markdown or JSON (HTML/PDF in M3). | `aies report run-2031 --format markdown` |
+| `transcript` | Render a whole run in one readable view — per item the task, the model's answer, and its scores/findings — so a reviewer need not open per-response records. | `aies transcript run-2031` |
+| `judge` | Judge track record derived from model-kind ratings across runs: `judge list` (deployments that have judged, runs judged, responses scored, parse rate, self-judged/unregistered flags) and `judge history` (one row per judged run). | `aies judge list` |
 | `profiles` | List, show, validate, and scaffold weighting profiles (§5.2). | `aies profiles show enterprise` |
 | `plugins` | List installed runtime plugins, their versions, and the capabilities each declares. | `aies plugins list` |
 | `conform` | Scaffold and check conformance statements against the model in [CONFORMANCE.md (AIES-DOC-08)](CONFORMANCE.md); verify evidence-backed claims against Qualification Records. | `aies conform check statement.yaml` |

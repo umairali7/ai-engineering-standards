@@ -34,6 +34,14 @@ def render_markdown(run_id: str) -> str:
     a(f"> **{pkg['grant_status'].upper()}**")
     a("")
 
+    if "model" in pkg.get("rater_kinds", []):
+        a("> **SCORES ARE JUDGE-PRODUCED (automated).** A judge model rated these "
+          "responses; scores reflect the judge's opinion, not ground truth. A "
+          "grant still requires a human authority (PLATFORM.md D8), and judge "
+          "scores carry decisional weight only when calibrated "
+          "(AIES-AESQS-PR-01-R09).")
+        a("")
+
     nondecisional = [area for area, d in pkg["areas"].items() if not d["decisional"]]
     if nondecisional:
         a("> **NON-DECISIONAL** - sample below the AESQS minimum for "

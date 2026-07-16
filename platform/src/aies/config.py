@@ -124,6 +124,13 @@ def default_parallel() -> int:
     return int(_get("AIES_PARALLEL", "1"))
 
 
+def default_judge() -> str | None:
+    """Default judge deployment for automated scoring (`aies qualify --judge`).
+    Set AIES_JUDGE to a deployment id (or "self") to auto-score every run
+    without passing --judge each time."""
+    return _get("AIES_JUDGE")
+
+
 def generation_defaults() -> dict:
     """Generation parameters applied to every request unless a deployment
     manifest or CLI flag overrides them. Only set keys are emitted."""

@@ -1,0 +1,20 @@
+# Frontier judge — OpenAI GPT-5.6 Terra.
+# See gpt-5-6-sol-native.yaml for the endpoint note.
+#
+#   aies deployment add examples/deployments/gpt-5-6-terra-native.yaml
+#   export OPENAI_API_KEY=sk-...
+#   aies qualify <subject> --rt 2 --judge gpt-5-6-terra-native --parallel 8
+
+id: gpt-5-6-terra-native
+family: frontier
+model: gpt-5.6-terra
+runtime: openai-compat
+roles: [judge]
+context_window: 1050000        # claim; recorded unverified until discovery probes it
+runtime_config:
+  base_url: https://api.openai.com/v1
+  model: gpt-5.6-terra
+  api_key_env: OPENAI_API_KEY
+provenance:
+  source: "hosted API (served by OpenAI)"
+  checksum: "sha256:endpoint-served"

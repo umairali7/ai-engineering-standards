@@ -1,0 +1,26 @@
+# Example judge deployment: a model running on ANOTHER machine on your network.
+#
+# "Local vs remote" is nothing more than the base_url. Point it at the other
+# box's IP and the port its OpenAI-compatible server listens on (vLLM, Ollama,
+# LM Studio, llama.cpp, MLX, TGI — all expose this format). The qualification
+# engine never learns it is remote; it just calls the endpoint.
+#
+# Register + use (subject on this machine, judge on the GPU box next to you):
+#   aies deployment add examples/deployments/judge-remote-machine.yaml
+#   aies qualify local-qwen --rt 2 --judge judge-remote-70b --parallel 8
+#
+# If that server needs a key, add `api_key_env: MY_KEY_ENV` under runtime_config
+# and export it; most LAN servers need none.
+
+id: judge-remote-70b
+family: llama
+model: llama-3.3-70b-instruct     # server-side model name on that machine
+runtime: openai-compat
+roles: [judge]                    # advisory: shows up in `aies judge available`
+context_window: 131072
+runtime_config:
+  base_url: http://192.168.1.50:8000/v1   # the other machine's IP:port
+  model: llama-3.3-70b-instruct
+provenance:
+  source: "served on host 192.168.1.50 (LAN)"
+  checksum: "sha256:endpoint-served"

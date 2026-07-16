@@ -89,29 +89,81 @@ def cmd_qualify(args) -> int:
                  f"aggregated {args.resume}\n"
                  f"  markdown: {paths['markdown']}\n  json    : {paths['json']}")
             return 0
+        from . import config, workspace
+        # Resolve the effective worker count once so both phases (response
+        # collection and, if judging, scoring) use it — and so the banner
+        # below reports the real number.
+        workers = getattr(args, "parallel", None) or config.default_parallel()
         if getattr(args, "journey", None):
             manifest = engine.start_journey(
                 args.model, args.profile, args.journey,
                 repeats=args.repeats, subject_kind="ai",
                 runtime=getattr(args, "runtime", None))
         else:
+            if not args.json:
+                print(f"collecting responses across {workers} worker(s)"
+                      f"{' — pass --parallel N to raise' if workers == 1 else ''}…",
+                      file=sys.stderr)
             manifest = engine.start_qualification(
                 args.model, args.profile, f"RT{args.rt}", args.area,
                 repeats=args.repeats,
                 subject_kind="ai",
                 runtime=getattr(args, "runtime", None),
-                workers=getattr(args, "parallel", 1),
+                workers=workers,
             )
         run_id = manifest["run_id"]
-        from . import workspace
+        # Automated scoring: if a judge is given (or AIES_JUDGE is set), score
+        # the responses with it and output the report directly — no manual step.
+        judge = getattr(args, "judge", None) or config.default_judge()
+        if judge:
+            from . import engine as _engine, model_review, report as _report
+            jdep = manifest["model"]["registry_id"] if judge == "self" else judge
+            self_judged = jdep == manifest["model"]["registry_id"]
+            n_resp = len(list((workspace.run_dir(run_id) / "responses").glob("*.json")))
+            if not args.json:
+                print(f"scoring {n_resp} responses with judge '{jdep}' across "
+                      f"{workers} worker(s)…", file=sys.stderr)
+            try:
+                summary = model_review.run_model_review(
+                    run_id, jdep, runtime=getattr(args, "reviewer_runtime", None),
+                    workers=workers)
+            except Exception as e:
+                print(f"error: automated scoring failed ({e}). The responses were "
+                      f"collected; you can score manually — see the scoresheet in "
+                      f"{workspace.run_dir(run_id)}.", file=sys.stderr)
+                return 2
+            pkg = _engine.aggregate(run_id)
+            _report.write_reports(run_id)
+            if args.json:
+                _out({"run_id": run_id, "judge": jdep, "self_judged": self_judged,
+                      "scoring": summary, "evidence_package": pkg}, True)
+            else:
+                print(_report.render_markdown(run_id))
+                print(f"\n[auto-scored by judge '{jdep}': {summary['scored']}/"
+                      f"{summary['responses']} responses; "
+                      f"{summary['unparseable']} unparseable]")
+                if self_judged:
+                    print("WARNING: the model scored its own output (self-judging) — "
+                          "expect inflation/bias. Use --judge <a different deployment> "
+                          "for a trustworthy read.")
+                print("This is an evidence report. To record a formal, revocable "
+                      f"grant, a human runs:  aies grant {run_id} --decision grant "
+                      "--authority \"You\" --second \"Peer\"")
+            return 0
         sheet = workspace.run_dir(run_id) / "scoresheet.json"
         _out(manifest, args.json,
-             f"run {run_id}: responses collected.\n"
-             f"  M1 human scoring hook - next steps:\n"
-             f"    1. fill {sheet}\n"
-             f"       (integer 0-4 per dimension per item, rater name, findings)\n"
-             f"    2. aies score {run_id}\n"
-             f"    3. aies qualify --resume {run_id}")
+             f"run {run_id}: responses collected. Next steps (score, then aggregate):\n"
+             f"    1. Open this file in your editor and score each response:\n"
+             f"         {sheet}\n"
+             f"       For every response set an integer 0-4 on each EV dimension,\n"
+             f"       set \"rater\": {{\"name\": \"You\", \"kind\": \"human\"}}, and add a\n"
+             f"       \"findings\" note for any score <= 2. (This is a file to edit,\n"
+             f"       not a command to run.)\n"
+             f"    2. aies score {run_id}              # ingest your scores\n"
+             f"    3. aies qualify --resume {run_id}   # aggregate + report\n"
+             f"\n"
+             f"  Tip: next time add --parallel N to run inference concurrently (much\n"
+             f"  faster), or --repeats 1 for a quick, smaller (non-decisional) look.")
     except Exception as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
@@ -176,6 +228,22 @@ def cmd_report(args) -> int:
     except FileNotFoundError:
         print(f"error: no evidence package for {args.run!r} — run "
               f"`aies qualify --resume {args.run}` first", file=sys.stderr)
+        return 2
+    return 0
+
+
+def cmd_transcript(args) -> int:
+    from . import transcript
+    try:
+        if args.format == "json":
+            print(transcript.render_json(args.run, area=args.area))
+        elif args.write:
+            path = transcript.write_transcript(args.run)
+            _out({"transcript": path}, args.json, f"wrote {path}")
+        else:
+            print(transcript.render_markdown(args.run, area=args.area))
+    except FileNotFoundError:
+        print(f"error: no run {args.run!r} in this workspace", file=sys.stderr)
         return 2
     return 0
 
@@ -281,9 +349,14 @@ def cmd_review(args) -> int:
     try:
         # Optionally drive a reviewer deployment to score the responses first.
         if getattr(args, "model_reviewer", None):
-            from . import model_review
+            from . import config, model_review
+            workers = getattr(args, "parallel", None) or config.default_parallel()
+            if not args.json:
+                print(f"scoring responses with reviewer '{args.model_reviewer}' "
+                      f"across {workers} worker(s)…", file=sys.stderr)
             summary = model_review.run_model_review(
-                args.run, args.model_reviewer, runtime=getattr(args, "reviewer_runtime", None))
+                args.run, args.model_reviewer,
+                runtime=getattr(args, "reviewer_runtime", None), workers=workers)
             if not (args.json):
                 print(f"reviewer model {summary['reviewer']}: scored "
                       f"{summary['scored']}/{summary['responses']} responses "
@@ -437,6 +510,68 @@ def cmd_runtime(args) -> int:
     return 0
 
 
+def cmd_judge(args) -> int:
+    """Judge track record derived from model-kind ratings across runs."""
+    from . import judge
+    if args.judge_cmd == "available":
+        rows = judge.registered_judges()
+        if args.json:
+            _out(rows, True)
+        elif not rows:
+            print("no deployments are registered as judges yet.\n"
+                  "  Tag one with `roles: [judge]` in its manifest (see "
+                  "examples/deployments/), or pass any deployment ad hoc with "
+                  "`aies qualify … --judge <id>`.")
+        else:
+            lines = [f"{len(rows)} registered judge(s):"]
+            for a in rows:
+                pr = ("never used" if a["parse_rate"] is None
+                      else f"parse={a['parse_rate']:.0%}, runs={a['runs_judged']}")
+                lines.append(f"  {a['judge']:28} {(a['model'] or '?'):22} "
+                             f"runtime={a['runtime']:<14} {pr}")
+            _out(rows, args.json, "\n".join(lines))
+    elif args.judge_cmd == "list":
+        rows = judge.judge_usage()
+        if args.json:
+            _out(rows, True)
+        elif not rows:
+            print("(no judge has scored a run yet — run "
+                  "`aies qualify … --judge <deployment>`)")
+        else:
+            lines = []
+            for a in rows:
+                flags = []
+                if a["self_judged_runs"]:
+                    flags.append(f"{a['self_judged_runs']} self-judged")
+                if not a["registered"]:
+                    flags.append("NOT REGISTERED")
+                pr = "n/a" if a["parse_rate"] is None else f"{a['parse_rate']:.0%}"
+                lines.append(
+                    f"{a['judge']:28} runs={a['runs_judged']:<3} "
+                    f"scored={a['responses_scored']:<4} parse={pr:>4} "
+                    f"last={(a['last_used'] or '')[:10]}"
+                    + (f"  [{', '.join(flags)}]" if flags else ""))
+            _out(rows, args.json, "\n".join(lines))
+    elif args.judge_cmd == "history":
+        rows = judge.judge_history(judge=getattr(args, "judge", None))
+        if args.json:
+            _out(rows, True)
+        elif not rows:
+            print("(no judged runs yet)")
+        else:
+            lines = []
+            for x in rows:
+                tag = " [self]" if x["self_judged"] else ""
+                agg = "aggregated" if x["aggregated"] else "not-aggregated"
+                lines.append(
+                    f"{x['run_id']:20} subject={x['subject']:20} "
+                    f"judge={x['judge']}{tag}  "
+                    f"scored={x['scored']}/{x['responses']} "
+                    f"({x['unparseable']} unparseable)  {agg}")
+            _out(rows, args.json, "\n".join(lines))
+    return 0
+
+
 def cmd_deployment(args) -> int:
     """Resource-model alias over the registry (deployments are what the
     registry holds)."""
@@ -454,6 +589,20 @@ def cmd_deployment(args) -> int:
         elif args.dep_cmd == "add":
             e = registry.add(Path(args.file))
             _out(e, args.json, f"registered deployment {e['id']}")
+        elif args.dep_cmd == "update":
+            e = registry.update(Path(args.file))
+            changed = e.pop("_identity_changed", False)
+            msg = f"updated deployment {e['id']}"
+            if changed:
+                msg += ("\n  WARNING: runtime/model/config changed — prior "
+                        "qualifications for this id may no longer describe what "
+                        "runs. Re-check with `aies qualification verify <QUAL-…>` "
+                        "(D7).")
+            _out(e, args.json, msg)
+        elif args.dep_cmd == "remove":
+            e = registry.remove(args.name)
+            _out(e, args.json, f"removed deployment {e['id']} — id is now free to "
+                               f"reuse (run history and QUAL records are untouched)")
         elif args.dep_cmd == "retire":
             e = registry.retire(args.name)
             _out(e, args.json, f"retired {e['id']}")
@@ -568,19 +717,29 @@ def _not_yet(milestone: str):
 _EPILOG = """\
 commands by stage:
   setup & discovery   doctor · discover · runtime · deployment (registry)
-  qualification       qualify · benchmark · score · review · runs · compare
+  qualification       qualify · benchmark · score · review · transcript · runs · compare
+  judging             judge available · judge list · judge history   (the judge pool + track record)
   decision & audit    grant · verify · conform · qualification · report · dashboard
   reference           profile · plugins · journey · index
 
 typical workflow:
   aies doctor                                  validate env, detect runtimes
   aies discover                                register the deployments they serve
+  # automated (recommended): one command in, a scored report out
+  aies qualify <deployment> --profile coder --rt 2 --area CA-05 --judge <judge-dep>
+                                               auto-score with a judge model -> report
+  aies transcript <run>                        read the whole run: task + answer + score per item
+
+  # manual scoring (a human rates the answers) — omit --judge:
   aies qualify <deployment> --profile enterprise --rt 2 --area CA-05
-  # fill the printed scoresheet.json (0-4 per dimension) ...
-  aies score <run>                             ingest human ratings
-  aies review <run> --model-reviewer <dep>     (optional) add a model reviewer
-  aies qualify --resume <run>                  gated aggregation
-  aies report <run> --format markdown          evidence package
+  aies score <run>                             ingest the scores you wrote in scoresheet.json
+  aies qualify --resume <run>                  aggregate -> report
+
+  # re-score a run you already collected (e.g. the judge failed) — no re-collect:
+  aies review <run> --model-reviewer <judge> --parallel 8
+  aies qualify --resume <run>                  aggregate -> report
+
+  # optional formal record (a human decision, revocable):
   aies grant <run> --decision grant --authority "Name (ROLE-13)" --second "Name (ROLE-14)"
   aies verify <QUAL-id>                         re-check environment (D7)
   aies conform check statement.yaml            check a conformance claim
@@ -589,6 +748,7 @@ typical workflow:
 
 Run `aies <command> --help` for a command's options. The platform prepares
 evidence; a human records every grant. Docs: platform/GUIDE.md.
+Stuck (timeout, TLS, auth, slow run, judge)? platform/TROUBLESHOOTING.md.
 """
 
 
@@ -637,11 +797,18 @@ def build_parser() -> argparse.ArgumentParser:
                    help="competency area (repeatable); default CA-05")
     q.add_argument("--journey", default=None, metavar="JOURNEY_ID",
                    help="run a multi-phase journey instead of area suites")
+    q.add_argument("--judge", default=None, metavar="DEPLOYMENT",
+                   help="auto-score responses with this judge deployment (or 'self') "
+                        "and print the report directly — no manual scoring. "
+                        "Defaults to $AIES_JUDGE.")
+    q.add_argument("--reviewer-runtime", default=None,
+                   help="disambiguate the judge deployment's runtime")
     q.add_argument("--repeats", type=int, default=None,
                    help="override per-scenario repeats")
     q.add_argument("--parallel", type=int, default=None, metavar="N",
-                   help="concurrent inference calls (default 1; records are "
-                        "written in canonical order regardless)")
+                   help="concurrent inference calls for BOTH response collection "
+                        "and judge scoring (default 1, or $AIES_PARALLEL; records "
+                        "are written in canonical order regardless)")
     q.add_argument("--resume", metavar="RUN_ID",
                    help="aggregate a scored run into the evidence package")
     q.set_defaults(func=lambda a: (_qualify_defaults(a), cmd_qualify(a))[1])
@@ -670,6 +837,15 @@ def build_parser() -> argparse.ArgumentParser:
 
     common(sub.add_parser("index", help="rebuild the result index from run files")
            ).set_defaults(func=cmd_index)
+
+    tr = common(sub.add_parser("transcript", help="read a whole run in one view: "
+                               "task + answer + scores per item"))
+    tr.add_argument("run")
+    tr.add_argument("--area", default=None, help="only this competency area")
+    tr.add_argument("--format", choices=("markdown", "json"), default="markdown")
+    tr.add_argument("--write", action="store_true",
+                    help="write transcript.md into the run directory")
+    tr.set_defaults(func=cmd_transcript)
 
     pr = common(sub.add_parser("profiles", help="list/show/validate weighting profiles"))
     prsub = pr.add_subparsers(dest="profiles_cmd", required=True)
@@ -706,6 +882,9 @@ def build_parser() -> argparse.ArgumentParser:
                          "before assembling the package")
     rv.add_argument("--reviewer-runtime", default=None,
                     help="disambiguate the reviewer deployment's runtime")
+    rv.add_argument("--parallel", type=int, default=None, metavar="N",
+                    help="concurrent reviewer calls when using --model-reviewer "
+                         "(default 1, or $AIES_PARALLEL)")
     rv.add_argument("--reviewer-qualified", action="store_true",
                     help="the reviewer holds a current review-class (CA-06) qualification")
     rv.add_argument("--calibration", default=None,
@@ -774,11 +953,31 @@ def build_parser() -> argparse.ArgumentParser:
     depsub = dep.add_subparsers(dest="dep_cmd", required=True)
     dl = depsub.add_parser("list"); dl.add_argument("--all", action="store_true")
     di = depsub.add_parser("inspect"); di.add_argument("name")
-    da = depsub.add_parser("add"); da.add_argument("file")
+    da = depsub.add_parser("add", help="register a NEW deployment"); da.add_argument("file")
+    du = depsub.add_parser("update", help="overwrite an EXISTING deployment in "
+                           "place (same id) — for config/key/roles fixes")
+    du.add_argument("file")
+    drm = depsub.add_parser("remove", help="hard-delete an entry so its id can be "
+                            "reused (vs retire, which reserves it for audit)")
+    drm.add_argument("name")
     dr = depsub.add_parser("retire"); dr.add_argument("name")
-    for x in (dl, di, da, dr):
+    for x in (dl, di, da, du, drm, dr):
         x.add_argument("--json", action="store_true")
     dep.set_defaults(func=cmd_deployment)
+
+    jg = common(sub.add_parser("judge", help="judge track record — which "
+                               "deployments have scored runs, and how reliably"))
+    jgsub = jg.add_subparsers(dest="judge_cmd", required=True)
+    jga = jgsub.add_parser("available", help="the judge pool: deployments "
+                           "registered with roles:[judge], and how many")
+    jgl = jgsub.add_parser("list", help="judges used across all runs, with "
+                           "runs judged, responses scored, and parse rate")
+    jgh = jgsub.add_parser("history", help="one row per judged run, newest first")
+    jgh.add_argument("--judge", default=None, metavar="DEPLOYMENT",
+                     help="filter to a single judge deployment id")
+    for x in (jga, jgl, jgh):
+        x.add_argument("--json", action="store_true")
+    jg.set_defaults(func=cmd_judge)
 
     prof = common(sub.add_parser("profile", help="weighting profiles (enterprise, "
                                  "coder, security, …)"))

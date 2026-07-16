@@ -1,0 +1,31 @@
+# Example judge deployment: a frontier model in the cloud.
+#
+# A "judge" is not special — it is an ordinary deployment in the registry
+# that you happen to pass to `aies qualify --judge <id>`. Any deployment
+# can judge any run. This one points at a hosted, OpenAI-compatible
+# chat/completions endpoint (OpenAI, DeepSeek, Together, Fireworks,
+# Groq, or any provider that speaks that wire format).
+#
+# Register + use:
+#   aies deployment add examples/deployments/judge-cloud-frontier.yaml
+#   export OPENAI_API_KEY=sk-...            # the key env named below
+#   aies qualify local-qwen --rt 2 --judge judge-cloud-frontier --parallel 8
+#
+# NOTE on Anthropic/Claude: the built-in `openai-compat` adapter speaks the
+# OpenAI chat/completions format. Use a provider endpoint that exposes that
+# format. A native API with a different wire format needs its own adapter
+# (an out-of-tree plugin — see examples/external_adapter/), per D9.
+
+id: judge-cloud-frontier
+family: frontier
+model: gpt-4o                     # server-side model name at the endpoint
+runtime: openai-compat
+roles: [judge]                    # advisory: shows up in `aies judge available`
+context_window: 128000
+runtime_config:
+  base_url: https://api.openai.com/v1
+  model: gpt-4o
+  api_key_env: OPENAI_API_KEY     # name of the env var holding the key
+provenance:
+  source: "hosted API (served by provider)"
+  checksum: "sha256:endpoint-served"   # remote artifact; server owns verification

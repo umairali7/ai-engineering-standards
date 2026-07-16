@@ -234,27 +234,131 @@ aies registry add my-deployment.yaml
 > and a separate qualification subject — that is design decision D11, and it is
 > why `verify` (§5.6) can invalidate a grant when the environment changes.
 
-### 5.2 Run the benchmark
+**Fixing or removing a deployment.** `add` only registers *new* ids — it refuses
+one that already exists. To correct a manifest you already registered (a wrong
+`base_url`, an `api_key_env` typo, changed generation defaults, or adding
+`roles: [judge]`), edit the file and run `update` — it overwrites the entry in
+place, keeping the id:
 
 ```
-aies qualify local-qwen --profile coder --rt 2 --area CA-05 --repeats 5 --parallel 4
+aies deployment update my-deployment.yaml   # edit an EXISTING deployment
+aies deployment remove  local-qwen          # hard-delete; frees the id to reuse
+aies deployment retire  local-qwen          # soft-mark; id stays reserved for audit
 ```
 
-This executes the CA-05 scenario suite against your model over real inference
-calls and writes append-only response records plus a `scoresheet.json`. Pick
-`--area` from `CA-01 … CA-12`; repeat for several areas. For a *decisional*
+`update` warns if a field that defines the deployment's behavioral identity
+(runtime, model, quantization, `runtime_config`) changed, because prior
+qualifications for that id may no longer describe what now runs — re-check with
+`aies qualification verify` (§5.6). A pure key/roles fix updates quietly.
+
+> **Keys live in the environment, never in the manifest.** `api_key_env` is the
+> **name** of an environment variable (e.g. `ANTHROPIC_API_KEY`), not the key
+> itself. Put the secret in your shell (`export ANTHROPIC_API_KEY=…`); if you
+> ever paste a real key into a file, rotate it.
+
+### 5.2 Run the benchmark — automated scoring (recommended)
+
+Pass a **judge deployment** and `qualify` runs end to end and prints the report
+directly — no manual step:
+
+```
+aies qualify local-qwen --profile coder --rt 2 --area CA-05 --repeats 5 \
+    --parallel 4 --judge <a-strong-deployment>
+```
+
+The candidate answers the scenarios; the judge model rates every answer 0–4 on
+EV1–EV6; the run aggregates and the report prints. Set `AIES_JUDGE` in your
+`.env` to make it the default for every run and every profile.
+
+`--parallel N` applies to **both** phases — collecting the candidate's answers
+*and* the judge's scoring — so a `--judge` run is concurrent end to end. The
+default is 1 (or `$AIES_PARALLEL`); the run prints how many workers each phase
+uses so you can see the concurrency. Raise it to the endpoint's real
+per-key concurrency limit.
+
+**If the judge step fails (e.g. a TLS or auth error), you do not re-collect.**
+Responses are written as they are collected, so they survive a later failure.
+Fix the judge issue, then score the *already-collected* run and aggregate:
+
+```
+aies review <run-id> --model-reviewer <judge-id> --parallel 8
+aies qualify --resume <run-id>
+```
+
+**Slow run?** It's almost always the subject model, not the platform. Cap output
+length with `export AIES_MAX_TOKENS=1024` (often the biggest speedup), and use
+`--repeats 1` for a quick, non-decisional look. On a single local GPU, more
+`--parallel` mostly just queues on the model — `max_tokens`/`--repeats` are the
+real levers. See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for timeout, TLS, auth,
+and judge issues.
+
+**Any deployment can be the judge — cloud, local, or another machine.** A judge
+is just a registered `openai-compat` deployment; "where it runs" is only its
+`base_url`. Copy-paste starting points are in
+[`examples/deployments/`](examples/deployments/README.md): a hosted frontier
+model, a second model on this machine, and a model on another box on your LAN.
+Register once (`aies deployment add <file>`) then `--judge <its-id>`.
+
+**See your judges.** A judge is an ordinary deployment, but you can *earmark*
+one by adding `roles: [judge]` to its manifest (advisory — any deployment can
+still judge ad hoc). Three views:
+
+```
+aies judge available                # the POOL: how many judges you have
+                                     #   registered (roles:[judge]), each with
+                                     #   its track record or "never used"
+aies judge list                     # judges that have actually JUDGED, with
+                                     #   runs judged · responses scored · parse
+                                     #   rate · self-judged / unregistered flags
+aies judge history                  # one row per judged run, newest first
+aies judge history --judge <id>     # just that judge's runs
+```
+
+The example manifests in [`examples/deployments/`](examples/deployments/README.md)
+are tagged `roles: [judge]`, so after `aies deployment add`-ing them,
+`aies judge available` counts them immediately.
+
+`parse rate` is the fraction of responses whose scores the judge returned in the
+required JSON shape — a judge that often falls below 100% is contributing thin
+evidence (unparseable replies are skipped, never fabricated) and is a poor
+choice regardless of how capable the underlying model is.
+
+Pick `--area` from `CA-01 … CA-12` (repeat for several). For a *decisional*
 result an AI system needs ≥ 20 (RT1), 30 (RT2), 50 (RT3), 100 (RT4) scored
-items per area — grow `--repeats` or the suites accordingly; under-sampled
-runs are labelled **NON-DECISIONAL** and cannot be granted on.
+items per area — grow `--repeats`; under-sampled runs are labelled
+**NON-DECISIONAL**.
 
-### 5.3 Score the responses (human rater)
+The report is marked **JUDGE-PRODUCED**: the scores are the judge's opinion,
+not ground truth. Two cautions: (1) use a *different, capable* deployment as
+the judge — `--judge self` (a model grading its own work) is biased and warned
+against; (2) judge scores carry decisional *weight* only once the judge is
+calibrated (§5.4). For a first **validity check** — does AIES separate a model
+you rate strong from one you rate weak? — score at least one run yourself, or
+review the judge, so you are testing AIES and not the judge.
 
-Open the printed `scoresheet.json` and, for each response, set an integer
-**0–4** on each dimension EV1–EV6 against the rubric anchors, add your rater
-name, and write a finding for any score ≤ 2. Then:
+### 5.2a Read the run in one view
+
+To review what actually happened — the task, the model's answer, and its
+scores side by side, per item — instead of opening response files one by one:
 
 ```
-aies score local-qwen-run-id             # ingests your ratings as append-only records
+aies transcript <run-id>                 # scrollable Markdown for the whole run
+aies transcript <run-id> --area CA-05    # just one area
+aies transcript <run-id> --write          # save transcript.md into the run dir
+```
+
+This is the fastest way to sanity-check a run and to *read the model's actual
+answers* when deciding whether the scores look right.
+
+### 5.3 Manual scoring (omit `--judge`)
+
+Without `--judge`, `qualify` writes a `scoresheet.json` and stops. Open it and,
+for each response, set an integer **0–4** on each EV1–EV6 dimension against the
+rubric anchors, add your rater name, and write a finding for any score ≤ 2:
+
+```
+aies score <run-id>              # ingest the scores you wrote
+aies qualify --resume <run-id>   # aggregate -> report
 ```
 
 ### 5.4 (Optional) Add a model reviewer

@@ -1,0 +1,24 @@
+# Frontier judge — Anthropic Claude Sonnet 5.
+#
+# base_url points at Anthropic's OpenAI-COMPATIBILITY endpoint, which the
+# built-in `openai-compat` adapter can drive. Anthropic's *native* Messages
+# API uses a different wire format and would need its own adapter (D9) — that
+# is why the endpoint below is the /v1 compat base, not the native path.
+#
+#   aies deployment add examples/deployments/claude-sonnet-5-native.yaml
+#   export ANTHROPIC_API_KEY=sk-ant-...
+#   aies qualify <subject> --rt 2 --judge claude-sonnet-5-native --parallel 8
+
+id: claude-sonnet-5-native
+family: frontier
+model: claude-sonnet-5
+runtime: openai-compat
+roles: [judge]
+context_window: 1000000        # claim; recorded unverified until discovery probes it
+runtime_config:
+  base_url: https://api.anthropic.com/v1
+  model: claude-sonnet-5
+  api_key_env: ANTHROPIC_API_KEY
+provenance:
+  source: "hosted API (Anthropic, OpenAI-compat endpoint)"
+  checksum: "sha256:endpoint-served"

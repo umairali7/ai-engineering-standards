@@ -1,0 +1,21 @@
+# Frontier judge — Anthropic Claude Fable 5.
+# Uses Anthropic's OpenAI-compatibility endpoint (see claude-sonnet-5-native.yaml
+# for the wire-format note).
+#
+#   aies deployment add examples/deployments/claude-fable-5-native.yaml
+#   export ANTHROPIC_API_KEY=sk-ant-...
+#   aies qualify <subject> --rt 2 --judge claude-fable-5-native --parallel 8
+
+id: claude-fable-5-native
+family: frontier
+model: claude-fable-5
+runtime: openai-compat
+roles: [judge]
+context_window: 1000000        # claim; recorded unverified until discovery probes it
+runtime_config:
+  base_url: https://api.anthropic.com/v1
+  model: claude-fable-5
+  api_key_env: ANTHROPIC_API_KEY
+provenance:
+  source: "hosted API (Anthropic, OpenAI-compat endpoint)"
+  checksum: "sha256:endpoint-served"

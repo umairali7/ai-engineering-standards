@@ -81,6 +81,7 @@ def _build_record(run_id, model_entry, adapter, sc, r, suite_version,
         },
         "environment_fingerprint": environment_fp,
         "request": {
+            "prompt": sc["prompt"],
             "prompt_hash": "sha256:" + hashlib.sha256(sc["prompt"].encode()).hexdigest(),
             "parameters": parameters or {},
         },
@@ -152,40 +153,68 @@ def execute_suite(
     records. Returns the paths written, in deterministic scenario/repeat
     order regardless of `workers`.
 
-    Parallelism (workers > 1) only changes how inference calls are
-    scheduled; records are written by the calling thread in canonical
-    order, so parallel and serial runs produce byte-identical record
-    sets (PLATFORM.md M3 exit criterion). Adapters used with workers > 1
-    MUST be safe for concurrent generate() calls; the built-in adapters
-    are (they hold no per-call state after load()).
+    Each successful response is written as soon as it completes, so a
+    failure partway through a run does not discard the responses already
+    collected — they stay on disk for inspection. The resulting record
+    set (filenames + contents, modulo per-record timestamps) is
+    independent of `workers`, so parallel and serial runs are equivalent
+    (PLATFORM.md M3 exit criterion). Adapters used with workers > 1 MUST
+    be safe for concurrent generate() calls; the built-in adapters are
+    (they hold no per-call state after load()).
+
+    If any inference call fails, the successful responses are kept and a
+    single SuiteError is raised summarising what failed — never a bare,
+    context-free error, and never silent data loss.
     """
-    from concurrent.futures import ThreadPoolExecutor
+    from concurrent.futures import ThreadPoolExecutor, as_completed
 
     rdir = workspace.run_dir(run_id) / "responses"
-    tasks = []  # (order_index, scenario, repeat)
+    tasks = []  # (scenario, repeat)
     for sc in scenarios:
         n_repeats = repeats or int(sc.get("repeats_min", 1))
         for r in range(1, n_repeats + 1):
             tasks.append((sc, r))
 
-    def _generate(task):
+    def _run_and_write(task) -> Path:
         sc, r = task
         request = GenerationRequest(prompt=sc["prompt"], parameters=parameters or {})
-        return sc, r, adapter.generate(request)
+        response = adapter.generate(request)
+        record = _build_record(run_id, model_entry, adapter, sc, r, suite_version,
+                               environment_fp, response, parameters)
+        path = rdir / f"{sc['id']}-r{r}.json"
+        workspace.write_json(path, record)
+        return path
+
+    written: list[Path] = []
+    failures: list[tuple[str, str]] = []  # (scenario-repeat, error)
 
     if workers and workers > 1:
         with ThreadPoolExecutor(max_workers=workers) as pool:
-            results = list(pool.map(_generate, tasks))
+            futs = {pool.submit(_run_and_write, t): t for t in tasks}
+            for fut in as_completed(futs):
+                sc, r = futs[fut]
+                try:
+                    written.append(fut.result())
+                except Exception as e:  # noqa: BLE001 — surfaced below, work preserved
+                    failures.append((f"{sc['id']}-r{r}", str(e)))
     else:
-        results = [_generate(t) for t in tasks]
+        for task in tasks:
+            sc, r = task
+            try:
+                written.append(_run_and_write(task))
+            except Exception as e:  # noqa: BLE001
+                failures.append((f"{sc['id']}-r{r}", str(e)))
 
-    # Canonical order: scenario appearance order, then repeat.
-    results.sort(key=lambda x: ([s["id"] for s in scenarios].index(x[0]["id"]), x[1]))
-    written: list[Path] = []
-    for sc, r, response in results:
-        record = _build_record(run_id, model_entry, adapter, sc, r, suite_version,
-                                environment_fp, response, parameters)
-        path = rdir / f"{sc['id']}-r{r}.json"
-        workspace.write_json(path, record)
-        written.append(path)
+    written.sort()  # deterministic return order; the record SET is worker-independent
+
+    if failures:
+        sample = "; ".join(f"{name}: {err}" for name, err in failures[:2])
+        if not written:
+            raise SuiteError(
+                f"all {len(failures)} inference call(s) failed. First: {sample}")
+        raise SuiteError(
+            f"{len(failures)} of {len(tasks)} inference call(s) failed; the "
+            f"{len(written)} successful responses were saved to {rdir}. "
+            f"First failure — {sample}. Fix the endpoint and re-run "
+            f"(or reduce --parallel), then re-score.")
     return written

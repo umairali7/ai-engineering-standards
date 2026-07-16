@@ -65,8 +65,18 @@ def start_qualification(
 
     # Stage 2 — capability discovery (M1: adapter declaration + smoke
     # probe; claims in the registry entry are recorded as unverified).
-    smoke = adapter.generate(runner.GenerationRequest(
-        prompt="Reply with the single word: ready", parameters=gen_params))
+    # The smoke probe is a liveness check, so it fails fast (a dead or
+    # misconfigured endpoint should error in seconds, not after the full
+    # per-request timeout used for real scenario calls).
+    smoke_params = {**gen_params,
+                    "timeout_s": min(float(gen_params.get("timeout_s", 300)), 30.0)}
+    try:
+        smoke = adapter.generate(runner.GenerationRequest(
+            prompt="Reply with the single word: ready", parameters=smoke_params))
+    except Exception as e:
+        raise EngineError(
+            f"deployment {entry['id']!r} did not respond to a liveness probe: {e}"
+        ) from e
     discovery = {
         "adapter_declared": adapter.capabilities(),
         "registry_claims": entry.get("capabilities", {}),
@@ -247,6 +257,7 @@ def aggregate(run_id: str) -> dict:
         "environment_fingerprint": manifest["environment_fingerprint"],
         "areas": areas,
         "raters": sorted({r["provenance"]["rater"] for r in ratings}),
+        "rater_kinds": sorted({r["provenance"]["rater_kind"] for r in ratings}),
         "aggregated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     }
     workspace.write_json(rdir / "evidence-package.json", package, overwrite=True)
