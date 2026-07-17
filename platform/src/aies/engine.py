@@ -94,10 +94,19 @@ def start_qualification(
         in_scope = [s for s in scenarios if s["risk_tier"] == risk_tier] or scenarios
         all_scenarios.append((definition, in_scope, suite_version))
 
+    _prov = entry.get("provenance") or {}
+    _model_block = {"registry_id": entry["id"],
+                    "checksum": _prov.get("checksum", "unknown")}
+    # Carry optional AI supply-chain provenance into the durable evidence
+    # (model signature / AI-BOM), so qualification records are audit-complete
+    # against supply-chain standards (CROSSWALK §3b).
+    if _prov.get("signature"):
+        _model_block["signature"] = _prov["signature"]
+    if _prov.get("ai_bom"):
+        _model_block["ai_bom"] = _prov["ai_bom"]
     manifest = {
         "run_id": run_id,
-        "model": {"registry_id": entry["id"],
-                  "checksum": (entry.get("provenance") or {}).get("checksum", "unknown")},
+        "model": _model_block,
         "profile": profile["name"],
         "risk_tier": risk_tier,
         "subject_kind": subject_kind,

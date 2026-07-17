@@ -77,6 +77,22 @@ def validate_entry(entry: dict) -> list[str]:
             "provenance.checksum missing or not sha256: the deployment must "
             "bind to an exact model artifact (PLATFORM.md §5.1)"
         )
+    # Optional AI supply-chain provenance (aligns D7 with model-signing /
+    # AI-BOM standards — OpenSSF Model Signing, CycloneDX/SPDX; CROSSWALK §3b).
+    # Declarations recorded as provenance; verification is delegated to the
+    # signer/server, exactly like `checksum` (PLATFORM.md §5.1).
+    sig = prov.get("signature")
+    if sig is not None and not isinstance(sig, dict):
+        problems.append(
+            "provenance.signature must be a mapping (e.g. {method, reference, "
+            "verified}); it declares a model signature, optional"
+        )
+    aibom = prov.get("ai_bom")
+    if aibom is not None and not isinstance(aibom, (dict, str)):
+        problems.append(
+            "provenance.ai_bom must be a string reference (path/URI) or a "
+            "mapping (e.g. {format, reference}); optional"
+        )
     roles = entry.get("roles")
     if roles is not None:
         if not isinstance(roles, list) or any(r not in KNOWN_ROLES for r in roles):

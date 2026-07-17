@@ -106,6 +106,7 @@ Operating metrics make governance empirical. Organizations MUST track at least t
 
 - [AIES-AEOS-GOV-01-R25] ROLE-14 MUST produce a periodic compliance report (at least annually, and on demand for auditors and regulators where applicable) stating: the AIES version and organizational policy version in force; conformance status against the normative requirements of AEOS with material deviations and their risk acceptances; incident summary by severity; metrics summary and trends; and open corrective actions. The report draws exclusively on audit-trail-derived evidence.
 - [AIES-AEOS-GOV-01-R26] Compliance reports MUST be reviewed by the executive owner of AI engineering risk, and material deviations MUST NOT be reported as conformant. Internal or external audits of AEOS conformance MUST be given direct read access to the audit store (§3) within confidentiality constraints.
+- [AIES-AEOS-GOV-01-R27] For AI participation at **RT3 or RT4**, ROLE-14 MUST ensure an **AI system impact assessment** is performed and recorded before autonomy is granted, and re-reviewed at each governance review (§7) and on any material change of scope, model, or environment. The assessment MUST cover foreseeable impacts on affected individuals and groups — intended and unintended — across the lifecycle, and its findings MUST inform risk-tier assignment (X03) and autonomy limits ([AIES-AEOS-OM-01 §5](operating-model.md#5-autonomy-assignment)). The assessment MAY follow **ISO/IEC 42005** and is retained as a governance record (§3); where an organization already performs a DPIA or a regulatory conformity assessment, that MAY satisfy this requirement if it covers the same scope.
 
 ## Related Documents
 
@@ -119,3 +120,4 @@ Operating metrics make governance empirical. Organizations MUST track at least t
 
 - RFC 2119 — Key words for use in RFCs to Indicate Requirement Levels
 - RFC 8174 — Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words
+- ISO/IEC 42005:2025 — Artificial intelligence — AI system impact assessment (impact-assessment guidance referenced by GOV-01-R27)

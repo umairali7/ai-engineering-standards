@@ -131,6 +131,23 @@ Ids are never reused by `add`. To change an existing deployment, don't re-add �
 The same model name maps to several deployments. Name the deployment id
 directly, or pass `--runtime <name>` to disambiguate.
 
+### `verify-artifact` says MISMATCH (or the signature won't verify)
+`aies deployment verify-artifact <id> --artifact <path>` recomputes the file's
+SHA-256 and compares it to the declared `provenance.checksum`. MISMATCH means the
+local file is not the artifact the deployment was registered against — you have
+the wrong file, or the manifest checksum is stale (fix with `aies deployment
+update`). A declared **signature** shows `declared-not-checked` until you pass
+`--pubkey` and `--signature`; `unverifiable` means the `cryptography` package
+isn't installed (`pip install cryptography`, or verify with cosign/Sigstore
+externally). `endpoint-served` checksums can't be checked against a local file.
+
+### Importing external eval results (`aies import`) skipped items
+`aies import` ingests only items with a `scenario_id` and **six integer 0–4 EV
+scores**; anything else is skipped and counted (never fabricated). If everything
+was skipped, your file isn't in the expected shape — see `aies import --help` or
+[GUIDE §5.2](GUIDE.md). A single-metric benchmark can't be imported as a full
+qualification; bring it as EV-shaped evidence or keep it as separate corroboration.
+
 ---
 
 ## Scoring & reports
@@ -143,16 +160,6 @@ scores per EV dimension and a rater, then `aies score <run>` and
 ### I can't tell which response got which score
 Read the whole run in one view: `aies transcript <run-id>` — per item the task,
 the model's answer, and its scores/findings together.
-
-### I don't understand what the scores mean (good planner? coder? security?)
-Two axes: **competency area** (CA-01…CA-12) is *what kind of work* — the
-planner/coder/security axis, one score + CL + autonomy envelope per area — and
-**EV1–EV6** are *how good* the answers are within an area (Correctness,
-Completeness, Safety & Security, Maintainability, Efficiency, Traceability). A
-CA-05 run only tells you about the **coder** role. To profile across the SDLC,
-qualify several `--area`s and read the per-area blocks. Note EV3 (is *this
-answer* safe?) is not CA-07 (can it *do* security engineering?). Full explanation
-with the CA→role/phase table: [GUIDE.md §5.2b](GUIDE.md).
 
 ### The report says NON-DECISIONAL
 Fewer scored items than the risk-tier minimum. Increase `--repeats` (or combine

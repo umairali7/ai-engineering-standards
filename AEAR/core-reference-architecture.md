@@ -238,6 +238,7 @@ Where agent intentions become real actions — and therefore where containment m
 | Tool sandbox | Isolated execution of tool calls with per-task capability grants |
 | Ephemeral code environments | Disposable, reproducible workspaces provisioned per task, destroyed at completion |
 | Toolchain connectors | Governed adapters to version control, work tracking, build, and deployment systems |
+| Tool / connector registry | Approved inventory of callable tools, connector servers, API adapters, schemas, owners, data classes, and action classes |
 | Artifact staging | Quarantine area where agent outputs await quality/approval gates |
 
 **Normative requirements**
@@ -248,6 +249,8 @@ Where agent intentions become real actions — and therefore where containment m
 - [AIES-AEAR-CORE-01-R27] Sandbox network access MUST be default-deny, with per-task allowlists enforced by the Guardrail Plane's egress control.
 - [AIES-AEAR-CORE-01-R28] Execution environments MUST NOT contain long-lived credentials; secrets are brokered per §9.
 - [AIES-AEAR-CORE-01-R29] Irreversible actions (data deletion, external communications, financial operations) MUST be classified RT4 by default and thus gated at AL1 unless a documented risk acceptance says otherwise ([AIES-SHARED-02 §4]).
+- [AIES-AEAR-CORE-01-R60] Agent-accessible tools and connector servers MUST be resolved from a governed registry; production agents MUST NOT dynamically discover, install, or call unregistered tools.
+- [AIES-AEAR-CORE-01-R61] Tool schemas, connector metadata, and remote API descriptions MUST be treated as untrusted input and MUST NOT be permitted to change an agent's envelope, entitlements, or policy obligations.
 
 **Interfaces**: receives action requests from the **Orchestration Plane** through **Guardrail Plane** filters; integrates with external SDLC toolchains (§14); emits execution telemetry to the **Observability Plane**; sandbox capability grants derive from **Governance Plane** entitlements.
 
@@ -281,6 +284,7 @@ Deterministic controls that hold **regardless of what any model says or any prom
 - [AIES-AEAR-CORE-01-R33] Secret material MUST NOT appear in prompts, assembled context, model traffic, or logs; the secrets broker MUST issue only short-lived, task-scoped credentials.
 - [AIES-AEAR-CORE-01-R34] Every guardrail denial MUST produce an ART-15 record including the policy that fired; denials MUST be visible to supervision surfaces in the Interaction Plane.
 - [AIES-AEAR-CORE-01-R35] Guardrail bypass paths (break-glass) MUST require human authorization by ROLE-13 or ROLE-14, MUST be time-bound, and MUST be conspicuously audited.
+- [AIES-AEAR-CORE-01-R62] Guardrails MUST inspect agent tool calls before execution, including the target tool, action class, parameters, data classification, destination, and expected side effects.
 
 **Interfaces**: interposed on **Orchestration→Model**, **Orchestration→Execution**, **Context ingestion**, and **all egress**; policy content and principal attributes come from the **Governance Plane**; all decisions stream to the **Observability Plane**.
 
@@ -313,6 +317,7 @@ If the Governance Plane is the platform's law, this plane is its memory and its 
 - [AIES-AEAR-CORE-01-R39] Evaluation MUST run continuously in production (sampling live outputs), not only pre-release.
 - [AIES-AEAR-CORE-01-R40] Observability data access MUST itself be entitlement-controlled and audited, since activity logs and captured context may contain sensitive material.
 - [AIES-AEAR-CORE-01-R41] Anomalous agent behavior SHOULD trigger automatic autonomy reduction for the affected agent pending human review (principle 6, §2).
+- [AIES-AEAR-CORE-01-R63] Observability MUST preserve tool-call provenance sufficient to reconstruct which tool or connector was called, with which parameters, under which capability grant, and with what external side effect.
 
 **Interfaces**: receives events from **all planes**; feeds evidence to the **Interaction Plane** (dashboards, approval consoles), the **Governance Plane** (compliance reporting), and **AESQS** processes; entitlements from the **Governance Plane**.
 
@@ -344,7 +349,7 @@ The root of authority. Everything else enforces; this plane decides who and what
 - [AIES-AEAR-CORE-01-R42] Every agent instance MUST hold a unique identity distinct from any human identity, linked to its Agent Definition version (ART-14) and to an accountable human owner.
 - [AIES-AEAR-CORE-01-R43] Agents MUST NOT authenticate using human credentials, and humans MUST NOT act under agent identities; shared or ambient credentials MUST NOT exist on the platform.
 - [AIES-AEAR-CORE-01-R44] Entitlements granted to an agent for a task MUST be derived from, and MUST NOT exceed, the task's declared autonomy level and risk tier; entitlements MUST expire at task completion.
-- [AIES-AEAR-CORE-01-R45] Changes to Agent Definitions, entitlement policy, or guardrail policy MUST themselves be treated as RT3-or-higher changes with corresponding human review.
+- [AIES-AEAR-CORE-01-R45] Changes to Agent Definitions, entitlement policy, guardrail policy, or registered tool capabilities MUST themselves be treated as RT3-or-higher changes with corresponding human review.
 - [AIES-AEAR-CORE-01-R46] The Governance Plane MUST be able to demonstrate, for any past action, the full authorization chain: which principal, under which definition and version, with which entitlements, approved by whom.
 - [AIES-AEAR-CORE-01-R47] Compliance reporting SHOULD be generated from platform evidence automatically rather than assembled manually (see [AIES-AEAR-XC-01 §4](cross-cutting-concerns.md#4-compliance-evidence-generation-x03)).
 
@@ -480,18 +485,21 @@ A self-assessment instrument. Each item maps to normative requirements above; "Y
 | 14 | Is per-task assembled context recorded or reconstructible? | Context & Knowledge | R22 |
 | 15 | Does all agent tool execution run sandboxed, default-deny, ephemeral? | Execution | R24, R25, R27 |
 | 16 | Do agents reach production only through existing CI/CD gates? | Execution | R26 |
-| 17 | Are secrets brokered short-lived and absent from prompts, context, and logs? | Guardrail | R28, R33 |
-| 18 | Is guardrail policy versioned policy-as-code, failing closed, with audited break-glass? | Guardrail | R31, R32, R35 |
-| 19 | Is there a complete, tamper-evident ART-15 trail correlated end-to-end per task? | Observability | R36, R37 |
-| 20 | Do evaluation pipelines run continuously and gate autonomy increases? | Observability | R38, R39 |
-| 21 | Does anomalous agent behavior reduce autonomy automatically pending review? | Observability | R41 |
-| 22 | Do agents hold distinct identities linked to definitions and accountable owners, with no shared credentials? | Governance | R42, R43 |
-| 23 | Are agent entitlements derived from autonomy level × risk tier and expired at task end? | Governance | R44 |
-| 24 | Can you reproduce the full authorization chain for any past action? | Governance | R46 |
-| 25 | Are toolchain actions performed under agent-owned identities? | Execution / Governance | R52 |
-| 26 | Are degraded modes defined, tested, and autonomy-reducing? | All | R58, R59 |
+| 17 | Are agent tools and connectors governed through an approved registry? | Execution / Governance | R60, R61 |
+| 18 | Are secrets brokered short-lived and absent from prompts, context, and logs? | Guardrail | R28, R33 |
+| 19 | Is guardrail policy versioned policy-as-code, failing closed, with audited break-glass? | Guardrail | R31, R32, R35 |
+| 20 | Are tool calls inspected before execution for action class, data class, destination, and side effects? | Guardrail | R62 |
+| 21 | Is there a complete, tamper-evident ART-15 trail correlated end-to-end per task? | Observability | R36, R37 |
+| 22 | Do evaluation pipelines run continuously and gate autonomy increases? | Observability | R38, R39 |
+| 23 | Does anomalous agent behavior reduce autonomy automatically pending review? | Observability | R41 |
+| 24 | Is tool-call provenance reconstructible from observability records? | Observability | R63 |
+| 25 | Do agents hold distinct identities linked to definitions and accountable owners, with no shared credentials? | Governance | R42, R43 |
+| 26 | Are agent entitlements derived from autonomy level × risk tier and expired at task end? | Governance | R44 |
+| 27 | Can you reproduce the full authorization chain for any past action? | Governance | R46 |
+| 28 | Are toolchain actions performed under agent-owned identities? | Execution / Governance | R52 |
+| 29 | Are degraded modes defined, tested, and autonomy-reducing? | All | R58, R59 |
 
-Scoring guidance: organizations SHOULD treat items 3, 4, 17, 19, 22, and 26 as gating for any AL3+ operation; the remainder sequence naturally with autonomy ambitions. AESQS provides the formal capability-scoring method.
+Scoring guidance: organizations SHOULD treat items 3, 4, 17, 18, 21, 25, and 29 as gating for any AL3+ operation; the remainder sequence naturally with autonomy ambitions. AESQS provides the formal capability-scoring method.
 
 ---
 

@@ -74,7 +74,8 @@ and every change is versioned and auditable.
 | Models cluster (everyone aces an area) | cross-run comparison | add harder scenarios; consider raising the bar | suite maintainer | suite version bump |
 | A production incident on a qualified deployment | incident record | add the failure as a regression scenario; re-qualify | authority + maintainer | RR-01 + suite bump |
 | A defect found in the standard text | errata report | correct via the doc lifecycle | module editor | Class 1–3 per change |
-| An external framework changes (EU AI Act, CSA, ISO) | maintainer watch | refresh the [Crosswalk](CROSSWALK.md) | governance officer | Class 2 review |
+| An external framework changes (EU AI Act/GPAI Code, CSA, NIST, ISO, OWASP, ASDLC) | maintainer watch | refresh the [Crosswalk](CROSSWALK.md), affected KAs, and architecture controls | governance officer + module editor | Class 2 review |
+| A new agentic attack pattern becomes common | security advisories, incidents, red-team reports | update KA-07, AEAR guardrails, and CA-07/CA-12 scenarios | security editor + suite maintainer | Class 2 review or suite bump |
 
 The highest-value, lowest-cost loop to operate first is **item analysis** — it
 reads data the platform already stores and points directly at which content is
@@ -91,9 +92,9 @@ records that the document was reviewed.
 |---------|----------|
 | **Continuous** | Errata triage; evidence accrual from runs; security-sensitive errata per [SECURITY.md](../SECURITY.md) |
 | **Per platform release** | Item-analysis review of touched suites; reviewer-model calibration re-check |
-| **Quarterly** | Governance review of operating metrics ([AEOS-GOV-01](../AEOS/governance-operations.md)); suite-health review (discrimination/coverage) |
+| **Quarterly** | Governance review of operating metrics ([AEOS-GOV-01](../AEOS/governance-operations.md)); suite-health review (discrimination/coverage); security watch for OWASP/NIST/EU/CSA/ASDLC changes affecting agentic delivery |
 | **Annual** | Full standard review — every document re-affirmed or revised; taxonomy-stability check; **Crosswalk refresh** against current external frameworks; deprecation review |
-| **Trigger-based (out of cadence)** | Production incident; a new model generation that invalidates suite calibration; a change in a mapped external standard; sustained drift |
+| **Trigger-based (out of cadence)** | Production incident; a new model generation that invalidates suite calibration; a change in a mapped external standard; sustained drift; new high-severity agentic attack pattern |
 
 [AIES-DOC-09-R03] Version increments follow the [Versioning Standard
 (AIES-STD-05)](standards/versioning-standard.md): content and calibration
@@ -132,3 +133,6 @@ the suite version it was gathered on.
 
 - RFC 2119 — Key words for use in RFCs to Indicate Requirement Levels
 - RFC 8174 — Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words
+- NIST AI 600-1 — Artificial Intelligence Risk Management Framework: Generative Artificial Intelligence Profile
+- European Commission — General-Purpose AI Code of Practice (2025) and GPAI guidance under the AI Act
+- OWASP GenAI Security Project — 2025 Top 10 for LLMs and GenAI Applications; OWASP Top 10 for Agentic Applications 2026

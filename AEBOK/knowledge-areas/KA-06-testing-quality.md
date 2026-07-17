@@ -75,3 +75,5 @@ KA-06 covers Testing & Quality (P10) in AI-native delivery, which has three dist
 
 - RFC 2119 — Key words for use in RFCs to Indicate Requirement Levels
 - RFC 8174 — Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words
+- ISO/IEC/IEEE 29119 — Software testing (the general test-process/technique series)
+- ISO/IEC TS 42119-2:2025 — Artificial intelligence — Testing of AI — Part 2: Overview of testing AI systems (applies 29119 to AI with risk-based test selection; further parts in progress — Part 3 V&V, Part 7 red teaming, Part 8 testing generative AI). AIES qualification suites are an executable instantiation; see [Standards Crosswalk §3a (AIES-DOC-07)](../../docs/CROSSWALK.md)

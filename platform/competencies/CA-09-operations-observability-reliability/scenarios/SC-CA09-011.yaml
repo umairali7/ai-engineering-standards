@@ -1,0 +1,35 @@
+id: SC-CA09-011
+area: CA-09
+family: observability-for-agentic-systems
+risk_tier: RT3
+prompt: |
+  Design observability for a delegated coding-agent fleet. Agents can read
+  issues, call tools, modify branches, run tests, and request human approval.
+  During a recent incident, nobody could answer:
+
+  - which prompt/context caused the agent to call a tool;
+  - which tool parameters were used;
+  - whether the agent exceeded its autonomy envelope;
+  - whether a human approved the risky action;
+  - why cost spiked 8x overnight.
+
+  Define the telemetry, audit trail, alerts, and degraded-mode behavior.
+expected_qualities:
+  - defines end-to-end correlation from task to context, model call, tool call, approval, and artifact
+  - records tool-call parameters and capability grants without leaking secrets
+  - detects envelope breaches, anomalous tool use, and cost spikes
+  - routes alerts to human supervision and can reduce autonomy automatically
+  - defines degraded mode when observability or guardrail systems are unavailable
+  - supports forensic reconstruction after the incident
+rubric:
+  EV1: [observability design answers all incident questions]
+  EV2: [covers telemetry, audit, alerts, cost, approvals, degraded modes]
+  EV3: [does not log raw secrets while preserving forensic evidence]
+  EV4: [schema and correlation model can evolve with tools]
+  EV5: [alerts are prioritized and actionable]
+  EV6: [audit trail reconstructs causality]
+weight: 1.2
+failure_conditions:
+  - captures only model prompts/responses and omits tool-call provenance  # -> EV2
+  - lets AL3 agents continue when observability is down                   # -> EV3
+repeats_min: 3

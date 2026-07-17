@@ -70,7 +70,21 @@ parameters_default:            # generation defaults for this deployment
 provenance:
   source: local MLX server
   checksum: sha256:…           # binds the deployment to an exact artifact
+  signature:                   # optional: AI supply-chain provenance (declared,
+    method: openssf-model-signing   #   verified externally like the checksum)
+    reference: oms://…              #   — OpenSSF Model Signing / Sigstore ref
+    verified: true
+  ai_bom:                      # optional: AI bill-of-materials reference
+    format: cyclonedx-1.7      #   (CycloneDX / SPDX 3.0), or a plain path/URI string
+    reference: ./sbom/local-qwen.cdx.json
 ```
+
+`signature` and `ai_bom` are **optional** and **declarative** — the platform
+records them as provenance and surfaces them in `aies deployment inspect` and in
+the durable evidence (run manifest → evidence package → Qualification Record),
+so an audit trail is complete against the AI supply-chain standards
+([CROSSWALK §3b](../docs/CROSSWALK.md)). Cryptographic verification is delegated
+to the signer/registry, exactly as artifact `checksum` verification is.
 
 ```
 aies discover                        # auto-register what your runtimes serve
@@ -80,6 +94,9 @@ aies deployment add ./local-qwen.yaml    # register a NEW deployment
 aies deployment update ./local-qwen.yaml # edit an EXISTING one in place (same id)
 aies deployment retire local-qwen    # soft-mark; id stays reserved for audit
 aies deployment remove local-qwen    # hard-delete; frees the id to reuse
+aies deployment verify-artifact local-qwen --artifact ./model.safetensors
+                                     # recompute SHA-256 vs the declared checksum
+                                     #   (+ --pubkey/--signature to verify a signature)
 ```
 
 `add` only registers new ids (it refuses an id that already exists). To fix a

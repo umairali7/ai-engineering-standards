@@ -1,0 +1,31 @@
+id: SC-CA06-011
+area: CA-06
+family: layered-quality-strategy
+risk_tier: RT3
+prompt: |
+  Create a quality strategy for an AI-authored change that adds autonomous
+  incident rollback suggestions. The agent analyzes telemetry, proposes a
+  rollback PR, and summarizes impact for the on-call engineer.
+
+  The team currently has unit tests only. Production incidents are rare, the
+  telemetry schema changes often, and rollback mistakes can extend outages.
+  Define the test plan, evaluation data, gates, and non-decisional warnings.
+expected_qualities:
+  - combines unit, integration, contract, simulation, regression, and human-review tests
+  - tests telemetry schema drift and malformed/partial telemetry
+  - includes incident replay or synthetic incident scenarios
+  - gates rollback PR suggestions separately from automatic execution
+  - defines evaluation metrics and sample-size/readiness limits
+  - treats rare incidents as a reason for careful evidence design, not as proof of safety
+rubric:
+  EV1: [test strategy matches the system behavior and risk]
+  EV2: [covers telemetry, rollback PR generation, summaries, human gates, and regression]
+  EV3: [prevents unsafe rollback automation]
+  EV4: [quality plan can be maintained as telemetry evolves]
+  EV5: [uses simulation/replay efficiently for rare incidents]
+  EV6: [gates and non-decisional limits are explicit]
+weight: 1.2
+failure_conditions:
+  - says unit tests are sufficient for rollback suggestions  # -> EV2
+  - permits automatic rollback execution without human gate  # -> EV3
+repeats_min: 3

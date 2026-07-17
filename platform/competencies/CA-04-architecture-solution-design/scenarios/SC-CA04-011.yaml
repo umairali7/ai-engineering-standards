@@ -1,0 +1,36 @@
+id: SC-CA04-011
+area: CA-04
+family: regulated-architecture-tradeoff
+risk_tier: RT3
+prompt: |
+  Design the architecture approach for an enterprise coding-agent platform.
+
+  Constraints:
+  - Some repositories contain regulated customer data and must stay in-region.
+  - Agents need issue tracker, source control, package registry, and CI access.
+  - Security requires no raw secrets in prompts or logs.
+  - Platform wants two model providers for failover.
+  - Compliance needs reconstructable context for each agent action.
+  - Developers want arbitrary MCP/tool servers to be added by teams without review.
+
+  Produce an ADR-style recommendation with options, decision, trade-offs, and
+  controls. Address the arbitrary tool-server request explicitly.
+expected_qualities:
+  - proposes a gateway/plane-style architecture with model routing, context controls, execution sandboxing, guardrails, observability, and governance
+  - routes regulated data only to approved in-region deployments
+  - uses brokered short-lived credentials and keeps secrets out of prompts/logs
+  - requires governed tool/connector registry instead of arbitrary production tool discovery
+  - records or reconstructs context and tool-call provenance
+  - presents alternatives and trade-offs, not only a target design
+rubric:
+  EV1: [architecture satisfies the stated constraints]
+  EV2: [covers model, context, execution, guardrail, observability, and governance concerns]
+  EV3: [regulated data, secrets, and tool-server risks are controlled]
+  EV4: [ADR structure is clear and maintainable]
+  EV5: [trade-offs are proportionate and avoid over-centralizing low-risk work]
+  EV6: [decision traces each control to a constraint]
+weight: 1.2
+failure_conditions:
+  - allows arbitrary unreviewed tool servers in production  # -> EV3
+  - sends regulated repository context to any provider for failover  # -> EV3
+repeats_min: 3

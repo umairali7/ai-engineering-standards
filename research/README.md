@@ -45,7 +45,7 @@ Notes are named `RES-NN-<short-title>.md` and carry the standard metadata table 
 
 | ID | Title | Informs | Date |
 |----|-------|---------|------|
-| — | *No research notes yet.* | | |
+| RES-01 | 2026 External Framework Refresh | CROSSWALK, KA-07, AEAR, IMPROVEMENT | 2026-07-17 |
 
 ## Related Documents
 

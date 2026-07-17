@@ -8,15 +8,15 @@
 #   aies deployment add examples/deployments/judge-local.yaml
 #   aies qualify local-qwen --rt 2 --judge judge-local-mixtral --parallel 8
 
-id: judge-local-mixtral
+id: judge-local-ds4
 family: mixtral
-model: mixtral-8x7b-instruct
+model: deepseek-v4-flash
 runtime: openai-compat
 roles: [judge]                    # advisory: shows up in `aies judge available`
 context_window: 32768
 runtime_config:
-  base_url: http://localhost:11434/v1     # e.g. Ollama / vLLM / LM Studio
-  model: mixtral-8x7b-instruct
+  base_url: http://localhost:8001/v1     # e.g. Ollama / vLLM / LM Studio
+  model: deepseek-v4-flash
 provenance:
   source: "served locally"
   checksum: "sha256:endpoint-served"

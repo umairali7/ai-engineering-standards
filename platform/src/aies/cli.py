@@ -185,6 +185,21 @@ def cmd_score(args) -> int:
     return 0
 
 
+def cmd_import(args) -> int:
+    from . import evalimport, rating
+    try:
+        summary = evalimport.import_eval(args.run, args.file, source=args.source)
+    except (evalimport.EvalImportError, rating.RatingError) as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+    _out(summary, args.json,
+         f"imported {summary['imported']}/{summary['items']} items as "
+         f"'{summary['source']}' ({summary['skipped']} skipped) into {args.run}\n"
+         f"next: aies qualify --resume {args.run}   # aggregate + report\n"
+         f"      (or `aies review {args.run}` to weigh it against a human rater)")
+    return 0
+
+
 def cmd_report(args) -> int:
     from . import report
     target = args.run
@@ -636,6 +651,29 @@ def cmd_deployment(args) -> int:
         elif args.dep_cmd == "retire":
             e = registry.retire(args.name)
             _out(e, args.json, f"retired {e['id']}")
+        elif args.dep_cmd == "verify-artifact":
+            from . import verification
+            try:
+                res = verification.verify_artifact(
+                    args.name, args.artifact, pubkey_path=args.pubkey,
+                    sig_path=args.signature, runtime=getattr(args, "runtime", None))
+            except verification.VerificationError as e:
+                print(f"error: {e}", file=sys.stderr)
+                return 2
+            if args.json:
+                _out(res, True)
+            else:
+                c = res["checksum"]
+                cm = ("MATCH" if c["match"] else "MISMATCH" if c["match"] is False
+                      else "n/a")
+                print(f"verify-artifact {res['deployment']}  ({res['artifact']})")
+                print(f"  checksum : {cm}  declared={c.get('declared')}  "
+                      f"computed={c['computed']}"
+                      + (f"\n    {c['note']}" if c.get("note") else ""))
+                print(f"  signature: {res['signature']['status']}"
+                      + (f" — {res['signature']['detail']}" if res['signature']['detail'] else ""))
+                print(f"  => {'OK' if res['ok'] else 'NOT VERIFIED'}")
+            return 0 if res["ok"] else 1
     except registry.RegistryError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
@@ -726,6 +764,14 @@ def cmd_journey(args) -> int:
     return 0
 
 
+def cmd_suites(args) -> int:
+    from . import suites
+    root = Path(args.root) if args.root else None
+    report = suites.validate(root)
+    _out(report, args.json, suites.render(report))
+    return 0 if report["valid"] else 1
+
+
 def cmd_dashboard(args) -> int:
     from . import dashboard
     if args.write:
@@ -747,10 +793,10 @@ def _not_yet(milestone: str):
 _EPILOG = """\
 commands by stage (each group alphabetical):
   setup & discovery   deployment · discover · doctor · runtime
-  qualification       benchmark · capabilities · compare · qualify · review · runs · score · transcript
+  qualification       benchmark · capabilities · compare · import · qualify · review · runs · score · transcript
   judging             judge available · judge history · judge list   (the judge pool + track record)
   decision & audit    conform · dashboard · grant · qualification · report · verify
-  reference           index · journey · plugins · profile
+  reference           index · journey · plugins · profile · suites
 
 typical workflow:
   aies doctor                                  validate env, detect runtimes
@@ -759,10 +805,6 @@ typical workflow:
   aies qualify <deployment> --profile coder --rt 2 --area CA-05 --judge <judge-dep>
                                                auto-score with a judge model -> report
   aies transcript <run>                        read the whole run: task + answer + score per item
-
-  # profile a deployment across the whole SDLC (planner/coder/security/…):
-  aies qualify <deployment> --all-areas --rt 2 --judge <judge-dep>
-  aies capabilities <run>                       per-area CL + autonomy, side by side
 
   # manual scoring (a human rates the answers) — omit --judge:
   aies qualify <deployment> --profile enterprise --rt 2 --area CA-05
@@ -773,24 +815,23 @@ typical workflow:
   aies review <run> --model-reviewer <judge> --parallel 8
   aies qualify --resume <run>                  aggregate -> report
 
+  # bring external eval results in as EV evidence (automated rater):
+  aies import <run> eval.json                  ingest EV1–EV6 scores from another tool
+
+  # profile a deployment across the whole SDLC (planner/coder/security/…):
+  aies qualify <deployment> --all-areas --rt 2 --judge <judge-dep>
+  aies capabilities <run>                      per-area CL + autonomy, side by side
+
   # optional formal record (a human decision, revocable):
   aies grant <run> --decision grant --authority "Name (ROLE-13)" --second "Name (ROLE-14)"
   aies verify <QUAL-id>                         re-check environment (D7)
   aies conform check statement.yaml            check a conformance claim
+  aies suites validate                         validate shipped competency suites
+
+  # supply-chain provenance:
+  aies deployment verify-artifact <id> --artifact model.bin   check checksum/signature
 
   aies qualify <deployment> --journey JOURNEY-01   run a multi-phase journey instead
-
-handy:
-  aies doctor                                  which runtimes are reachable
-  aies deployment list                         what is registered
-  aies deployment add ./judge.yaml             register a new deployment
-  aies deployment update ./judge.yaml          fix an existing one in place (same id)
-  aies judge available                         judges you have registered (roles:[judge])
-  aies judge list                              judges used, with parse rate
-  aies capabilities <run>                      per-area profile: planner/coder/security/…
-  aies transcript <run> --area CA-07           read one area's answers + scores
-  aies compare <depA> <depB>                   diff two deployments area-by-area
-  aies runs                                    result history
 
 Run `aies <command> --help` for a command's options. The platform prepares
 evidence; a human records every grant. Docs: platform/GUIDE.md.
@@ -878,6 +919,15 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("run")
     s.add_argument("--file", help="scoresheet path (default: the run's scoresheet.json)")
     s.set_defaults(func=cmd_score)
+
+    im = common(sub.add_parser("import", help="import external eval results "
+                               "(EV1–EV6 JSON) into a run as automated ratings"))
+    im.add_argument("run")
+    im.add_argument("file", help="eval file: JSON {source?, items:[{scenario_id, "
+                    "repeat?, scores:{EV1..EV6}, findings?}]}")
+    im.add_argument("--source", default=None,
+                    help="label for the rater (default: the file's `source` field)")
+    im.set_defaults(func=cmd_import)
 
     r = common(sub.add_parser("report", help="render an evidence package"))
     r.add_argument("run")
@@ -1005,6 +1055,14 @@ def build_parser() -> argparse.ArgumentParser:
     jns.add_argument("--json", action="store_true")
     jn.set_defaults(func=cmd_journey)
 
+    st = common(sub.add_parser("suites", help="inspect and validate competency suites"))
+    stsub = st.add_subparsers(dest="suites_cmd", required=True)
+    stv = stsub.add_parser("validate", help="validate suite YAML structure and coverage")
+    stv.add_argument("--root", default=None,
+                     help="competencies directory to validate (default: shipped suites)")
+    stv.add_argument("--json", action="store_true")
+    st.set_defaults(func=cmd_suites)
+
     dep = common(sub.add_parser("deployment", help="manage deployments "
                                 "(model × runtime × config × endpoint)"))
     depsub = dep.add_subparsers(dest="dep_cmd", required=True)
@@ -1018,7 +1076,14 @@ def build_parser() -> argparse.ArgumentParser:
                             "reused (vs retire, which reserves it for audit)")
     drm.add_argument("name")
     dr = depsub.add_parser("retire"); dr.add_argument("name")
-    for x in (dl, di, da, du, drm, dr):
+    dva = depsub.add_parser("verify-artifact", help="verify a local artifact "
+                            "against the deployment's declared checksum/signature")
+    dva.add_argument("name")
+    dva.add_argument("--artifact", required=True, help="path to the model artifact file")
+    dva.add_argument("--pubkey", default=None, help="PEM public key for signature verification")
+    dva.add_argument("--signature", default=None, help="detached signature file")
+    dva.add_argument("--runtime", default=None, help="disambiguate the deployment's runtime")
+    for x in (dl, di, da, du, drm, dr, dva):
         x.add_argument("--json", action="store_true")
     dep.set_defaults(func=cmd_deployment)
 

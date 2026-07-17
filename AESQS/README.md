@@ -128,6 +128,7 @@ The loop is continuous: ongoing verification feeds back into evaluation, and rev
 - [AIES-AESQS-RR-01 — Revision & Revocation](revision-and-revocation.md)
 - [AIES-AEBOK-00 — AEBOK Module Overview](../AEBOK/README.md) · [AIES-AEOS-00 — AEOS Module Overview](../AEOS/README.md) · [AIES-AECT-00 — AECT Module Overview](../AECT/README.md)
 - [Taxonomy (AIES-SHARED-02)](../Shared/Taxonomy/README.md) · [Glossary (AIES-SHARED-01)](../Shared/Glossary/README.md)
+- **External alignment:** ISO/IEC TS 42119-2 (testing of AI) and ISO/IEC 25059 (AI quality model) — AESQS is an executable, risk-tiered instantiation of the former, and EV1–EV6 map to the latter; see [Standards Crosswalk §3a (AIES-DOC-07)](../docs/CROSSWALK.md)
 
 ## References
 

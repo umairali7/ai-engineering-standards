@@ -285,6 +285,34 @@ aies review <run-id> --model-reviewer <judge-id> --parallel 8
 aies qualify --resume <run-id>
 ```
 
+**Bring external eval results in as evidence.** If you already scored the
+responses with another tool (a custom Inspect/DeepEval task, a second judge, an
+offline pipeline) that emits EV1–EV6, import them as automated-kind ratings
+(subject to the same calibration gate):
+
+```
+aies import <run-id> eval.json --source inspect:my-task
+aies qualify --resume <run-id>
+```
+
+The file is `{"source": "...", "items": [{"scenario_id": "SC-CA05-001",
+"repeat": 1, "scores": {"EV1": 3, …, "EV6": 3}, "findings": [...]}]}`. Items that
+aren't six integers 0–4 are skipped and reported, never fabricated. (AIES scores
+all six dimensions, so a single-metric benchmark is corroboration, not a
+substitute.)
+
+**Verify supply-chain provenance.** If a deployment declares `provenance.checksum`
+(and optionally `provenance.signature`), verify a local artifact against it:
+
+```
+aies deployment verify-artifact <id> --artifact ./model.safetensors \
+  [--pubkey key.pem --signature model.sig]
+```
+
+Checksum verification is exact (SHA-256); signature verification is best-effort
+(needs `cryptography`, or verify via cosign/Sigstore externally). A declared
+signature you didn't check is reported as such — never a false pass.
+
 **Slow run?** It's almost always the subject model, not the platform. Cap output
 length with `export AIES_MAX_TOKENS=1024` (often the biggest speedup), and use
 `--repeats 1` for a quick, non-decisional look. On a single local GPU, more
@@ -349,84 +377,6 @@ aies transcript <run-id> --write          # save transcript.md into the run dir
 
 This is the fastest way to sanity-check a run and to *read the model's actual
 answers* when deciding whether the scores look right.
-
-### 5.2b Understanding your results — the two axes
-
-Scores have **two independent axes**, and mixing them up is the most common
-source of confusion:
-
-**Axis 1 — Competency Area (CA-01…CA-12): *what kind of work*.** This is the
-"good planner / coder / security engineer?" axis. Each area is a role / SDLC
-phase, and **each gets its own score, competency level (CL), and autonomy
-envelope**. A model can be a strong coder and a weak security engineer — that
-shows up as different per-area results.
-
-| Area | Role / name | What it covers | SDLC phase |
-|---|---|---|---|
-| CA-01 | AI-Native SDLC Foundations | Risk-tiering a task, deriving the autonomy ceiling, provenance, keeping an accountable human — the orientation every other area assumes | Cross-cutting |
-| CA-02 | Business & Requirements Analysis (**planner**) | Eliciting/structuring intent, checking requirements for ambiguity & contradiction, traceability to a source | Plan |
-| CA-03 | Product & Experience Definition | Defining end-to-end experience, testable acceptance criteria, prioritizing against product goals | Design |
-| CA-04 | Architecture & Solution Design (**architect**) | Enumerating design options vs quality attributes, critiquing for failure modes, recording decisions + rejected alternatives | Design |
-| CA-05 | AI-Assisted Implementation (**coder**) | Producing source changes: features, fixes, refactors; stating assumptions, preserving behavior, escalating out-of-scope | Build |
-| CA-06 | Testing, Quality & Evaluation | Tests that assert intended (not just current) behavior, verification independence, real coverage vs theater | Test |
-| CA-07 | Security & Privacy Engineering (**security**) | Threat-modeling agents/pipelines, finding vulns, reviewing personal-data flows, treating external input as untrusted | Cross-cutting |
-| CA-08 | Delivery & Release Engineering | Pipeline as enforcement: risk-tier gates, provenance at promotion, progressive release with rollback | Release |
-| CA-09 | Operations, Observability & Reliability | Running AI-native systems: observability, reliability, incident response | Operate |
-| CA-10 | Human-AI Collaboration & Oversight | Oversight as a discipline: gates a human can judge, right-sized reviews, measured control health | Cross-cutting |
-| CA-11 | Context & Knowledge Engineering | Curating governed context assets: knowledge → machine-consumable form, minimal relevant set per task, freshness | Cross-cutting |
-| CA-12 | Governance, Risk & AI Safety | Keeping the operating model honest: risk acceptance, evidence-driven autonomy change, guardrails, incident governance | Cross-cutting |
-
-**Axis 2 — Evaluation Dimension (EV1–EV6): *how good* the answers are**, applied
-*within* each area:
-
-| | Dimension | Asks |
-|---|---|---|
-| EV1 | Correctness | Is it right? |
-| EV2 | Completeness | Does it cover the task? |
-| EV3 | Safety & Security | Is *this answer* safe? (the hard gate) |
-| EV4 | Maintainability | Is it clean/readable? |
-| EV5 | Efficiency | Is it economical? |
-| EV6 | Traceability | Is it justified/auditable? |
-
-So a run over **CA-05** with EV scores ~3.7/4 reads as: *"as a **coder**, its
-answers were highly correct, complete, safe, … "* — it says **nothing** about
-planning or security engineering, because those areas weren't tested.
-
-> **EV3 ≠ CA-07.** EV3 (Safety & Security) asks whether *this particular answer*
-> is safe — a quality check on every area. CA-07 (Security & Privacy
-> Engineering) asks whether the model can *do security work* — a whole area. A
-> high EV3 on a coding run does not make the model a good security engineer.
-
-**To profile a model across the SDLC**, qualify several areas at once — pick them
-with repeated `--area`, or `--all-areas` for the full CA-01…CA-12 sweep:
-
-```
-# selected roles:
-aies qualify <deployment> --rt 2 --repeats 5 --judge <strong-independent-dep> \
-  --area CA-02 --area CA-04 --area CA-05 --area CA-06 --area CA-07
-# or the whole SDLC:
-aies qualify <deployment> --rt 2 --repeats 5 --all-areas --judge <strong-dep>
-```
-
-Then read the whole capability profile in one table:
-
-```
-aies capabilities <run-id>        # or a deployment id (its latest aggregated run)
-```
-
-```
-AREA   ROLE / SDLC PHASE                  CL   AGG   AL   GATES  SAMPLE
-CA-04  Architecture & Solution Design     CL3  3.41  AL3  PASS   decisional
-CA-05  AI-Assisted Implementation         CL3  3.46  AL3  PASS   decisional
-CA-07  Security & Privacy Engineering     CL1  1.90  AL1  FAIL   decisional
-```
-
-That is the "how good at each phase" answer — *strong coder, weak security* — at
-a glance. `aies compare` diffs two deployments area-by-area (same suite versions
-only). **Reading the numbers within an area:** gates use the **lower 90 %
-confidence bound** (the `decision_value`), not the mean; a result is only
-**decisional** once the area has enough scored items (≥ 20/30/50/100 for
-RT1–RT4), otherwise it is **NON-DECISIONAL** and cannot ground a grant.
 
 ### 5.3 Manual scoring (omit `--judge`)
 
@@ -551,118 +501,7 @@ invalidated and you re-qualify.
 Every other runtime is identical — just start its server and use the matching
 deployment name (`lmstudio-…`, `llamacpp-…`, `mlx-…`).
 
-## 6. Command cheatsheet — common recipes
-
-Copy-paste starting points, grouped by task. Run `aies help` for the full
-command tree (alphabetical) and `aies <command> --help` for every option.
-
-### Recommended path for a first real run
-
-**Step 0 — once, so the fixes are active and runs are fast**
-```
-pip install -e ".[test]"                 # installs certifi (fixes TLS on macOS)
-export ANTHROPIC_API_KEY=<key>           # if your judge is a cloud model
-export AIES_MAX_TOKENS=1024              # cap output so local models don't crawl
-```
-
-**Step 1 — validate cheaply: re-score a run you already collected, with a strong
-independent judge (no re-collection), then read it**
-```
-aies review <run-id> --model-reviewer claude-opus-4-8-native --parallel 8
-aies qualify --resume <run-id>
-aies capabilities <run-id>               # per-area profile
-aies transcript   <run-id>               # do the scores match the answers?
-```
-
-**Step 2 — a real capability profile across the SDLC.** Start focused, then sweep:
-```
-# a few roles first, modest repeats:
-aies qualify <deployment> --rt 2 --area CA-05 --area CA-07 --area CA-02 \
-  --repeats 3 --parallel 1 --judge claude-opus-4-8-native
-# the full sweep when you're ready (slower):
-aies qualify <deployment> --rt 2 --all-areas --repeats 5 \
-  --parallel 1 --judge claude-opus-4-8-native
-aies capabilities <new-run-id>
-```
-
-> **Tuning for a local server:** keep `--parallel 1` if it rejects/drops
-> concurrent calls (common for a single-GPU server); use an **independent**
-> judge (not the subject's sibling) to avoid inflated scores; raise `--repeats`
-> until an area reaches its decisional minimum (≥ 20/30/50/100 for RT1–RT4).
-
-### Grouped recipes
-
-**Setup & discovery**
-```
-aies doctor                              # which runtimes are reachable
-aies discover                            # auto-register served models as deployments
-aies runtime ollama                      # probe one runtime's endpoint
-aies plugins list                        # installed runtime adapters + capabilities
-```
-
-**Register & fix deployments**
-```
-aies deployment add ./my-deployment.yaml     # register a NEW deployment
-aies deployment add examples/deployments/claude-opus-4-8-native.yaml
-aies deployment list                          # what is registered
-aies deployment inspect local-qwen            # full manifest (base_url, api_key_env)
-aies deployment update ./my-deployment.yaml   # fix an existing one in place (same id)
-aies deployment remove local-qwen             # hard-delete; frees the id
-aies deployment retire local-qwen             # soft-mark; id reserved for audit
-```
-
-**Run a qualification (automated judge)**
-```
-export AIES_MAX_TOKENS=1024                    # cap output → faster local runs
-export ANTHROPIC_API_KEY=<key>                 # if the judge is a cloud model
-aies qualify local-qwen --rt 2 --area CA-05 --repeats 5 \
-  --judge claude-opus-4-8-native --parallel 8
-aies qualify local-qwen --rt 2 --all-areas --repeats 5 \
-  --judge claude-opus-4-8-native              # profile the whole SDLC
-aies qualify local-qwen --rt 2 --area CA-05 --journey JOURNEY-01   # a multi-phase journey
-```
-
-**Run a qualification (manual human scoring)**
-```
-aies qualify local-qwen --rt 2 --area CA-05 --repeats 5    # writes scoresheet.json
-# edit scoresheet.json: 0–4 per EV dimension, a rater, findings for ≤2
-aies score run-2031                            # ingest your scores
-aies qualify --resume run-2031                 # aggregate → report
-```
-
-**Re-score a run you already collected (e.g. the judge failed) — no re-collect**
-```
-aies review run-2031 --model-reviewer claude-opus-4-8-native --parallel 8
-aies qualify --resume run-2031
-```
-
-**Read & interpret results**
-```
-aies transcript run-2031                       # whole run: task + answer + scores per item
-aies transcript run-2031 --area CA-07          # just one area
-aies capabilities run-2031                     # per-area profile: planner/coder/security/…
-aies report run-2031 --format markdown         # the evidence report
-aies runs                                      # result history
-aies compare local-qwen other-model            # diff two deployments area-by-area
-```
-
-**Judges**
-```
-aies judge available                           # judges registered (roles:[judge]) + count
-aies judge list                                # judges used, with parse rate
-aies judge history --judge claude-opus-4-8-native
-```
-
-**Decision & audit (human)**
-```
-aies grant run-2031 --decision grant \
-  --authority "Alex (ROLE-13)" --second "Sam (ROLE-14)"
-aies qualification history                      # the QUAL-… records
-aies verify QUAL-2026-001                        # re-check environment (D7)
-aies conform check statement.yaml                # check a conformance claim
-```
-
-## 7. A note on trust
+## 6. A note on trust
 
 Every number the platform emits is evidence with full provenance (which model
 build, which environment, which rater, which suite version), stored as plain

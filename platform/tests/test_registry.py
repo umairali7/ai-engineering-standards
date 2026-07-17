@@ -61,6 +61,37 @@ def test_update_edits_in_place_and_flags_config_only_change(ws, tmp_path):
     assert registry.get("dep")["roles"] == ["judge"]
 
 
+def test_supply_chain_provenance_validated(ws, tmp_path):
+    import yaml
+    from aies import registry
+    prov = {"source": "x", "checksum": "sha256:" + "0" * 64,
+            "signature": {"method": "openssf-model-signing", "reference": "oms://x",
+                          "verified": True},
+            "ai_bom": {"format": "cyclonedx-1.7", "reference": "./sbom.cdx.json"}}
+    ok = yaml.safe_load(_manifest(tmp_path, provenance=prov).read_text(encoding="utf-8"))
+    assert registry.validate_entry(ok) == []                 # valid shapes accepted
+    bad = dict(ok, provenance={"checksum": "sha256:" + "0" * 64,
+                               "signature": "not-a-mapping"})
+    assert any("provenance.signature" in x for x in registry.validate_entry(bad))
+
+
+def test_supply_chain_provenance_carried_into_evidence(ws, tmp_path):
+    import json, yaml
+    from aies import registry, engine, workspace
+    entry = {"id": "signed", "family": "demo", "runtime": "mock", "model": "signed",
+             "context_window": 8192,
+             "provenance": {"source": "x", "checksum": "sha256:" + "0" * 64,
+                            "signature": {"method": "openssf-model-signing",
+                                          "reference": "oms://x"},
+                            "ai_bom": "./sbom.cdx.json"}}
+    p = tmp_path / "signed.yaml"; p.write_text(yaml.safe_dump(entry), encoding="utf-8")
+    registry.add(p)
+    run = engine.start_qualification("signed", "enterprise", "RT2", ["CA-05"], repeats=1)
+    manifest = json.loads((workspace.run_dir(run["run_id"]) / "manifest.json").read_text())
+    assert manifest["model"]["signature"]["method"] == "openssf-model-signing"
+    assert manifest["model"]["ai_bom"] == "./sbom.cdx.json"
+
+
 def test_remove_frees_id_retire_reserves_it(ws, tmp_path):
     from aies import registry
     registry.add(_manifest(tmp_path))

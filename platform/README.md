@@ -18,11 +18,14 @@ never a global "production ready" verdict (D4).
 
 **Milestones M1–M4 shipped** (see [PLATFORM.md §10](../docs/PLATFORM.md)) —
 the full pipeline is runnable end to end:
-`doctor` (runtime-aware), `discover`, `registry`, `qualify` (with
-`--parallel` and `--journey`), `score`, `report` (Markdown/JSON/HTML),
+`doctor` (runtime-aware), `discover`, `registry`/`deployment` (incl. `update`,
+`remove`, `verify-artifact` for supply-chain provenance), `qualify` (with
+`--parallel`, `--judge` auto-scoring, `--journey`, `--all-areas`), `score`,
+`import` (external eval results), `report` (Markdown/JSON/HTML), `transcript`,
+`capabilities` (per-area SDLC profile), `judge` (available/list/history),
 `runs`, `compare`, `index`, `review`, `grant`, `verify`, `journey`,
-`conform`, `runtime`/`deployment`/`profile`/`qualification`,
-`dashboard`, `plugins`. All twelve competency areas
+`conform`, `runtime`/`profile`/`qualification`, `dashboard`, `plugins`.
+All twelve competency areas
 (CA-01…CA-12) ship demonstration suites; six weighting profiles; a
 frozen v1.0 runtime-adapter contract with an
 [out-of-tree adapter example](examples/external_adapter/README.md);
@@ -51,6 +54,7 @@ environment change invalidates the grant, per D7).
 cd platform
 pip install -e .          # installs the `aies` command (Python >= 3.10)
 pytest tests/             # conformance tests keyed to AESQS requirement IDs
+aies suites validate      # suite schema, ID, risk-tier, and rubric gate
 ```
 
 Artifacts are written to `./aies-workspace` (override with the
@@ -74,6 +78,7 @@ aies report <run-id> --format markdown         # evidence package
 
 aies runs list                # result history
 aies compare <dep-a> <dep-b>  # deltas on identical suite versions only
+aies suites validate          # validate suite catalog before publishing changes
 ```
 
 **Qualify deployments, not bare models** (PLATFORM.md D11). A deployment
@@ -128,12 +133,14 @@ platform/
 ```
 
 All twelve competency areas (CA-01…CA-12) ship demonstration suites of
-four scenarios each, every area including an escalation scenario where
-the competent behavior is to decline or escalate. A *decisional* RT2
-assessment needs ≥ 30 scored items per area (AIES-AESQS-CS-01 §6), so
-these suites must be grown before their results are treated as
-qualification evidence — the platform labels under-sampled runs
-NON-DECISIONAL automatically.
+eleven scenarios each, including harder integration scenarios that combine
+multiple constraints, ambiguity, safety pressure, and governance trade-offs.
+The suites are useful for smoke tests, calibration, and early comparison, but
+they are still not a full public qualification benchmark by themselves. A
+*decisional* RT2 assessment needs ≥ 30 scored items per area
+(AIES-AESQS-CS-01 §6), so teams should use repeats and additional held-out
+scenarios before treating results as qualification evidence — the platform
+labels under-sampled runs NON-DECISIONAL automatically.
 
 ## Related Documents
 

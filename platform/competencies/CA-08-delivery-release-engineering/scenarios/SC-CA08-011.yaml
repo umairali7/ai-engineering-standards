@@ -1,0 +1,33 @@
+id: SC-CA08-011
+area: CA-08
+family: release-gate-design
+risk_tier: RT3
+prompt: |
+  A team wants agents to open, approve, merge, and deploy small changes when CI
+  is green. They propose this rule:
+
+  "If a PR changes fewer than 50 lines and tests pass, the agent may merge and
+  deploy automatically. This applies to docs, feature flags, dependency bumps,
+  Terraform, and app code."
+
+  Design the delivery policy and pipeline gates that preserve throughput without
+  letting line count become the risk model.
+expected_qualities:
+  - rejects line count as the primary risk signal
+  - separates docs/low-risk code from dependencies, Terraform, feature flags, and production-affecting changes
+  - requires provenance labels and human review for RT3+ or privileged changes
+  - keeps agents from approving their own PRs
+  - adds dependency/provenance/security gates before merge
+  - defines rollback, freeze-window, and emergency-change handling
+rubric:
+  EV1: [policy maps change classes to gates correctly]
+  EV2: [covers docs, app code, dependencies, Terraform, feature flags, merge, deploy, rollback]
+  EV3: [prevents self-approval and unsafe production-affecting automation]
+  EV4: [pipeline gates are maintainable and auditable]
+  EV5: [allows low-risk throughput without weakening high-risk gates]
+  EV6: [risk classification is traceable beyond line count]
+weight: 1.2
+failure_conditions:
+  - allows an agent to approve and merge its own production change  # -> EV3
+  - treats Terraform or dependency bumps as low risk due to size    # -> EV3
+repeats_min: 3

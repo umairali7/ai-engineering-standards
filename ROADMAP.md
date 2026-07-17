@@ -136,6 +136,22 @@ Deliverables (milestones per [PLATFORM.md §10](docs/PLATFORM.md)):
 
 Entry criteria: AESQS at Review status (execution feedback is part of hardening it toward Approved); [ADR-0002](adr/ADR-0002-Qualification-Platform.md) accepted. Exit criteria: platform can execute a full qualification cycle — evidence through human-recorded grant — for at least one role scope ✅; results reproducible on an identical environment fingerprint ✅; conformance tests map enforced behavior to AESQS requirement IDs ✅ (40 tests); **independent pilot on a real hosted/local model — outstanding** (requires a maintainer to run `aies` against an actual deployment).
 
+### Phase 8 Hardening Backlog — Path to 10/10
+
+| Status | Priority | Work item | Why it matters |
+|--------|----------|-----------|----------------|
+| Open | P0 | Finalize repository license and split code/docs licensing if needed | OSS reuse is blocked while all rights are reserved |
+| Open | P0 | Remove generated artifacts from release archives and add a release hygiene check | Public source packages must not include `.env`, cache, workspace, or build artifacts |
+| Open | P0 | Publish an independent pilot on one local and one hosted deployment | Proves the platform works outside synthetic/mock paths |
+| Done | P1 | Add `aies suites validate` and run it in CI | Prevents scenario schema, ID, rubric, and risk-tier drift |
+| In progress | P1 | Grow each CA suite to decisional-ready public and held-out sets | First tranche complete: 11 public scenarios per CA, including complex integration cases; held-out decisional sets remain |
+| Done | P1 | Add connector/tool/memory attack scenarios to CA-07 and governance response scenarios to CA-12 | `SC-CA07-011`, `SC-CA11-011`, and `SC-CA12-011` cover this initial tranche |
+| Open | P2 | Add bridges/exporters for Inspect AI or comparable eval traces | Lets AIES complement the eval ecosystem instead of duplicating it |
+| In progress | P2 | Record model signature and AI-BOM in the deployment manifest (OpenSSF Model Signing; CycloneDX/SPDX) | Aligns deployment provenance (D7) with AI supply-chain standards ([CROSSWALK §3b](docs/CROSSWALK.md)). Declaration + evidence pass-through done; cryptographic verification (Sigstore/OMS) remains |
+| Open | P2 | Add resumable failed-run repair for partial inference failures | Makes long real-model evaluations easier to operate |
+| Open | P2 | Improve reports with sample-readiness, gate-failure, and grant-readiness explanations | Helps adopters interpret evidence correctly |
+| Open | P3 | Publish a contributor guide for writing high-quality scenarios | Makes suite growth community-friendly |
+
 ## Phase 9 — v1.0 Public Release
 
 **Status: ⏳ Planned**
