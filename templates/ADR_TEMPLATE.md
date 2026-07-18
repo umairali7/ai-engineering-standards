@@ -48,6 +48,18 @@
 - <Driver 2>
 - <Driver 3>
 
+## Existing-Contracts Check
+
+<!-- MANDATORY (COMPATIBILITY.md §5). Answer before proposing a new abstraction:
+     "Can this be expressed using the existing contracts?" If YES, do not add a
+     new abstraction — this ADR is likely unnecessary. If NO, state precisely
+     which existing contract is insufficient and why, and note the version bump
+     and conformance impact (STABILITY.md). -->
+
+- **Can the existing contracts express this?** <Yes → reconsider the ADR / No → why>
+- **If no, which contract is insufficient, and what version bump / conformance
+  impact does the change carry?** <answer>
+
 ## Options Considered
 
 <!-- List EVERY option seriously considered, including the rejected ones —

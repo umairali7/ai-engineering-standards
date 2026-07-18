@@ -155,6 +155,17 @@ The project follows an engineering governance model described in [GOVERNANCE.md]
 
 No individual contributor owns the standards. Engineering consensus drives evolution.
 
+**Contract stability (v1.0 freeze).** The architecture has reached a stable
+equilibrium; the contracts others build against are frozen and versioned:
+
+- [STABILITY.md](STABILITY.md) — the **v1.0 Architecture Freeze**: frozen
+  contracts with versions, the **normative vs reference** distinction, and
+  **reference implementation vs conformance suite**.
+- [COMPATIBILITY.md](COMPATIBILITY.md) — how contracts evolve (additive-only,
+  ADR-for-breaking, deprecation window) — **enforced by CI**, not just prose.
+- [CONFORMANCE-POLICY.md](CONFORMANCE-POLICY.md) — what "AIES Conformant" means,
+  verified by a data-first conformance suite over a golden Evidence Package corpus.
+
 ## Non-Goals
 
 The project does **not** aim to:
