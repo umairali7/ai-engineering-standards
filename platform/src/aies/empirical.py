@@ -26,8 +26,17 @@ evidence and a verdict; a human records the promotion, exactly as with grants.
 
 from __future__ import annotations
 
+import datetime
 import re
 from statistics import mean, pstdev
+
+# Versioned like every other normative input (STABILITY/COMPATIBILITY):
+#   METHODOLOGY_VERSION — how the metrics are computed (this analysis)
+#   THRESHOLDS_VERSION  — the pass/fail cut-offs below
+# An empirical verdict is only reproducible if BOTH are recorded with it: a change
+# to either can flip a scenario's verdict, exactly like a decision-semantics change.
+METHODOLOGY_VERSION = "1.0"
+THRESHOLDS_VERSION = "1.0"
 
 # Thresholds are deliberately conservative defaults; a real panel study documents
 # and versions the ones it used (like any decision input).
@@ -36,6 +45,14 @@ CEILING_MIN = 3.3             # strongest group should reach at least this
 FLOOR_MAX = 2.5               # weakest group should land at or below this (a live floor)
 REPEATABILITY_MAX_STD = 0.75  # per-(model,scenario) score std must be at or below this
 TWIN_GAP_MAX = 1.0            # a model's |scenario - twin| gap above this flags gaming
+
+
+def _thresholds() -> dict:
+    """The frozen threshold values used — recorded with results for reproducibility."""
+    return {"version": THRESHOLDS_VERSION,
+            "discrimination_min": DISCRIMINATION_MIN, "ceiling_min": CEILING_MIN,
+            "floor_max": FLOOR_MAX, "repeatability_max_std": REPEATABILITY_MAX_STD,
+            "twin_gap_max": TWIN_GAP_MAX}
 
 
 def _group_means(per_model: dict[str, list[float]], ability: dict[str, int]) -> dict[int, float]:
@@ -97,13 +114,18 @@ def analyze_scenario(per_model: dict[str, list[float]], ability: dict[str, int],
             "empirically_calibratable": calibratable}
 
 
-def analyze_panel(panel: dict) -> dict:
+def analyze_panel(panel: dict, panel_id: str | None = None,
+                  analyzed_at: str | None = None) -> dict:
     """Analyze a full panel-results object:
-      {"panel": [{"model": id, "ability": rank}, ...],
+      {"panel": [{"model": id, "ability": rank, ...}, ...],
        "scores": {scenario_id: {model_id: [score, ...]}},
-       "twins":  {scenario_id: twin_scenario_id}}   # optional
-    Returns per-scenario analyses plus a summary."""
-    ability = {m["model"]: m["ability"] for m in panel.get("panel", [])}
+       "twins":  {scenario_id: twin_scenario_id},   # optional
+       "panel_id": str}                              # optional
+    Returns per-scenario analyses, a summary, and an immutable **metadata** block
+    (panel identity, participating models, methodology + thresholds versions, and
+    the threshold values used) so an empirical verdict is reproducible."""
+    panel_models = panel.get("panel", [])
+    ability = {m["model"]: m["ability"] for m in panel_models}
     scores = panel.get("scores", {})
     twins = panel.get("twins", {})
     results = {}
@@ -112,7 +134,17 @@ def analyze_panel(panel: dict) -> dict:
         twin_scores = scores.get(twin_id) if twin_id else None
         results[sid] = analyze_scenario(per_model, ability, twin_scores)
     calibratable = [s for s, r in results.items() if r["empirically_calibratable"]]
-    return {"panel_size": len(ability),
+
+    metadata = {
+        "panel_id": panel_id or panel.get("panel_id"),
+        "panel": panel_models,                     # participating models + ability (+ run/checksum)
+        "methodology_version": METHODOLOGY_VERSION,
+        "thresholds": _thresholds(),
+        "analyzed_at": analyzed_at or datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    }
+    return {"kind": "empirical-calibration-result",
+            "metadata": metadata,
+            "panel_size": len(ability),
             "scenarios": len(results),
             "empirically_calibratable": sorted(calibratable),
             "flagged": sorted(s for s in results if s not in calibratable),
@@ -139,7 +171,11 @@ def assemble_panel_from_runs(specs: list[dict]) -> dict:
         if model in seen_models:
             raise ValueError(f"duplicate panel model {model!r} — one run per model")
         seen_models.add(model)
-        panel.append({"model": model, "ability": int(spec["ability"])})
+        # Record the run and model checksum so the panel is traceable to the exact
+        # evidence it was assembled from (reproducibility).
+        panel.append({"model": model, "ability": int(spec["ability"]),
+                      "run_id": spec["run_id"],
+                      "model_checksum": manifest.get("model", {}).get("checksum")})
 
         rating_dir = rdir / "ratings"
         if not rating_dir.is_dir():
@@ -181,7 +217,14 @@ def _twins_for(scenario_ids) -> dict[str, str]:
 
 
 def render(report: dict) -> str:
+    m = report.get("metadata", {})
+    models = ", ".join(f"{p['model']}(a{p['ability']})" for p in m.get("panel", []))
     lines = [f"empirical calibration (panel of {report['panel_size']} models)",
+             f"  panel id           : {m.get('panel_id') or '(unnamed)'}",
+             f"  methodology / thr. : v{m.get('methodology_version')} / "
+             f"v{(m.get('thresholds') or {}).get('version')}",
+             f"  models             : {models}",
+             f"  analyzed_at        : {m.get('analyzed_at')}",
              f"  scenarios analyzed : {report['scenarios']}",
              f"  discriminating     : {len(report['empirically_calibratable'])}",
              f"  flagged            : {len(report['flagged'])}",

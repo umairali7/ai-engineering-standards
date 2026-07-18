@@ -69,6 +69,23 @@ def test_analyze_panel_partitions_calibratable_from_flagged():
     assert report["flagged"] == ["SC-B"]
 
 
+def test_result_carries_reproducibility_metadata():
+    """An empirical verdict is only reproducible if the panel, the methodology
+    version, and the exact threshold values are recorded with it."""
+    from aies import empirical
+    panel = _panel({"SC-A": {"strong": [4, 4], "mid": [3, 3], "weak": [1, 1]}})
+    report = empirical.analyze_panel(panel, panel_id="pilot-2026-Q3",
+                                     analyzed_at="2026-07-19T00:00:00Z")
+    m = report["metadata"]
+    assert m["panel_id"] == "pilot-2026-Q3"
+    assert m["analyzed_at"] == "2026-07-19T00:00:00Z"
+    assert m["methodology_version"] == empirical.METHODOLOGY_VERSION
+    assert m["thresholds"]["version"] == empirical.THRESHOLDS_VERSION
+    # the actual cut-offs are recorded, so a threshold change is visible
+    assert m["thresholds"]["discrimination_min"] == empirical.DISCRIMINATION_MIN
+    assert {p["model"] for p in m["panel"]} == {"strong", "mid", "weak"}
+
+
 def test_insufficient_panel_is_handled():
     from aies import empirical
     r = empirical.analyze_scenario({"solo": [4, 4]}, {"solo": 1})

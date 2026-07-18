@@ -252,7 +252,15 @@ assembled file for the record.
 
 A scenario that clears all of them is **empirically calibratable**; the harness
 **flags** the rest (`low-discrimination`, `too-easy`, `ceiling-unreached`,
-`noisy`, `gameable`). Like a grant, the harness produces evidence and a verdict —
+`noisy`, `gameable`).
+
+**Empirical findings are reproducible too.** Every result carries an immutable
+`metadata` block — the **panel id** (`--panel-id`), the **participating models**
+(with ability, `run_id`, and checksum when assembled from runs), the
+**methodology version**, the **thresholds version *and their exact values***, and
+the timestamp. A change to a threshold or the panel can flip a scenario's verdict,
+exactly like a decision-semantics change — so both are recorded with the finding,
+never left implicit. Like a grant, the harness produces evidence and a verdict —
 a human records the promotion of `empirical_status.empirically_calibrated`; the
 tool never sets it silently. Until a panel is run, every scenario is honestly
 `empirically_calibrated: false`.

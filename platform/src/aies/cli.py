@@ -945,7 +945,7 @@ def cmd_suites(args) -> int:
         else:
             print("error: pass a panel JSON file, or --runs RUN=ABILITY ...", file=sys.stderr)
             return 2
-        report = empirical.analyze_panel(panel)
+        report = empirical.analyze_panel(panel, panel_id=args.panel_id)
         _out(report, args.json, empirical.render(report))
         return 0
     report = suites.validate(root)
@@ -1335,6 +1335,8 @@ def build_parser() -> argparse.ArgumentParser:
                           "--runs run-strong=3 run-mid=2 run-weak=1")
     ste.add_argument("--write-panel", default=None,
                      help="also write the assembled panel JSON to this path")
+    ste.add_argument("--panel-id", default=None,
+                     help="name this panel for traceability (recorded in the result metadata)")
     ste.add_argument("--json", action="store_true")
     st.set_defaults(func=cmd_suites)
 
