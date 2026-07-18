@@ -14,7 +14,7 @@ def test_health_reports_independent_dimensions_with_evidence():
     r = corpus.health()
     assert r["kind"] == "corpus-health"
     assert set(r["dimensions"]) == {"calibration", "coverage",
-                                    "behavioral_diversity", "empirical"}
+                                    "behavioral_diversity", "duplication", "empirical"}
     # each dimension carries its own evidence/metric, not just a number
     assert "evidence" in r["dimensions"]["calibration"]
     assert r["dimensions"]["coverage"]["rt_distribution_total"]
@@ -61,3 +61,47 @@ def test_coverage_flags_a_thin_assessment_tier_but_calibration_is_complete():
     # security (RT3) has at least one mandatory area below the depth target
     sec = next(a for a in r["dimensions"]["coverage"]["assessments"] if a["id"] == "security")
     assert sec["declared_tier"] == "RT3"
+
+
+def test_shipped_corpus_is_well_differentiated():
+    """The shipped corpus should have no non-twin near-duplicates — and any twin
+    pairs should be surface-different enough not to trip the detector."""
+    from aies import corpus
+    dup = corpus.duplicates()
+    assert dup["redundancy_candidates"] == 0, dup["pairs"]
+
+
+def _scn(tmp, sid, prompt, ceiling="c", twin=None):
+    import yaml
+    d = tmp / "CA-07-test" / "scenarios"
+    d.mkdir(parents=True, exist_ok=True)
+    body = {"id": sid, "area": "CA-07", "risk_tier": "RT2", "prompt": prompt,
+            "family": "vuln-analysis",
+            "calibration": {"ceiling_anchor": ceiling}}
+    if twin:
+        body["calibration"]["hold_out_twin"] = twin
+    (d / f"{sid}.yaml").write_text(yaml.safe_dump(body), encoding="utf-8")
+
+
+def test_detector_flags_near_duplicate_non_twin_pair(tmp_path):
+    from aies import corpus
+    P = "review this handler for a sql injection defect and fix it by parameterizing the query safely"
+    _scn(tmp_path, "SC-CA07-901", P)
+    _scn(tmp_path, "SC-CA07-902", P + " today")          # near-identical prompt, not twins
+    _scn(tmp_path, "SC-CA07-903", "threat model the deployed agent and rank the exposures by risk")
+    dup = corpus.duplicates(tmp_path)
+    flagged = {(p["a"], p["b"]) for p in dup["pairs"]}
+    assert ("SC-CA07-901", "SC-CA07-902") in flagged
+    pair = next(p for p in dup["pairs"] if {p["a"], p["b"]} == {"SC-CA07-901", "SC-CA07-902"})
+    assert not pair["is_twin"] and "redundant" in pair["recommendation"]
+    assert dup["redundancy_candidates"] >= 1
+
+
+def test_detector_flags_a_twin_that_is_too_similar_on_the_surface(tmp_path):
+    from aies import corpus
+    P = "review this authentication middleware and restore real verification of the signed token"
+    _scn(tmp_path, "SC-CA07-901", P, twin="SC-CA07-902")
+    _scn(tmp_path, "SC-CA07-902", P + " now")            # a twin, but nearly identical surface
+    dup = corpus.duplicates(tmp_path)
+    pair = next(p for p in dup["pairs"] if {p["a"], p["b"]} == {"SC-CA07-901", "SC-CA07-902"})
+    assert pair["is_twin"] and "TOO similar" in pair["recommendation"]

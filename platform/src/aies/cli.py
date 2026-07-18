@@ -458,9 +458,13 @@ def cmd_profiles(args) -> int:
 
 def cmd_corpus(args) -> int:
     from . import corpus
-    report = corpus.health(Path(args.root) if getattr(args, "root", None) else None)
-    coverage_only = args.corpus_cmd == "coverage"
-    _out(report, args.json, corpus.render(report, coverage_only=coverage_only))
+    root = Path(args.root) if getattr(args, "root", None) else None
+    if args.corpus_cmd == "duplicates":
+        report = corpus.duplicates(root)
+        _out(report, args.json, corpus.render_duplicates(report))
+        return 0   # advisory — never a gate
+    report = corpus.health(root)
+    _out(report, args.json, corpus.render(report, coverage_only=args.corpus_cmd == "coverage"))
     return 0   # advisory — never a gate
 
 
@@ -1297,7 +1301,9 @@ def build_parser() -> argparse.ArgumentParser:
     for name, h in (("health", "full multidimensional corpus-health report + ranked "
                      "advisory recommendations"),
                     ("coverage", "the coverage dimension only — RT distribution per area "
-                     "and per-assessment tier depth")):
+                     "and per-assessment tier depth"),
+                    ("duplicates", "near-duplicate scenario pairs (prompt/ceiling overlap), "
+                     "twin-aware — flags redundancy candidates for human review")):
         sc = cpsub.add_parser(name, help=h)
         sc.add_argument("--root", default=None,
                         help="competencies directory (default: shipped suites)")

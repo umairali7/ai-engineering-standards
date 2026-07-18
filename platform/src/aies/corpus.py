@@ -17,6 +17,7 @@ event, not a silent one.
 from __future__ import annotations
 
 import datetime
+import re
 
 METHODOLOGY_VERSION = "1.0"
 
@@ -24,8 +25,97 @@ METHODOLOGY_VERSION = "1.0"
 # they are NOT gates and do not fail a build.
 DIVERSITY_MIN_HIGH_TIER_FAMILIES = 4   # distinct decision kinds wanted among RT3/RT4
 DEPTH_TARGET_DISTINCT_AT_TIER = 8      # distinct scenarios at/above an assessment's declared tier
+DUP_PROMPT_SHINGLE_MIN = 0.5           # 3-word-shingle Jaccard on prompts -> near-duplicate
+DUP_CEILING_OVERLAP_MIN = 0.6          # word-set Jaccard on ceiling anchors -> same discrimination target
+DUP_TWIN_TOO_SIMILAR = 0.7             # a hold-out twin this similar on the surface defeats its purpose
 
 _TIER_ORDER = ("RT1", "RT2", "RT3", "RT4")
+
+
+def _tokens(text) -> list[str]:
+    return re.findall(r"[a-z0-9]+", (text or "").lower())
+
+
+def _shingles(tokens: list[str], n: int = 3) -> set:
+    if len(tokens) < n:
+        return {tuple(tokens)} if tokens else set()
+    return {tuple(tokens[i:i + n]) for i in range(len(tokens) - n + 1)}
+
+
+def _jaccard(a: set, b: set) -> float:
+    return round(len(a & b) / len(a | b), 3) if (a or b) else 0.0
+
+
+def _load_scenarios(root=None) -> dict[str, list[dict]]:
+    """Per-area list of {id, prompt, ceiling, family, twin} for the corpus."""
+    import yaml
+
+    from . import runner, suites
+
+    base = root or runner.competencies_dir()
+    out: dict[str, list[dict]] = {}
+    if not base.exists():
+        return out
+    for area_dir in sorted(p for p in base.iterdir() if p.is_dir() and p.name.startswith("CA-")):
+        area = suites._area_code(area_dir.name)
+        if area is None:
+            continue
+        scen_dir = area_dir / "scenarios"
+        for f in sorted(scen_dir.glob("*.yaml")) if scen_dir.exists() else []:
+            try:
+                sc = yaml.safe_load(f.read_text(encoding="utf-8"))
+            except Exception:                                # pragma: no cover
+                continue
+            if not isinstance(sc, dict):
+                continue
+            cal = sc.get("calibration") or {}
+            out.setdefault(area, []).append({
+                "id": sc.get("id", f.stem), "prompt": sc.get("prompt", ""),
+                "ceiling": cal.get("ceiling_anchor", ""), "family": sc.get("family"),
+                "twin": cal.get("hold_out_twin")})
+    return out
+
+
+def duplicates(root=None) -> dict:
+    """Deterministic near-duplicate detection within each area — advisory. Flags
+    pairs with high prompt-shingle overlap or the same discrimination target
+    (ceiling overlap), annotating whether the pair is a declared hold-out twin
+    (where similar competency is expected, but a too-similar *surface* defeats the
+    anti-gaming purpose). Critique only; it never merges or edits anything."""
+    scen = _load_scenarios(root)
+    pairs: list[dict] = []
+    for area, items in scen.items():
+        prepared = [(s, _shingles(_tokens(s["prompt"])), set(_tokens(s["ceiling"]))) for s in items]
+        for i in range(len(prepared)):
+            (a, pa, ca) = prepared[i]
+            for j in range(i + 1, len(prepared)):
+                (b, pb, cb) = prepared[j]
+                p_ov, c_ov = _jaccard(pa, pb), _jaccard(ca, cb)
+                is_twin = a["twin"] == b["id"] or b["twin"] == a["id"]
+                if p_ov < DUP_PROMPT_SHINGLE_MIN and c_ov < DUP_CEILING_OVERLAP_MIN:
+                    continue
+                if is_twin:
+                    rec = ("twin pair TOO similar on the surface — strengthen the variant"
+                           if p_ov >= DUP_TWIN_TOO_SIMILAR
+                           else "declared hold-out twin — similar competency is expected")
+                elif p_ov >= DUP_PROMPT_SHINGLE_MIN:
+                    rec = "likely redundant — differentiate the prompt or merge"
+                else:
+                    rec = "same discrimination target from two prompts — confirm intentional coverage"
+                pairs.append({"area": area, "a": a["id"], "b": b["id"],
+                              "prompt_overlap": p_ov, "ceiling_overlap": c_ov,
+                              "is_twin": is_twin, "recommendation": rec})
+    # non-twin redundancy candidates first (the actionable ones), then by overlap
+    pairs.sort(key=lambda x: (x["is_twin"], -x["prompt_overlap"]))
+    non_twin = [p for p in pairs if not p["is_twin"]]
+    return {"kind": "corpus-duplicates", "methodology_version": METHODOLOGY_VERSION,
+            "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "thresholds": {"prompt_shingle_min": DUP_PROMPT_SHINGLE_MIN,
+                           "ceiling_overlap_min": DUP_CEILING_OVERLAP_MIN,
+                           "twin_too_similar": DUP_TWIN_TOO_SIMILAR},
+            "note": "advisory — flags candidates for human review; never merges or edits",
+            "flagged_pairs": len(pairs), "redundancy_candidates": len(non_twin),
+            "pairs": pairs}
 
 
 def _at_or_above(rt: dict, tier: str) -> int:
@@ -103,6 +193,19 @@ def health(root=None) -> dict:
                      "evidence": f"{x['high_tier_families']} kinds among {x['rt3_rt4']} RT3/RT4 "
                                  f"(advisory target {DIVERSITY_MIN_HIGH_TIER_FAMILIES})"})
 
+    # --- dimension: duplication risk --------------------------------------
+    dup = duplicates(root)
+    duplication = {"flagged_pairs": dup["flagged_pairs"],
+                   "redundancy_candidates": dup["redundancy_candidates"],
+                   "evidence": {"top": [{"a": p["a"], "b": p["b"],
+                                         "prompt_overlap": p["prompt_overlap"]}
+                                        for p in dup["pairs"] if not p["is_twin"]][:5]}}
+    if dup["redundancy_candidates"]:
+        recs.append({"priority": 2, "dimension": "duplication",
+                     "action": "review non-twin high-overlap scenario pairs "
+                               "(`aies corpus duplicates`) — differentiate or merge",
+                     "evidence": f"{dup['redundancy_candidates']} redundancy candidate pair(s)"})
+
     # --- dimension: empirical maturity ------------------------------------
     empirical = {"empirically_calibrated": tot.get("empirically_calibrated", 0),
                  "total": tot.get("scenarios", 0),
@@ -119,9 +222,27 @@ def health(root=None) -> dict:
         "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "note": "advisory and multidimensional by design — there is no single aggregate grade",
         "dimensions": {"calibration": calibration, "coverage": coverage,
-                       "behavioral_diversity": diversity, "empirical": empirical},
+                       "behavioral_diversity": diversity, "duplication": duplication,
+                       "empirical": empirical},
         "recommendations": recs,
     }
+
+
+def render_duplicates(report: dict) -> str:
+    t = report["thresholds"]
+    L = [f"corpus duplicates (advisory · methodology v{report['methodology_version']})",
+         f"  thresholds: prompt-shingle>={t['prompt_shingle_min']} · "
+         f"ceiling-overlap>={t['ceiling_overlap_min']} · twin-too-similar>={t['twin_too_similar']}",
+         f"  flagged pairs: {report['flagged_pairs']}  "
+         f"(redundancy candidates, non-twin: {report['redundancy_candidates']})", ""]
+    if not report["pairs"]:
+        L.append("  (no pairs above threshold — corpus is well-differentiated)")
+    for p in report["pairs"]:
+        tag = "twin " if p["is_twin"] else "     "
+        L.append(f"  [{tag}] {p['a']} ~ {p['b']}  prompt={p['prompt_overlap']} "
+                 f"ceiling={p['ceiling_overlap']}")
+        L.append(f"           -> {p['recommendation']}")
+    return "\n".join(L)
 
 
 def render(report: dict, coverage_only: bool = False) -> str:
@@ -160,6 +281,11 @@ def render(report: dict, coverage_only: bool = False) -> str:
     L += ["behavioral diversity",
           f"  areas below the high-tier-diversity target: "
           f"{[x['area'] for x in div['evidence']['narrow_high_tier_areas']] or 'none'}",
+          ""]
+    dup = d["duplication"]
+    L += ["duplication risk",
+          f"  redundancy candidates (non-twin high-overlap pairs): "
+          f"{dup['redundancy_candidates']}  (flagged pairs total {dup['flagged_pairs']})",
           ""]
     emp = d["empirical"]
     L += ["empirical maturity",

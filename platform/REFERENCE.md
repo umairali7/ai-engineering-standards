@@ -113,7 +113,8 @@ append-only records. Grouped as in `aies --help`.
 | `suites validate` | Validate the suite catalog **and** the shipped assessments (CI gate); validates `calibration` blocks when present | `aies suites validate` |
 | `suites calibrate` | Calibration-coverage report — how far each scenario has progressed as a measurement instrument ([CALIBRATION.md](CALIBRATION.md)); advisory | `aies suites calibrate` |
 | `suites empirical` | Phase-2 empirical calibration — per-scenario discrimination/repeatability/twin-robustness. Give a panel JSON, or **auto-assemble** it from scored runs with `--runs RUN=ABILITY` | `aies suites empirical --runs run-strong=3 run-weak=1` |
-| `corpus health` / `corpus coverage` | Advisory quality review of the assessment corpus *itself* — calibration, coverage, behavioral diversity, empirical maturity, each with evidence + ranked recommendations. **Multidimensional, no single grade, never a gate** | `aies corpus health` |
+| `corpus health` / `corpus coverage` | Advisory quality review of the assessment corpus *itself* — calibration, coverage, behavioral diversity, duplication, empirical maturity, each with evidence + ranked recommendations. **Multidimensional, no single grade, never a gate** | `aies corpus health` |
+| `corpus duplicates` | Deterministic near-duplicate detection (prompt-shingle + ceiling overlap), **twin-aware** — flags non-twin redundancy candidates, and hold-out twins that are *too* similar on the surface | `aies corpus duplicates` |
 | `journey` | Inspect multi-phase lifecycle scenarios | `aies journey list` |
 | `index` | Rebuildable SQLite index over the append-only records | `aies index` |
 | `plugins` | Installed runtime adapters + declared capabilities | `aies plugins list` |
