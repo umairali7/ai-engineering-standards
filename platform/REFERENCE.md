@@ -110,7 +110,8 @@ append-only records. Grouped as in `aies --help`.
 | Command | Contract | Example |
 |---|---|---|
 | `profiles` | List/show/validate/scaffold weighting profiles | `aies profiles show enterprise` |
-| `suites validate` | Validate the suite catalog **and** the shipped assessments (CI gate) | `aies suites validate` |
+| `suites validate` | Validate the suite catalog **and** the shipped assessments (CI gate); validates `calibration` blocks when present | `aies suites validate` |
+| `suites calibrate` | Calibration-coverage report — how far each scenario has progressed as a measurement instrument ([CALIBRATION.md](CALIBRATION.md)); advisory | `aies suites calibrate` |
 | `journey` | Inspect multi-phase lifecycle scenarios | `aies journey list` |
 | `index` | Rebuildable SQLite index over the append-only records | `aies index` |
 | `plugins` | Installed runtime adapters + declared capabilities | `aies plugins list` |

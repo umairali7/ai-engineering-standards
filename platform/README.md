@@ -43,7 +43,8 @@ See also [DEPLOYMENTS.md](DEPLOYMENTS.md) (qualify deployments, not models),
 [SCENARIOS.md](SCENARIOS.md) (how to author competency scenarios), and
 [ASSESSMENTS.md](ASSESSMENTS.md) (declarative qualification composition).
 [REFERENCE.md](REFERENCE.md) is the complete reference — vocabulary, artifact
-schemas, and every command.
+schemas, and every command. [CALIBRATION.md](CALIBRATION.md) covers scenario
+calibration — treating each scenario as a *measurement instrument*.
 Hit a snag? [TROUBLESHOOTING.md](TROUBLESHOOTING.md) covers the common
 endpoint, TLS, auth, performance, and judge issues.
 

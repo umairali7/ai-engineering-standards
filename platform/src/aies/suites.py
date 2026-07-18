@@ -98,6 +98,85 @@ def render(report: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def calibrate(root: Path | None = None) -> dict[str, Any]:
+    """Calibration-coverage report (CALIBRATION.md): per area, how far each
+    scenario has progressed as a *measurement instrument* — does it carry
+    calibration metadata, a ceiling anchor, a floor trap, a refuse/escalate case,
+    a hold-out twin, and what maturity does it claim (design-time vs empirical).
+    Advisory: it surfaces where the design-time calibration pass should go; it
+    never fails a build."""
+    base = root or competencies_dir()
+    areas: list[dict[str, Any]] = []
+    if not base.exists():
+        return {"root": str(base), "areas": areas, "totals": {}}
+
+    for area_dir in sorted(p for p in base.iterdir() if p.is_dir() and p.name.startswith("CA-")):
+        area_code = _area_code(area_dir.name)
+        if area_code is None:
+            continue
+        scen_dir = area_dir / "scenarios"
+        files = sorted(scen_dir.glob("*.yaml")) if scen_dir.exists() else []
+        row = {"area": area_code, "scenarios": len(files), "calibrated": 0,
+               "ceiling_anchor": 0, "floor_trap": 0, "refuse_case": 0,
+               "hold_out_twins": 0, "design_reviewed": 0, "empirically_calibrated": 0,
+               "rt3_rt4": 0}
+        for f in files:
+            try:
+                sc = yaml.safe_load(f.read_text(encoding="utf-8"))
+            except Exception:  # pragma: no cover
+                continue
+            if not isinstance(sc, dict):
+                continue
+            if sc.get("risk_tier") in ("RT3", "RT4"):
+                row["rt3_rt4"] += 1
+            if sc.get("failure_conditions"):
+                row["floor_trap"] += 1
+            cal = sc.get("calibration")
+            if isinstance(cal, dict) and cal:
+                row["calibrated"] += 1
+                if cal.get("ceiling_anchor"):
+                    row["ceiling_anchor"] += 1
+                if cal.get("expected_refusal"):
+                    row["refuse_case"] += 1
+                if cal.get("hold_out_twin"):
+                    row["hold_out_twins"] += 1
+                es = cal.get("empirical_status") or {}
+                if es.get("design_reviewed"):
+                    row["design_reviewed"] += 1
+                if es.get("empirically_calibrated"):
+                    row["empirically_calibrated"] += 1
+        areas.append(row)
+
+    keys = ("scenarios", "calibrated", "ceiling_anchor", "floor_trap", "refuse_case",
+            "hold_out_twins", "design_reviewed", "empirically_calibrated", "rt3_rt4")
+    totals = {k: sum(a[k] for a in areas) for k in keys}
+    return {"root": str(base), "areas": areas, "totals": totals}
+
+
+def render_calibration(report: dict[str, Any]) -> str:
+    t = report["totals"]
+    n = t.get("scenarios", 0) or 1
+    lines = [
+        "calibration coverage (design-time; empirical requires a model panel)",
+        f"  scenarios          : {t.get('scenarios', 0)}",
+        f"  with metadata      : {t.get('calibrated', 0)}/{t.get('scenarios', 0)}",
+        f"  ceiling anchor      : {t.get('ceiling_anchor', 0)}   (what a 4 does that a 3 doesn't)",
+        f"  floor trap          : {t.get('floor_trap', 0)}",
+        f"  refuse/escalate case: {t.get('refuse_case', 0)}",
+        f"  hold-out twins      : {t.get('hold_out_twins', 0)}",
+        f"  RT3/RT4 scenarios   : {t.get('rt3_rt4', 0)}",
+        f"  design-reviewed     : {t.get('design_reviewed', 0)}",
+        f"  empirically calib.  : {t.get('empirically_calibrated', 0)}   (0 until a model panel exists)",
+        "",
+        "  area    scen  calib  ceil  trap  refuse  twin  RT3/4",
+    ]
+    for a in report["areas"]:
+        lines.append(f"  {a['area']:6} {a['scenarios']:5} {a['calibrated']:6} "
+                     f"{a['ceiling_anchor']:5} {a['floor_trap']:5} {a['refuse_case']:7} "
+                     f"{a['hold_out_twins']:5} {a['rt3_rt4']:6}")
+    return "\n".join(lines)
+
+
 def _validate_area(
     area_dir: Path,
     area_code: str,
@@ -207,6 +286,59 @@ def _validate_scenario(
         errors.append(_issue(path, "repeats_min must be a positive integer"))
     if "failure_conditions" in scenario and not isinstance(scenario["failure_conditions"], list):
         errors.append(_issue(path, "failure_conditions must be a list when present"))
+
+    if "calibration" in scenario:
+        _validate_calibration(path, scenario, area_code, errors, warnings)
+
+
+# Calibration metadata (CALIBRATION.md): a scenario is a measurement instrument;
+# this block records WHY it exists and how well it measures. Optional today
+# (advisory), so the corpus can be migrated incrementally — but validated when
+# present, and surfaced by `aies suites calibrate`.
+_CALIBRATION_KEYS = {"objective", "target_competency", "ceiling_anchor",
+                     "floor_anchor", "gaming_rationale", "expected_refusal",
+                     "hold_out_twin", "empirical_status"}
+_CALIBRATION_REQUIRED = ("objective", "ceiling_anchor", "empirical_status")
+_EMPIRICAL_STATUS_KEYS = {"design_reviewed", "empirically_calibrated"}
+
+
+def _validate_calibration(path, scenario, area_code, errors, warnings) -> None:
+    cal = scenario.get("calibration")
+    if not isinstance(cal, dict) or not cal:
+        errors.append(_issue(path, "calibration must be a non-empty mapping when present"))
+        return
+    for k in cal:
+        if k not in _CALIBRATION_KEYS:
+            errors.append(_issue(path, f"calibration has unknown key {k!r}"))
+    for req in _CALIBRATION_REQUIRED:
+        if not cal.get(req):
+            errors.append(_issue(path, f"calibration.{req} is required (the ceiling "
+                                 "anchor — 'what a 4 does that a 3 does not' — is "
+                                 "the load-bearing design-time criterion)"))
+    tc = cal.get("target_competency")
+    if tc is not None and tc != area_code:
+        errors.append(_issue(path, f"calibration.target_competency {tc!r} != area {area_code}"))
+    if "expected_refusal" in cal and not isinstance(cal["expected_refusal"], bool):
+        errors.append(_issue(path, "calibration.expected_refusal must be a boolean"))
+    twin = cal.get("hold_out_twin")
+    if twin is not None and not (isinstance(twin, str) and SCENARIO_RE.match(twin)):
+        errors.append(_issue(path, "calibration.hold_out_twin must be a scenario id SC-CA##-###"))
+    es = cal.get("empirical_status")
+    if es is not None:
+        if not isinstance(es, dict):
+            errors.append(_issue(path, "calibration.empirical_status must be a mapping"))
+        else:
+            for k in es:
+                if k not in _EMPIRICAL_STATUS_KEYS:
+                    errors.append(_issue(path, f"empirical_status has unknown key {k!r}"))
+            for k in _EMPIRICAL_STATUS_KEYS:
+                if not isinstance(es.get(k), bool):
+                    errors.append(_issue(path, f"empirical_status.{k} must be a boolean"))
+            # Honesty guard: nothing is empirically calibrated until a model panel
+            # exists; a scenario MUST NOT claim it without design review first.
+            if es.get("empirically_calibrated") and not es.get("design_reviewed"):
+                errors.append(_issue(path, "empirical_status: empirically_calibrated "
+                                     "cannot be true unless design_reviewed is true"))
 
 
 def _load_yaml(path: Path, errors: list[dict[str, str]]) -> Any:

@@ -917,6 +917,10 @@ def cmd_journey(args) -> int:
 def cmd_suites(args) -> int:
     from . import suites
     root = Path(args.root) if args.root else None
+    if getattr(args, "suites_cmd", None) == "calibrate":
+        report = suites.calibrate(root)
+        _out(report, args.json, suites.render_calibration(report))
+        return 0
     report = suites.validate(root)
     _out(report, args.json, suites.render(report))
     return 0 if report["valid"] else 1
@@ -1285,6 +1289,11 @@ def build_parser() -> argparse.ArgumentParser:
     stv.add_argument("--root", default=None,
                      help="competencies directory to validate (default: shipped suites)")
     stv.add_argument("--json", action="store_true")
+    stc = stsub.add_parser("calibrate", help="calibration-coverage report — how far "
+                           "each scenario has progressed as a measurement instrument "
+                           "(CALIBRATION.md); advisory, never fails")
+    stc.add_argument("--root", default=None)
+    stc.add_argument("--json", action="store_true")
     st.set_defaults(func=cmd_suites)
 
     dep = common(sub.add_parser("deployment", help="manage deployments "

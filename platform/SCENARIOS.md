@@ -42,9 +42,14 @@ repeats_min: 3               # 2–3; repeats measure variance, not padding
 
 `id`, `area`, `risk_tier`, `prompt`, `expected_qualities`, and `rubric` are
 **required** (the validator errors without them). `family`, `weight`,
-`failure_conditions`, and `repeats_min` are strongly recommended.
+`failure_conditions`, and `repeats_min` are strongly recommended. An optional
+`calibration:` block records why the scenario exists and how well it measures —
+see [CALIBRATION.md](CALIBRATION.md), which treats each scenario as a
+*measurement instrument*.
 [SC-CA05-011](competencies/CA-05-ai-assisted-implementation/scenarios/SC-CA05-011.yaml)
-is a good worked example.
+is a good worked example;
+[SC-CA07-001](competencies/CA-07-security-privacy-engineering/scenarios/SC-CA07-001.yaml)
+shows a calibrated one.
 
 ## 2. The quality bar (this is the point)
 
