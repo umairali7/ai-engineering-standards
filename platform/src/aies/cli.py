@@ -240,7 +240,15 @@ def cmd_assessment(args) -> int:
         elif args.assessment_cmd == "result":
             from . import decision
             res = decision.assess_run(args.run)
-            _out(res, args.json, decision.render_markdown(res))
+            if getattr(args, "format", "markdown") == "html":
+                html_doc = decision.render_html(res)
+                if args.out:
+                    Path(args.out).write_text(html_doc, encoding="utf-8")
+                    print(f"wrote {args.out}")
+                else:
+                    print(html_doc)
+            else:
+                _out(res, args.json, decision.render_markdown(res))
             return 0 if res["outcome"] == "PASS" else 1
     except assessments.AssessmentError as e:
         print(f"error: {e}", file=sys.stderr)
@@ -1129,6 +1137,9 @@ def build_parser() -> argparse.ArgumentParser:
     asm_res = asmsub.add_parser("result", help="decide the outcome of an aggregated "
                                "run composed under an assessment (no inference)")
     asm_res.add_argument("run")
+    asm_res.add_argument("--format", choices=("markdown", "html"), default="markdown",
+                         help="render the canonical result as markdown (default) or HTML")
+    asm_res.add_argument("--out", help="write HTML to this file instead of stdout")
     for x in (asm_show, asm_val, asm_res):
         x.add_argument("--json", action="store_true")
     asmsub.choices["list"].add_argument("--json", action="store_true")

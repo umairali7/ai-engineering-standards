@@ -23,7 +23,14 @@ those (the validator enforces a strict allowed-key schema).
 aies assessment list                                  # the shipped assessments
 aies qualify <deployment> --assessment enterprise --judge <judge>   # compose, score, decide
 aies assessment result <run>                          # re-decide an aggregated run (no inference)
+aies assessment result <run> --json                   # the Canonical Assessment Result object
+aies assessment result <run> --format html --out result.html   # presentation-grade view
 ```
+
+The Markdown, JSON, and HTML renderers are **views of the same Canonical
+Assessment Result** — they never re-decide. The outcome shown is verbatim from
+the frozen decision engine; the HTML is a single self-contained, theme-aware,
+print-ready file (browser "Save as PDF" gives the PDF deliverable).
 
 `--assessment` selects the competency set, profile, risk tier, and sampling; the
 resolved assessment is recorded immutably in the run manifest. After scoring +
@@ -99,6 +106,13 @@ aies assessment validate ./assessments/finance.yaml
 The validator rejects: unknown/engine-owned keys, unknown or duplicate
 competencies, non-positive weights, no mandatory competency, an orphan profile
 reference, bad `id`/`version`/`schema`, and sub-minimum sampling.
+
+Every shipped assessment is also validated by `aies suites validate` — the same
+gate CI runs — so a broken assessment file cannot merge silently:
+
+```
+aies suites validate     # areas + scenarios + shipped assessments, one gate
+```
 
 ## Reproducibility
 

@@ -41,7 +41,38 @@ def validate(root: Path | None = None) -> dict[str, Any]:
     if not areas:
         errors.append(_issue(base, "no competency area directories found"))
 
-    return _report(base, areas, errors, warnings)
+    assessments = _validate_assessments(errors)
+
+    return _report(base, areas, errors, warnings, assessments)
+
+
+def _validate_assessments(errors: list[dict[str, str]]) -> list[dict[str, Any]]:
+    """Validate the shipped declarative assessments (ADR-0005) as part of the
+    same gate CI runs, so a broken assessment file cannot ship silently. Import
+    is local to keep the suite validator usable even if the assessment module or
+    its data directory is absent."""
+    from . import assessments as A
+
+    out: list[dict[str, Any]] = []
+    d = A.assessments_dir()
+    if not d.exists():
+        return out
+    for path in sorted(d.glob("*.yaml")):
+        try:
+            data = yaml.safe_load(path.read_text(encoding="utf-8"))
+            problems = A.validate(data)
+        except Exception as exc:  # pragma: no cover - malformed YAML
+            problems = [f"could not parse: {exc}"]
+            data = None
+        for problem in problems:
+            errors.append(_issue(path, problem))
+        out.append({
+            "id": (data or {}).get("id", path.stem) if isinstance(data, dict) else path.stem,
+            "path": str(path),
+            "valid": not problems,
+            "problems": problems,
+        })
+    return out
 
 
 def render(report: dict[str, Any]) -> str:
@@ -52,6 +83,7 @@ def render(report: dict[str, Any]) -> str:
         f"  root     : {report['root']}",
         f"  areas    : {summary['areas']}",
         f"  scenarios: {summary['scenarios']}",
+        f"  assessmnt: {summary.get('assessments', 0)}",
         f"  warnings : {len(report['warnings'])}",
         f"  errors   : {len(report['errors'])}",
     ]
@@ -190,7 +222,8 @@ def _load_yaml(path: Path, errors: list[dict[str, str]]) -> Any:
         return None
 
 
-def _report(base: Path, areas: list[dict[str, Any]], errors: list[dict[str, str]], warnings: list[dict[str, str]]) -> dict[str, Any]:
+def _report(base: Path, areas: list[dict[str, Any]], errors: list[dict[str, str]], warnings: list[dict[str, str]], assessments: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    assessments = assessments or []
     return {
         "valid": not errors,
         "root": str(base),
@@ -198,8 +231,10 @@ def _report(base: Path, areas: list[dict[str, Any]], errors: list[dict[str, str]
             "areas": len(areas),
             "scenarios": sum(area["scenarios"] for area in areas),
             "valid_scenarios": sum(area["valid_scenarios"] for area in areas),
+            "assessments": len(assessments),
         },
         "areas": areas,
+        "assessments": assessments,
         "errors": errors,
         "warnings": warnings,
     }

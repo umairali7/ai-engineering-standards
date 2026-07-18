@@ -91,3 +91,32 @@ def test_load_missing_raises():
     from aies import assessments
     with pytest.raises(assessments.AssessmentError, match="not found"):
         assessments.load("no-such-assessment-xyz")
+
+
+def test_every_shipped_assessment_is_valid():
+    """A broken enterprise.yaml etc. must never ship — this asserts the actual
+    files on disk validate (the unit tests above use hand-built dicts)."""
+    import yaml
+    from aies import assessments
+    d = assessments.assessments_dir()
+    files = sorted(d.glob("*.yaml"))
+    assert files, f"no shipped assessments found under {d}"
+    for path in files:
+        problems = assessments.validate(yaml.safe_load(path.read_text(encoding="utf-8")))
+        assert problems == [], f"{path.name}: {problems}"
+
+
+def test_suites_validate_gate_catches_a_broken_assessment(tmp_path, monkeypatch):
+    """`aies suites validate` (the gate CI runs) must fail if an assessment file
+    is invalid, so a bad assessment cannot pass CI silently."""
+    import yaml
+    from aies import assessments, suites
+    # point the assessment dir at a temp dir holding one broken file
+    broken = tmp_path / "broken.yaml"
+    broken.write_text(yaml.safe_dump({"id": "broken", "gates": {"x": 1}}), encoding="utf-8")
+    monkeypatch.setattr(assessments, "assessments_dir", lambda: tmp_path)
+    report = suites.validate()                      # real suites + the broken assessment
+    assert report["valid"] is False
+    assert any("broken.yaml" in e["file"] and "unknown key" in e["message"]
+               for e in report["errors"])
+    assert report["summary"]["assessments"] == 1

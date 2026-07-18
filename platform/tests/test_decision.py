@@ -92,6 +92,19 @@ def test_result_has_all_facets_and_metadata():
     assert "## PASS" in md and "1. Normative" in md and "non-authoritative" in md
 
 
+def test_render_html_is_a_view_not_a_decision():
+    from aies import decision
+    # FAIL outcome must surface verbatim in the HTML; renderer never re-decides.
+    pkg = _pkg({"CA-05": _area(cl="CL3", aggregate=3.9),
+                "CA-07": _area(gates_passed=False, ev3_hard_fail=True)})
+    res = decision.decide(pkg, _assessment(_m("CA-05"), _m("CA-07")))
+    doc = decision.render_html(res)
+    assert doc.startswith("<!doctype html>")
+    assert "Assessment Result" in doc
+    assert res["outcome"] in doc and "Normative (authoritative)" in doc
+    assert "http://" not in doc and "https://" not in doc     # self-contained, no external requests
+
+
 def test_assess_run_replays_from_evidence_without_inference(ws_run):
     from aies import decision, workspace
     run_id = ws_run

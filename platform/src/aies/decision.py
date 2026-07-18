@@ -209,3 +209,91 @@ def render_markdown(result: dict) -> str:
             "assessment; a named human records any grant/certification (D8). "
             "PASS is an assessment outcome, not a deployment-readiness decision.*"]
     return "\n".join(out)
+
+
+def render_html(result: dict) -> str:
+    """Presentation-grade HTML view of the SAME Canonical Assessment Result —
+    a rendering, never a decision (ADR-0005 D-B4: renderers are views). Single
+    self-contained file (inline CSS, no external requests), theme-aware,
+    print-ready. The outcome shown here is verbatim from the frozen engine."""
+    from .report_html import _CSS, _esc
+
+    m = result["metadata"]
+    dec = result["decisions"]
+    a = result["assessment"]
+    outcome = result["outcome"]
+    cls = "pass" if outcome == "PASS" else "fail"
+    p: list[str] = []
+    w = p.append
+
+    w("<!doctype html><html lang=en><head><meta charset=utf-8>")
+    w("<meta name=viewport content='width=device-width, initial-scale=1'>")
+    w(f"<title>AIES Assessment Result — {_esc(a['id'])} v{_esc(a['version'])}</title>")
+    w(f"<style>{_CSS}</style></head><body>")
+
+    w(f"<h1>AIES Assessment Result &mdash; {_esc(a['id'])} "
+      f"<span class=muted>v{_esc(a['version'])}</span></h1>")
+    w(f"<div class='banner grant'><span class={cls}>{_esc(outcome)}</span></div>")
+    w(f"<p><strong>Subject:</strong> <code>{_esc(result['subject'])}</code> "
+      f"&middot; <strong>Risk tier:</strong> {_esc(result['risk_tier'])} "
+      f"&middot; <strong>Profile:</strong> {_esc(a['profile'])}</p>")
+    w("<p class=muted>The outcome is authoritative (conformity). The diagnostic "
+      "and analytics sections below are informational and do not decide.</p>")
+
+    # Layer 1 — Normative
+    w("<h2>1. Normative (authoritative)</h2>")
+    w("<table><tr><th>Competency</th><th>Requirement</th><th>Outcome</th></tr>")
+    for c in dec["competencies"]:
+        oc = "pass" if c["outcome"] == "PASS" else "fail"
+        w(f"<tr><td>{_esc(c['area'])}</td><td>{_esc(c['requirement'])}</td>"
+          f"<td class={oc}>{_esc(c['outcome'])}</td></tr>")
+    w("</table>")
+    ov = "pass" if dec["overall"] == "PASS" else "fail"
+    w(f"<p><strong>Overall outcome: <span class={ov}>{_esc(dec['overall'])}</span></strong> "
+      "&mdash; decided over the mandatory competencies (advisory competencies "
+      "never fail an assessment).</p>")
+    if dec["reasons"]:
+        w("<h3>Reasons</h3><ul>")
+        for r in dec["reasons"]:
+            w(f"<li><strong>{_esc(r['area'])}</strong> &mdash; "
+              f"<code>{_esc(r['kind'])}</code>: {_esc(r['detail'])}</li>")
+        w("</ul>")
+
+    # Layer 2 — Diagnostic
+    w("<h2>2. Diagnostic <span class=muted>(informational — engineering feedback)</span></h2>")
+    w("<table><tr><th>Area</th><th>Aggregate</th><th>CL</th><th>Decisional</th></tr>")
+    for area, d in result["diagnostics"].items():
+        agg = d.get("aggregate")
+        w(f"<tr><td>{_esc(area)}</td><td>{_esc(agg) if agg is not None else '-'}</td>"
+          f"<td>{_esc(d.get('cl') or '-')}</td>"
+          f"<td>{'yes' if d.get('decisional') else 'no'}</td></tr>")
+    w("</table>")
+
+    # Layer 3 — Analytics
+    an = result["analytics"]
+    w("<h2>3. Analytics <span class=muted>(non-authoritative)</span></h2>")
+    w(f"<ul><li>coverage: {_esc(an.get('coverage'))}</li>"
+      f"<li>mandatory pass rate: {_esc(an.get('mandatory_pass_rate'))}</li>"
+      f"<li class=muted>{_esc(an.get('note'))}</li></ul>")
+
+    # Execution metadata
+    w("<h2>Execution metadata <span class=muted>(immutable)</span></h2>")
+    w("<table class=env>")
+    for label, val in (
+        ("assessment", f"{m['assessment_id']} v{m['assessment_version']} (schema {m['assessment_schema']})"),
+        ("profile", m["profile"]),
+        ("platform / AIES", f"{m['platform_version']} / {m['aies_version']}"),
+        ("model", f"{m['model']} ({m['model_checksum']})"),
+        ("runtime", m["runtime"]),
+        ("fingerprint", m["environment_fingerprint"]),
+        ("run", m["run_id"]),
+        ("aggregated / decided", f"{m['aggregated_at']} / {m['decided_at']}"),
+    ):
+        w(f"<tr><td>{_esc(label)}</td><td><code>{_esc(val)}</code></td></tr>")
+    w("</table>")
+
+    w("<footer>The platform prepares evidence and decides conformity to the "
+      "assessment; a named human records any grant/certification (D8). "
+      "PASS is an assessment outcome, not a deployment-readiness decision.</footer>")
+    w("</body></html>")
+    return "".join(p)

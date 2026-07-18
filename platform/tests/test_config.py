@@ -11,12 +11,18 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 
 @pytest.fixture()
-def fresh_config(monkeypatch):
+def fresh_config(monkeypatch, tmp_path):
     # Reload config with a clean module state so load_dotenv re-runs.
     for var in ("AIES_WORKSPACE", "AIES_OPENAI_BASE_URL", "AIES_OPENAI_API_KEY",
                 "AIES_REQUEST_TIMEOUT_S", "AIES_PARALLEL", "AIES_TEMPERATURE",
-                "AIES_MAX_TOKENS", "AIES_ENV_FILE"):
+                "AIES_MAX_TOKENS"):
         monkeypatch.delenv(var, raising=False)
+    # Hermetic: point the .env search at an empty file so a developer's real
+    # platform/.env (e.g. a local AIES_OPENAI_BASE_URL) cannot leak into the
+    # test. AIES_ENV_FILE is first in the search order, so cwd/.env is skipped.
+    empty_env = tmp_path / "empty.env"
+    empty_env.write_text("", encoding="utf-8")
+    monkeypatch.setenv("AIES_ENV_FILE", str(empty_env))
     import aies.config as cfg
     importlib.reload(cfg)
     return cfg
