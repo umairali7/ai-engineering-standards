@@ -8,6 +8,8 @@
 
 **New here? Start with [GETTING_STARTED.md](GETTING_STARTED.md)** — role-based reading paths and a six-step adoption guide.
 
+**Want to see the platform run in 5 minutes?** [QUICKSTART.md](QUICKSTART.md) — the whole workflow, fully offline (`make demo`, or step by step).
+
 ---
 
 ## Vision

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions & Discussion
+    url: https://github.com/OWNER/aies/discussions # Placeholder — update when the repository's public home is finalized
+    about: Ask questions, discuss ideas, and comment on open proposals before filing an issue.
+  - name: Security Reports (private)
+    url: https://github.com/OWNER/aies/security/advisories/new # Placeholder — update when the repository's public home is finalized
+    about: Report security issues privately per SECURITY.md — never as a public issue.

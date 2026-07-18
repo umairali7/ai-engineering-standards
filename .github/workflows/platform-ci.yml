@@ -1,0 +1,63 @@
+name: platform-ci
+
+# Continuous integration for the AIES Qualification Platform (M4,
+# docs/PLATFORM.md §10). Runs the conformance test suite — the tests
+# keyed to AESQS requirement IDs that keep the engine faithful to the
+# standard (ADR-0002 anti-drift mitigation) — on every change under
+# platform/.
+
+on:
+  push:
+    # conformance/** is the golden corpus (the arbiter, outside platform/): a
+    # change to it MUST re-run the conformance gate, or the policy isn't enforced.
+    paths: ["platform/**", "conformance/**", ".github/workflows/platform-ci.yml"]
+  pull_request:
+    paths: ["platform/**", "conformance/**", ".github/workflows/platform-ci.yml"]
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    defaults:
+      run:
+        working-directory: platform
+    env:
+      # Keep the openai-compat runtime probe from touching a real endpoint.
+      AIES_OPENAI_BASE_URL: "http://127.0.0.1:9/v1"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install (editable) + test deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pytest
+      - name: Conformance tests
+        run: pytest tests/ -q
+      - name: Suite catalog validation
+        run: aies suites validate
+      - name: Decision-engine conformance (golden Evidence Package corpus)
+        # The arbiter: the reference engine must reproduce every expected outcome
+        # in conformance/corpus. Drift from AESQS decision semantics fails here.
+        run: aies conform engine --corpus ../conformance/corpus
+      - name: Self-audit — repository conformance (dogfood)
+        # Audits the repo (one level up from platform/) against AIES engineering
+        # practices and gates on RT2's required evidence. If this fails, the repo
+        # regressed a required practice — fix it or relax the tier.
+        run: aies audit .. --gate --rt 2
+      - name: Smoke — offline qualify cycle exits cleanly
+        run: |
+          aies doctor --json > /dev/null
+          aies discover > /dev/null
+          aies plugins
+      - name: Demo — full workflow end-to-end, offline (executable docs)
+        # The complete golden path (discover -> assessment -> qualify -> decide
+        # -> render) against the mock runtime. Gated as tests/test_demo.py above;
+        # this also proves the human-facing scripts/demo.sh still runs.
+        run: bash scripts/demo.sh
