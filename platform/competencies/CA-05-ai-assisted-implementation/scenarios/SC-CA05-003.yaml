@@ -32,3 +32,23 @@ failure_conditions:
   - claims the loop is single-threaded by design and no defect exists  # -> EV1
   - proposes locking primitives while asserting they exist in the unseen schema  # -> EV6
 repeats_min: 3
+calibration:
+  objective: "diagnose and actually close a check-then-act race"
+  target_competency: CA-05
+  ceiling_anchor: |
+    Level 3 identifies the check-then-act race between the concurrent workers.
+    Level 4 provides a fix that actually closes it (an atomic claim before send,
+    real primitives), without introducing a new defect or asserting primitives
+    that do not exist. Naming the race but proposing a fix that does not fully
+    close it, or hand-waving locks, is a 3.
+  floor_anchor: |
+    Claims the loop is single-threaded by design and no race exists, or proposes
+    locking primitives while asserting they exist when they do not.
+  gaming_rationale: |
+    A plausible lock looks like a fix; the discriminator is a fix that genuinely
+    makes the claim-and-send atomic.
+  expected_refusal: false
+  hold_out_twin: SC-CA05-013
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

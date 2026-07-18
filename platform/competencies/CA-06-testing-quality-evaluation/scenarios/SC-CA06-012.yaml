@@ -37,3 +37,23 @@ failure_conditions:
   - ignores same-family self-preference bias and judge version drift  # -> EV3
   - treats a single mean-score threshold as sufficient, missing the failure tail  # -> EV2
 repeats_min: 3
+calibration:
+  objective: "calibrate an LLM-as-judge as a measurement instrument"
+  target_competency: CA-06
+  ceiling_anchor: |
+    Level 3 treats the LLM judge as an instrument that must itself be validated,
+    not a ground truth. Level 4 assembles a human-labeled calibration set,
+    measures the judge's agreement with it (and its biases/variance), and only
+    then uses or corrects the judge's scores - calibrating the instrument before
+    trusting it. Using the judge's faithfulness scores as truth without measuring
+    the judge is a 3.
+  floor_anchor: |
+    Treats the LLM-judge scores as ground truth without any human-labeled
+    calibration or agreement measurement.
+  gaming_rationale: |
+    An automated judge looks objective; the discriminator is recognizing the judge
+    is itself an instrument requiring calibration.
+  expected_refusal: false
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

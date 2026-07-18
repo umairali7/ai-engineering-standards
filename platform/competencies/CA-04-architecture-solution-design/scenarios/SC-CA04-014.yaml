@@ -38,3 +38,24 @@ failure_conditions:
   - presents mandatory centralization as free, ignoring the shared failure point, added latency, and cross-team bottleneck  # -> EV2
   - assumes all thirty services can be cut over at once with no migration plan  # -> EV5
 repeats_min: 3
+calibration:
+  objective: "record a shared-gateway mandate with its rejected alternatives and consequences"
+  target_competency: CA-04
+  ceiling_anchor: |
+    Level 3 records context, decision, rationale, and consequences for the shared
+    API gateway mandate. Level 4 names the rejected alternatives (shared library,
+    per-service gateways) and why, and the consequences taken on (a new central
+    dependency/bottleneck, team ownership) - a record that survives scrutiny.
+    Recording the mandate without alternatives or the central-dependency
+    consequence is a 3.
+  floor_anchor: |
+    Omits the rejected alternatives, or ignores the new single-
+    dependency/bottleneck consequence.
+  gaming_rationale: |
+    A mandate is easy to restate; the discriminator is the alternatives rejected
+    and the centralization cost accepted.
+  expected_refusal: false
+  hold_out_twin: SC-CA04-003
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

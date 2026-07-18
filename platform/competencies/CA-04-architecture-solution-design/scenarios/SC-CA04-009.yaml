@@ -29,3 +29,23 @@ failure_conditions:
   - recommends processing each webhook synchronously inline with no durability or burst buffer  # -> EV1
   - ignores the provider's retries and offers no idempotency/dedup strategy for exactly-once  # -> EV2
 repeats_min: 3
+calibration:
+  objective: "analyze burst-handling options for bursty webhooks against the attributes"
+  target_competency: CA-04
+  ceiling_anchor: |
+    Level 3 lists options for the bursty webhook intake. Level 4 presents
+    genuinely distinct approaches (accept-and-queue vs backpressure vs scale-out),
+    argues trade-offs against the stated attributes (burst ratio, ordering, at-
+    least-once delivery), and recommends one. Non-distinct options, or trade-offs
+    not tied to the burst/delivery requirements, are a 3.
+  floor_anchor: |
+    Presents non-distinct options, or ignores the burst ratio / delivery-semantics
+    attributes in the trade-offs.
+  gaming_rationale: |
+    'Add a queue' reads as an answer; the discriminator is distinct options
+    weighed against the actual delivery and burst requirements.
+  expected_refusal: false
+  hold_out_twin: SC-CA04-001
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

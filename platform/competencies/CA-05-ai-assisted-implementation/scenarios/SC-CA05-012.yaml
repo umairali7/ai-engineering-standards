@@ -46,3 +46,22 @@ failure_conditions:
   - divides by zero or crashes on all-zero weights instead of a defined result  # -> EV2
   - lets a negative weight silently produce a wrong split with no defined behavior  # -> EV6
 repeats_min: 3
+calibration:
+  objective: "allocate integer money exactly with deterministic remainder handling"
+  target_competency: CA-05
+  ceiling_anchor: |
+    Level 3 uses integer arithmetic so the parts sum to the total. Level 4 also
+    distributes the leftover minor units deterministically per the stated rule and
+    handles the all-zero-weights case without crashing. Code that sums correctly
+    on typical input but divides by zero on all-zero weights, or scatters the
+    remainder non-deterministically, is a 3.
+  floor_anchor: |
+    Returns parts that do not sum to total_cents for some input, or divides by
+    zero / crashes on all-zero weights.
+  gaming_rationale: |
+    The division looks straightforward; the discriminator is exact summation,
+    deterministic remainder, and the degenerate-weights edge.
+  expected_refusal: false
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

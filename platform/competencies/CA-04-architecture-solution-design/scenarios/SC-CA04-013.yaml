@@ -37,3 +37,23 @@ failure_conditions:
   - proposes a fix that assumes a permission-filtering layer in front of the index that the prompt never describes  # -> EV1
   - treats the problem only as retrieval relevance/quality and not as an authorization leak  # -> EV3
 repeats_min: 3
+calibration:
+  objective: "catch a retrieval path that bypasses authorization in a design review"
+  target_competency: CA-04
+  ceiling_anchor: |
+    Level 3 reviews the RAG design's failure and operational modes. Level 4
+    identifies that retrieval bypasses the app's per-user authorization, treats it
+    as a confidentiality/authorization failure (not a mere quality issue), and
+    proposes enforcing authorization on the retrieval path. Missing the
+    authorization-bypass, or treating it as a minor concern, is a 3.
+  floor_anchor: |
+    Misses that retrieval bypasses per-user authorization, or treats the cross-
+    user exposure as a quality nit.
+  gaming_rationale: |
+    A retrieval design looks like an IR concern; the discriminator is recognizing
+    the authorization bypass as a confidentiality failure.
+  expected_refusal: false
+  hold_out_twin: SC-CA04-002
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

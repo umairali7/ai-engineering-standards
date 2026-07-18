@@ -42,3 +42,22 @@ failure_conditions:
   - claims the tests prove no PII can leak, treating passing as absence of leaks  # -> EV3
   - relies solely on fixed example strings and never uses a property/metamorphic relation (e.g., idempotence or "output contains no substring still matching a PII pattern")  # -> EV5
 repeats_min: 2
+calibration:
+  objective: "test PII redaction including false positives and negatives"
+  target_competency: CA-06
+  ceiling_anchor: |
+    Level 3 covers positive cases for each PII type at boundaries. Level 4 also
+    includes the hard cases that make redaction real - false positives (benign
+    text resembling PII must not be over-redacted) and false negatives
+    (obfuscated/edge-format PII must still be caught) - so the tests measure
+    precision and recall, not just obvious hits. Positive-only PII tests are a 3.
+  floor_anchor: |
+    Tests only obvious positive PII cases, omitting false-positive (over-
+    redaction) and false-negative (missed/obfuscated) cases.
+  gaming_rationale: |
+    Catching obvious PII looks sufficient; the discriminator is testing both over-
+    and under-redaction.
+  expected_refusal: false
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

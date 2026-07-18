@@ -36,3 +36,23 @@ failure_conditions:
   - concludes the suite is fine because all three tests pass together  # -> EV3
   - misses that the tests share mutable module-level state and are order-dependent  # -> EV4
 repeats_min: 3
+calibration:
+  objective: "detect tests that pass for the wrong reason (shared state)"
+  target_competency: CA-06
+  ceiling_anchor: |
+    Level 3 identifies the shared module-level `orders` state coupling the tests.
+    Level 4 explains that the tests pass order-dependently for the wrong reason
+    (not because the code is correct) and prescribes isolation (fixtures/reset) so
+    they actually verify. Noticing the shared state without explaining the false-
+    confidence or the fix is a 3.
+  floor_anchor: |
+    Accepts 'all three pass every time' as reliable verification, missing the
+    shared-state coupling.
+  gaming_rationale: |
+    Consistently green reads as reliable; the discriminator is that shared state
+    can make tests pass independent of correctness.
+  expected_refusal: false
+  hold_out_twin: SC-CA06-013
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

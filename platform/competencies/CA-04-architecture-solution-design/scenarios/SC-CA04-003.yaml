@@ -28,3 +28,24 @@ failure_conditions:
   - records only the decision and its upside, with no rejected alternative or rationale  # -> EV6
   - presents the split as free, ignoring the added network/operational cost              # -> EV2
 repeats_min: 3
+calibration:
+  objective: "write a decision record that captures the rejected alternative and consequences"
+  target_competency: CA-04
+  ceiling_anchor: |
+    Level 3 records context, decision, rationale, and consequences for extracting
+    the payments component. Level 4 also names the rejected alternative (in-
+    process module) and why it lost, and the consequences taken on (network
+    failure modes, deployment complexity) - a record a future engineer can
+    actually reason from. Recording the decision without alternatives or honest
+    consequences is a 3.
+  floor_anchor: |
+    Omits the rejected alternative, or records only benefits and no
+    consequences/trade-offs.
+  gaming_rationale: |
+    A tidy summary reads as an ADR; the discriminator is the rejected option and
+    the consequences accepted.
+  expected_refusal: false
+  hold_out_twin: SC-CA04-007
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

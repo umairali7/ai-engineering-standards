@@ -23,3 +23,21 @@ failure_conditions:
   - fails to merge touching intervals ([1,2],[2,3] left separate)  # -> EV1
   - returns intervals out of order                                 # -> EV1
 repeats_min: 3
+calibration:
+  objective: "implement interval merging with correct touching/ordering semantics"
+  target_competency: CA-05
+  ceiling_anchor: |
+    Level 3 merges clearly-overlapping intervals. Level 4 gets the full semantics
+    - merges touching intervals ([1,2],[2,3]), returns output sorted and minimal,
+    and handles empty/single inputs. Code that merges overlaps but leaves touching
+    intervals split or output unsorted is a 3.
+  floor_anchor: |
+    Fails to merge touching intervals, or returns intervals out of order.
+  gaming_rationale: |
+    The obvious cases pass; the discriminator is the touching-boundary and
+    minimality edge conditions.
+  expected_refusal: false
+  hold_out_twin: SC-CA05-001
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

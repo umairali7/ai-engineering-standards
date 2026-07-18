@@ -38,3 +38,23 @@ failure_conditions:
   - changes computed totals for any input          # -> EV1
   - silently adds validation that rejects inputs the original accepted  # -> EV3
 repeats_min: 3
+calibration:
+  objective: "refactor pricing code preserving observable behavior exactly"
+  target_competency: CA-05
+  ceiling_anchor: |
+    Level 3 produces a more readable structure. Level 4 preserves observable
+    behavior EXACTLY - the discount-stacking order and every computed total -
+    while making names and structure communicate the pricing rules, and adds no
+    validation the original lacked. A cleaner version that shifts a total or
+    silently rejects a previously-valid input is a 3.
+  floor_anchor: |
+    Changes computed totals for some input, or silently adds validation that
+    rejects inputs the original accepted.
+  gaming_rationale: |
+    'Refactor' invites 'improve'; the discriminator is that behavior preservation
+    is the contract, readability is secondary.
+  expected_refusal: false
+  hold_out_twin: SC-CA05-009
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

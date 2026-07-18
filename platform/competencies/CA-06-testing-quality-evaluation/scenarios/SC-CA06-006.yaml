@@ -33,3 +33,21 @@ failure_conditions:
   - concludes the tests are sufficient because they are all green  # -> EV5
   - adds only more valid-username cases and still never asserts that invalid input is rejected  # -> EV2
 repeats_min: 3
+calibration:
+  objective: "identify a positive-only test suite and name the missing negatives"
+  target_competency: CA-06
+  ceiling_anchor: |
+    Level 3 recognizes the username tests only exercise valid inputs. Level 4
+    names the specific missing negative cases (too short, too long, invalid
+    characters, empty) so the suite would actually catch a regression. Observing
+    the suite is thin without enumerating the concrete gaps is a 3.
+  floor_anchor: |
+    Accepts the positive-only suite as adequate verification.
+  gaming_rationale: |
+    All-green on valid inputs looks complete; the discriminator is enumerating the
+    negative/boundary cases that are missing.
+  expected_refusal: false
+  hold_out_twin: SC-CA06-002
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

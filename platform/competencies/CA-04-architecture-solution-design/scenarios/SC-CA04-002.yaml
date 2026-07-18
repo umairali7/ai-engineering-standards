@@ -30,3 +30,23 @@ failure_conditions:
   - approves the synchronous inline design as sound with no failure-mode analysis  # -> EV2
   - proposes a fix that assumes a message queue or retry service the prompt never mentions  # -> EV1
 repeats_min: 3
+calibration:
+  objective: "critique a design by finding and prioritizing the highest-risk failure mode"
+  target_competency: CA-04
+  ceiling_anchor: |
+    Level 3 lists failure modes, scaling, security, and operational concerns.
+    Level 4 identifies that a slow or failed third-party call is the high-risk
+    path, flags the payment call specifically, reasons about its blast radius, and
+    proposes concrete improvements ranked by risk. A flat list that does not
+    surface and prioritize the dominant failure is a 3.
+  floor_anchor: |
+    Misses the high-risk third-party/payment path, or lists issues without
+    prioritizing by risk.
+  gaming_rationale: |
+    A long critique looks thorough; the discriminator is identifying and ranking
+    the failure that actually matters.
+  expected_refusal: false
+  hold_out_twin: SC-CA04-013
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

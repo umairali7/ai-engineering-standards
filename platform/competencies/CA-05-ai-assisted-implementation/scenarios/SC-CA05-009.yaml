@@ -31,3 +31,22 @@ failure_conditions:
   - changes which inputs raise ValueError                    # -> EV1
   - alters or reorders the db.insert side effect             # -> EV1
 repeats_min: 3
+calibration:
+  objective: "split a function into testable units with behavior preserved exactly"
+  target_competency: CA-05
+  ceiling_anchor: |
+    Level 3 separates parse/validate/persist into smaller units. Level 4 keeps the
+    same exceptions on the same inputs and the same DB writes/side-effect order
+    while making the units independently testable. A decomposition that changes
+    which inputs raise ValueError or reorders the db.insert is a 3.
+  floor_anchor: |
+    Changes which inputs raise ValueError, or alters or reorders the db.insert
+    side effect.
+  gaming_rationale: |
+    'Make it testable' invites behavior tweaks; the discriminator is exact
+    exception and side-effect preservation.
+  expected_refusal: false
+  hold_out_twin: SC-CA05-002
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

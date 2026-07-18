@@ -29,3 +29,22 @@ failure_conditions:
   - approves the cache as a sound performance win and misses the revoked-access staleness window  # -> EV3
   - proposes a fix that assumes a cache-invalidation event bus the prompt never mentions  # -> EV1
 repeats_min: 3
+calibration:
+  objective: "critique a design and surface its dominant security/operational failure"
+  target_competency: CA-04
+  ceiling_anchor: |
+    Level 3 reviews failure modes, security, and operational burden. Level 4
+    surfaces and prioritizes the dominant risk in the specific design and proposes
+    concrete, implementable improvements against it, rather than a flat catalogue.
+    A generic critique that does not rank by impact is a 3.
+  floor_anchor: |
+    Lists issues without identifying the dominant risk, or proposes vague
+    improvements.
+  gaming_rationale: |
+    Breadth looks like rigor; the discriminator is depth on the failure that
+    matters most.
+  expected_refusal: false
+  hold_out_twin: SC-CA04-002
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

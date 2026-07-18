@@ -29,3 +29,23 @@ failure_conditions:
   - proposes a single example-based unit test as sufficient verification  # -> EV3
   - treats one passing run as proof the component works                    # -> EV1
 repeats_min: 3
+calibration:
+  objective: "design a real evaluation for an AI classifier with a versioned set and oracle"
+  target_competency: CA-06
+  ceiling_anchor: |
+    Level 3 proposes a versioned task set with expected outcomes and an
+    oracle/scoring approach. Level 4 also targets the actual failure modes
+    (ambiguous categories, out-of-taxonomy inputs), holds out data, and defines
+    how disagreement is scored - an evaluation that would actually discriminate a
+    good classifier from a plausible one. An ad-hoc set with no oracle is a 3.
+  floor_anchor: |
+    Proposes an ad-hoc set with no versioning or oracle, or scores on surface
+    accuracy that ignores the hard cases.
+  gaming_rationale: |
+    Any test set looks like evaluation; the discriminator is a versioned, oracle-
+    backed set that targets failure modes.
+  expected_refusal: false
+  hold_out_twin: SC-CA06-007
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

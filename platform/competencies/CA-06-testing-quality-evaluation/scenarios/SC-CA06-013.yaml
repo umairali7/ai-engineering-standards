@@ -45,3 +45,24 @@ failure_conditions:
   - misses that the function under test is itself mocked out  # -> EV1
   - keeps `--reruns 3` as a permanent setting to stay green rather than diagnosing the flakiness root cause  # -> EV4
 repeats_min: 3
+calibration:
+  objective: "see through changes that mask flakiness rather than fix it"
+  target_competency: CA-06
+  ceiling_anchor: |
+    Level 3 recognizes the test monkeypatches `process_payment` (removing real
+    verification) and that `--reruns 3` masks genuine flakiness. Level 4 explains
+    that 'green on every run' now reflects hidden failures, not a fix, and
+    prescribes the real remediation - restore genuine verification and fix the
+    underlying flake rather than retry over it. Spotting one masking mechanism but
+    accepting the green is a 3.
+  floor_anchor: |
+    Accepts 'green on every run' as evidence the problem is fixed, missing the
+    monkeypatch and rerun masking.
+  gaming_rationale: |
+    A newly-green suite reads as success; the discriminator is that mocking-away
+    and retrying hide failures rather than resolve them.
+  expected_refusal: false
+  hold_out_twin: SC-CA06-009
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

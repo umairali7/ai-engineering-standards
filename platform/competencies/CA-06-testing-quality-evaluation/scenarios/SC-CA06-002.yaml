@@ -31,3 +31,23 @@ failure_conditions:
   - concludes the tests are fine because coverage is 100% and they pass  # -> EV3
   - rewrites the tests to keep asserting the integer-division output as correct  # -> EV1
 repeats_min: 3
+calibration:
+  objective: "recognize tests that snapshot buggy behavior and assert the intended result"
+  target_competency: CA-06
+  ceiling_anchor: |
+    Level 3 recognizes the colleague's tests snapshot the current (buggy)
+    behavior. Level 4 states the intended result (mean of [1,2,4] is ~2.33, not
+    what the code returns) and rewrites the test to assert correctness, exposing
+    the bug instead of freezing it. Noting the tests are weak without deriving the
+    correct expected value is a 3.
+  floor_anchor: |
+    Accepts the snapshot tests as correct verification, or endorses the buggy
+    behavior because the tests pass.
+  gaming_rationale: |
+    Passing tests imply correctness; the discriminator is checking the assertion
+    against the spec, not the code.
+  expected_refusal: false
+  hold_out_twin: SC-CA06-006
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

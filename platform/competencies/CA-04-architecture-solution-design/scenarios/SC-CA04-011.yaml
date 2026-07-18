@@ -34,3 +34,23 @@ failure_conditions:
   - allows arbitrary unreviewed tool servers in production  # -> EV3
   - sends regulated repository context to any provider for failover  # -> EV3
 repeats_min: 3
+calibration:
+  objective: "architect a regulated multi-repo agent platform with enforced data boundaries"
+  target_competency: CA-04
+  ceiling_anchor: |
+    Level 3 proposes a gateway/plane-style architecture. Level 4 routes regulated
+    data only to approved in-region/approved services with enforceable controls
+    (data-class-aware routing, residency, egress limits), argues the trade-offs
+    against the constraints, and keeps the design implementable. A plausible
+    architecture that does not actually enforce the regulated-data boundary is a
+    3.
+  floor_anchor: |
+    Lets regulated data reach non-approved services/regions, or leaves the data
+    boundary as an unenforced guideline.
+  gaming_rationale: |
+    A clean plane diagram looks compliant; the discriminator is enforceable, data-
+    class-aware routing, not a boundary in prose.
+  expected_refusal: false
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

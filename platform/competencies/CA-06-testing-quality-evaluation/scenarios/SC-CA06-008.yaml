@@ -36,3 +36,21 @@ failure_conditions:
   - uses real time.sleep / wall-clock time instead of the injected `now`, making tests flaky  # -> EV4
   - omits the refill-cap-at-capacity or the deny-consumes-nothing behavior  # -> EV2
 repeats_min: 3
+calibration:
+  objective: "test a rate limiter deterministically with an injected clock"
+  target_competency: CA-06
+  ceiling_anchor: |
+    Level 3 writes tests derived from the spec. Level 4 injects a controllable
+    clock (no wall-clock dependence) and covers the boundaries - bucket empties
+    after capacity, refills at the specified rate, behavior at exactly the limit.
+    Tests that depend on real time or miss the refill/boundary behavior are a 3.
+  floor_anchor: |
+    Depends on wall-clock time (flaky), or omits the empties-after-capacity /
+    refill boundaries.
+  gaming_rationale: |
+    A quick timing test looks sufficient; the discriminator is deterministic time
+    injection and boundary coverage.
+  expected_refusal: false
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

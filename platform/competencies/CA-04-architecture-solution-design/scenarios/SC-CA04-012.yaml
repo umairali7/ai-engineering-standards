@@ -44,3 +44,23 @@ failure_conditions:
   - claims row-level tenant_id filtering fully satisfies "another tenant's bug cannot read my rows" without noting its weaker isolation guarantee  # -> EV3
   - ignores the regional-residency requirement entirely  # -> EV2
 repeats_min: 3
+calibration:
+  objective: "analyze tenant-isolation models against isolation strength and cost"
+  target_competency: CA-04
+  ceiling_anchor: |
+    Level 3 lists tenant-isolation options (shared column vs schema vs database).
+    Level 4 presents genuinely distinct isolation models and argues trade-offs
+    against isolation strength, blast radius of a cross-tenant leak, cost, and
+    operational burden, then recommends per the stated growth. Non-distinct
+    options, or trade-offs that ignore cross-tenant blast radius, are a 3.
+  floor_anchor: |
+    Presents non-distinct isolation options, or ignores cross-tenant leakage /
+    blast radius in the trade-offs.
+  gaming_rationale: |
+    'Add tenant_id' is the status quo; the discriminator is weighing isolation
+    strength and leak blast radius across distinct models.
+  expected_refusal: false
+  hold_out_twin: SC-CA04-001
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

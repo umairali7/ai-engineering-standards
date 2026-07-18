@@ -34,3 +34,23 @@ failure_conditions:
   - omits the floor-at-zero case where a fixed coupon exceeds the total  # -> EV2
   - writes assertions that would pass for any output rather than encoding the spec  # -> EV1
 repeats_min: 3
+calibration:
+  objective: "write spec-derived tests that cover boundaries, not the implementation"
+  target_competency: CA-06
+  ceiling_anchor: |
+    Level 3 writes a passing test suite. Level 4 derives tests from the
+    specification rather than the current implementation, and covers the
+    boundaries a happy-path suite misses (e.g. a fixed coupon larger than the
+    total). Tests that merely re-encode what the code currently does, or skip
+    boundaries, are a 3.
+  floor_anchor: |
+    Derives tests from the implementation (snapshots current behavior), or omits
+    the specified boundary cases.
+  gaming_rationale: |
+    Tests that pass look done; the discriminator is spec-derivation and boundary
+    coverage, not green output.
+  expected_refusal: false
+  hold_out_twin: SC-CA06-008
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

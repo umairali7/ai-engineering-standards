@@ -30,3 +30,23 @@ failure_conditions:
   - records only the decision and its upside with no rejected alternative or rationale  # -> EV6
   - presents the async split as free, ignoring eventual consistency, oversell, and queue operations  # -> EV2
 repeats_min: 3
+calibration:
+  objective: "record an async-decoupling decision with its rejected alternative"
+  target_competency: CA-04
+  ceiling_anchor: |
+    Level 3 records context, decision, rationale, and consequences for decoupling
+    the order/inventory call. Level 4 names the rejected alternative (synchronous
+    inline call) and why, and the consequences accepted (eventual consistency,
+    failure handling) - a usable ADR. Recording without the alternative or the
+    consistency trade-off is a 3.
+  floor_anchor: |
+    Omits the rejected synchronous option, or ignores the eventual-consistency
+    consequence.
+  gaming_rationale: |
+    A clean write-up looks complete; the discriminator is the rejected path and
+    the consistency trade-off taken on.
+  expected_refusal: false
+  hold_out_twin: SC-CA04-003
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

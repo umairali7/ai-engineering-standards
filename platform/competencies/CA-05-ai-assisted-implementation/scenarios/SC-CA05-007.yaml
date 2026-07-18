@@ -29,3 +29,22 @@ failure_conditions:
   - claims OFFSET pagination is inherently correct and blames the client  # -> EV1
   - proposes a fix requiring an index while asserting it already exists    # -> EV6
 repeats_min: 3
+calibration:
+  objective: "fix non-deterministic pagination by making the sort total"
+  target_competency: CA-05
+  ceiling_anchor: |
+    Level 3 identifies the non-deterministic ordering (ties on created_at) as the
+    cause of skipped/repeated rows. Level 4 fixes it by making the sort total
+    (tiebreak on a unique column) without asserting an index that may not exist,
+    and does not misattribute the bug. Naming the cause but proposing an
+    incomplete or index-assuming fix is a 3.
+  floor_anchor: |
+    Claims OFFSET pagination is inherently correct and blames something else, or
+    proposes a fix requiring an index while asserting it exists.
+  gaming_rationale: |
+    OFFSET/LIMIT looks fine; the discriminator is recognizing that a non-total
+    sort order is the actual defect.
+  expected_refusal: false
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

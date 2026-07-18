@@ -30,3 +30,23 @@ failure_conditions:
   - fabricates a datetime API that does not exist            # -> EV1
   - compares timestamps after stripping timezone information # -> EV1
 repeats_min: 3
+calibration:
+  objective: "implement scheduling-overlap logic correct on timezones and boundaries"
+  target_competency: CA-05
+  ceiling_anchor: |
+    Level 3 produces working overlap logic for the common case. Level 4 also gets
+    the details a merely-working answer misses - compares instants not naive local
+    times (timezone/DST correctness), handles the overlap boundary per the stated
+    strict inequality, and does not invent a datetime API. Happy-path code that
+    mishandles timezone or the boundary is a 3.
+  floor_anchor: |
+    Compares timestamps after stripping timezone information, or fabricates a
+    datetime API that does not exist.
+  gaming_rationale: |
+    It looks like a simple interval check; the discriminator is instant-vs-local-
+    time correctness and the exact boundary rule.
+  expected_refusal: false
+  hold_out_twin: SC-CA05-008
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

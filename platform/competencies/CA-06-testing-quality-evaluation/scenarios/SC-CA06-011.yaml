@@ -29,3 +29,23 @@ failure_conditions:
   - says unit tests are sufficient for rollback suggestions  # -> EV2
   - permits automatic rollback execution without human gate  # -> EV3
 repeats_min: 3
+calibration:
+  objective: "design a layered quality strategy covering AI-specific failure modes"
+  target_competency: CA-06
+  ceiling_anchor: |
+    Level 3 combines unit, integration, contract, and simulation testing for the
+    rollback-suggestion change. Level 4 also covers the AI-specific failure modes
+    - telemetry schema drift, malformed/partial inputs, degraded-signal behavior,
+    and the consequence of a wrong rollback suggestion - a strategy matched to an
+    autonomous, high-consequence change. A conventional test pyramid that ignores
+    the AI/telemetry failure modes is a 3.
+  floor_anchor: |
+    Proposes a single-layer or conventional-only strategy that ignores telemetry
+    drift, malformed inputs, or the wrong-suggestion consequence.
+  gaming_rationale: |
+    A standard test pyramid looks thorough; the discriminator is covering the AI-
+    and-telemetry failure modes specific to this change.
+  expected_refusal: false
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

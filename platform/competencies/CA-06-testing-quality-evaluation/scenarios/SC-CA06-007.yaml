@@ -29,3 +29,23 @@ failure_conditions:
   - proposes a single example-based check as sufficient verification  # -> EV3
   - scores only on readability/fluency and cannot catch a summary that misstates the obligation  # -> EV1
 repeats_min: 3
+calibration:
+  objective: "design an evaluation for a generative summarizer targeting faithfulness"
+  target_competency: CA-06
+  ceiling_anchor: |
+    Level 3 proposes a versioned evaluation set of clauses with an oracle/scoring
+    approach. Level 4 targets the real failure mode - unfaithfulness /
+    hallucinated or dropped clauses - defines how faithfulness is scored against
+    source, and holds out data, rather than measuring surface fluency. An eval
+    that scores readability instead of faithfulness is a 3.
+  floor_anchor: |
+    Uses no oracle, or measures surface metrics (length/fluency) that do not
+    detect unfaithful summaries.
+  gaming_rationale: |
+    A summary that reads well seems good; the discriminator is measuring
+    faithfulness to source, not fluency.
+  expected_refusal: false
+  hold_out_twin: SC-CA06-003
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

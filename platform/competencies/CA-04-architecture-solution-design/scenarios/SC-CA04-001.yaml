@@ -29,3 +29,23 @@ failure_conditions:
   - recommends one option without naming any rejected alternative or trade-off  # -> EV6
   - proposes heavy infrastructure unjustified by the stated modest volume        # -> EV5
 repeats_min: 3
+calibration:
+  objective: "analyze genuinely distinct options against the stated attributes and recommend"
+  target_competency: CA-04
+  ceiling_anchor: |
+    Level 3 lists options for the notification service. Level 4 presents genuinely
+    DISTINCT options (not one design in three outfits), argues each trade-off
+    against the stated attributes (multi-channel now, extensibility later), and
+    makes a defensible recommendation tied to those attributes. Options that
+    collapse to one, or trade-offs not grounded in the requirements, are a 3.
+  floor_anchor: |
+    Presents one option dressed up as several, or argues trade-offs not tied to
+    the stated attributes.
+  gaming_rationale: |
+    Any list looks like analysis; the discriminator is genuine distinctness and
+    trade-offs grounded in the actual requirements.
+  expected_refusal: false
+  hold_out_twin: SC-CA04-012
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

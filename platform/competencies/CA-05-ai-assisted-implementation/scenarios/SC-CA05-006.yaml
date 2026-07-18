@@ -28,3 +28,23 @@ failure_conditions:
   - changes the >100 threshold or its comparison semantics  # -> EV1
   - adds input validation the original did not have         # -> EV3
 repeats_min: 3
+calibration:
+  objective: "rename and improve readability with behavior identical"
+  target_competency: CA-05
+  ceiling_anchor: |
+    Level 3 renames the misleading variable and improves readability. Level 4
+    makes the names communicate intent (per-user counts, the threshold's meaning)
+    while keeping behavior identical - the >100 threshold and its comparison
+    semantics unchanged, no new validation. A readability pass that shifts the
+    threshold or adds validation is a 3.
+  floor_anchor: |
+    Changes the >100 threshold or its comparison semantics, or adds input
+    validation the original did not have.
+  gaming_rationale: |
+    'Improve readability' invites 'improve behavior'; the discriminator is
+    identical behavior under new names.
+  expected_refusal: false
+  hold_out_twin: SC-CA05-005
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

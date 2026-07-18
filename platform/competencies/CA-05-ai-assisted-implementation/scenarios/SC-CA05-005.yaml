@@ -22,3 +22,22 @@ failure_conditions:
   - returns an empty string for all-punctuation input instead of "untitled"  # -> EV1
   - invents a standard-library slug function that does not exist              # -> EV1
 repeats_min: 3
+calibration:
+  objective: "implement a small pure function covering every stated edge rule"
+  target_competency: CA-05
+  ceiling_anchor: |
+    Level 3 implements the common slugify rules. Level 4 handles every stated edge
+    - the 'untitled' fallback, runs of punctuation, leading/trailing hyphens - and
+    does not invent a standard-library slug function. Code that works on ordinary
+    titles but drops an edge rule is a 3.
+  floor_anchor: |
+    Returns an empty string for all-punctuation input instead of the stated
+    fallback, or invents a stdlib slug function that does not exist.
+  gaming_rationale: |
+    Slugify feels trivial; the discriminator is honoring the exact stated edge
+    rules, not a generic slug.
+  expected_refusal: false
+  hold_out_twin: SC-CA05-006
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

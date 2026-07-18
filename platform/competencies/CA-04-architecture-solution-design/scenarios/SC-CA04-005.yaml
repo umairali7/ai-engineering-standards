@@ -29,3 +29,23 @@ failure_conditions:
   - recommends one option with no rejected alternative or trade-off named  # -> EV6
   - proposes a multi-region CDN or heavy pipeline unjustified by the modest internal scope  # -> EV5
 repeats_min: 3
+calibration:
+  objective: "analyze storage options for a low-risk tool proportionately"
+  target_competency: CA-04
+  ceiling_anchor: |
+    Level 3 lists storage options for the avatar tool. Level 4 presents genuinely
+    distinct options (object store vs blob-in-DB vs filesystem), argues trade-offs
+    against the stated constraints, and keeps the analysis proportionate to a low-
+    risk internal tool. One option in disguise, or over-engineering a trivial
+    choice, is a 3.
+  floor_anchor: |
+    Presents non-distinct options, or argues trade-offs untethered to the stated
+    constraints.
+  gaming_rationale: |
+    A trivial choice invites a token list; the discriminator is distinct options
+    with proportionate, grounded trade-offs.
+  expected_refusal: false
+  hold_out_twin: SC-CA04-001
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

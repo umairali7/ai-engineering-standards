@@ -29,3 +29,23 @@ failure_conditions:
   - approves the design as fine and misses the duplicate-insertion / non-idempotency problem  # -> EV2
   - proposes a fix that assumes a message queue or dedup service the prompt never mentions  # -> EV1
 repeats_min: 3
+calibration:
+  objective: "find the non-idempotency/restart failure in a design review"
+  target_competency: CA-04
+  ceiling_anchor: |
+    Level 3 critiques failure modes and operational burden. Level 4 identifies the
+    non-idempotency (re-runs produce duplicates) and the half-failure/restart
+    behavior as the dominant risks, and proposes concrete idempotent/restart-safe
+    improvements. A generic review that misses the restart-duplication failure is
+    a 3.
+  floor_anchor: |
+    Misses the non-idempotency / restart-duplication failure, or proposes vague
+    'add error handling'.
+  gaming_rationale: |
+    Surface issues are easy to list; the discriminator is finding the
+    restart/idempotency failure that bites in production.
+  expected_refusal: false
+  hold_out_twin: SC-CA04-002
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

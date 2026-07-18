@@ -34,3 +34,21 @@ failure_conditions:
   - omits the remainder-distribution case where the total does not divide evenly  # -> EV2
   - writes assertions that pass for any list summing near the total rather than encoding the exact-sum and remainder rules  # -> EV1
 repeats_min: 3
+calibration:
+  objective: "write spec-derived tests proportionate to a low-risk function"
+  target_competency: CA-06
+  ceiling_anchor: |
+    Level 3 writes tests that pass. Level 4 derives them from the specification
+    and covers the stated boundaries (exact division, non-even split) while
+    staying proportionate to the low risk. Implementation-snapshot tests, or
+    missing a stated boundary, are a 3.
+  floor_anchor: |
+    Snapshots the implementation, or omits a specified boundary case.
+  gaming_rationale: |
+    Simple function invites trivial tests; the discriminator is still deriving
+    from the spec and hitting boundaries.
+  expected_refusal: false
+  hold_out_twin: SC-CA06-001
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false
