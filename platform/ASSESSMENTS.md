@@ -53,6 +53,15 @@ A strong competency **never** offsets a failing one — there is no blended scor
 records any grant/certification (`Assessment PASS → certification →
 production-ready`).
 
+**Evidential maturity by tier.** An assessment's `default_risk_tier` states its
+*ambition*; whether the corpus can *decisively* support that tier depends on how
+many **distinct** high-tier scenarios back each mandatory area (a decisional RT3
+run needs far more than repeats of a handful of prompts — see
+[CALIBRATION.md §5](CALIBRATION.md)). Describe this honestly, e.g. *"RT2:
+decisional. RT3: operationally ready; an expanded distinct-scenario corpus is
+required for decisional confidence."* The platform already labels under-sampled
+runs NON-DECISIONAL, but stating maturity up front keeps claims credible.
+
 ## Three reporting layers
 
 1. **Normative (authoritative):** per-mandatory PASS/FAIL + overall outcome + structured reasons.

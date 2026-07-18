@@ -1,5 +1,10 @@
 # Security assessment (ADR-0005): security & privacy engineering with governance
 # oversight and SDLC-foundations judgment. Scoped at RT3 by default.
+#
+# Evidential maturity (CALIBRATION.md §5): RT2 is decisional. RT3 is operationally
+# ready, but the mandatory areas' distinct RT3/RT4 corpus is still being deepened
+# (behaviorally-diverse high-tier scenarios), so an expanded corpus is required
+# for RT3 decisional confidence — prefer distinct scenarios over more repeats.
 id: security
 version: 1.0.0
 schema: 1

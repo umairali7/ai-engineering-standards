@@ -119,7 +119,9 @@ def calibrate(root: Path | None = None) -> dict[str, Any]:
         row = {"area": area_code, "scenarios": len(files), "calibrated": 0,
                "ceiling_anchor": 0, "floor_trap": 0, "refuse_case": 0,
                "hold_out_twins": 0, "design_reviewed": 0, "empirically_calibrated": 0,
-               "rt3_rt4": 0}
+               "rt3_rt4": 0, "families": 0, "high_tier_families": 0}
+        families: set[str] = set()
+        high_families: set[str] = set()
         for f in files:
             try:
                 sc = yaml.safe_load(f.read_text(encoding="utf-8"))
@@ -127,8 +129,13 @@ def calibrate(root: Path | None = None) -> dict[str, Any]:
                 continue
             if not isinstance(sc, dict):
                 continue
+            fam = sc.get("family")
+            if fam:
+                families.add(fam)
             if sc.get("risk_tier") in ("RT3", "RT4"):
                 row["rt3_rt4"] += 1
+                if fam:
+                    high_families.add(fam)
             if sc.get("failure_conditions"):
                 row["floor_trap"] += 1
             cal = sc.get("calibration")
@@ -145,6 +152,11 @@ def calibrate(root: Path | None = None) -> dict[str, Any]:
                     row["design_reviewed"] += 1
                 if es.get("empirically_calibrated"):
                     row["empirically_calibrated"] += 1
+        row["families"] = len(families)
+        # behavioral diversity at the high tiers: distinct KINDS of decision, not
+        # distinct prompts — a thin high_tier_families count is a coverage gap even
+        # when rt3_rt4 looks healthy (CALIBRATION.md §5).
+        row["high_tier_families"] = len(high_families)
         areas.append(row)
 
     keys = ("scenarios", "calibrated", "ceiling_anchor", "floor_trap", "refuse_case",
@@ -168,12 +180,16 @@ def render_calibration(report: dict[str, Any]) -> str:
         f"  design-reviewed     : {t.get('design_reviewed', 0)}",
         f"  empirically calib.  : {t.get('empirically_calibrated', 0)}   (0 until a model panel exists)",
         "",
-        "  area    scen  calib  ceil  trap  refuse  twin  RT3/4",
+        "  behavioral diversity: 'fam' = distinct decision kinds; 'hi-fam' = distinct",
+        "  kinds among RT3/RT4 (a thin hi-fam is a coverage gap even if RT3/4 looks ok)",
+        "",
+        "  area    scen  calib  ceil  trap  refuse  twin  RT3/4  fam  hi-fam",
     ]
     for a in report["areas"]:
         lines.append(f"  {a['area']:6} {a['scenarios']:5} {a['calibrated']:6} "
                      f"{a['ceiling_anchor']:5} {a['floor_trap']:5} {a['refuse_case']:7} "
-                     f"{a['hold_out_twins']:5} {a['rt3_rt4']:6}")
+                     f"{a['hold_out_twins']:5} {a['rt3_rt4']:6} {a.get('families', 0):4} "
+                     f"{a.get('high_tier_families', 0):6}")
     return "\n".join(lines)
 
 

@@ -69,7 +69,11 @@ def test_shipped_ca07_worked_example_is_calibrated_and_still_valid():
     from aies import suites
     report = suites.calibrate()
     ca07 = next(a for a in report["areas"] if a["area"] == "CA-07")
-    assert ca07["calibrated"] >= 3 and ca07["ceiling_anchor"] >= 3
+    assert ca07["calibrated"] == ca07["scenarios"]                 # fully calibrated
+    assert ca07["ceiling_anchor"] == ca07["scenarios"]            # every scenario has a ceiling
     assert ca07["refuse_case"] >= 2 and ca07["hold_out_twins"] >= 1
+    # behavioral diversity (CALIBRATION.md §5): CA-07's high tier spans many
+    # distinct decision kinds, not repetitions of one — a broad hi-fam count.
+    assert ca07["rt3_rt4"] >= 9 and ca07["high_tier_families"] >= 8
     assert report["totals"]["empirically_calibrated"] == 0        # honest: no panel yet
     assert suites.validate()["valid"]                              # nothing broke

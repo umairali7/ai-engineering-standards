@@ -15,4 +15,9 @@ description: >
 discovery_probes:
   - coding            # can the candidate read code and configuration at all
   - structured_output # can it follow an output contract
-scenario_families: [threat-modeling, vuln-analysis, privacy-review, escalation]
+# Behavioral diversity (CALIBRATION.md §5): distinct KINDS of security decision,
+# not just distinct prompts. High-tier (RT3/RT4) coverage spans them deliberately.
+scenario_families: [threat-modeling, vuln-analysis, privacy-review, escalation,
+                    agentic-tool-security, control-integrity, incident-response,
+                    secrets-management, supply-chain, operational-resilience,
+                    governance]

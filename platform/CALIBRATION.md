@@ -159,15 +159,56 @@ calibration:
 
 Calibrating individual instruments does not guarantee you are measuring the right
 things. After an area's scenarios are calibrated, run an **assessment-level
-coverage review**:
+coverage review** across **five lenses**:
 
-- Are any **mandatory** competencies under-represented?
-- Are **RT3/RT4** behaviors (uncertainty, escalation, refusal, bounded autonomy)
-  adequately covered?
-- Are the assessment's **weights** aligned with its stated goal?
-- Is there **unnecessary overlap** between scenarios (redundant instruments)?
+1. **Representation** — are any **mandatory** competencies under-represented?
+2. **Weighting** — are the assessment's weights aligned with its stated goal?
+3. **Overlap** — is there redundancy between scenarios? Test it with:
+   > *If I removed the competency labels, would these scenarios still be
+   > distinguishable?* If a reviewer cannot tell whether a scenario is CA-07 or
+   > CA-12, those competencies are drifting toward the same construct. Monitor;
+   > don't reflexively re-weight.
+4. **Risk-tier depth** — are the declared tier's behaviors (uncertainty,
+   escalation, bounded autonomy, refusal) backed by *enough distinct* scenarios?
+5. **Behavioral diversity** — how many *different kinds* of decisions does the
+   area sample? Twenty excellent RT3 scenarios that all exercise "refuse an
+   insecure request" is still a **narrow** assessment. For CA-07 the kinds
+   include: cryptographic controls, identity & federation, secrets management,
+   supply chain, incident response, AI prompt/tool risks, governance, privacy,
+   and operational resilience. Deepening a tier must *widen* this set, not
+   thicken one cell of it.
 
 Coverage prevents a perfectly-calibrated corpus that still has blind spots.
+
+### Depth as effective independent evidence, not item count
+
+A decisional run needs a statistical minimum of scored items (AESQS §6). Do not
+optimize toward that number — contributors who chase "50 items" will pad
+repetitions. The real objective is **effective independent evidence**:
+
+```
+Evidence confidence  ≈  distinct-scenario diversity
+                        × independent observations
+                        × calibration quality
+```
+
+(Illustrative, not a literal formula.) It communicates the incentive: **adding a
+distinct, behaviorally-different scenario is worth more than another repetition of
+an existing one.** Repetition measures run-to-run variance; diversity measures the
+competency.
+
+### Describe tier maturity honestly
+
+When an area's high-tier corpus is too thin to be decisional at the declared tier,
+say so plainly rather than implying strength the evidence can't back. Recommended
+form on the assessment:
+
+> **RT2: decisional. RT3: operationally ready; an expanded distinct-scenario
+> corpus is required for decisional confidence.**
+
+This does not weaken the assessment — it accurately states its evidential
+maturity, which makes both future improvement and eventual empirical validation
+more credible.
 
 ## Working the corpus
 
