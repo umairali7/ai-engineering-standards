@@ -1,0 +1,24 @@
+# Security assessment (ADR-0005): security & privacy engineering with governance
+# oversight and SDLC-foundations judgment. Scoped at RT3 by default.
+id: security
+version: 1.0.0
+schema: 1
+description: Security & privacy engineering qualification with governance oversight.
+profile: security
+default_risk_tier: RT3
+competencies:
+  - area: CA-07                # Security & Privacy Engineering
+    requirement: { type: mandatory }
+    weight: 45
+    min_cl: CL3
+  - area: CA-12                # Governance, Risk & AI Safety
+    requirement: { type: mandatory }
+    weight: 25
+  - area: CA-01                # AI-Native SDLC Foundations (risk tiering / autonomy)
+    requirement: { type: mandatory }
+    weight: 20
+  - area: CA-05                # AI-Assisted Implementation (advisory)
+    requirement: { type: advisory }
+    weight: 10
+sampling:
+  repeats: 3

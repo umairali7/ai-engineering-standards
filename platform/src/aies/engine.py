@@ -37,6 +37,7 @@ def start_qualification(
     subject_kind: str = "ai",
     runtime: str | None = None,
     workers: int | None = None,
+    assessment: dict | None = None,
 ) -> dict:
     """Stages 2-4: discovery, environment, benchmark execution.
 
@@ -112,6 +113,10 @@ def start_qualification(
         "subject_kind": subject_kind,
         "repeats": repeats,          # override used, if any (for resume-collection)
         "scoped_areas": list(areas),  # the CA codes as requested (for resume-collection)
+        # The assessment this run was composed under (ADR-0005), if any — the
+        # decision engine reads this to compute the assessment outcome. Recording
+        # it here keeps the composition immutable with the evidence.
+        **({"assessment": assessment} if assessment else {}),
         "areas": [
             {"area": d.get("area", a), "suite_version": v,
              "n_scenarios": len(s),

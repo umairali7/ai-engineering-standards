@@ -544,6 +544,28 @@ conformance model:
 { "items": [ {"id": "ca10-branch-protection", "evidence": "link or note"} ] }
 ```
 
+### 5.9 Run a named assessment (composition as data)
+
+Instead of listing areas and a profile by hand, run a **declarative assessment**
+— a named qualification (enterprise, coder, security, architecture) whose
+competency composition lives in `assessments/*.yaml`
+([ADR-0005](../adr/ADR-0005-Assessment-as-Code.md), authoring guide
+[ASSESSMENTS.md](ASSESSMENTS.md)):
+
+```
+aies assessment list                                        # what's shipped
+aies qualify local-qwen --assessment enterprise --judge <judge>   # compose, score, decide
+aies assessment result <run>                                # re-decide a run (no inference)
+```
+
+`--assessment` selects the competency set, profile, risk tier, and sampling. After
+scoring, the platform decides an **authoritative outcome** —
+`PASS / FAIL / INCONCLUSIVE / INSUFFICIENT EVIDENCE` — over the assessment's
+**mandatory** competencies. It is **gate-first**: a strong competency never
+offsets a failing one, and there is **no blended score**. Advisory competencies
+and the numeric diagnostics/analytics are reported for feedback but never decide.
+A `PASS` is an assessment outcome; a named human still records any grant.
+
 ## 6. A note on trust
 
 Every number the platform emits is evidence with full provenance (which model

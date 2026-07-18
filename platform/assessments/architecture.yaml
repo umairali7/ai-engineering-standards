@@ -1,0 +1,24 @@
+# Architecture assessment (ADR-0005): architecture & solution design, with
+# foundations and design-level security mandatory, requirements advisory.
+id: architecture
+version: 1.0.0
+schema: 1
+description: Architecture & solution design qualification.
+profile: architect
+default_risk_tier: RT2
+competencies:
+  - area: CA-04                # Architecture & Solution Design
+    requirement: { type: mandatory }
+    weight: 45
+    min_cl: CL3
+  - area: CA-01                # AI-Native SDLC Foundations
+    requirement: { type: mandatory }
+    weight: 20
+  - area: CA-07                # Security & Privacy Engineering (design-level)
+    requirement: { type: mandatory }
+    weight: 20
+  - area: CA-02                # Business & Requirements Analysis (advisory)
+    requirement: { type: advisory }
+    weight: 15
+sampling:
+  repeats: 3

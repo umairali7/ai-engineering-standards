@@ -38,7 +38,8 @@ See also [DEPLOYMENTS.md](DEPLOYMENTS.md) (qualify deployments, not models),
 [PROFILES.md](PROFILES.md) (the weighting presets),
 [RUNTIMES.md](RUNTIMES.md) (the runtime interface and shipped adapters), and
 [JOURNEYS.md](JOURNEYS.md) (multi-phase scenarios that test lifecycle depth),
-and [SCENARIOS.md](SCENARIOS.md) (how to author competency scenarios).
+[SCENARIOS.md](SCENARIOS.md) (how to author competency scenarios), and
+[ASSESSMENTS.md](ASSESSMENTS.md) (declarative qualification composition).
 Hit a snag? [TROUBLESHOOTING.md](TROUBLESHOOTING.md) covers the common
 endpoint, TLS, auth, performance, and judge issues.
 

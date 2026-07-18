@@ -69,6 +69,7 @@ Accepted ADRs are never edited to change the decision. If circumstances change, 
 | [ADR-0002](ADR-0002-Qualification-Platform.md) | Qualification Platform — an Executable Reference Implementation of AESQS | Accepted |
 | [ADR-0003](ADR-0003-Competency-Area-Knowledge-Mapping.md) | Competency areas map to knowledge areas by coverage, not bijection | Accepted |
 | [ADR-0004](ADR-0004-Repository-Conformance-Audit.md) | `aies audit` — executable repository conformance assessment (maturity scoring, three-state evidence) | Accepted |
+| [ADR-0005](ADR-0005-Assessment-as-Code.md) | Assessment-as-Code — declarative competency composition above profiles (gate-first, no blended score) | Accepted |
 
 ## Related Documents
 

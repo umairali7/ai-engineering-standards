@@ -93,9 +93,14 @@ def cmd_qualify(args) -> int:
             package = engine.aggregate(args.resume)
             from . import report
             paths = report.write_reports(args.resume)
-            _out({"package": package, "reports": paths}, args.json,
+            outcome = _assessment_result(args.resume)
+            _out({"package": package, "reports": paths,
+                  **({"assessment_result": outcome} if outcome else {})}, args.json,
                  f"aggregated {args.resume}\n"
-                 f"  markdown: {paths['markdown']}\n  json    : {paths['json']}")
+                 f"  markdown: {paths['markdown']}\n  json    : {paths['json']}"
+                 + (f"\n\nAssessment '{outcome['assessment']['id']}' "
+                    f"v{outcome['assessment']['version']}: **{outcome['outcome']}**"
+                    if outcome else ""))
             return 0
         from . import config, workspace
         # Resolve the effective worker count once so both phases (response
@@ -118,6 +123,7 @@ def cmd_qualify(args) -> int:
                 subject_kind="ai",
                 runtime=getattr(args, "runtime", None),
                 workers=workers,
+                assessment=getattr(args, "_assessment", None),
             )
         run_id = manifest["run_id"]
         # Automated scoring: if a judge is given (or AIES_JUDGE is set), score
@@ -142,11 +148,16 @@ def cmd_qualify(args) -> int:
                 return 2
             pkg = _engine.aggregate(run_id)
             _report.write_reports(run_id)
+            outcome = _assessment_result(run_id)
             if args.json:
                 _out({"run_id": run_id, "judge": jdep, "self_judged": self_judged,
-                      "scoring": summary, "evidence_package": pkg}, True)
+                      "scoring": summary, "evidence_package": pkg,
+                      **({"assessment_result": outcome} if outcome else {})}, True)
             else:
                 print(_report.render_markdown(run_id))
+                if outcome:
+                    from . import decision as _decision
+                    print("\n" + _decision.render_markdown(outcome))
                 print(f"\n[auto-scored by judge '{jdep}': {summary['scored']}/"
                       f"{summary['responses']} responses; "
                       f"{summary['unparseable']} unparseable]")
@@ -175,6 +186,71 @@ def cmd_qualify(args) -> int:
     except Exception as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
+    return 0
+
+
+def _assessment_result(run_id):
+    """If the run was composed under an assessment, decide + return its Canonical
+    Result (else None). Used to append the outcome after aggregation."""
+    from . import decision, workspace
+    try:
+        manifest = workspace.read_json(workspace.run_dir(run_id) / "manifest.json")
+    except Exception:
+        return None
+    if not manifest.get("assessment"):
+        return None
+    try:
+        return decision.assess_run(run_id)
+    except decision.DecisionError:
+        return None
+
+
+def cmd_assessment(args) -> int:
+    from . import assessments
+    try:
+        if args.assessment_cmd == "list":
+            rows = assessments.list_assessments()
+            _out(rows, args.json, "\n".join(
+                f"{r.get('id', ''):16} v{str(r.get('version', '?')):8} "
+                f"comps={r.get('competencies', '?')} mandatory={r.get('mandatory', '?')}  "
+                f"{'ok' if r.get('valid') else 'INVALID'}  {r.get('description', '')}"
+                for r in rows) or "(no assessments under assessments/)")
+        elif args.assessment_cmd == "show":
+            import yaml as _yaml
+            a = assessments.load(args.name)          # validates on load
+            _out(a, args.json, _yaml.safe_dump(a, sort_keys=False))
+        elif args.assessment_cmd == "validate":
+            import yaml as _yaml
+            src = Path(args.name)
+            if not src.exists():
+                src = assessments.assessments_dir() / f"{args.name}.yaml"
+            if not src.exists():
+                print(f"error: assessment {args.name!r} not found", file=sys.stderr)
+                return 2
+            problems = assessments.validate(_yaml.safe_load(src.read_text(encoding="utf-8")))
+            if args.json:
+                _out({"valid": not problems, "problems": problems}, True)
+            elif problems:
+                print(f"INVALID: {args.name}")
+                for p in problems:
+                    print(f"  - {p}")
+            else:
+                print(f"valid: {args.name}")
+            return 0 if not problems else 1
+        elif args.assessment_cmd == "result":
+            from . import decision
+            res = decision.assess_run(args.run)
+            _out(res, args.json, decision.render_markdown(res))
+            return 0 if res["outcome"] == "PASS" else 1
+    except assessments.AssessmentError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+    except Exception as e:
+        from . import decision
+        if isinstance(e, decision.DecisionError):
+            print(f"error: {e}", file=sys.stderr)
+            return 2
+        raise
     return 0
 
 
@@ -842,7 +918,7 @@ def _not_yet(milestone: str):
 _EPILOG = """\
 commands by stage (each group alphabetical):
   setup & discovery   deployment · discover · doctor · runtime
-  qualification       benchmark · capabilities · compare · export · import · qualify · review · runs · score · transcript
+  qualification       assessment · benchmark · capabilities · compare · export · import · qualify · review · runs · score · transcript
   judging             judge available · judge history · judge list   (the judge pool + track record)
   decision & audit    audit · conform · dashboard · grant · qualification · report · verify
   reference           index · journey · plugins · profile · suites
@@ -870,6 +946,11 @@ typical workflow:
   # profile a deployment across the whole SDLC (planner/coder/security/…):
   aies qualify <deployment> --all-areas --rt 2 --judge <judge-dep>
   aies capabilities <run>                      per-area CL + autonomy, side by side
+
+  # run a declarative assessment (composition as data) -> a PASS/FAIL outcome:
+  aies assessment list                         the shipped assessments (enterprise, coder, security, …)
+  aies qualify <deployment> --assessment enterprise --judge <judge-dep>
+  aies assessment result <run>                 re-decide an aggregated run (no inference)
 
   # optional formal record (a human decision, revocable):
   aies grant <run> --decision grant --authority "Name (ROLE-13)" --second "Name (ROLE-14)"
@@ -930,9 +1011,13 @@ def build_parser() -> argparse.ArgumentParser:
     q.add_argument("model", nargs="?", help="deployment id, or model name")
     q.add_argument("--runtime", default=None,
                    help="disambiguate when a model has several deployments")
+    q.add_argument("--assessment", default=None, metavar="NAME",
+                   help="run a declarative assessment (assessments/NAME.yaml): its "
+                        "competency set, profile, risk tier, and sampling (ADR-0005). "
+                        "Authoritative — sets --area/--profile; --rt/--repeats override it")
     q.add_argument("--profile", default="enterprise")
-    q.add_argument("--rt", type=int, choices=(1, 2, 3, 4), default=2,
-                   help="scoped risk tier")
+    q.add_argument("--rt", type=int, choices=(1, 2, 3, 4), default=None,
+                   help="scoped risk tier (default RT2, or the assessment's tier)")
     q.add_argument("--area", action="append", default=None,
                    help="competency area (repeatable); default CA-05")
     q.add_argument("--all-areas", action="store_true",
@@ -1032,6 +1117,22 @@ def build_parser() -> argparse.ArgumentParser:
     au.add_argument("--format", choices=("markdown", "json"), default="markdown")
     au.set_defaults(func=lambda a: (setattr(a, "rt", a.rt or (2 if a.gate else None)),
                                     cmd_audit(a))[1])
+
+    asm = common(sub.add_parser("assessment", help="declarative assessments "
+                                "(ADR-0005): list/show/validate, and decide a run's "
+                                "outcome (PASS/FAIL/INCONCLUSIVE/INSUFFICIENT EVIDENCE)"))
+    asmsub = asm.add_subparsers(dest="assessment_cmd", required=True)
+    asmsub.add_parser("list", help="the shipped assessments and their validity")
+    asm_show = asmsub.add_parser("show", help="print a validated assessment"); asm_show.add_argument("name")
+    asm_val = asmsub.add_parser("validate", help="validate an assessment (name or path)")
+    asm_val.add_argument("name")
+    asm_res = asmsub.add_parser("result", help="decide the outcome of an aggregated "
+                               "run composed under an assessment (no inference)")
+    asm_res.add_argument("run")
+    for x in (asm_show, asm_val, asm_res):
+        x.add_argument("--json", action="store_true")
+    asmsub.choices["list"].add_argument("--json", action="store_true")
+    asm.set_defaults(func=cmd_assessment)
 
     pr = common(sub.add_parser("profiles", help="list/show/validate weighting profiles"))
     prsub = pr.add_subparsers(dest="profiles_cmd", required=True)
@@ -1205,11 +1306,26 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _qualify_defaults(args) -> None:
-    if getattr(args, "all_areas", False):
+    if getattr(args, "assessment", None):
+        from . import assessments
+        try:
+            resolved = assessments.resolve(assessments.load(args.assessment))
+        except assessments.AssessmentError as e:
+            raise SystemExit(f"error: {e}")
+        args._assessment = resolved            # stashed for the manifest (ADR-0005)
+        args.area = resolved["areas"]          # assessment selects the competencies
+        args.profile = resolved["profile"]     # and its EV-weighting profile
+        if getattr(args, "rt", None) is None:  # --rt overrides the assessment's tier
+            args.rt = int(resolved["risk_tier"][2:])
+        if getattr(args, "repeats", None) is None:
+            args.repeats = resolved["repeats"]
+    elif getattr(args, "all_areas", False):
         from . import runner
         args.area = runner.all_area_codes()
     elif getattr(args, "area", None) in (None, []):
         args.area = ["CA-05"]
+    if getattr(args, "rt", None) is None:      # default risk tier when none given
+        args.rt = 2
     if (getattr(args, "resume", None) is None
             and getattr(args, "resume_collection", None) is None
             and not getattr(args, "model", None)):
