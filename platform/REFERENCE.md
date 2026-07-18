@@ -112,6 +112,7 @@ append-only records. Grouped as in `aies --help`.
 | `profiles` | List/show/validate/scaffold weighting profiles | `aies profiles show enterprise` |
 | `suites validate` | Validate the suite catalog **and** the shipped assessments (CI gate); validates `calibration` blocks when present | `aies suites validate` |
 | `suites calibrate` | Calibration-coverage report — how far each scenario has progressed as a measurement instrument ([CALIBRATION.md](CALIBRATION.md)); advisory | `aies suites calibrate` |
+| `suites empirical` | Phase-2 empirical calibration — per-scenario discrimination/repeatability/twin-robustness. Give a panel JSON, or **auto-assemble** it from scored runs with `--runs RUN=ABILITY` | `aies suites empirical --runs run-strong=3 run-weak=1` |
 | `journey` | Inspect multi-phase lifecycle scenarios | `aies journey list` |
 | `index` | Rebuildable SQLite index over the append-only records | `aies index` |
 | `plugins` | Installed runtime adapters + declared capabilities | `aies plugins list` |

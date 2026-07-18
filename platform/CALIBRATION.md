@@ -210,11 +210,59 @@ This does not weaken the assessment — it accurately states its evidential
 maturity, which makes both future improvement and eventual empirical validation
 more credible.
 
+## The empirical harness (Phase 2)
+
+Design-time review cannot measure discrimination — only a **panel of models of
+known-varying ability** can. The harness (`aies suites empirical`,
+`empirical.py`) is the analysis core, ready for when that panel exists. You
+assemble a **panel-results** file — run each panel model through the scenarios
+(`aies qualify` per model), score, and record each model's per-scenario scores:
+
+```json
+{
+  "panel":  [{"model": "strong-ref", "ability": 3},
+             {"model": "mid-ref",    "ability": 2},
+             {"model": "weak-ref",   "ability": 1}],
+  "scores": {"SC-CA07-001": {"strong-ref": [4,4,3], "mid-ref": [3,3,2], "weak-ref": [1,2,1]}},
+  "twins":  {"SC-CA07-001": "SC-CA07-007"}
+}
+```
+
+**One-command pilot.** You don't have to hand-write that file — run each panel
+model through the scenarios and let the harness assemble it from the scored runs:
+
+```
+aies qualify strong-ref --assessment security --judge <judge>   # -> run-strong
+aies qualify mid-ref    --assessment security --judge <judge>   # -> run-mid
+aies qualify weak-ref   --assessment security --judge <judge>   # -> run-weak
+aies suites empirical --runs run-strong=3 run-mid=2 run-weak=1 --write-panel panel.json
+```
+
+Each run is one panel model (the number is its ability rank); each rating
+contributes one observation (its mean EV1–EV6 score) to its scenario, and
+hold-out twins are read from the calibration metadata. `--write-panel` saves the
+assembled file for the record.
+
+`aies suites empirical` then computes, per scenario:
+
+- **discrimination** — stronger models score higher (top-group mean − bottom, plus monotonicity);
+- **ceiling reach / live floor** — strong models reach the ceiling, weak models actually sink;
+- **repeatability** — score stability across repeats;
+- **twin robustness** — consistency across a hold-out twin (a large gap flags gaming).
+
+A scenario that clears all of them is **empirically calibratable**; the harness
+**flags** the rest (`low-discrimination`, `too-easy`, `ceiling-unreached`,
+`noisy`, `gameable`). Like a grant, the harness produces evidence and a verdict —
+a human records the promotion of `empirical_status.empirically_calibrated`; the
+tool never sets it silently. Until a panel is run, every scenario is honestly
+`empirically_calibrated: false`.
+
 ## Working the corpus
 
 ```
-aies suites calibrate      # where each area stands (metadata, ceiling anchors, RT3/4, twins)
-aies suites validate       # calibration blocks are validated when present
+aies suites calibrate         # where each area stands (metadata, ceiling anchors, RT3/4, twins)
+aies suites validate          # calibration blocks are validated when present
+aies suites empirical p.json  # Phase 2: discrimination/repeatability from a model panel
 ```
 
 Order of work: calibrate one area, review it, then apply the methodology to the

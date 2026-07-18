@@ -15,8 +15,11 @@ validate:          ## suite catalog + shipped assessments (the CI gate)
 audit:             ## repository self-conformance (dogfood), gated at RT2
 	aies audit .. --gate --rt 2
 
-demo:              ## full workflow, fully offline (mock runtime + mock judge)
+demo:              ## core workflow, fully offline (mock runtime + mock judge)
 	bash scripts/demo.sh
+
+demo-full:         ## comprehensive tour of the whole platform, fully offline
+	bash scripts/demo-full.sh
 
 integration-demo:  ## full workflow against a REAL deployment (opt-in)
 	@# Set DEPLOYMENT and JUDGE to registered deployments, then:

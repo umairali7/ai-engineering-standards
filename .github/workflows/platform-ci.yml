@@ -56,8 +56,9 @@ jobs:
           aies doctor --json > /dev/null
           aies discover > /dev/null
           aies plugins
-      - name: Demo — full workflow end-to-end, offline (executable docs)
-        # The complete golden path (discover -> assessment -> qualify -> decide
-        # -> render) against the mock runtime. Gated as tests/test_demo.py above;
-        # this also proves the human-facing scripts/demo.sh still runs.
-        run: bash scripts/demo.sh
+      - name: Demo — comprehensive workflow end-to-end, offline (executable docs)
+        # The whole platform against the mock runtime: qualify a deployment, the
+        # canonical result, the human grant + verify lifecycle, decision-engine
+        # conformance, the Phase-2 empirical harness, and the repository audit.
+        # The core golden path is also gated as tests/test_demo.py above.
+        run: bash scripts/demo-full.sh

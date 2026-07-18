@@ -72,15 +72,23 @@ YAML/JSON: diffable, reviewable, tool-independent.
 ## See the whole thing run (one command, fully offline)
 
 ```
-make demo        # or: bash scripts/demo.sh
+make demo        # core workflow (or: bash scripts/demo.sh)
+make demo-full   # comprehensive tour of the whole platform
 ```
 
-Runs the **entire workflow** against the mock runtime — discover a deployment,
-compose a named qualification from an assessment, collect + auto-score evidence
-with a mock judge, let the frozen decision engine decide the outcome, and render
-the Canonical Assessment Result as Markdown + HTML. No GPU, no API key, no
-network. It's **executable documentation**: the same golden path is CI-gated as
-[`tests/test_demo.py`](tests/test_demo.py). For a run against a real deployment,
+`make demo` runs the **core workflow** against the mock runtime — discover a
+deployment, compose a named qualification from an assessment, collect +
+auto-score evidence with a mock judge, let the frozen decision engine decide the
+outcome, and render the Canonical Assessment Result as Markdown + HTML.
+
+`make demo-full` is the **comprehensive tour**: the three subjects AIES can
+assess (a model deployment via `qualify`, a repository via `audit`, and the
+standard itself via `conform engine`), the calibrated measurement instruments,
+the human **grant → verify** lifecycle, and the Phase-2 empirical harness.
+
+No GPU, no API key, no network. It's **executable documentation** — the core
+path is CI-gated as [`tests/test_demo.py`](tests/test_demo.py) and the
+comprehensive script runs in CI too. For a real deployment,
 `make integration-demo DEPLOYMENT=… JUDGE=…`.
 
 ## Quickstart (fully offline)

@@ -916,10 +916,37 @@ def cmd_journey(args) -> int:
 
 def cmd_suites(args) -> int:
     from . import suites
-    root = Path(args.root) if args.root else None
+    root = Path(args.root) if getattr(args, "root", None) else None
     if getattr(args, "suites_cmd", None) == "calibrate":
         report = suites.calibrate(root)
         _out(report, args.json, suites.render_calibration(report))
+        return 0
+    if getattr(args, "suites_cmd", None) == "empirical":
+        from . import empirical
+        if args.runs:
+            specs = []
+            for spec in args.runs:
+                if "=" not in spec:
+                    print(f"error: --runs expects RUN_ID=ABILITY, got {spec!r}", file=sys.stderr)
+                    return 2
+                run_id, ability = spec.rsplit("=", 1)
+                specs.append({"run_id": run_id, "ability": int(ability)})
+            try:
+                panel = empirical.assemble_panel_from_runs(specs)
+            except (ValueError, FileNotFoundError) as e:
+                print(f"error: {e}", file=sys.stderr)
+                return 2
+            if args.write_panel:
+                Path(args.write_panel).write_text(json.dumps(panel, indent=2), encoding="utf-8")
+                if not args.json:
+                    print(f"wrote assembled panel to {args.write_panel}")
+        elif args.panel:
+            panel = json.loads(Path(args.panel).read_text(encoding="utf-8"))
+        else:
+            print("error: pass a panel JSON file, or --runs RUN=ABILITY ...", file=sys.stderr)
+            return 2
+        report = empirical.analyze_panel(panel)
+        _out(report, args.json, empirical.render(report))
         return 0
     report = suites.validate(root)
     _out(report, args.json, suites.render(report))
@@ -982,7 +1009,10 @@ typical workflow:
   aies assessment result <run>                 re-decide an aggregated run (no inference)
 
   # see the whole thing run, fully offline (mock runtime + mock judge):
-  make demo                                    or: bash scripts/demo.sh
+  make demo                                    core workflow (bash scripts/demo.sh)
+  make demo-full                               comprehensive tour of the whole platform
+  aies suites calibrate                        each scenario's progress as a measurement instrument
+  aies suites empirical panel.json             Phase-2: discrimination from a model panel
 
   # optional formal record (a human decision, revocable):
   aies grant <run> --decision grant --authority "Name (ROLE-13)" --second "Name (ROLE-14)"
@@ -1294,6 +1324,18 @@ def build_parser() -> argparse.ArgumentParser:
                            "(CALIBRATION.md); advisory, never fails")
     stc.add_argument("--root", default=None)
     stc.add_argument("--json", action="store_true")
+    ste = stsub.add_parser("empirical", help="analyze a model panel for per-scenario "
+                           "discrimination/repeatability/twin-robustness (CALIBRATION.md "
+                           "Phase 2). Give a panel JSON, or assemble one from scored runs "
+                           "with --runs")
+    ste.add_argument("panel", nargs="?", default=None,
+                     help="panel-results JSON (panel + per-model scores)")
+    ste.add_argument("--runs", nargs="+", metavar="RUN_ID=ABILITY", default=None,
+                     help="assemble the panel from scored qualify runs, e.g. "
+                          "--runs run-strong=3 run-mid=2 run-weak=1")
+    ste.add_argument("--write-panel", default=None,
+                     help="also write the assembled panel JSON to this path")
+    ste.add_argument("--json", action="store_true")
     st.set_defaults(func=cmd_suites)
 
     dep = common(sub.add_parser("deployment", help="manage deployments "
