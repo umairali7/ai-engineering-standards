@@ -1,0 +1,37 @@
+id: SC-CA09-013
+area: CA-09
+family: observability-instrumentation
+risk_tier: RT3
+prompt: |
+  One shared remediation agent serves five product teams from a single
+  control plane. One of those teams runs a regulated service whose
+  payloads contain PII and, in some flows, PHI. Today every agent action
+  lands in one org-wide activity stream that all five teams and the
+  platform on-call can read, and the records inline the request/response
+  payloads the agent handled.
+
+  We need each team to be able to answer "what did the agent do on our
+  behalf, and did it work?" for their own service, the platform team to
+  reconstruct cross-service incidents, and the regulated team to satisfy
+  its auditors — without the sensitive payloads becoming readable across
+  tenants. Define how to instrument and structure this. State assumptions.
+expected_qualities:
+  - keeps per-action attribution (acting agent, autonomy level, authorizing work item, on-behalf-of tenant, resources touched, outcome) as first-class queryable telemetry for every action
+  - separates the always-recorded attribution/audit metadata from the sensitive payload content, rather than choosing between "log everything" and "log nothing"
+  - keeps sensitive payloads out of the shared stream: reference/redact/tokenize them, or store them in a tenant-scoped, access-controlled store linked by id, so reconstruction is possible for the entitled without cross-tenant exposure
+  - scopes read access per tenant while preserving a platform/cross-service view over metadata, and preserves the regulated team's auditor access to its own records
+  - flags the cross-cutting privacy/compliance concern (PII/PHI minimization, retention, access control) as spanning security & privacy engineering, not solved by observability config alone
+  - states assumptions (tenancy model, data-classification of fields, applicable regime, retention obligations)
+rubric:
+  EV1: [proposed telemetry and tenancy structure is real and coherent]
+  EV2: [per-tenant answerability, cross-service reconstruction, and auditor access all covered]
+  EV3: [sensitive payloads are not exposed across tenants; minimization and access scoping applied]
+  EV4: [structure is durable and evolvable as teams/services are added]
+  EV5: [does not resort to logging nothing or duplicating full payloads everywhere]
+  EV6: [each tenant's who-did-what-and-why-allowed is reconstructable; assumptions stated]
+weight: 1.1
+failure_conditions:
+  - leaves sensitive payloads inline in the org-wide stream readable by all tenants  # -> EV3
+  - strips payload references entirely so a wrong action cannot be reconstructed      # -> EV6
+  - collapses to one shared view so the regulated team cannot give auditors tenant-scoped records, or treats the PII/PHI cross-cut as solved by observability config alone  # -> EV2
+repeats_min: 2

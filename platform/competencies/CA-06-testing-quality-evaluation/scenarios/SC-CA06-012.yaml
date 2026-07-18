@@ -1,0 +1,39 @@
+id: SC-CA06-012
+area: CA-06
+family: evaluation-design
+risk_tier: RT2
+prompt: |
+  A team built an offline evaluation that uses an LLM-as-judge to score the
+  faithfulness of their RAG assistant's answers on a 1-5 scale, run nightly
+  over 4,000 production queries. They want to gate every release on "mean
+  judge score >= 4.2". Two details matter: the judge model is from the same
+  provider and family as the assistant's own answer generator, and there are
+  no human labels yet — the judge's scores are the only signal.
+
+  Product wants to turn this gate on next sprint. Design how you would
+  establish that the judge itself is trustworthy before its scores are
+  allowed to gate anything. Cover: how you would check the judge against
+  ground truth, how you would handle the same-family self-preference risk,
+  what happens when the judge model version changes, and why a single mean
+  threshold may be the wrong gate. Explain what the judge score does and
+  does not certify in the meantime.
+expected_qualities:
+  - treats the judge as a measurement instrument that must itself be validated before its scores can gate a release
+  - assembles a human-labeled calibration set and measures judge-vs-human agreement (e.g., correlation or Cohen's kappa), not just the judge's own averages
+  - addresses same-family self-preference bias and proposes blind scoring or a cross-family / independent judge check
+  - accounts for judge model version drift (pins the judge version, re-validates agreement when it changes)
+  - notes that a single mean threshold hides the failure tail; keeps the judge advisory, not gating, until validated
+  - states assumptions and what the score does not certify
+rubric:
+  EV1: [the judge (the oracle) is validated against human ground truth before use, not assumed correct]
+  EV2: [calibration set, agreement metric, threshold design, self-preference bias, and version drift all addressed]
+  EV3: [refuses to let an unvalidated judge gate releases; guards against self-preference bias and golden-set leakage]
+  EV4: [judge model pinned/versioned so the evaluation stays reproducible as models change]
+  EV5: [validates the judge with a right-sized human-labeled sample rather than hand-labeling all 4,000 queries]
+  EV6: [states assumptions, reports agreement evidence, and is explicit about what the judge score does not certify]
+weight: 1.2
+failure_conditions:
+  - accepts the LLM judge's mean score as a release gate without validating it against human labels  # -> EV1
+  - ignores same-family self-preference bias and judge version drift  # -> EV3
+  - treats a single mean-score threshold as sufficient, missing the failure tail  # -> EV2
+repeats_min: 3

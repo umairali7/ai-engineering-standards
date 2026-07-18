@@ -1,0 +1,45 @@
+id: SC-CA03-012
+area: CA-03
+family: experience-definition
+risk_tier: RT2
+prompt: |
+  A team is adding an inline AI writing assistant to a document editor: as
+  the user types, the assistant suggests a completion of the current
+  sentence, which the user can accept, edit, or dismiss. The model is
+  sometimes confident and correct, sometimes confidently wrong, and
+  sometimes returns nothing.
+
+  Define the end-to-end user experience. Treat the model's fallibility as a
+  first-class design constraint, not an afterthought: cover how the user
+  understands that a suggestion is machine-generated and potentially wrong,
+  how they recover from a bad or accepted-but-wrong suggestion, and what
+  happens on low confidence, empty response, latency, and offline. Two
+  states matter and are easy to miss: (1) a stale/racing suggestion — the
+  request is in flight but the user keeps typing or moves the cursor, so the
+  completion no longer fits where it lands; (2) an accepted-but-wrong
+  suggestion that the user does not notice until later, possibly after the
+  document has been shared or auto-saved. Note accessibility
+  considerations. Where the brief is silent on a behavior, state it as an
+  assumption to confirm rather than deciding it. Do not add unrelated
+  features (no chat panel, no document-wide rewrite).
+expected_qualities:
+  - defines the primary accept/edit/dismiss flow plus failure states (low confidence, empty response, high latency/timeout, offline, service error)
+  - handles the stale/racing case: a completion returned after the user has kept typing or moved the cursor is invalidated or re-anchored, never inserted at a position it no longer fits
+  - makes the suggestion visibly machine-generated and non-authoritative rather than indistinguishable from the user's own text
+  - provides recovery paths (easy undo of an accepted suggestion, no silent overwrite, no data loss if the model is wrong) and does not rely on the user catching a wrong acceptance before share/auto-save
+  - notes accessibility (screen-reader announcement of a pending suggestion, keyboard accept/dismiss, not conveying suggestion state by color alone, no focus stealing)
+  - marks unspecified behavior (whether text is sent to a third-party API, retention, suggestion frequency) as assumptions to confirm, including a privacy flag
+  - stays within scope; does not invent a chatbot or full-document features
+rubric:
+  EV1: [defined experience actually delivers usable inline completions and does not treat model output as always correct]  # Correctness
+  EV2: [low-confidence, empty, latency, offline, error, and the stale/racing-suggestion state plus accessibility covered, not only the happy path]  # Completeness
+  EV3: [suggestions are marked as machine-generated and fallible; the data-sent-to-model question is raised, not assumed away]  # Safety & Security
+  EV4: [experience is concrete and testable, with observable states rather than aspirational description]  # Maintainability
+  EV5: [scope limited to the inline assistant; no gold-plating with unrelated AI surfaces]  # Efficiency
+  EV6: [assumptions about unspecified behavior stated for confirmation]  # Traceability
+weight: 1.1
+failure_conditions:
+  - renders AI suggestions indistinguishable from the user's own text with no way to tell they are machine-generated  # -> EV3
+  - specifies only the accept-a-good-suggestion path and omits low-confidence/empty/latency/offline and stale/racing states  # -> EV2
+  - silently assumes document text may be sent to a third-party model without flagging it as an open decision  # -> EV6
+repeats_min: 2

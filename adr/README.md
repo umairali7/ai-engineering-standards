@@ -68,6 +68,7 @@ Accepted ADRs are never edited to change the decision. If circumstances change, 
 | [ADR-0001](ADR-0001-Repository-Foundation.md) | Repository Foundation | Accepted |
 | [ADR-0002](ADR-0002-Qualification-Platform.md) | Qualification Platform — an Executable Reference Implementation of AESQS | Accepted |
 | [ADR-0003](ADR-0003-Competency-Area-Knowledge-Mapping.md) | Competency areas map to knowledge areas by coverage, not bijection | Accepted |
+| [ADR-0004](ADR-0004-Repository-Conformance-Audit.md) | `aies audit` — executable repository conformance assessment (maturity scoring, three-state evidence) | Accepted |
 
 ## Related Documents
 

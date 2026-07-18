@@ -1,0 +1,38 @@
+id: SC-CA11-014
+area: CA-11
+family: asset-curation
+risk_tier: RT2
+prompt: |
+  Two assets in the store both claim authority over the same question, and
+  agents are assembling both right now while shipping code. The security
+  team owns "secure coding standard" (v7, current, reviewed last month); it
+  says all outbound HTTP must go through the vetted client with certificate
+  pinning. The platform team owns "service conventions" (v12, current,
+  reviewed last week); it says use the lightweight fetch helper for
+  outbound calls and does not mention pinning. Both are validated, both are
+  fresh, both are owned — and they contradict each other on a real security
+  control.
+
+  An engineer says "just load the newer one, v12 wins." Design how to
+  resolve this, including what agents should do in the window before it is
+  reconciled.
+expected_qualities:
+  - recognizes this is a governance/authority conflict between two current, owned assets — not the staleness or version drift of a single asset — so "newest wins" is the wrong resolution rule
+  - determines which asset is authoritative for this specific control (a security control defers to the security-owned standard, not to whichever was edited most recently) and lands certificate pinning as required
+  - convenes both owners to reconcile so a single source of truth governs the control, instead of leaving two contradictory authoritative assets live
+  - removes or cross-references the contradiction at the source so agents stop assembling conflicting ground truth, rather than re-adjudicating it silently at assembly time on every run
+  - specifies interim behavior that defaults to the more protective control (keep cert pinning) so the safety-relevant requirement is never silently dropped while reconciliation is pending
+  - records the resolution and updates both assets' ownership/scope so the authority boundary is durable and traceable
+rubric:
+  EV1: [resolution treats this as an authority conflict rather than recency, and lands the safety-relevant control (cert pinning) as required]
+  EV2: [authority determination, owner reconciliation, source-level fix, and interim behavior are all covered]
+  EV3: [the security control is not silently dropped and contradictory ground truth is not left live for high-risk assembly; interim default is the more protective control]
+  EV4: [the conflict is resolved at the source into a single authoritative asset with clarified ownership/scope, not re-decided per run]
+  EV5: [once reconciled, agents load one authoritative asset for the control rather than both overlapping ones; the fix is done once at the source]
+  EV6: [the resolution and the authority boundary are recorded and traceable to the owning teams]
+weight: 1.0
+failure_conditions:
+  - resolves by recency ("v12 is newer") and drops the certificate-pinning control            # -> EV1
+  - leaves both contradictory assets live and relies on per-run assembly to pick               # -> EV4
+  - patches it silently without engaging the two owners or recording the decision              # -> EV6
+repeats_min: 2

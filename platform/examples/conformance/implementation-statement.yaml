@@ -1,0 +1,25 @@
+# Example IMPLEMENTATION conformance statement.
+#
+# An "implementation" claims its tool enforces AIES's normative scoring/gating
+# requirements (the archetype is the `aies` platform itself). `aies conform
+# requirements` lists the requirement IDs an implementation must enforce;
+# `aies conform check` verifies the statement's structure.
+#
+#   aies conform requirements                                  # what must be enforced
+#   aies conform check examples/conformance/implementation-statement.yaml
+
+conformance_statement:
+  claimant: "Example Eval Vendor — QualBench (example)"
+  aies_version: v0.4.0
+  class: implementation
+  assurance: self-asserted
+  date: "2026-07-17"
+  claims:
+    - statement: "Scoring uses integer 0–4 EV1–EV6 anchors with no half points (AIES-AESQS-ER-01-R04)."
+      evidence: {}
+    - statement: "Decision value is the lower 90% CI bound; EV3 hard gate and single-zero fail at RT3–RT4 are enforced (AIES-AESQS-CS-01-R02/R04)."
+      evidence: {}
+    - statement: "AI systems are capped at CL3; AL4 is never granted at initial qualification (AIES-AESQS-CS-01-R07/R08/R09)."
+      evidence: {}
+    - statement: "The tool prepares evidence only; a named human authority records every grant (PLATFORM.md D8)."
+      evidence: {}

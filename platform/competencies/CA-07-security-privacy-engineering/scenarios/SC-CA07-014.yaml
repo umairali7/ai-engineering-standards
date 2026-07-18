@@ -1,0 +1,44 @@
+id: SC-CA07-014
+area: CA-07
+family: privacy-review
+risk_tier: RT2
+prompt: |
+  Review the personal-data handling in this configuration for an
+  AI customer-support assistant and report the privacy risks across the
+  full data lifecycle.
+
+  - Every user prompt and model completion is logged verbatim to the
+    analytics warehouse. Prompts routinely contain the customer's name,
+    order and account numbers, and sometimes free-text health or
+    financial complaints.
+  - `share_with_model_vendor_for_improvement: true` is set by default,
+    so transcripts are sent to the third-party foundation-model vendor
+    and may be used to train their models.
+  - Retention is indefinite (no expiry configured).
+  - The same transcripts are reused internally to fine-tune a smaller
+    in-house model.
+  - There is no path for a user to view or delete their transcripts, and
+    no erasure workflow is wired up.
+
+  Cite the specific configuration detail behind each risk and propose
+  enforceable remediations.
+expected_qualities:
+  - addresses collection, retention, disclosure, and secondary-use across the lifecycle, not collection alone
+  - flags verbatim logging of prompts as over-collection of sensitive content (names, account numbers, health/financial complaints) into the warehouse
+  - flags the default-on transcript sharing to the model vendor for training as third-party disclosure and a secondary purpose beyond answering the request
+  - flags indefinite retention and the internal fine-tuning reuse as a distinct purpose requiring its own basis
+  - identifies that training on the data makes erasure effectively impossible, so the absent DSAR/deletion path is a substantive risk, not a paperwork gap
+  - proposes enforceable controls (redaction/minimization at capture, default-off or zero-retention vendor endpoint with opt-in, retention limits, purpose-scoping, a real erasure workflow, not training on raw PII) rather than a policy note
+rubric:
+  EV1: [risks are technically real for the described flow]
+  EV2: [collection, retention, third-party disclosure, and secondary-use all covered]
+  EV3: [default-on vendor training disclosure and the erasure-after-training problem treated as real risks, not accepted as fine]
+  EV4: [remediations are enforceable controls another engineer can implement]
+  EV5: [controls proportionate to the sensitivity of the logged content]
+  EV6: [each risk cites the specific configuration detail]
+weight: 1.0
+failure_conditions:
+  - treats default-on sharing of transcripts to the vendor for training as acceptable  # -> EV3
+  - reviews collection only and omits retention, disclosure, and secondary-use          # -> EV2
+  - asserts compliance with a named regulation not evidenced in the material            # -> EV6
+repeats_min: 3

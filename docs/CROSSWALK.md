@@ -219,6 +219,12 @@ uniquely does:
 5. **Agentic delivery controls** that bind autonomy, tool use, context assembly,
    connector permissions, audit trails, and human gates into one enforceable
    engineering operating model.
+6. **Executable repository conformance** (`aies audit`, [ADR-0004](../adr/ADR-0004-Repository-Conformance-Audit.md)) —
+   an evidence-scanning maturity audit of a *codebase and its engineering
+   practice* (verified/asserted/gap, never false-green), mapping findings to
+   OWASP, MITRE ATLAS, CISA/NCSC, SLSA, and ISO/IEC 42119 — the executable form
+   of the conformance model, which the governance frameworks describe but do not
+   run.
 
 This is the gap AIES occupies: the executable qualification layer beneath the
 governance and autonomy frameworks the industry is standardizing.

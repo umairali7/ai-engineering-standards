@@ -1,0 +1,41 @@
+id: SC-CA07-013
+area: CA-07
+family: threat-modeling
+risk_tier: RT2
+prompt: |
+  Threat-model this multi-tenant retrieval feature and report the
+  exposures, ranked by risk, each with a control.
+
+  We are shipping a "knowledge assistant" to all our SaaS customers. It:
+  - lets each customer upload their own documents (PDFs, exported support
+    tickets, spreadsheets), which we parse and embed;
+  - stores every tenant's chunks in a single shared vector index, with no
+    per-tenant partition;
+  - at query time retrieves the global top-k chunks by similarity and
+    concatenates their text into the model's context to answer;
+  - was also seeded, "to make it useful on day one," with an internal
+    operations corpus that includes runbooks and some credentials.
+
+  For each exposure name the mechanism, cite the evidence in the
+  description, and propose a control. Separate controls enforced outside
+  the model from behavior you would only ask the model to follow.
+expected_qualities:
+  - identifies cross-tenant data leakage from a single shared index with global top-k retrieval and no tenant filter
+  - identifies stored / indirect prompt injection via uploaded documents that are embedded and later retrieved into other users' contexts
+  - flags the internal operations corpus (runbooks, credentials) mixed into the same index as retrievable by any tenant
+  - treats uploaded documents and retrieved chunks as untrusted input crossing a trust boundary, not as trusted reference text
+  - proposes controls enforced outside the model (per-tenant partitioned indexes with a server-side tenant filter, isolating or removing the sensitive corpus, ingestion sanitization, provenance on retrieved chunks) rather than prompt instructions
+  - ranks the exposures by risk rather than listing them flat
+rubric:
+  EV1: [named mechanisms are real threats for a shared-index RAG design, no fabricated controls]
+  EV2: [tenant isolation, stored injection, and the leaked sensitive corpus covered together]
+  EV3: [trust boundary named; uploaded and retrieved content treated as untrusted; sensitive corpus not left retrievable]
+  EV4: [controls are external guardrails (partitioning, server-side filtering, ingestion checks) another engineer can implement]
+  EV5: [exposures prioritized by risk]
+  EV6: [each finding cites the supporting detail in the description]
+weight: 1.1
+failure_conditions:
+  - proposes only a prompt instruction ("only answer from this tenant's data") as the isolation control  # -> EV4
+  - treats uploaded documents as trusted and omits the stored-injection surface                          # -> EV3
+  - leaves the credential-bearing operations corpus in the shared retrievable index                      # -> EV3
+repeats_min: 3

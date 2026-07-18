@@ -1,0 +1,43 @@
+id: SC-CA03-013
+area: CA-03
+family: acceptance-criteria
+risk_tier: RT2
+prompt: |
+  Write acceptance criteria, in a testable Given/When/Then form, for this
+  user story:
+
+    "As an account holder, I want to set a daily spending limit on my card
+    so that I am blocked from spending more than my chosen amount in a day."
+
+  This touches money and time, so precision matters. Make the criteria
+  observable and testable and cover the important states. Several details
+  are unspecified and materially change behavior: which time zone and
+  clock defines a "day"; how pending vs. settled transactions and later
+  refunds or reversals count toward the limit; how a single transaction
+  that would exceed the remaining limit is treated; how a merchant
+  pre-authorization or hold (e.g. a fuel pump or hotel) that later settles
+  for a different amount counts; what happens when the user lowers the
+  limit mid-day below what they have already spent today; and what currency
+  the limit is denominated in for foreign transactions. Flag each such open
+  decision rather than inventing a policy, and do not introduce
+  requirements the story does not imply.
+expected_qualities:
+  - criteria are observable and testable, covering setting/changing the limit and a transaction being blocked once the limit is reached
+  - covers important states (transaction under, at, and over the remaining limit; the day boundary resetting the counter; declining a purchase that would breach the limit; lowering the limit below today's spend; a pre-authorization hold that settles for a different amount)
+  - explicitly flags the unspecified decisions (day defined by which time zone/clock, pending vs settled accounting, refund/reversal handling, pre-auth/hold settlement, mid-day limit reduction, currency conversion) instead of inventing policy
+  - avoids fabricating financial rules and does not silently pick, e.g., a UTC day or a specific rounding rule as if it were required
+  - each criterion traces to the intent of the story (a hard daily cap the user controls)
+  - notes that money and limit-breach behavior should be validated with product/compliance before build
+rubric:
+  EV1: [criteria faithfully express a user-controlled daily cap and do not fabricate an unstated financial policy as required]  # Correctness
+  EV2: [under/at/over-limit, day-boundary reset, breach-declining, mid-day limit reduction, and pre-auth/hold settlement states covered, not only a single blocked purchase]  # Completeness
+  EV3: [flags money-sensitive ambiguities (currency, refunds, pending vs settled) rather than guessing, and defers policy to product/compliance]  # Safety & Security
+  EV4: [criteria are concrete and testable Given/When/Then, not "spending should be controlled"]  # Maintainability
+  EV5: [stays scoped to the daily-limit story without inventing adjacent card-control features]  # Efficiency
+  EV6: [open decisions flagged and each criterion tied back to the story intent]  # Traceability
+weight: 1.1
+failure_conditions:
+  - silently fixes the day to a specific time zone or invents a refund/pending accounting rule and states it as an acceptance criterion  # -> EV1
+  - writes vague criteria like "the user should not overspend" with no observable checks  # -> EV4
+  - omits the day-boundary reset and over-limit-transaction handling entirely  # -> EV2
+repeats_min: 2

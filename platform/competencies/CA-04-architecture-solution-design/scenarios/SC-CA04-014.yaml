@@ -1,0 +1,40 @@
+id: SC-CA04-014
+area: CA-04
+family: decision-record
+risk_tier: RT2
+prompt: |
+  Your organization has decided that every internal service must sit
+  behind a single shared API gateway, owned by a new platform team.
+  Service-to-service calls that currently go directly, pod-to-pod, will be
+  required to route through the gateway. The motivations were consistent
+  authentication, centralized rate limiting, and one place to collect
+  request telemetry, instead of each of the roughly thirty services
+  reimplementing these concerns inconsistently.
+
+  Write an Architecture Decision Record for this choice. Capture the
+  context, the decision, the rationale, the alternatives you rejected and
+  why, and the consequences — including the new behaviors and costs this
+  introduces (e.g., the gateway as a shared point of failure and a latency
+  hop on the hot path, the platform team as a potential delivery
+  bottleneck for every other team, and the migration effort to move thirty
+  services behind it).
+expected_qualities:
+  - records context, decision, rationale, and consequences in ADR form
+  - names the rejected alternatives (e.g., a shared sidecar/library/service-mesh approach, or leaving per-service implementations) and why they were rejected
+  - acknowledges the trade-offs introduced, not only the upside: a new shared failure point and blast radius, added latency on internal calls, and cross-team coupling / bottleneck on the platform team
+  - states the migration cost and a realistic path (e.g., incremental onboarding rather than a flag-day cutover of all thirty services)
+  - makes the gateway's contract with services explicit rather than implied
+  - addresses the gateway becoming a hard dependency on critical paths: names an availability target and a break-glass or fallback path so a gateway outage cannot wedge every internal call at once
+rubric:
+  EV1: [reasoning about centralization trade-offs is technically sound and does not overstate the benefits]
+  EV2: [consequences including shared-failure-point, latency, coupling, and migration cost stated, not just benefits]
+  EV3: [treats the gateway as a concentrated blast-radius / availability concern, not a pure win]
+  EV4: [contract between the gateway and the services it fronts is made explicit and maintainable]
+  EV5: [proposes an incremental adoption path proportionate to thirty services rather than a risky flag-day migration]
+  EV6: [rejected alternatives and rationale recorded as decision capital]
+weight: 1.1
+failure_conditions:
+  - records only the decision and its upside with no rejected alternative or rationale  # -> EV6
+  - presents mandatory centralization as free, ignoring the shared failure point, added latency, and cross-team bottleneck  # -> EV2
+  - assumes all thirty services can be cut over at once with no migration plan  # -> EV5
+repeats_min: 3

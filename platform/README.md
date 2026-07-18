@@ -23,6 +23,7 @@ the full pipeline is runnable end to end:
 `--parallel`, `--judge` auto-scoring, `--journey`, `--all-areas`), `score`,
 `import` (external eval results), `report` (Markdown/JSON/HTML), `transcript`,
 `capabilities` (per-area SDLC profile), `judge` (available/list/history),
+`audit` (repository conformance — maturity per area, ADR-0004),
 `runs`, `compare`, `index`, `review`, `grant`, `verify`, `journey`,
 `conform`, `runtime`/`profile`/`qualification`, `dashboard`, `plugins`.
 All twelve competency areas
@@ -36,7 +37,8 @@ component wiring, and step-by-step setup + real-model run instructions.
 See also [DEPLOYMENTS.md](DEPLOYMENTS.md) (qualify deployments, not models),
 [PROFILES.md](PROFILES.md) (the weighting presets),
 [RUNTIMES.md](RUNTIMES.md) (the runtime interface and shipped adapters), and
-[JOURNEYS.md](JOURNEYS.md) (multi-phase scenarios that test lifecycle depth).
+[JOURNEYS.md](JOURNEYS.md) (multi-phase scenarios that test lifecycle depth),
+and [SCENARIOS.md](SCENARIOS.md) (how to author competency scenarios).
 Hit a snag? [TROUBLESHOOTING.md](TROUBLESHOOTING.md) covers the common
 endpoint, TLS, auth, performance, and judge issues.
 
@@ -133,8 +135,9 @@ platform/
 ```
 
 All twelve competency areas (CA-01…CA-12) ship demonstration suites of
-eleven scenarios each, including harder integration scenarios that combine
-multiple constraints, ambiguity, safety pressure, and governance trade-offs.
+about sixteen scenarios each (189 in total), including many hard, distinct
+scenarios that combine multiple constraints, ambiguity, safety pressure, and
+governance trade-offs, plus RT3/RT4 refuse-or-escalate cases.
 The suites are useful for smoke tests, calibration, and early comparison, but
 they are still not a full public qualification benchmark by themselves. A
 *decisional* RT2 assessment needs ≥ 30 scored items per area

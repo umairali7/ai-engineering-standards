@@ -1,0 +1,46 @@
+id: SC-CA04-012
+area: CA-04
+family: option-analysis
+risk_tier: RT2
+prompt: |
+  A B2B SaaS product currently serves 40 small customers from one shared
+  database using a `tenant_id` column on every table. Two things have
+  changed:
+
+    - A prospective enterprise customer will not sign unless their data is
+      logically isolated from other tenants and they can be told, credibly,
+      that a bug in another tenant's query cannot read their rows.
+    - That customer is regulated and requires their data to reside in a
+      specific region; most existing customers are in a different region.
+
+  The engineering team is five people with no dedicated DBA or platform
+  team, and the shared-database design works well for the 40 existing
+  customers.
+
+  Propose two or three isolation architectures (e.g., shared schema with
+  row-level controls, schema-per-tenant, database-per-tenant, or a hybrid
+  "pool + silo" tiering). For each, give the key trade-offs across
+  isolation strength, the regional-residency requirement, per-tenant
+  operational cost with a five-person team, and migration cost from where
+  they are today. Recommend one, name the options you rejected and why,
+  and state the assumptions your analysis rests on.
+expected_qualities:
+  - presents genuinely distinct isolation models, not one model with cosmetic variants
+  - argues trade-offs against isolation strength, regional residency, ops cost for a small team, and migration cost from the current shared design
+  - addresses that residency and strong isolation may point to a per-tenant/silo tier while the 40 existing tenants may stay pooled (a hybrid), rather than forcing all tenants onto one model
+  - is honest that stronger isolation raises per-tenant operational and migration burden for a team with no DBA
+  - names the rejected options and why, and lists assumptions (e.g., growth, number of future enterprise tenants, backup/restore expectations)
+  - accounts for backup/restore and per-tenant operational blast radius: a five-person team with no DBA must actually run, patch, back up, and restore whatever number of databases or schemas the recommended model implies
+rubric:
+  EV1: [recommended model actually delivers the isolation and residency the enterprise customer requires, with residency met by region-pinned placement of that tenant's data rather than merely asserted]
+  EV2: [isolation, residency, ops cost, and migration cost all addressed, not just isolation]
+  EV3: [treats cross-tenant readability as a security/blast-radius property, not a schema convenience]
+  EV4: [proposes a model whose tenant boundary is explicit and enforceable rather than convention-only]
+  EV5: [does not force heavy database-per-tenant onto all 40 low-risk tenants where pooling still fits]
+  EV6: [trade-offs and rejected options stated with reasons; assumptions listed]
+weight: 1.1
+failure_conditions:
+  - recommends one model with no rejected alternative, trade-off, or assumption named  # -> EV6
+  - claims row-level tenant_id filtering fully satisfies "another tenant's bug cannot read my rows" without noting its weaker isolation guarantee  # -> EV3
+  - ignores the regional-residency requirement entirely  # -> EV2
+repeats_min: 3

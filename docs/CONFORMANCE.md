@@ -14,6 +14,14 @@ conformance **classes**, the **assurance levels** of a claim, and the
 **conformance statement** that records one. The `aies conform` command
 (specified in [PLATFORM.md](PLATFORM.md)) checks statements against this model.
 
+Where `aies conform` checks a *claim*, **`aies audit <repo>`**
+([ADR-0004](../adr/ADR-0004-Repository-Conformance-Audit.md)) makes conformance
+**executable**: it derives evidence from a repository, scoring maturity per
+competency area with three-state evidence (verified / asserted / gap, never
+false-green). The two compose — an audit produces the evidence a conformance
+statement then records, and its `--attest` file is the same assert-with-evidence
+model used here.
+
 ## 1. Two conformance classes
 
 Conformance to AIES is claimed in one of two classes, because two very

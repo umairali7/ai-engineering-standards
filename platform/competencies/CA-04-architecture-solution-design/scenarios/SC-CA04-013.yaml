@@ -1,0 +1,39 @@
+id: SC-CA04-013
+area: CA-04
+family: design-review
+risk_tier: RT2
+prompt: |
+  Review the following proposed design and critique it for failure modes,
+  security posture, and operational burden, then propose improvements. Do
+  not assume infrastructure that is not described; if a recommendation
+  depends on something not shown, say so.
+
+    Proposed design: to add a "chat with your documents" feature to an
+    existing document-management app, the team will embed every document
+    in the system into one shared vector index. At query time, the user's
+    question is embedded, the top-k most similar chunks are retrieved from
+    that single index, and those chunks are pasted into the prompt sent to
+    an LLM, which answers the user. The app already enforces per-document
+    access permissions on its normal file-listing and download pages. The
+    retrieval feature queries the shared index directly and does not pass
+    the requesting user's identity or permissions to the retrieval step.
+expected_qualities:
+  - identifies that retrieval bypasses the app's per-document permissions, so a user can receive content from documents they are not allowed to see, surfaced through the LLM's answer
+  - treats this as a confidentiality/authorization failure with real blast radius, not a relevance-tuning issue
+  - notes that embedding content into a shared index does not carry the source document's access controls, and that the answer can leak restricted text even if the source file is never "downloaded"
+  - proposes carrying the requesting user's identity/permissions into retrieval (e.g., permission-filtered retrieval, per-principal partitioning, or post-retrieval authorization checks) rather than trusting top-k similarity
+  - does not assume an unseen access-control or filtering layer already sits in front of the vector index
+  - makes the fix verifiable — e.g., a negative test proving a user cannot be answered from chunks of a document they are not permitted to see — rather than only describing the intent
+rubric:
+  EV1: [does not assert that the existing file-page permissions automatically protect the retrieval path]
+  EV2: [failure modes, operational burden, and the retrieval/permission gap all addressed]
+  EV3: [the cross-permission retrieval leak is central and framed as an authorization failure]
+  EV4: [proposes an explicit permission-aware retrieval contract, not a vague "add a filter"]
+  EV5: [improvements are proportionate and reuse the app's existing permission model rather than rebuilding one]
+  EV6: [states assumptions and the reasoning connecting embedding-without-ACLs to the leak]
+weight: 1.2
+failure_conditions:
+  - approves the shared-index design as sound and misses that retrieval bypasses per-document permissions  # -> EV3
+  - proposes a fix that assumes a permission-filtering layer in front of the index that the prompt never describes  # -> EV1
+  - treats the problem only as retrieval relevance/quality and not as an authorization leak  # -> EV3
+repeats_min: 3

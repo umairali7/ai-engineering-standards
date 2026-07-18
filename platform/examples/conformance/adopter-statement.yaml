@@ -1,0 +1,24 @@
+# Example ADOPTER conformance statement.
+#
+# An "adopter" claims it uses AIES to qualify deployments and govern AI
+# participation. Evidence-backed claims must reference a live Qualification
+# Record (QUAL-…) in the workspace; `aies conform check` verifies that link.
+# The claimant/QUAL ids below are illustrative — swap in your own.
+#
+#   aies conform check examples/conformance/adopter-statement.yaml
+#
+# (A claim with no evidence is reported "self-asserted", not verified — that is
+#  correct behavior, not a failure of the tool.)
+
+conformance_statement:
+  claimant: "Acme Engineering (example)"
+  aies_version: v0.4.0
+  class: adopter
+  assurance: evidence-backed
+  date: "2026-07-17"
+  claims:
+    - statement: "Deployment local-qwen is qualified for CA-05 at RT2 (AL2)."
+      evidence:
+        qualification_record: QUAL-2026-001
+    - statement: "Human approval gates operate for RT3+ AI-produced change per AIES-AEOS-HO-01."
+      evidence: {}            # no linked record -> reported as self-asserted

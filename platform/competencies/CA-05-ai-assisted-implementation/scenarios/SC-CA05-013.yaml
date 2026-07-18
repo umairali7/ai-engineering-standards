@@ -1,0 +1,49 @@
+id: SC-CA05-013
+area: CA-05
+family: defect-fix
+risk_tier: RT2
+prompt: |
+  A payments client wraps an HTTP call in a retry loop to improve
+  reliability. Customers occasionally report being charged twice.
+
+  ```python
+  def charge(client, customer_id, amount):
+      for attempt in range(3):
+          try:
+              return client.post(
+                  "/charges",
+                  json={"customer": customer_id, "amount": amount},
+                  timeout=5,
+              )
+          except TimeoutError:
+              continue
+      raise RuntimeError("charge failed after retries")
+  ```
+
+  Diagnose why customers can be charged twice and propose a fix. If your
+  fix uses an idempotency token, be precise about where it is generated
+  and why it must stay stable across the retries of a single logical
+  charge. If a correct fix depends on capabilities of the `/charges`
+  endpoint that you cannot see from this snippet, say so rather than
+  assuming they exist.
+expected_qualities:
+  - identifies that a client-side timeout does not prove the charge failed; the server may have processed it
+  - explains that retrying a non-idempotent POST re-submits the same charge
+  - proposes request idempotency (idempotency key / dedup token) rather than blind retry
+  - generates the idempotency token once per logical charge (outside the retry loop) so every retry carries the same key
+  - recognizes the fix depends on server-side support and flags it instead of assuming it exists
+  - offers a fallback (no retry, or reconcile/verify before retrying) when idempotency is unavailable
+  - distinguishes transient network failure from a server-processed-but-unacknowledged outcome
+rubric:
+  EV1: [correct root cause; fix prevents duplicate charges (stable per-charge idempotency key), not just masks them]
+  EV2: [timeout-after-success window and the no-idempotency fallback both addressed]
+  EV3: [no fix that risks silently double-charging or silently dropping a charge]
+  EV4: [fix keeps the retry logic comprehensible, not a tangle of special cases]
+  EV5: [avoids adding unbounded retries or extra round-trips without justification]
+  EV6: [dependency on endpoint capabilities stated; unknowns not assumed away]
+weight: 1.1
+failure_conditions:
+  - treats the timeout as proof the charge failed and keeps blind retries  # -> EV1
+  - generates a fresh idempotency key on each retry, so the server sees distinct requests  # -> EV1
+  - assumes the endpoint supports idempotency keys without flagging the dependency  # -> EV6
+repeats_min: 3

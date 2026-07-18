@@ -462,9 +462,10 @@ aies doctor                         # ollama -> [OK] endpoint reachable
 aies discover                       # -> created ollama-llama3.1-8b
 aies registry list
 
-# 3. run the benchmark (RT2 needs >=30 scored items -> 8 repeats x 4 scenarios = 32)
+# 3. run the benchmark (RT2 needs >=30 scored items; CA-05 has ~10 distinct
+#    RT2 scenarios, so 3 repeats x 10 = 30 — repeats now add variance, not padding)
 aies qualify ollama-llama3.1-8b --profile coder --rt 2 --area CA-05 \
-      --repeats 8 --parallel 4
+      --repeats 3 --parallel 4
 #    prints a run id, e.g. run-YYYYMMDDT...-ollama-llama3.1-8b-ab12cd
 #    and writes .../runs/<run>/scoresheet.json
 
@@ -500,6 +501,35 @@ invalidated and you re-qualify.
 
 Every other runtime is identical — just start its server and use the matching
 deployment name (`lmstudio-…`, `llamacpp-…`, `mlx-…`).
+
+### 5.8 Audit a repository (a different subject)
+
+Everything above qualifies a **model**. `aies audit` assesses a **repository and
+the engineering practice in it** against the twelve competency areas
+([ADR-0004](../adr/ADR-0004-Repository-Conformance-Audit.md)) — the executable
+form of [conformance](../docs/CONFORMANCE.md).
+
+```
+aies audit .                      # scorecard + ranked recommendations (markdown)
+aies audit . --rt 2               # evaluate against RT2's required evidence
+aies audit . --gate --rt 2        # CI mode: non-zero exit if RT2 evidence is missing
+aies audit . --attest attest.json # supply evidence for non-detectable practices
+aies audit . --format json        # machine-readable
+```
+
+It scores **maturity ML0–ML4 per area** with **three-state evidence**:
+**verified** (found in the repo), **asserted** (attested with an evidence
+pointer), or **gap**. Absence of a signal is always a gap — never a false pass —
+and an assertion cannot stand in for a control that *is* file-detectable. It
+auto-detects the strong-signal areas (foundations, implementation provenance,
+testing, security, delivery, context) and maps findings to external standards
+(OWASP, MITRE ATLAS, CISA/NCSC, SLSA, ISO/IEC 42119); the non-detectable areas
+(requirements, product) are attestation-only. The attestation file mirrors the
+conformance model:
+
+```json
+{ "items": [ {"id": "ca10-branch-protection", "evidence": "link or note"} ] }
+```
 
 ## 6. A note on trust
 

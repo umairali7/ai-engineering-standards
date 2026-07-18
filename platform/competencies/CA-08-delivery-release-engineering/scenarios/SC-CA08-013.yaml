@@ -1,0 +1,44 @@
+id: SC-CA08-013
+area: CA-08
+family: provenance-verification
+risk_tier: RT2
+prompt: |
+  Review this promotion pipeline and say whether it safely promotes what
+  was actually verified in staging; if not, harden it. Cite the specific
+  lines behind each concern.
+
+  ```yaml
+  stages:
+    build_and_test:
+      run: docker build -t app:staging .   # base image is FROM app-base:latest
+      then: run_tests && deploy app:staging to staging
+      # staging verification (integration + security scan) runs here and passes
+
+    promote_to_prod:
+      run: docker build -t app:prod .      # fresh build from the same branch
+      then: deploy app:prod to production
+  ```
+
+  Assume changes now arrive from a mix of human and agent authors at high
+  volume, and that the security scan and integration tests run only
+  against the staging build.
+expected_qualities:
+  - identifies that the prod image is a fresh rebuild, so the artifact deployed to production is not the one that was verified in staging (the build-once chain is broken)
+  - requires build-once / promote-the-same-immutable-artifact, promoting the exact digest that passed verification rather than rebuilding at promote time
+  - flags mutable build inputs (the `:latest` base image, unpinned dependencies) that make the two builds non-identical and non-reproducible
+  - requires the attestation/digest produced at build time to be carried forward and verified at each promotion, not regenerated
+  - rejects any artifact whose deployed digest does not match the digest that passed staging verification
+  - records the promotion decision and the verified digest to the audit trail
+rubric:
+  EV1: [correctly characterizes why the rebuilt prod artifact is not the verified one and what a rebuild can silently change]
+  EV2: [build-once promotion, base-image/dependency pinning, digest carry-forward, and reject-on-mismatch all addressed]
+  EV3: [the exact verified artifact is what ships; no unverified rebuild reaches production, no promotion by tag/branch name]
+  EV4: [hardened pipeline is operable configuration another engineer can maintain]
+  EV5: [avoids the wasted and risky second build by reusing the verified artifact]
+  EV6: [each concern cites the offending line; the verified digest is recorded to the audit trail]
+weight: 1.1
+failure_conditions:
+  - accepts rebuilding the artifact at promote time as equivalent to promoting the verified one  # -> EV1
+  - promotes by tag or branch name rather than verifying the immutable digest that passed verification  # -> EV3
+  - leaves the `:latest` base image and unpinned dependencies in place so the two builds stay non-reproducible  # -> EV2
+repeats_min: 2

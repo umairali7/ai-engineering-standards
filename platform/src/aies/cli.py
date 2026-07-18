@@ -247,6 +247,33 @@ def cmd_report(args) -> int:
     return 0
 
 
+def cmd_audit(args) -> int:
+    """Audit a repository's conformance to AIES engineering practices (ADR-0004)."""
+    from . import audit
+    attestations = None
+    if args.attest:
+        try:
+            attestations = json.loads(Path(args.attest).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as e:
+            print(f"error: cannot read attestation file {args.attest!r}: {e}",
+                  file=sys.stderr)
+            return 2
+    rt = f"RT{args.rt}" if args.gate else (f"RT{args.rt}" if args.rt else None)
+    try:
+        result = audit.run_audit(args.repo, attestations=attestations, rt=rt)
+    except (NotADirectoryError, FileNotFoundError) as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+    if args.format == "json" or args.json:
+        _out(result, True)
+    else:
+        print(audit.render_markdown(result))
+    if args.gate:
+        g = result.get("gate") or {}
+        return 0 if g.get("passed") else 1
+    return 0
+
+
 def cmd_capabilities(args) -> int:
     """Per-area capability profile of an aggregated run/deployment."""
     from . import capabilities, compare
@@ -795,7 +822,7 @@ commands by stage (each group alphabetical):
   setup & discovery   deployment · discover · doctor · runtime
   qualification       benchmark · capabilities · compare · import · qualify · review · runs · score · transcript
   judging             judge available · judge history · judge list   (the judge pool + track record)
-  decision & audit    conform · dashboard · grant · qualification · report · verify
+  decision & audit    audit · conform · dashboard · grant · qualification · report · verify
   reference           index · journey · plugins · profile · suites
 
 typical workflow:
@@ -827,6 +854,10 @@ typical workflow:
   aies verify <QUAL-id>                         re-check environment (D7)
   aies conform check statement.yaml            check a conformance claim
   aies suites validate                         validate shipped competency suites
+
+  # audit a repository's engineering practice against AIES (maturity per area):
+  aies audit .                                 scorecard + ranked recommendations
+  aies audit . --gate --rt 2                   CI gate: fail if RT2 evidence is missing
 
   # supply-chain provenance:
   aies deployment verify-artifact <id> --artifact model.bin   check checksum/signature
@@ -953,6 +984,22 @@ def build_parser() -> argparse.ArgumentParser:
                                 "security…, one CL + autonomy level per area)"))
     cap.add_argument("ref", help="run id, or deployment id (its latest aggregated run)")
     cap.set_defaults(func=cmd_capabilities)
+
+    au = common(sub.add_parser("audit", help="audit a repository's conformance to "
+                               "AIES engineering practices (maturity per area; "
+                               "verified/asserted/gap; ADR-0004)"))
+    au.add_argument("repo", help="path to the repository to audit")
+    au.add_argument("--rt", type=int, choices=(1, 2, 3, 4), default=None,
+                    help="evaluate against this risk tier's required evidence")
+    au.add_argument("--gate", action="store_true",
+                    help="CI mode: non-zero exit if RT-required evidence is missing "
+                         "(implies the given --rt, default RT2)")
+    au.add_argument("--attest", default=None, metavar="FILE",
+                    help="attestation JSON for non-detectable practices "
+                         "({items:[{id, evidence}]})")
+    au.add_argument("--format", choices=("markdown", "json"), default="markdown")
+    au.set_defaults(func=lambda a: (setattr(a, "rt", a.rt or (2 if a.gate else None)),
+                                    cmd_audit(a))[1])
 
     pr = common(sub.add_parser("profiles", help="list/show/validate weighting profiles"))
     prsub = pr.add_subparsers(dest="profiles_cmd", required=True)

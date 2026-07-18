@@ -1,0 +1,44 @@
+id: SC-CA08-012
+area: CA-08
+family: release-strategy
+risk_tier: RT2
+prompt: |
+  An agent produced a change that spans two independently deployed
+  services that communicate over a Kafka topic:
+
+  - order-service (producer) starts emitting a new event shape: it adds a
+    required `currency` field and renames `total` to `total_minor`.
+  - fulfillment-service (consumer) is updated to read `total_minor` and
+    `currency`.
+
+  The two services deploy from separate pipelines; there is no way to
+  flip both at the same instant, and multiple instances of each run
+  concurrently during a rollout. If the consumer ships first it will not
+  find `total_minor`; if the producer ships first with the rename it
+  breaks the still-running old consumers.
+
+  Design the release so the producer and consumer stay compatible at
+  every intermediate state. Cover deploy ordering, how the event contract
+  evolves, how you detect a compatibility break, and how you roll back
+  one service without breaking the other. State assumptions about
+  infrastructure you cannot see.
+expected_qualities:
+  - treats the event shape as a contract and sequences the change so producer and consumer are compatible at every intermediate state, rather than a synchronized flag-day cutover
+  - evolves the contract additively first (consumer tolerates old and new; producer emits new alongside old; the rename/required-field removal of the old form happens only after all consumers read the new form)
+  - defines deploy ordering explicitly and does not assume the two pipelines deploy atomically or that only one version of each runs at a time
+  - defines how a compatibility break is detected (consumer deserialization errors, schema-registry compatibility check, dead-letter-queue growth) and what halts the rollout
+  - allows either service to roll back independently during the transition without breaking the other
+  - states infrastructure assumptions (schema registry / compatibility mode, at-least-once delivery, mixed producer and consumer versions in flight) instead of presuming them
+rubric:
+  EV1: [proposed ordering and contract evolution are technically real and stay compatible at each step]
+  EV2: [deploy ordering, contract transition, break detection, and independent rollback all covered]
+  EV3: [no intermediate state breaks a running consumer or producer; either side can revert safely]
+  EV4: [contract transition expressed as repeatable, versioned steps rather than a one-off manual coordination]
+  EV5: [transition proportionate to the risk, not an unnecessarily heavy multi-week dance for an additive change]
+  EV6: [assumptions and the compatibility contract stated explicitly and traceable]
+weight: 1.0
+failure_conditions:
+  - proposes a synchronized flag-day cutover that assumes both services deploy at the same instant  # -> EV3
+  - makes the rename and required-field change in one step with no backward-compatible transition    # -> EV1
+  - presumes atomic deploys or a single running version per service, or leaves the schema-registry/delivery assumptions unstated  # -> EV6
+repeats_min: 2

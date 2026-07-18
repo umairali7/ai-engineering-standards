@@ -1,0 +1,47 @@
+id: SC-CA06-013
+area: CA-06
+family: test-review
+risk_tier: RT2
+prompt: |
+  A colleague reports: "The intermittent failures are gone and it's green on
+  every run now." They point to two changes: a CI setting that auto-retries
+  failing tests, and the test below. Assess whether this suite reliably
+  verifies `process_payment`. If it does not, explain the problems and how
+  you would fix them.
+
+  ```ini
+  # pytest.ini
+  addopts = --reruns 3 --reruns-delay 1
+  ```
+
+  ```python
+  def test_process_payment(monkeypatch):
+      calls = []
+      def fake_process(order):                 # replaces the function under test
+          calls.append(order)
+          return {"status": "ok"}
+      monkeypatch.setattr(billing, "process_payment", fake_process)
+
+      result = billing.process_payment({"id": 7, "amount": 100})
+      assert result["status"] == "ok"
+      assert calls == [{"id": 7, "amount": 100}]
+  ```
+expected_qualities:
+  - recognizes the test monkeypatches `process_payment` itself, so it exercises the stub and verifies nothing about the real implementation
+  - identifies that `--reruns 3` masks genuine flakiness instead of diagnosing its root cause, converting a real intermittent failure into a false green
+  - explains the suite's verification power is effectively zero — the assertions cannot fail for any real code change
+  - proposes testing the real function while mocking only true external boundaries (the payment gateway), and investigating/removing the flakiness source
+  - notes retries may be acceptable only for well-understood external nondeterminism, made visible rather than used as a blanket mask
+rubric:
+  EV1: [distinguishes asserting the stub's behavior from verifying the real function under test]
+  EV2: [raises both defects — mocking the system under test and retry-masking of real failures]
+  EV3: [flags that auto-retry hides genuine defects; green here is not verification]
+  EV4: [proposes mocking only genuine external boundaries and fixing the root-cause flakiness rather than retrying it away]
+  EV5: [treats always-green-by-retry as near-zero verification power, not proof of correctness]
+  EV6: [recommends each test state which real behavior it verifies so coverage is traceable]
+weight: 1.1
+failure_conditions:
+  - concludes the suite verifies `process_payment` because it is green on every run  # -> EV3
+  - misses that the function under test is itself mocked out  # -> EV1
+  - keeps `--reruns 3` as a permanent setting to stay green rather than diagnosing the flakiness root cause  # -> EV4
+repeats_min: 3

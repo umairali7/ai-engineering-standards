@@ -1,0 +1,44 @@
+id: SC-CA06-014
+area: CA-06
+family: test-design
+risk_tier: RT2
+prompt: |
+  Write a test suite (in Python) for `redact_pii(text) -> str`. Derive the
+  tests from the specification below. Unlike a pure arithmetic function,
+  there is no exhaustive oracle here — you cannot enumerate every possible
+  input — and the costly failure is a false negative: real PII left in the
+  output. Design your tests with that in mind.
+
+  Specification:
+    - Replaces email addresses, North American phone numbers, and 16-digit
+      payment card numbers with the literal token "[REDACTED]".
+    - Text containing no PII is returned unchanged.
+    - Redaction is idempotent: redacting already-redacted text changes
+      nothing further.
+    - It must not over-redact ordinary content — e.g. a 15-digit or 17-digit
+      run of digits, or an order ID, is not a card number and must be left
+      alone.
+
+  Note which requirement each test exercises. Because an exact oracle is
+  impossible, say how you would get confidence beyond hand-written examples,
+  and be explicit about what your tests can and cannot establish.
+expected_qualities:
+  - covers positive cases for each PII type at boundaries (valid vs malformed emails, phone formats with/without separators, exactly 16 digits vs 15/17)
+  - includes false-positive / negative cases (benign text, order IDs, non-card digit runs) so the redactor is not trivially "redact everything"
+  - uses property or metamorphic tests where an exact oracle is impossible (idempotence; the output contains no substring still matching a PII pattern; PII embedded mid-sentence and multiple per line)
+  - explicitly prioritizes the false-negative direction (leaked PII) as the safety-critical one and tests adversarial embeddings
+  - acknowledges the tests reduce but cannot prove the absence of all leaks, and recommends fuzzing or a known-PII corpus with a stated residual risk
+  - maps each test to its requirement and uses deterministic, real testing constructs
+rubric:
+  EV1: [assertions encode the spec — each PII type redacted, non-PII preserved, idempotent — not an implementation's incidental output]
+  EV2: [boundaries, adversarial embeddings, and false-positive cases all covered, not just a few clean positives]
+  EV3: [prioritizes the false-negative (leaked PII) risk and acknowledges tests cannot prove absence of leaks; recommends fuzzing/corpus]
+  EV4: [tests are deterministic, isolated, clearly named, and the property tests remain maintainable as patterns evolve]
+  EV5: [uses property/metamorphic relations to gain coverage without enumerating infinite inputs]
+  EV6: [maps tests to requirements and states residual risk and what is not covered]
+weight: 1.2
+failure_conditions:
+  - only tests a few well-formed positive examples and omits adversarial/embedded PII and false-positive cases  # -> EV2
+  - claims the tests prove no PII can leak, treating passing as absence of leaks  # -> EV3
+  - relies solely on fixed example strings and never uses a property/metamorphic relation (e.g., idempotence or "output contains no substring still matching a PII pattern")  # -> EV5
+repeats_min: 2

@@ -1,0 +1,48 @@
+id: SC-CA05-012
+area: CA-05
+family: implementation
+risk_tier: RT2
+prompt: |
+  Implement `allocate(total_cents: int, weights: list[int]) -> list[int]`
+  for a billing service. It splits an integer amount of money in minor
+  units (cents) across buckets in proportion to `weights`.
+
+  Constraints:
+  - every returned amount is an integer (no fractional cents);
+  - the returned amounts sum EXACTLY to `total_cents` — no lost or
+    invented cents, no rounding drift;
+  - the split is deterministic; any leftover minor unit that cannot be
+    divided evenly goes to the earliest buckets (largest-remainder,
+    ties broken by position);
+  - `total_cents` may be negative (refunds are allocated too);
+  - `weights` are expected to be non-negative; a negative weight is not
+    a meaningful share, so decide and document a defined behavior
+    (reject, or specify the exact semantics) rather than letting it
+    silently corrupt the split.
+
+  Provide tests covering: weights that do not divide evenly, a bucket
+  with weight 0, an all-zero `weights` list, and a negative total.
+  State your assumptions (for example, what an empty `weights` list
+  returns, how the sign of a refund affects remainder placement, and
+  what a negative weight does).
+expected_qualities:
+  - uses integer arithmetic so the parts sum exactly to total_cents with no float drift
+  - distributes leftover minor units deterministically per the stated earliest-bucket rule
+  - defines and defends behavior for a zero-weight bucket and for all-zero weights (no divide-by-zero)
+  - handles a negative total (refund) so the parts still sum exactly to it
+  - gives a negative weight a defined behavior (reject or specified semantics), not silent corruption
+  - tests exercise uneven division, zero weight, all-zero weights, and negative total as asked
+  - states assumptions (empty weights, negative weight, sign/remainder conventions) rather than leaving them implicit
+rubric:
+  EV1: [parts sum exactly to total_cents for every input, integer-only, remainder rule correct]
+  EV2: [zero-weight, all-zero, uneven, negative-total, and negative-weight cases handled and tested]
+  EV3: [no crash/divide-by-zero; no silent value loss on the money path]
+  EV4: [readable, single clear allocation strategy rather than ad hoc patching]
+  EV5: [no unnecessary passes or arbitrary-precision types where integers suffice]
+  EV6: [assumptions on empty input and sign conventions stated, tests map to constraints]
+weight: 1.1
+failure_conditions:
+  - returns parts that do not sum to total_cents for some input   # -> EV1
+  - divides by zero or crashes on all-zero weights instead of a defined result  # -> EV2
+  - lets a negative weight silently produce a wrong split with no defined behavior  # -> EV6
+repeats_min: 3
