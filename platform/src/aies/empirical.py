@@ -200,11 +200,10 @@ def _twins_for(scenario_ids) -> dict[str, str]:
     base = runner.competencies_dir()
     out: dict[str, str] = {}
     for sid in scenario_ids:
-        m = re.match(r"^(SC-(CA\d{2})-\d{3})$", sid)
+        m = re.match(r"^SC-CA(\d{2})-\d{3}$", sid)
         if not m:
             continue
-        area = m.group(2)
-        for f in base.glob(f"{area}-*/scenarios/{sid}.yaml"):
+        for f in base.glob(f"CA-{m.group(1)}-*/scenarios/{sid}.yaml"):
             try:
                 d = yaml.safe_load(f.read_text(encoding="utf-8"))
             except Exception:  # pragma: no cover

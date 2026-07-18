@@ -78,6 +78,9 @@ aies audit .. 2>/dev/null | sed -n '1,10p' || echo "(audit step skipped)"
 
 hr "12. The platform reviews its OWN corpus (continuous QA — advisory, no single grade)"
 aies corpus health 2>/dev/null | sed -n '1,18p' || echo "(corpus step skipped)"
+echo
+echo "-- and reviews a single scenario as a measurement instrument (structural + model critique) --"
+aies corpus review SC-CA07-015 --reviewer "$JUDGE" 2>/dev/null | sed -n '1,14p' || echo "(review skipped)"
 
 hr "DEMO COMPLETE"
 echo "Subjects assessed:  a model deployment (qualify)  +  a repository (audit)  +  the standard (conform engine)"

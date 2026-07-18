@@ -105,3 +105,60 @@ def test_detector_flags_a_twin_that_is_too_similar_on_the_surface(tmp_path):
     dup = corpus.duplicates(tmp_path)
     pair = next(p for p in dup["pairs"] if {p["a"], p["b"]} == {"SC-CA07-901", "SC-CA07-902"})
     assert pair["is_twin"] and "TOO similar" in pair["recommendation"]
+
+
+# --- calibration reviewer -------------------------------------------------
+
+def test_structural_review_of_a_shipped_scenario_is_clean():
+    from aies import corpus
+    r = corpus.review_scenario("SC-CA07-015")           # a fully-calibrated scenario
+    assert r["kind"] == "calibration-review"
+    assert r["structural_summary"]["gap"] == 0          # all structural checks ok
+    assert r["semantic"] is None                        # no reviewer -> structural only
+    # the review is never a score/grade
+    assert not ({"score", "grade", "confidence", "overall"} & set(r))
+
+
+def test_structural_review_flags_a_missing_ceiling(tmp_path):
+    from aies import corpus
+    _scn(tmp_path, "SC-CA07-901", "review this handler", ceiling="")   # ceiling blank
+    f = tmp_path / "CA-07-test" / "scenarios" / "SC-CA07-901.yaml"
+    r = corpus.review_scenario(str(f))
+    ceiling = next(c for c in r["structural"] if c["criterion"] == "ceiling anchor")
+    assert ceiling["status"] == "gap"
+
+
+def test_parse_concerns_is_robust():
+    from aies import corpus
+    assert corpus._parse_concerns('```json\n["a","b"]\n```') == ["a", "b"]
+    assert corpus._parse_concerns("no json here") is None
+    assert corpus._parse_concerns("[]") == []
+
+
+def test_semantic_review_only_critiques_never_scores(tmp_path, monkeypatch):
+    """With a reviewer, the model's reply is parsed into concerns — the review
+    still carries no score/grade, and the reviewer is told to critique only."""
+    import yaml
+    monkeypatch.setenv("AIES_WORKSPACE", str(tmp_path / "ws"))
+    monkeypatch.setenv("AIES_ENV_FILE", str(tmp_path / "empty.env"))
+    (tmp_path / "empty.env").write_text("", encoding="utf-8")
+    from aies import corpus, registry
+    from aies.adapters import mock as mockmod
+    from aies.adapters.base import GenerationResponse
+
+    e = {"id": "rev", "family": "demo", "runtime": "mock", "model": "rev",
+         "context_window": 8192, "provenance": {"source": "x", "checksum": "sha256:" + "0" * 64}}
+    p = tmp_path / "rev.yaml"; p.write_text(yaml.safe_dump(e), encoding="utf-8"); registry.add(p)
+
+    captured = {}
+
+    def fake_generate(self, request):
+        captured["prompt"] = request.prompt
+        return GenerationResponse(text='["ceiling overlaps the RT2 expectation"]', usage={}, raw={})
+    monkeypatch.setattr(mockmod.MockAdapter, "generate", fake_generate)
+
+    r = corpus.review_scenario("SC-CA07-015", reviewer="rev")
+    assert r["semantic"]["parsed"]
+    assert r["semantic"]["concerns"] == ["ceiling overlaps the RT2 expectation"]
+    assert "Do NOT rewrite" in captured["prompt"] and "Do NOT approve" in captured["prompt"]
+    assert not ({"score", "grade", "confidence"} & set(r))

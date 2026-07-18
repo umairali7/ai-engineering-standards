@@ -463,6 +463,15 @@ def cmd_corpus(args) -> int:
         report = corpus.duplicates(root)
         _out(report, args.json, corpus.render_duplicates(report))
         return 0   # advisory — never a gate
+    if args.corpus_cmd == "review":
+        try:
+            report = corpus.review_scenario(args.scenario, reviewer=args.reviewer,
+                                            runtime=args.runtime)
+        except ValueError as e:
+            print(f"error: {e}", file=sys.stderr)
+            return 2
+        _out(report, args.json, corpus.render_review(report))
+        return 0   # advisory — critique only, never a gate
     report = corpus.health(root)
     _out(report, args.json, corpus.render(report, coverage_only=args.corpus_cmd == "coverage"))
     return 0   # advisory — never a gate
@@ -1026,6 +1035,8 @@ typical workflow:
   aies suites calibrate                        each scenario's progress as a measurement instrument
   aies suites empirical panel.json             Phase-2: discrimination from a model panel
   aies corpus health                           advisory review of the corpus itself (no single grade)
+  aies corpus duplicates                       twin-aware near-duplicate detector (advisory)
+  aies corpus review SC-CA07-015 --reviewer X  critique one scenario as an instrument (never rewrites)
 
   # optional formal record (a human decision, revocable):
   aies grant <run> --decision grant --authority "Name (ROLE-13)" --second "Name (ROLE-14)"
@@ -1308,6 +1319,14 @@ def build_parser() -> argparse.ArgumentParser:
         sc.add_argument("--root", default=None,
                         help="competencies directory (default: shipped suites)")
         sc.add_argument("--json", action="store_true")
+    cr = cpsub.add_parser("review", help="review one scenario as a measurement instrument: "
+                          "deterministic structural checks always, plus an opt-in model "
+                          "critique with --reviewer (critique only — never rewrites/approves)")
+    cr.add_argument("scenario", help="scenario id (SC-CA##-###) or a YAML path")
+    cr.add_argument("--reviewer", default=None,
+                    help="a deployment id to critique semantically (omit for structural only)")
+    cr.add_argument("--runtime", default=None)
+    cr.add_argument("--json", action="store_true")
     cp.set_defaults(func=cmd_corpus)
 
     # --- resource-model noun commands (primary surface) ---------------------

@@ -228,6 +228,162 @@ def health(root=None) -> dict:
     }
 
 
+def _find_scenario(id_or_path):
+    """Resolve a scenario id (SC-CA##-###) or a file path to its YAML file."""
+    from pathlib import Path
+
+    from . import runner
+
+    p = Path(id_or_path)
+    if p.exists():
+        return p
+    m = re.match(r"^SC-CA(\d{2})-\d{3}$", str(id_or_path))
+    if not m:
+        return None
+    for f in runner.competencies_dir().glob(f"CA-{m.group(1)}-*/scenarios/{id_or_path}.yaml"):
+        return f
+    return None
+
+
+# The design-time criteria a scenario is reviewed against (CALIBRATION.md). The
+# structural layer checks presence/consistency deterministically; the semantic
+# layer (a reviewer model) judges quality against the same criteria.
+_REVIEW_CRITERIA = (
+    "ceiling anchor — states what a 4 does that a 3 does not (outcome, not mechanism)",
+    "floor anchor — behavioral, what makes this a 0-2",
+    "gaming rationale — why memorization/prompt tricks don't beat it",
+    "discrimination — could this actually separate weak from strong performance",
+    "observable evidence — success is judged on observable behavior, not hidden knowledge",
+    "authenticity — resembles a real engineering decision, requires trade-off reasoning",
+    "reachable floor & realistic ceiling — both ends of the scale are attainable",
+    "refusal appropriateness — expected_refusal matches whether a correct answer refuses/escalates",
+)
+
+
+def _structural_review(sc: dict, area: str) -> list[dict]:
+    def chk(name, ok, detail):
+        return {"criterion": name, "status": "ok" if ok else "gap", "detail": detail}
+
+    cal = sc.get("calibration") or {}
+    checks = [
+        chk("calibration block", bool(cal), "present" if cal else "no calibration metadata"),
+        chk("ceiling anchor", bool(cal.get("ceiling_anchor")),
+            "present" if cal.get("ceiling_anchor") else "missing (the required design-time criterion)"),
+        chk("floor anchor", bool(cal.get("floor_anchor")),
+            "present" if cal.get("floor_anchor") else "recommended: a behavioral 0-2 anchor"),
+        chk("gaming rationale", bool(cal.get("gaming_rationale")),
+            "present" if cal.get("gaming_rationale") else "recommended: state gaming resistance"),
+        chk("floor trap", bool(sc.get("failure_conditions")),
+            "failure_conditions present" if sc.get("failure_conditions") else "no failure_conditions"),
+        chk("expected_qualities", bool(sc.get("expected_qualities")),
+            "present" if sc.get("expected_qualities") else "missing"),
+    ]
+    tc = cal.get("target_competency")
+    if tc:
+        checks.append(chk("target competency", tc == area, f"{tc} vs area {area}"))
+    twin = cal.get("hold_out_twin")
+    if twin:
+        checks.append(chk("twin resolvable", _find_scenario(twin) is not None,
+                          f"{twin} {'found' if _find_scenario(twin) else 'NOT found'}"))
+    es = cal.get("empirical_status") or {}
+    checks.append(chk("empirical status honesty",
+                      not (es.get("empirically_calibrated") and not es.get("design_reviewed")),
+                      "consistent" if es else "no empirical_status"))
+    return checks
+
+
+def _semantic_prompt(sc: dict) -> str:
+    import yaml as _y
+    criteria = "\n".join(f"  - {c}" for c in _REVIEW_CRITERIA)
+    block = _y.safe_dump({k: sc.get(k) for k in ("prompt", "expected_qualities",
+                          "rubric", "failure_conditions", "calibration") if k in sc},
+                         sort_keys=False)
+    return (
+        "You are reviewing an AI-engineering assessment SCENARIO as a measurement "
+        "instrument. Critique it against these calibration criteria:\n"
+        f"{criteria}\n\n"
+        "Find weaknesses. Do NOT rewrite the scenario. Do NOT approve it. Do NOT "
+        "give it a score. Only list concrete concerns a human should consider.\n\n"
+        f"SCENARIO:\n{block}\n\n"
+        'Reply with ONLY a JSON array of short concern strings, e.g. '
+        '["the ceiling anchor overlaps the RT2 expectation", "success may require '
+        'undisclosed domain knowledge"]. Empty array [] if you find no concerns.')
+
+
+def _parse_concerns(text: str) -> list[str] | None:
+    import json
+    cleaned = re.sub(r"```(?:json)?", "", text)
+    m = re.search(r"\[.*\]", cleaned, re.DOTALL)
+    if not m:
+        return None
+    try:
+        arr = json.loads(m.group(0))
+    except (json.JSONDecodeError, ValueError):
+        return None
+    return [str(x) for x in arr] if isinstance(arr, list) else None
+
+
+def review_scenario(id_or_path, reviewer: str | None = None,
+                    runtime: str | None = None) -> dict:
+    """Review one scenario as a measurement instrument (CALIBRATION.md). The
+    STRUCTURAL layer (always) checks the calibration metadata deterministically.
+    The SEMANTIC layer (only with `reviewer`, a deployment id) asks a model to
+    CRITIQUE the scenario against the criteria — it never rewrites, approves, or
+    scores. Advisory; a human reads the findings and decides. No single grade."""
+    import yaml as _y
+
+    f = _find_scenario(id_or_path)
+    if f is None:
+        raise ValueError(f"scenario {id_or_path!r} not found")
+    sc = _y.safe_load(f.read_text(encoding="utf-8"))
+    area = sc.get("area", "")
+    structural = _structural_review(sc, area)
+    summary = {"ok": sum(c["status"] == "ok" for c in structural),
+               "gap": sum(c["status"] == "gap" for c in structural)}
+
+    semantic = None
+    if reviewer:
+        from .adapters import resolve as _resolve
+        from .adapters.base import GenerationRequest
+        from . import registry
+        entry = registry.resolve(reviewer, runtime=runtime)
+        adapter = _resolve(entry["runtime"])()
+        adapter.load(entry)
+        reply = adapter.generate(GenerationRequest(prompt=_semantic_prompt(sc)))
+        concerns = _parse_concerns(reply.text)
+        semantic = {"reviewer": reviewer,
+                    "concerns": concerns if concerns is not None else [],
+                    "parsed": concerns is not None,
+                    "raw": None if concerns is not None else reply.text[:2000]}
+
+    return {"kind": "calibration-review", "scenario": sc.get("id", f.stem),
+            "methodology_version": METHODOLOGY_VERSION,
+            "structural": structural, "structural_summary": summary,
+            "semantic": semantic,
+            "note": "advisory — critique only; never rewrites, approves, or scores"}
+
+
+def render_review(report: dict) -> str:
+    L = [f"calibration review: {report['scenario']}  "
+         f"(advisory · methodology v{report['methodology_version']})",
+         "  structural checks:"]
+    for c in report["structural"]:
+        mark = "ok " if c["status"] == "ok" else "GAP"
+        L.append(f"    [{mark}] {c['criterion']}: {c['detail']}")
+    sem = report["semantic"]
+    if sem is None:
+        L.append("  semantic critique: (skipped — pass --reviewer <deployment> to enable)")
+    elif not sem["parsed"]:
+        L.append(f"  semantic critique ({sem['reviewer']}): unparseable reply — see raw")
+    elif not sem["concerns"]:
+        L.append(f"  semantic critique ({sem['reviewer']}): no concerns raised")
+    else:
+        L.append(f"  semantic critique ({sem['reviewer']}):")
+        for c in sem["concerns"]:
+            L.append(f"    - {c}")
+    return "\n".join(L)
+
+
 def render_duplicates(report: dict) -> str:
     t = report["thresholds"]
     L = [f"corpus duplicates (advisory · methodology v{report['methodology_version']})",

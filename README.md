@@ -196,6 +196,14 @@ AIES defines **engineering standards** that remain applicable regardless of the 
 
 Details in [ROADMAP.md](ROADMAP.md).
 
+The **[qualification platform](platform/README.md)** (`aies` CLI) is the executable
+reference implementation. Beyond assessing AI systems, it applies the same
+evidence-plus-verdict-plus-human-decision discipline to *itself*: `aies audit`
+reviews a repository's engineering practice, and `aies corpus` continuously
+reviews the platform's **own** assessment corpus for calibration, coverage,
+behavioral diversity, duplication, and empirical maturity — advisory,
+multidimensional, and never a single grade.
+
 ## Contributing
 
 Contributions are welcome. Every proposal should include an engineering rationale, problem statement, alternatives considered, trade-offs, references, and impact analysis. See [CONTRIBUTING.md](CONTRIBUTING.md).

@@ -25,7 +25,8 @@ the full pipeline is runnable end to end:
 `capabilities` (per-area SDLC profile), `judge` (available/list/history),
 `assessment` (declarative qualification composition — list/show/validate/result,
 Markdown/JSON/HTML, ADR-0005), `audit` (repository conformance — maturity per
-area, ADR-0004),
+area, ADR-0004), `corpus` (the platform reviews its **own** assessment corpus —
+health/coverage/duplicates/review; advisory, multidimensional, no single grade),
 `runs`, `compare`, `index`, `review`, `grant`, `verify`, `journey`,
 `conform`, `runtime`/`profile`/`qualification`, `dashboard`, `plugins`.
 All twelve competency areas
@@ -44,7 +45,11 @@ See also [DEPLOYMENTS.md](DEPLOYMENTS.md) (qualify deployments, not models),
 [ASSESSMENTS.md](ASSESSMENTS.md) (declarative qualification composition).
 [REFERENCE.md](REFERENCE.md) is the complete reference — vocabulary, artifact
 schemas, and every command. [CALIBRATION.md](CALIBRATION.md) covers scenario
-calibration — treating each scenario as a *measurement instrument*.
+calibration — treating each scenario as a *measurement instrument* — and the
+platform reviews its **own** corpus for calibration, coverage, behavioral
+diversity, duplication, and empirical maturity via `aies corpus`
+(advisory, multidimensional, never a single grade, never a gate — it critiques,
+a human decides).
 Hit a snag? [TROUBLESHOOTING.md](TROUBLESHOOTING.md) covers the common
 endpoint, TLS, auth, performance, and judge issues.
 

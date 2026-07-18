@@ -41,6 +41,17 @@ class MockAdapter(RuntimeAdapter):
                 usage={"prompt_chars": len(request.prompt), "latency_ms": 0},
                 raw={"adapter": self.adapter_id, "digest": digest, "mode": "judge"},
             )
+        # Calibration-critique prompt (aies corpus review --reviewer): return a
+        # parseable, obviously-synthetic concern array so the reviewer path runs
+        # offline. A real reviewer model produces substantive critique here.
+        if self._is_critique_prompt(request.prompt):
+            return GenerationResponse(
+                text='["[mock reviewer] synthetic concern for offline demo — '
+                     'a real reviewer model would critique this scenario\'s ceiling, '
+                     'floor, and gaming resistance here"]',
+                usage={"prompt_chars": len(request.prompt), "latency_ms": 0},
+                raw={"adapter": self.adapter_id, "digest": digest, "mode": "critique"},
+            )
         text = (
             "[mock-adapter deterministic response]\n"
             f"prompt-digest: {digest[:16]}\n"
@@ -58,6 +69,11 @@ class MockAdapter(RuntimeAdapter):
     @staticmethod
     def _is_review_prompt(prompt: str) -> bool:
         return "qualification reviewer" in prompt and '"EV1"' in prompt
+
+    @staticmethod
+    def _is_critique_prompt(prompt: str) -> bool:
+        return ("measurement instrument" in prompt
+                and "JSON array of short concern strings" in prompt)
 
     @staticmethod
     def _mock_scores(digest: str) -> str:
