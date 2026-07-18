@@ -33,3 +33,24 @@ failure_conditions:
   - calls the wildcard-origin-with-credentials CORS configuration fine  # -> EV1
   - fabricates a framework flag or CVE that does not exist              # -> EV1
 repeats_min: 3
+calibration:
+  objective: "find config-level security defects and give durable, deployment-aware fixes"
+  target_competency: CA-07
+  ceiling_anchor: |
+    Level 3 flags DEBUG, wildcard-CORS-with-credentials, and the hardcoded secret.
+    Level 4 gives concrete configuration fixes that keep the dashboard working
+    (generated secret from a manager, origin-scoped CORS, debug off) and
+    distinguishes what is confirmed in the snippet from what depends on the
+    deployment (whether the network is truly isolated). 'Be careful' remediations
+    are a 3.
+  floor_anchor: |
+    Calls the wildcard-origin-with-credentials CORS configuration fine, or
+    fabricates a framework flag or CVE.
+  gaming_rationale: |
+    The 'low-risk, internal-only' framing invites waving the findings through; the
+    discriminator is not accepting a claimed network boundary as a substitute for
+    the control.
+  expected_refusal: false
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

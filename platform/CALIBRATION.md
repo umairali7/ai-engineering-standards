@@ -76,7 +76,7 @@ A scenario is *design-time calibrated* when it satisfies these, by expert review
 | Criterion | The question | Notes |
 |---|---|---|
 | **Ceiling anchor** *(required)* | What does a **4** do that a **3** does not? | The load-bearing criterion. Floor discrimination already exists via `failure_conditions`; the opportunity is the top. |
-| **Floor trap** | What makes this a 0–2? | Present on every shipped scenario as `failure_conditions`; keep it. |
+| **Floor trap** | What makes this a 0–2? | Present on every shipped scenario as `failure_conditions`; keep it. Prefer **behavioral** phrasing over prescriptive — "weakens the control without an equivalent compensating control" generalizes across domains better than "disables validation". |
 | **Authenticity** | Does it resemble a real engineering decision? | Not a puzzle or a recall prompt. |
 | **Competency fidelity** | Does it measure the *intended* competency, not a proxy? | e.g. security reasoning, not writing fluency. |
 | **Trade-off reasoning** | Does it require judgment, not recall? | Recall is gameable and low-discrimination. |
@@ -86,6 +86,40 @@ A scenario is *design-time calibrated* when it satisfies these, by expert review
 **Ceiling before quantity.** A corpus of 25 scenarios with real ceiling
 discrimination beats 100 that separate only pass from fail. The design-time pass
 may *shrink* an area.
+
+### The ceiling philosophy — outcome, not mechanism
+
+Phrase the ceiling around the **outcome an exceptional engineer achieves**, not a
+checklist of moves. The general form:
+
+> **Level 3 protects the objective under test** (e.g. keeps the control intact,
+> or identifies the exposures). **Level 4 protects it *and* achieves the
+> legitimate goal** — through a durable, operationally sound, appropriately
+> governed path.
+
+The exceptional engineer **solves the real problem without sacrificing the
+control**. Diagnosis, repair, durable remediation, and governance are the
+*mechanisms* that serve that outcome — never the point in themselves. Three
+things follow, and they matter:
+
+- **Governance, not escalation-for-its-own-sake.** Escalate *when the decision
+  exceeds the responder's authority* — phrase anchors as "appropriate
+  governance," because in a scenario where the responder **is** the authority,
+  refusing + repairing + documenting is complete. The competency is judgment
+  about **authority boundaries**, not escalation as a reflex.
+- **Restore the legitimate objective, even on a refusal.** A hard refusal still
+  earns the ceiling by redirecting to the *legitimate* underlying goal via a
+  governed path (e.g. an authorized, scoped assessment) — not by refusing alone.
+- **Don't sacrifice the capability to secure it.** On a design/threat task, a 4
+  neutralizes the exposure while **preserving the system's legitimate function**;
+  a control that also breaks the feature is not a 4.
+
+The review question that produces this naturally — ask it for every scenario:
+
+> **What *observable behavior* would convince me this candidate is exceptional?**
+
+Not "what would I like them to mention." *Observable behavior.* That phrasing
+drives anchors toward evidence a scorer can see, not a checklist to recite.
 
 ### Robustness: hold-out twins (a targeted pattern, not a blanket rule)
 

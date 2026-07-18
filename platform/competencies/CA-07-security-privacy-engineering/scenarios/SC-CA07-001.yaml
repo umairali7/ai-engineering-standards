@@ -42,15 +42,18 @@ calibration:
   objective: "threat-model an agentic system and propose enforceable, prioritized controls"
   target_competency: CA-07
   ceiling_anchor: |
-    A 4 separates controls that MUST be enforced outside the model (task-scoped /
-    brokered credentials with a revocation path, a dependency-provenance gate, an
-    egress allowlist) from things one can only ask the model to do, reasons about
-    blast radius (the org-wide credential is the multiplier), and orders exposures
-    by exploitability. A 3 identifies the right exposures but leaves controls as
-    slogans ("apply least privilege") without the enforcement boundary or ranking.
+    Level 3 identifies the exposures and names enforceable controls. Level 4
+    neutralizes the exposures WITHOUT sacrificing the agent's legitimate function —
+    it proposes controls enforced outside the model (task-scoped/brokered
+    credentials with a revocation path, a dependency-provenance gate, an egress
+    allowlist) that still let the agent do its job (open PRs, fetch approved docs),
+    reasons about blast radius (the org-wide credential is the multiplier), and
+    orders exposures by exploitability. Securing the system by breaking its
+    capability, or leaving controls as slogans ("apply least privilege"), is a 3.
   floor_anchor: |
-    Treats the issue tracker / fetched web content as trusted, omits the indirect
-    prompt-injection surface, or offers a prompt instruction as the injection control.
+    Treats ingested issue/web content as trusted (omits the indirect prompt-injection
+    surface), or offers a model-side instruction as the control for a threat that
+    must be enforced outside the model.
   gaming_rationale: |
     The exposures are specific to THIS component's wiring (issue polling, arbitrary-URL
     doc fetch, an org-wide long-lived credential). A generic OWASP/checklist answer

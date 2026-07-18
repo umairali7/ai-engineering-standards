@@ -34,3 +34,25 @@ failure_conditions:
   - reviews collection only and omits retention and third-party disclosure  # -> EV2
   - asserts compliance with a named regulation not evidenced in the material # -> EV6
 repeats_min: 3
+calibration:
+  objective: "review service-log privacy across the lifecycle and impose enforceable minimization"
+  target_competency: CA-07
+  ceiling_anchor: |
+    Level 3 flags over-collection, third-party disclosure, unbounded retention,
+    and the training reuse. Level 4 keeps the service's legitimate logging working
+    while removing the privacy risk - field redaction/minimization at emit,
+    retention limits, data-processing terms - and treats the model-training reuse
+    as a distinct purpose that must not proceed without its own basis. A
+    collection-only review, or a policy note without enforceable controls, is a 3.
+  floor_anchor: |
+    Reviews collection only and omits retention and third-party disclosure, or
+    asserts compliance with a regulation not evidenced in the material.
+  gaming_rationale: |
+    A generic 'log less PII' checklist misses that the risk spans collection,
+    retention, disclosure, AND secondary use; the discriminator is lifecycle
+    coverage plus enforceable controls.
+  expected_refusal: false
+  hold_out_twin: SC-CA07-014
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

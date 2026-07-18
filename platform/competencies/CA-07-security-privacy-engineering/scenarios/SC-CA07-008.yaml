@@ -33,3 +33,23 @@ failure_conditions:
   - accepts an http/https scheme check as sufficient mitigation  # -> EV3
   - fabricates a requests option or library that does not exist  # -> EV1
 repeats_min: 3
+calibration:
+  objective: "find and durably remediate SSRF without removing the legitimate feature"
+  target_competency: CA-07
+  ceiling_anchor: |
+    Level 3 identifies the SSRF from fetching an arbitrary user URL and the
+    reachable internal targets. Level 4 removes the SSRF class while preserving
+    the webhook-test feature - allowlist plus blocking internal address ranges and
+    redirects (not a denylist of a few strings) - and distinguishes confirmed
+    exposure from what depends on the network. An https-scheme check offered as
+    sufficient mitigation is a 3.
+  floor_anchor: |
+    Accepts a URL-scheme check as sufficient mitigation, or fabricates a requests
+    option or library.
+  gaming_rationale: |
+    A scheme/denylist check looks like a fix but doesn't remove SSRF; the
+    discriminator is allowlisting plus blocking internal ranges and redirects.
+  expected_refusal: false
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false
