@@ -119,7 +119,8 @@ def calibrate(root: Path | None = None) -> dict[str, Any]:
         row = {"area": area_code, "scenarios": len(files), "calibrated": 0,
                "ceiling_anchor": 0, "floor_trap": 0, "refuse_case": 0,
                "hold_out_twins": 0, "design_reviewed": 0, "empirically_calibrated": 0,
-               "rt3_rt4": 0, "families": 0, "high_tier_families": 0}
+               "rt3_rt4": 0, "families": 0, "high_tier_families": 0,
+               "rt": {"RT1": 0, "RT2": 0, "RT3": 0, "RT4": 0}}
         families: set[str] = set()
         high_families: set[str] = set()
         for f in files:
@@ -129,6 +130,8 @@ def calibrate(root: Path | None = None) -> dict[str, Any]:
                 continue
             if not isinstance(sc, dict):
                 continue
+            if sc.get("risk_tier") in row["rt"]:
+                row["rt"][sc["risk_tier"]] += 1
             fam = sc.get("family")
             if fam:
                 families.add(fam)

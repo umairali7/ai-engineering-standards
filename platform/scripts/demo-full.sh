@@ -76,6 +76,9 @@ aies suites empirical "$WS/panel.json"
 hr "11. Repository conformance AUDIT (a different subject: the engineering practice)"
 aies audit .. 2>/dev/null | sed -n '1,10p' || echo "(audit step skipped)"
 
+hr "12. The platform reviews its OWN corpus (continuous QA — advisory, no single grade)"
+aies corpus health 2>/dev/null | sed -n '1,18p' || echo "(corpus step skipped)"
+
 hr "DEMO COMPLETE"
 echo "Subjects assessed:  a model deployment (qualify)  +  a repository (audit)  +  the standard (conform engine)"
 echo "Also shown:  calibrated instruments, the human grant lifecycle, and the Phase-2 empirical harness."

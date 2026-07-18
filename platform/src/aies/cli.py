@@ -456,6 +456,14 @@ def cmd_profiles(args) -> int:
     return 0
 
 
+def cmd_corpus(args) -> int:
+    from . import corpus
+    report = corpus.health(Path(args.root) if getattr(args, "root", None) else None)
+    coverage_only = args.corpus_cmd == "coverage"
+    _out(report, args.json, corpus.render(report, coverage_only=coverage_only))
+    return 0   # advisory — never a gate
+
+
 def cmd_serve(args) -> int:
     from . import api
     api.serve(args.host, args.port)
@@ -976,7 +984,7 @@ commands by stage (each group alphabetical):
   setup & discovery   deployment · discover · doctor · runtime
   qualification       assessment · benchmark · capabilities · compare · export · import · qualify · review · runs · score · transcript
   judging             judge available · judge history · judge list   (the judge pool + track record)
-  decision & audit    audit · conform · dashboard · grant · qualification · report · serve · verify
+  decision & audit    audit · conform · corpus · dashboard · grant · qualification · report · serve · verify
   reference           index · journey · plugins · profile · suites
 
 typical workflow:
@@ -1013,6 +1021,7 @@ typical workflow:
   make demo-full                               comprehensive tour of the whole platform
   aies suites calibrate                        each scenario's progress as a measurement instrument
   aies suites empirical panel.json             Phase-2: discrimination from a model panel
+  aies corpus health                           advisory review of the corpus itself (no single grade)
 
   # optional formal record (a human decision, revocable):
   aies grant <run> --decision grant --authority "Name (ROLE-13)" --second "Name (ROLE-14)"
@@ -1279,6 +1288,21 @@ def build_parser() -> argparse.ArgumentParser:
     sv.add_argument("--host", default="127.0.0.1")
     sv.add_argument("--port", type=int, default=8722)
     sv.set_defaults(func=cmd_serve)
+
+    cp = common(sub.add_parser("corpus", help="advisory quality review of the "
+                               "assessment corpus itself (calibration, coverage, "
+                               "behavioral diversity, empirical maturity); multidimensional, "
+                               "never a single grade, never a gate"))
+    cpsub = cp.add_subparsers(dest="corpus_cmd", required=True)
+    for name, h in (("health", "full multidimensional corpus-health report + ranked "
+                     "advisory recommendations"),
+                    ("coverage", "the coverage dimension only — RT distribution per area "
+                     "and per-assessment tier depth")):
+        sc = cpsub.add_parser(name, help=h)
+        sc.add_argument("--root", default=None,
+                        help="competencies directory (default: shipped suites)")
+        sc.add_argument("--json", action="store_true")
+    cp.set_defaults(func=cmd_corpus)
 
     # --- resource-model noun commands (primary surface) ---------------------
     rt = common(sub.add_parser("runtime", help="inspect runtime adapters and "
