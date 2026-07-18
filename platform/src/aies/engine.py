@@ -110,6 +110,8 @@ def start_qualification(
         "profile": profile["name"],
         "risk_tier": risk_tier,
         "subject_kind": subject_kind,
+        "repeats": repeats,          # override used, if any (for resume-collection)
+        "scoped_areas": list(areas),  # the CA codes as requested (for resume-collection)
         "areas": [
             {"area": d.get("area", a), "suite_version": v,
              "n_scenarios": len(s),
@@ -136,6 +138,55 @@ def start_qualification(
 
     rating.build_scoresheet(run_id)
     return manifest
+
+
+def resume_collection(run_id: str, workers: int | None = None) -> dict:
+    """Fill only the *missing* responses of a partially-collected run (e.g. one
+    whose collection failed partway on a flaky endpoint), then rebuild the
+    scoresheet — no re-collecting what already succeeded.
+
+    Reconstructs the deployment, scenarios, and generation parameters from the
+    run manifest. Refuses if a suite has changed since collection (the existing
+    responses would no longer be comparable, per PLATFORM.md §9)."""
+    rdir = workspace.run_dir(run_id)
+    mpath = rdir / "manifest.json"
+    if not mpath.exists():
+        raise EngineError(f"no run {run_id!r} in this workspace")
+    manifest = workspace.read_json(mpath)
+    entry = registry.get(manifest["model"]["registry_id"])
+    adapter = resolve(entry["runtime"])()
+    adapter.load(entry)
+    if workers is None:
+        workers = config.default_parallel()
+
+    repeats = manifest.get("repeats")
+    risk_tier = manifest["risk_tier"]
+    gen_params = manifest.get("generation_parameters") or config.generation_defaults()
+    fp = manifest["environment_fingerprint"]
+    scoped = manifest.get("scoped_areas") or [a["area"] for a in manifest["areas"]]
+    recorded_sv = {a["area"]: a["suite_version"] for a in manifest["areas"]}
+
+    before = len(list((rdir / "responses").glob("*.json")))
+    filled = 0
+    for area in scoped:
+        definition, scenarios, suite_version = runner.load_area(area)
+        code = definition.get("area", area)
+        if recorded_sv.get(code) and recorded_sv[code] != suite_version:
+            raise EngineError(
+                f"suite {code} changed since collection "
+                f"({recorded_sv[code]} -> {suite_version}); cannot resume — "
+                "start a fresh run")
+        in_scope = [s for s in scenarios if s["risk_tier"] == risk_tier] or scenarios
+        written = runner.execute_suite(run_id, entry, adapter, in_scope, suite_version,
+                                       fp, repeats=repeats, parameters=gen_params,
+                                       workers=workers, skip_existing=True)
+        filled += len(written)
+
+    rating.build_scoresheet(run_id)
+    after = len(list((rdir / "responses").glob("*.json")))
+    planned = sum(a["planned_items"] for a in manifest["areas"])
+    return {"run_id": run_id, "filled": filled, "responses": after,
+            "was": before, "planned": planned}
 
 
 def start_journey(

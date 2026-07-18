@@ -81,6 +81,14 @@ def cmd_registry(args) -> int:
 def cmd_qualify(args) -> int:
     from . import engine
     try:
+        if getattr(args, "resume_collection", None):
+            summary = engine.resume_collection(args.resume_collection)
+            _out(summary, args.json,
+                 f"filled {summary['filled']} missing response(s) for "
+                 f"{summary['run_id']} — now {summary['responses']}/{summary['planned']} "
+                 f"collected.\nnext: aies score {summary['run_id']}  (then "
+                 f"aies qualify --resume {summary['run_id']}), or add --judge by re-running")
+            return 0
         if args.resume:
             package = engine.aggregate(args.resume)
             from . import report
@@ -197,6 +205,20 @@ def cmd_import(args) -> int:
          f"'{summary['source']}' ({summary['skipped']} skipped) into {args.run}\n"
          f"next: aies qualify --resume {args.run}   # aggregate + report\n"
          f"      (or `aies review {args.run}` to weigh it against a human rater)")
+    return 0
+
+
+def cmd_export(args) -> int:
+    from . import evalexport
+    try:
+        if args.write:
+            path = evalexport.write_export(args.run)
+            _out({"exported": path}, args.json, f"wrote {path}")
+        else:
+            print(evalexport.render_json(args.run))
+    except FileNotFoundError:
+        print(f"error: no run {args.run!r} in this workspace", file=sys.stderr)
+        return 2
     return 0
 
 
@@ -820,7 +842,7 @@ def _not_yet(milestone: str):
 _EPILOG = """\
 commands by stage (each group alphabetical):
   setup & discovery   deployment · discover · doctor · runtime
-  qualification       benchmark · capabilities · compare · import · qualify · review · runs · score · transcript
+  qualification       benchmark · capabilities · compare · export · import · qualify · review · runs · score · transcript
   judging             judge available · judge history · judge list   (the judge pool + track record)
   decision & audit    audit · conform · dashboard · grant · qualification · report · verify
   reference           index · journey · plugins · profile · suites
@@ -932,6 +954,9 @@ def build_parser() -> argparse.ArgumentParser:
                         "are written in canonical order regardless)")
     q.add_argument("--resume", metavar="RUN_ID",
                    help="aggregate a scored run into the evidence package")
+    q.add_argument("--resume-collection", metavar="RUN_ID",
+                   help="fill only the missing responses of a partially-collected "
+                        "run (e.g. after an endpoint failure), then rebuild the scoresheet")
     q.set_defaults(func=lambda a: (_qualify_defaults(a), cmd_qualify(a))[1])
 
     b = common(sub.add_parser("benchmark", help="execute scenario suites only (stage 4)"))
@@ -959,6 +984,13 @@ def build_parser() -> argparse.ArgumentParser:
     im.add_argument("--source", default=None,
                     help="label for the rater (default: the file's `source` field)")
     im.set_defaults(func=cmd_import)
+
+    ex = common(sub.add_parser("export", help="export a run's responses+scores to "
+                               "a generic eval-log JSON (round-trips with import)"))
+    ex.add_argument("run")
+    ex.add_argument("--write", action="store_true",
+                    help="write eval-log.json into the run directory (else stdout)")
+    ex.set_defaults(func=cmd_export)
 
     r = common(sub.add_parser("report", help="render an evidence package"))
     r.add_argument("run")
@@ -1178,8 +1210,11 @@ def _qualify_defaults(args) -> None:
         args.area = runner.all_area_codes()
     elif getattr(args, "area", None) in (None, []):
         args.area = ["CA-05"]
-    if getattr(args, "resume", None) is None and not getattr(args, "model", None):
-        raise SystemExit("error: a model registry id is required unless --resume is used")
+    if (getattr(args, "resume", None) is None
+            and getattr(args, "resume_collection", None) is None
+            and not getattr(args, "model", None)):
+        raise SystemExit("error: a model registry id is required unless --resume "
+                         "or --resume-collection is used")
 
 
 def _subparsers_action(parser):

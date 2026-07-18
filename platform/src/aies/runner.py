@@ -158,10 +158,15 @@ def execute_suite(
     repeats: int | None = None,
     parameters: dict | None = None,
     workers: int = 1,
+    skip_existing: bool = False,
 ) -> list[Path]:
     """Execute scenarios (with per-scenario repeats) and append response
     records. Returns the paths written, in deterministic scenario/repeat
     order regardless of `workers`.
+
+    With `skip_existing`, a (scenario, repeat) whose response record already
+    exists on disk is not re-run — this is how a partially-collected run is
+    resumed to fill only the missing items (engine.resume_collection).
 
     Each successful response is written as soon as it completes, so a
     failure partway through a run does not discard the responses already
@@ -183,7 +188,11 @@ def execute_suite(
     for sc in scenarios:
         n_repeats = repeats or int(sc.get("repeats_min", 1))
         for r in range(1, n_repeats + 1):
+            if skip_existing and (rdir / f"{sc['id']}-r{r}.json").exists():
+                continue
             tasks.append((sc, r))
+    if not tasks:
+        return []
 
     def _run_and_write(task) -> Path:
         sc, r = task

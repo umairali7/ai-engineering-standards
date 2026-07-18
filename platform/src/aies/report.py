@@ -13,6 +13,40 @@ from . import constants as C
 from . import workspace
 
 
+def _area_verdict(d: dict) -> tuple[str, str]:
+    """Grant-readiness verdict for one area (informs a human decision; the
+    platform never grants)."""
+    if not d["decisional"]:
+        return "BLOCKED", f"non-decisional ({d['n_scored']}/{d['min_sample']} items)"
+    if d.get("ev3_hard_fail"):
+        return "BLOCKED", "EV3 safety hard gate failed"
+    if not d.get("gates_passed", True):
+        failed = [g["dimension"] for g in d["gates"] if not g["passed"]]
+        return "BLOCKED", f"gate failure: {', '.join(failed)}"
+    return "READY", f"informs a grant up to {d.get('cl') or 'CL?'}"
+
+
+def _residual_risks(pkg: dict) -> list[str]:
+    risks: list[str] = []
+    if "model" in pkg.get("rater_kinds", []):
+        risks.append("Scores are **judge-produced** — advisory until the judge is "
+                     "calibrated against human anchors (AIES-AESQS-PR-01-R09).")
+    for area, d in pkg["areas"].items():
+        if not d["decisional"]:
+            risks.append(f"**{area}**: non-decisional — grow the sample "
+                         "(more `--repeats` or distinct scenarios) or combine runs.")
+        for g in d["gates"]:
+            dv, th = g.get("decision_value"), g.get("threshold")
+            if g.get("passed") and dv is not None and th is not None and (dv - th) < 0.5:
+                sev = " — **safety gate**" if g["dimension"] == "EV3" else ""
+                risks.append(f"**{area} {g['dimension']}**: passed by a thin margin "
+                             f"(decision value {dv} vs threshold {th}){sev}.")
+    if not risks:
+        risks.append("No elevated residual risk flagged by the platform; a named "
+                     "human still owns the grant decision (D8).")
+    return risks
+
+
 def render_json(run_id: str) -> str:
     pkg = workspace.read_json(workspace.run_dir(run_id) / "evidence-package.json")
     return json.dumps(pkg, indent=2)
@@ -48,6 +82,35 @@ def render_markdown(run_id: str) -> str:
           f"{', '.join(nondecisional)} (AIES-AESQS-CS-01 §6). These results "
           "MUST NOT be presented as qualification evidence.")
         a("")
+
+    # Grant-readiness summary (synthesis of the per-area detail below).
+    a("## Grant Readiness")
+    a("")
+    a("| Area | Decisional | Gates | CL | Verdict — informs a human grant |")
+    a("|---|---|---|---|---|")
+    verdicts = {}
+    for area, d in pkg["areas"].items():
+        v, why = _area_verdict(d)
+        verdicts[area] = v
+        gates = ("PASS" if d.get("gates_passed") and not d.get("ev3_hard_fail")
+                 else "FAIL")
+        a(f"| {area} | {'yes' if d['decisional'] else '**no**'} | {gates} | "
+          f"{d.get('cl') or '-'} | **{v}** — {why} |")
+    a("")
+    if all(v == "READY" for v in verdicts.values()):
+        a("**Overall: READY** — every scoped area is decisional and passes its "
+          "gates. A named human authority may record a grant "
+          "(`aies grant <run> …`); the platform does not grant (D8).")
+    else:
+        blocked = [ar for ar, v in verdicts.items() if v != "READY"]
+        a(f"**Overall: BLOCKED** — not grant-ready for {', '.join(blocked)}. "
+          "Resolve the blockers above before a grant.")
+    a("")
+    a("### Residual risk")
+    a("")
+    for r in _residual_risks(pkg):
+        a(f"- {r}")
+    a("")
 
     a("## Environment Fingerprint")
     a("")

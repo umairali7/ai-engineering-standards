@@ -28,6 +28,17 @@ def _register(tmp_path, model_id="demo", runtime="mock"):
     return registry.add(p)
 
 
+def test_report_has_grant_readiness_and_residual_risk(ws, tmp_path):
+    from aies import engine, report
+    _register(tmp_path)
+    run = engine.start_qualification("demo", "enterprise", "RT2", ["CA-05"], repeats=1)
+    _fill_and_aggregate(run["run_id"], score=3)
+    md = report.render_markdown(run["run_id"])
+    assert "## Grant Readiness" in md and "### Residual risk" in md
+    # a small CA-05 run is under the RT2 minimum -> BLOCKED / non-decisional flagged
+    assert "BLOCKED" in md and "non-decisional" in md
+
+
 def _fill_and_aggregate(run_id, score=3):
     from aies import engine, rating, workspace
     sheet = json.loads((workspace.run_dir(run_id) / "scoresheet.json")

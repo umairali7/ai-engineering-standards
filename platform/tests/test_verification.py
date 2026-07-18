@@ -76,3 +76,33 @@ def test_missing_artifact_errors(ws, tmp_path):
     _register(tmp_path, "sha256:" + "0" * 64)
     with pytest.raises(verification.VerificationError, match="artifact not found"):
         verification.verify_artifact("art", str(tmp_path / "nope.bin"))
+
+
+def test_ed25519_signature_verifies_end_to_end(ws, tmp_path):
+    """With the `crypto` extra installed, a real detached Ed25519 signature
+    over the artifact verifies (and a tampered signature fails)."""
+    crypto = pytest.importorskip("cryptography")
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+    from cryptography.hazmat.primitives import serialization
+    from aies import verification
+
+    art, digest = _artifact(tmp_path)
+    key = Ed25519PrivateKey.generate()
+    sig = key.sign(art.read_bytes())
+    pub_pem = key.public_key().public_bytes(
+        serialization.Encoding.PEM,
+        serialization.PublicFormat.SubjectPublicKeyInfo)
+    pub = tmp_path / "key.pem"; pub.write_bytes(pub_pem)
+    sigf = tmp_path / "model.sig"; sigf.write_bytes(sig)
+
+    _register(tmp_path, digest, signature={"method": "ed25519", "reference": str(sigf)})
+    res = verification.verify_artifact("art", str(art),
+                                       pubkey_path=str(pub), sig_path=str(sigf))
+    assert res["signature"]["status"] == "verified"
+    assert res["checksum"]["match"] is True and res["ok"] is True
+
+    # a tampered signature must fail, not pass
+    sigf.write_bytes(b"\x00" + sig[1:])
+    res2 = verification.verify_artifact("art", str(art),
+                                        pubkey_path=str(pub), sig_path=str(sigf))
+    assert res2["signature"]["status"] == "failed" and res2["ok"] is False

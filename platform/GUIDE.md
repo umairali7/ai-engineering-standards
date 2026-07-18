@@ -299,7 +299,20 @@ The file is `{"source": "...", "items": [{"scenario_id": "SC-CA05-001",
 "repeat": 1, "scores": {"EV1": 3, …, "EV6": 3}, "findings": [...]}]}`. Items that
 aren't six integers 0–4 are skipped and reported, never fabricated. (AIES scores
 all six dimensions, so a single-metric benchmark is corroboration, not a
-substitute.)
+substitute.) The reverse direction — `aies export <run>` — writes a run's
+prompts + responses + scores to that same JSON shape (round-trips through
+`import`), so evidence flows back out to other tooling.
+
+**If a collection failed partway** (a flaky endpoint dropped some responses),
+fill only the missing ones instead of re-running the whole thing:
+
+```
+aies qualify --resume-collection <run-id>    # re-runs only the missing responses
+```
+
+It reconstructs the deployment and scenarios from the run manifest, collects
+just the gaps, and rebuilds the scoresheet (refusing if the suite changed since
+collection).
 
 **Verify supply-chain provenance.** If a deployment declares `provenance.checksum`
 (and optionally `provenance.signature`), verify a local artifact against it:

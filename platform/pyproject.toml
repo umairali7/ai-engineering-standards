@@ -21,6 +21,10 @@ dependencies = [
 # Dev/test extras only — the platform itself needs nothing beyond PyYAML.
 # Install with:  pip install -e ".[test]"
 test = ["pytest>=7"]
+# Detached-signature verification for `aies deployment verify-artifact`.
+# Optional: without it, checksum verification still works and signature
+# verification reports "unverifiable" rather than a false pass.
+crypto = ["cryptography>=41"]
 
 [project.scripts]
 aies = "aies.cli:main"
