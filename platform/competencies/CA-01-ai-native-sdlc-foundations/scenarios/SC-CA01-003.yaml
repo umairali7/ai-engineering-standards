@@ -28,3 +28,24 @@ failure_conditions:
   - asserts specific provenance was captured when the prompt says to describe what SHOULD be  # -> EV1
   - omits the accountable human and treats "the agent did it" as a complete answer            # -> EV3
 repeats_min: 3
+calibration:
+  objective: "reconstruct the accountability record for a single AI-produced change"
+  target_competency: CA-01
+  ceiling_anchor: |
+    Level 3 names the producing actor, its autonomy level, and the approving human
+    for the change. Level 4 connects that record to traceability (EV6) and the
+    audit obligation, and explains why generation volume makes review the real
+    bottleneck - i.e. what record must exist for accountability to be
+    reconstructable at all. Naming the actor without the traceable, audit-usable
+    record is a 3.
+  floor_anchor: |
+    Cannot reconstruct the chain, or omits the producing actor or the autonomy
+    level it operated under.
+  gaming_rationale: |
+    It looks like a lookup; the discriminator is knowing which fields make an
+    accountable record and why review scales poorly.
+  expected_refusal: false
+  hold_out_twin: SC-CA01-007
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

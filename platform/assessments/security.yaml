@@ -2,9 +2,11 @@
 # oversight and SDLC-foundations judgment. Scoped at RT3 by default.
 #
 # Evidential maturity (CALIBRATION.md §5): RT2 is decisional. RT3 is operationally
-# ready, but the mandatory areas' distinct RT3/RT4 corpus is still being deepened
-# (behaviorally-diverse high-tier scenarios), so an expanded corpus is required
-# for RT3 decisional confidence — prefer distinct scenarios over more repeats.
+# ready. All three mandatory areas are design-time calibrated and their distinct
+# RT3/RT4 corpus was deepened for behavioral diversity (CA-07: 9 high-tier across
+# 9 decision kinds; CA-12: 8; CA-01: 7). This substantially strengthens RT3
+# evidence; reaching the RT3 decisional sample minimum still favours adding more
+# distinct high-tier scenarios over repeats.
 id: security
 version: 1.0.0
 schema: 1

@@ -17,4 +17,6 @@ description: >
 discovery_probes:
   - reasoning          # can the candidate reason about policy, risk, and evidence
   - structured_output  # can it follow an output contract
-scenario_families: [risk-acceptance, autonomy-governance, incident-governance, escalation]
+# Behavioral diversity (CALIBRATION.md §5): distinct KINDS of governance decision.
+scenario_families: [risk-acceptance, autonomy-governance, incident-governance,
+                    escalation, external-framework-change, guardrails, risk-tiering]

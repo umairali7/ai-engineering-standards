@@ -29,3 +29,23 @@ failure_conditions:
   - classifies the contained guardrail catch as a major incident requiring a full PIR and exec reporting  # -> EV5
   - concludes a contained catch needs no record or trending at all                                        # -> EV6
 repeats_min: 3
+calibration:
+  objective: "respond proportionately to a guardrail-contained event"
+  target_competency: CA-12
+  ceiling_anchor: |
+    Level 3 classifies the blocked change as contained - caught by a guardrail
+    before any shared environment. Level 4 gives the proportionate response (log
+    and trend the guardrail hit) AND notes what should still happen because the
+    catch is recorded, without inflating a working control into a major incident.
+    Treating a successful block as a severe incident, or ignoring it entirely, is
+    a 3.
+  floor_anchor: |
+    Escalates a guardrail-contained event as a major incident (disproportionate),
+    or dismisses it with no logging/trending.
+  gaming_rationale: |
+    A 'security event' label invites over-reaction; the discriminator is
+    recognizing the control worked and responding proportionately.
+  expected_refusal: false
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

@@ -15,4 +15,4 @@ description: >
 discovery_probes:
   - reasoning          # can the candidate reason about risk/autonomy from principles
   - structured_output  # can it express decisions in canonical taxonomy terms
-scenario_families: [risk-classification, autonomy-mapping, provenance, escalation]
+scenario_families: [risk-classification, autonomy-mapping, provenance, escalation, integrated-risk-autonomy]
