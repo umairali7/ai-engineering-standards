@@ -61,6 +61,9 @@ fi
 hr "9. Decision-engine CONFORMANCE (the standard as a subject)"
 echo "Does the reference engine reproduce AESQS decision semantics on the golden corpus?"
 aies conform engine || true
+echo
+echo "-- and a FOREIGN engine (package-free reimplementation) self-verifies on the same corpus --"
+aies conform engine --engine "python ../conformance/example_engine.py" 2>/dev/null | sed -n '1,4p' || echo "(foreign-engine step skipped)"
 
 hr "10. Empirical calibration harness (Phase 2 — ready for a real-model panel)"
 echo "Design-time calibration is done; EMPIRICAL calibration needs a model panel."

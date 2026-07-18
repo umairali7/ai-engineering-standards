@@ -17,6 +17,9 @@ semantics vX.Y" means. (Distinct from `conformance.py`, which handles conformanc
 from __future__ import annotations
 
 import json
+import os
+import shlex
+import subprocess
 from pathlib import Path
 from typing import Callable
 
@@ -25,6 +28,36 @@ from . import decision
 
 class ConformanceError(Exception):
     pass
+
+
+def subprocess_decider(cmd: str, timeout: float = 60.0) -> Callable[[dict, dict], dict]:
+    """Wrap a FOREIGN decision engine (any language) as a decide_fn, so a
+    third-party implementation can self-verify against the same golden corpus
+    without importing this package. The command receives `{"evidence":…,
+    "assessment":…}` as JSON on stdin and must print the Canonical Assessment
+    Result (at least `outcome`, `decisions.reasons[].kind`, and
+    `metadata.decision_semantics_version`) as JSON on stdout."""
+    argv = shlex.split(cmd, posix=(os.name != "nt"))
+    if os.name == "nt":            # posix=False keeps surrounding quotes on tokens
+        argv = [a[1:-1] if len(a) >= 2 and a[0] == a[-1] == '"' else a for a in argv]
+
+    def decide(evidence: dict, assessment: dict) -> dict:
+        payload = json.dumps({"evidence": evidence, "assessment": assessment})
+        try:
+            proc = subprocess.run(argv, input=payload, capture_output=True,
+                                  text=True, timeout=timeout)
+        except (OSError, subprocess.TimeoutExpired) as e:
+            raise ConformanceError(f"foreign engine {cmd!r} failed to run: {e}")
+        if proc.returncode != 0:
+            raise ConformanceError(f"foreign engine exited {proc.returncode}: "
+                                   f"{proc.stderr.strip()[:300]}")
+        try:
+            return json.loads(proc.stdout)
+        except (json.JSONDecodeError, ValueError):
+            raise ConformanceError(f"foreign engine produced non-JSON output: "
+                                   f"{proc.stdout.strip()[:300]}")
+
+    return decide
 
 
 def default_corpus_dir() -> Path | None:
@@ -50,9 +83,11 @@ def _load_case(case_dir: Path) -> dict:
 
 
 def verify(corpus_dir: Path | None = None,
-           decide_fn: Callable[[dict, dict], dict] = decision.decide) -> dict:
+           decide_fn: Callable[[dict, dict], dict] = decision.decide,
+           engine: str = "reference") -> dict:
     """Replay every corpus case through decide_fn; return a structured report.
-    `valid` is True iff every case matches its expected outcome + reason kinds."""
+    `valid` is True iff every case matches its expected outcome + reason kinds.
+    `engine` labels which implementation was verified (reference or a foreign one)."""
     corpus_dir = corpus_dir or default_corpus_dir()
     if corpus_dir is None or not Path(corpus_dir).is_dir():
         raise ConformanceError(
@@ -85,6 +120,7 @@ def verify(corpus_dir: Path | None = None,
 
     passed = sum(1 for r in results if r["passed"])
     return {"valid": bool(results) and passed == len(results),
+            "engine": engine,
             "corpus": str(corpus_dir),
             "semantics_version": decision.DECISION_SEMANTICS_VERSION,
             "total": len(results), "passed": passed,
@@ -94,6 +130,7 @@ def verify(corpus_dir: Path | None = None,
 def render(report: dict) -> str:
     status = "CONFORMANT" if report["valid"] else "NON-CONFORMANT"
     lines = [f"decision-engine conformance: {status}",
+             f"  engine   : {report.get('engine', 'reference')}",
              f"  corpus   : {report['corpus']}",
              f"  semantics: {report['semantics_version']}",
              f"  cases    : {report['passed']}/{report['total']} passed"]

@@ -21,6 +21,9 @@ demo:              ## core workflow, fully offline (mock runtime + mock judge)
 demo-full:         ## comprehensive tour of the whole platform, fully offline
 	bash scripts/demo-full.sh
 
+demo-empirical:    ## Phase-2 empirical harness on a SYNTHETIC panel (see discrimination output)
+	python scripts/demo_empirical.py
+
 integration-demo:  ## full workflow against a REAL deployment (opt-in)
 	@# Set DEPLOYMENT and JUDGE to registered deployments, then:
 	@#   make integration-demo DEPLOYMENT=local-qwen JUDGE=gpt-oss

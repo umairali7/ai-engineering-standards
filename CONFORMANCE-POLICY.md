@@ -47,6 +47,21 @@ of any engine (STABILITY.md §3), the corpus outlives engine builds: the *same*
 corpus verifies the reference engine today and a third-party or future engine
 later.
 
+**The corpus is language-neutral data — you do not need this package to use it.**
+The cases are plain JSON (`evidence-package.json`, `assessment.json`,
+`expected.json`); an independent engine in any language can read them and compare
+its own outputs. For convenience, `aies conform engine --engine "<command>"`
+runs the whole corpus against a **foreign** engine: the command reads
+`{"evidence": …, "assessment": …}` as JSON on stdin and prints the Canonical
+Assessment Result on stdout. A minimal, self-contained reference —
+[`conformance/example_engine.py`](conformance/example_engine.py), ~50 lines of
+pure Python with **no `aies` import** — reimplements the semantics from the spec
+and passes all cases, proving the standard is reproducible independently:
+
+```
+aies conform engine --engine "python conformance/example_engine.py"   # → CONFORMANT 8/8
+```
+
 The corpus MUST cover, at minimum: each outcome (`PASS / FAIL / INCONCLUSIVE /
 INSUFFICIENT EVIDENCE`); each reason kind (`mandatory-gate`, `min-cl`,
 `insufficient-evidence`, `assessment-error`, …); the load-bearing invariants (a

@@ -901,8 +901,14 @@ def cmd_conform(args) -> int:
             return 0 if report["summary"]["substantiated"] else 5
         elif args.conform_cmd == "engine":
             from . import engine_conformance as ec
+            corpus_dir = Path(args.corpus) if args.corpus else None
+            decide_fn = ec.decision.decide
+            engine_label = "reference"
+            if args.engine:
+                decide_fn = ec.subprocess_decider(args.engine)
+                engine_label = args.engine
             try:
-                report = ec.verify(Path(args.corpus) if args.corpus else None)
+                report = ec.verify(corpus_dir, decide_fn=decide_fn, engine=engine_label)
             except ec.ConformanceError as e:
                 print(f"error: {e}", file=sys.stderr)
                 return 2
@@ -1032,6 +1038,7 @@ typical workflow:
   # see the whole thing run, fully offline (mock runtime + mock judge):
   make demo                                    core workflow (bash scripts/demo.sh)
   make demo-full                               comprehensive tour of the whole platform
+  make demo-empirical                          Phase-2 harness on a synthetic panel (see discrimination)
   aies suites calibrate                        each scenario's progress as a measurement instrument
   aies suites empirical panel.json             Phase-2: discrimination from a model panel
   aies corpus health                           advisory review of the corpus itself (no single grade)
@@ -1043,6 +1050,7 @@ typical workflow:
   aies verify <QUAL-id>                         re-check environment (D7)
   aies conform check statement.yaml            check a conformance claim
   aies conform engine                          verify the decision engine vs the golden corpus
+  aies conform engine --engine "python conformance/example_engine.py"   verify a FOREIGN engine
   aies suites validate                         validate shipped competency suites
   aies serve --port 8722                       read-only REST API over the canonical artifacts
 
@@ -1347,10 +1355,15 @@ def build_parser() -> argparse.ArgumentParser:
     cfc = cfsub.add_parser("check"); cfc.add_argument("file")
     cfc.add_argument("--write", action="store_true"); cfc.add_argument("--json", action="store_true")
     cfsub.add_parser("requirements").add_argument("--json", action="store_true")
-    cfe = cfsub.add_parser("engine", help="verify the decision engine against the "
-                           "golden Evidence Package corpus (CONFORMANCE-POLICY.md)")
+    cfe = cfsub.add_parser("engine", help="verify a decision engine against the "
+                           "golden Evidence Package corpus (CONFORMANCE-POLICY.md). "
+                           "Defaults to the reference engine; --engine verifies a "
+                           "FOREIGN engine so independent implementations can self-check")
     cfe.add_argument("--corpus", default=None,
                      help="path to conformance/corpus (default: auto-discover)")
+    cfe.add_argument("--engine", default=None,
+                     help="a foreign engine command: reads {evidence,assessment} JSON on "
+                          "stdin, prints the Canonical Assessment Result JSON on stdout")
     cfe.add_argument("--json", action="store_true")
     cf.set_defaults(func=cmd_conform)
 

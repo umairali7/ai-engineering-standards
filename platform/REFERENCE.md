@@ -101,7 +101,7 @@ append-only records. Grouped as in `aies --help`.
 | `verify` | Re-check the environment fingerprint (D7); non-zero if invalidated | `aies verify QUAL-2026-001` |
 | `audit` | Audit a *repository's* AIES engineering practice (maturity ML0–ML4) | `aies audit . --gate --rt 2` |
 | `conform check` | Check a conformance *statement* against CONFORMANCE.md | `aies conform check statement.yaml` |
-| `conform engine` | Verify the *decision engine* against the golden corpus | `aies conform engine` |
+| `conform engine` | Verify a *decision engine* against the golden corpus — the reference engine, or a **foreign** one via `--engine "<cmd>"` (reads evidence+assessment JSON on stdin, prints the result) so independent implementations self-check | `aies conform engine --engine "python conformance/example_engine.py"` |
 | `dashboard` | Render an HTML overview (a renderer — computes no outcomes) | `aies dashboard --write` |
 | `serve` | Thin read-only REST API over the canonical artifacts | `aies serve --port 8722` |
 
