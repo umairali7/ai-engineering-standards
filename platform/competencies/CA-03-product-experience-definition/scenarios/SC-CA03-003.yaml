@@ -37,3 +37,23 @@ failure_conditions:
   - invents conversion-lift percentages for features that have no data  # -> EV1
   - ranks F5 (unrelated to checkout) top without acknowledging it is off-goal  # -> EV6
 repeats_min: 3
+calibration:
+  objective: "prioritize against the stated goal, separating evidence from assumption"
+  target_competency: CA-03
+  ceiling_anchor: |
+    Level 3 prioritizes the checkout features. Level 4 justifies the ordering
+    against the stated goal (reduce mobile checkout abandonment) and distinguishes
+    evidence-backed items (F1, F4) from assumption-based ones, rather than ranking
+    by gut. Prioritization untethered to the goal, or that ignores evidence
+    strength, is a 3.
+  floor_anchor: |
+    Prioritizes without tying to the stated goal, or treats assumption-based items
+    as evidence-backed.
+  gaming_rationale: |
+    Any ranked list looks like prioritization; the discriminator is justification
+    against the goal and honesty about evidence.
+  expected_refusal: false
+  hold_out_twin: SC-CA03-008
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

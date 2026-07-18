@@ -26,3 +26,22 @@ failure_conditions:
   - specifies only the successful-download path and omits empty/large/failed-generation states  # -> EV2
   - invents unrelated features (e.g., a scheduled-export subscription system)  # -> EV5
 repeats_min: 3
+calibration:
+  objective: "define a data-export flow with edge states and accessibility"
+  target_competency: CA-03
+  ceiling_anchor: |
+    Level 3 defines the CSV-download primary flow. Level 4 covers the edge states
+    (empty data, very large export, generation delay) and the accessibility of the
+    control (keyboard operable, labeled), so the feature is buildable end to end.
+    Happy-path only, or no accessibility, is a 3.
+  floor_anchor: |
+    Defines only the primary flow, omitting edge states or accessibility of the
+    control.
+  gaming_rationale: |
+    A download button seems trivial; the discriminator is the empty/large/slow
+    edge cases and accessibility.
+  expected_refusal: false
+  hold_out_twin: SC-CA03-001
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

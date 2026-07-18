@@ -28,3 +28,22 @@ failure_conditions:
   - leaves freshness as an assumption with no tracked review-by date or status  # -> EV6
   - assigns no owner, so review responsibility falls to no one                  # -> EV4
 repeats_min: 3
+calibration:
+  objective: "give a large store ownership, validation, and a usage-tied review cadence"
+  target_competency: CA-11
+  ceiling_anchor: |
+    Level 3 adds metadata to the 400-asset store. Level 4 gives every asset
+    tracked properties and an accountable owner, and sets a review cadence tied to
+    usage (heavily-used or high-risk assets reviewed more often), making freshness
+    a governed lifecycle. Adding metadata without ownership or a review cadence is
+    a 3.
+  floor_anchor: |
+    Adds properties but no accountable owner, or no usage-tied review cadence.
+  gaming_rationale: |
+    Tagging assets looks like governance; the discriminator is ownership and a
+    usage-risk-tied review cadence.
+  expected_refusal: false
+  hold_out_twin: SC-CA11-003
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

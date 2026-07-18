@@ -30,3 +30,24 @@ failure_conditions:
   - endorses pointing agents at the raw wiki untransformed  # -> EV1
   - produces unversioned, ownerless context with no validation step  # -> EV4
 repeats_min: 3
+calibration:
+  objective: "curate tacit conventions into explicit, contradiction-resolved assets"
+  target_competency: CA-11
+  ceiling_anchor: |
+    Level 3 documents the architecture conventions. Level 4 distinguishes curation
+    (transforming tacit knowledge into explicit, self-contained assets and
+    resolving ambiguity/contradictions) from dumping raw notes, and explains that
+    ambiguity and contradictions in the source must be resolved before the asset
+    is usable by agents. Pasting the informal conventions verbatim as an asset is
+    a 3.
+  floor_anchor: |
+    Dumps the raw/informal conventions as an asset without resolving ambiguity or
+    contradictions.
+  gaming_rationale: |
+    Copying the conventions in feels like knowledge capture; the discriminator is
+    transforming and resolving, not dumping.
+  expected_refusal: false
+  hold_out_twin: SC-CA11-006
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

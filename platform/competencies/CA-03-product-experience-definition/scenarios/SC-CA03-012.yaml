@@ -43,3 +43,23 @@ failure_conditions:
   - specifies only the accept-a-good-suggestion path and omits low-confidence/empty/latency/offline and stale/racing states  # -> EV2
   - silently assumes document text may be sent to a third-party model without flagging it as an open decision  # -> EV6
 repeats_min: 2
+calibration:
+  objective: "define an inline-AI assistant flow handling the stale/racing case"
+  target_competency: CA-03
+  ceiling_anchor: |
+    Level 3 defines the accept/edit/dismiss flow for the writing assistant. Level
+    4 handles the stale/racing case (a completion arriving after the user typed
+    on, or for old context), latency/loading, and accessibility - the states that
+    make an inline assistant usable rather than jarring. Missing the stale/race
+    handling is a 3.
+  floor_anchor: |
+    Defines accept/edit/dismiss only, omitting the stale/racing completion and
+    latency handling.
+  gaming_rationale: |
+    The accept/dismiss flow looks complete; the discriminator is the race between
+    typing and async completions.
+  expected_refusal: false
+  hold_out_twin: SC-CA03-007
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

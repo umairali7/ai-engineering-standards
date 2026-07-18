@@ -29,3 +29,22 @@ failure_conditions:
   - misses the direct R1/R2 contradiction                              # -> EV1
   - resolves the conflict by unilaterally picking SMS or email as if deciding intent  # -> EV3
 repeats_min: 3
+calibration:
+  objective: "find the contradiction and the untestable requirements in a set"
+  target_competency: CA-02
+  ceiling_anchor: |
+    Level 3 reviews the requirement set. Level 4 identifies the concrete R1/R2
+    contradiction (SMS vs email-only), flags R3/R5 as untestable/unquantified as
+    written, and states what would make each testable. A review that misses the
+    contradiction or accepts vague requirements as-is is a 3.
+  floor_anchor: |
+    Misses the R1/R2 contradiction, or accepts untestable/unquantified
+    requirements without flagging them.
+  gaming_rationale: |
+    A neat requirement list looks fine; the discriminator is catching the
+    contradiction and demanding testability.
+  expected_refusal: false
+  hold_out_twin: SC-CA02-006
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

@@ -29,3 +29,22 @@ failure_conditions:
   - assembles the whole store "to be safe"  # -> EV5
   - selects assets without pinning versions, so the run is not reproducible  # -> EV6
 repeats_min: 3
+calibration:
+  objective: "assemble the minimal task-relevant context as a budget, not a bucket"
+  target_competency: CA-11
+  ceiling_anchor: |
+    Level 3 assembles context for the rounding-bug fix. Level 4 selects the
+    minimal task-relevant asset set and argues assembly is a budget, not a bucket
+    - more context is not better and dilutes/distracts. Loading everything
+    potentially related is a 3.
+  floor_anchor: |
+    Assembles a large 'everything related' context set rather than the minimal
+    task-relevant one.
+  gaming_rationale: |
+    More context feels safer; the discriminator is minimal, task-relevant assembly
+    under a budget.
+  expected_refusal: false
+  hold_out_twin: SC-CA11-005
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

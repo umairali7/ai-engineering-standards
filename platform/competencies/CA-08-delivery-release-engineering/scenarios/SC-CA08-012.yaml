@@ -42,3 +42,22 @@ failure_conditions:
   - makes the rename and required-field change in one step with no backward-compatible transition    # -> EV1
   - presumes atomic deploys or a single running version per service, or leaves the schema-registry/delivery assumptions unstated  # -> EV6
 repeats_min: 2
+calibration:
+  objective: "evolve a cross-service event contract additively and sequence the deploys"
+  target_competency: CA-08
+  ceiling_anchor: |
+    Level 3 recognizes the two services share the Kafka event as a contract. Level
+    4 evolves the contract additively first (deploy the consumer to tolerate the
+    new shape before the producer emits it), sequences the deploys accordingly,
+    and avoids a breaking simultaneous change. Deploying a breaking contract
+    change to both at once is a 3.
+  floor_anchor: |
+    Changes the event shape in a breaking way and deploys both services together,
+    or ignores the consumer's compatibility.
+  gaming_rationale: |
+    One logical change invites one deploy; the discriminator is treating the event
+    as a contract and evolving it additively in order.
+  expected_refusal: false
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

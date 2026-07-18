@@ -29,3 +29,23 @@ failure_conditions:
   - proposes a single big-bang deploy of the payment change with no progressive exposure  # -> EV3
   - claims rollback safety without a tested rollback path                                  # -> EV3
 repeats_min: 3
+calibration:
+  objective: "release a payment change progressively with automated health-based rollback"
+  target_competency: CA-08
+  ceiling_anchor: |
+    Level 3 releases the payment-capture change carefully. Level 4 releases
+    progressively (canary/staged), defines the automated health signals that
+    decide continue-vs-rollback, and can revert without human latency - matching a
+    payment-path change's risk. An all-at-once release, or manual-only health
+    judgment, is a 3.
+  floor_anchor: |
+    Releases the payment change all-at-once, or defines no automated rollback
+    signal.
+  gaming_rationale: |
+    A working change invites shipping it fully; the discriminator is progressive
+    rollout with automated health gating on a payment path.
+  expected_refusal: false
+  hold_out_twin: SC-CA08-006
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

@@ -38,3 +38,23 @@ failure_conditions:
   - accepts "at least as good" as a testable bar without demanding a baseline       # -> EV4
   - bakes the unapproved 10x spike in as a committed scaling requirement            # -> EV3
 repeats_min: 2
+calibration:
+  objective: "turn unmeasurable migration NFRs into measurable ones"
+  target_competency: CA-02
+  ceiling_anchor: |
+    Level 3 names that 'at least as good' is unmeasurable as written. Level 4
+    produces the questions that turn each vague NFR (performance, reliability,
+    parity) into a measurable acceptance criterion tied to the old system's actual
+    numbers. Accepting 'at least as good' as a requirement, or vague pushback, is
+    a 3.
+  floor_anchor: |
+    Accepts 'at least as good' / 'just has to work' as a requirement without
+    demanding measurable criteria.
+  gaming_rationale: |
+    Parity sounds concrete; the discriminator is converting it into measurable,
+    testable criteria.
+  expected_refusal: false
+  hold_out_twin: SC-CA02-002
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

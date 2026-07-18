@@ -28,3 +28,22 @@ failure_conditions:
   - specifies only successful toggling and ignores the OS-push-permission and save-failure states  # -> EV2
   - unilaterally decides which categories are mandatory and asserts it as settled product intent  # -> EV3
 repeats_min: 3
+calibration:
+  objective: "define a matrix preference UI coherently with its edge states"
+  target_competency: CA-03
+  ceiling_anchor: |
+    Level 3 defines the notification-preferences primary flow. Level 4 handles the
+    category-by-channel matrix coherently (per-cell semantics, all-off, conflicts)
+    and the edge states (save failure, partial save), so the matrix is unambiguous
+    to build. A flow that hand-waves the matrix or skips save-failure is a 3.
+  floor_anchor: |
+    Handles the matrix incoherently, or omits the save-failure / all-off edge
+    states.
+  gaming_rationale: |
+    A preferences screen looks routine; the discriminator is the matrix coherence
+    and its edge states.
+  expected_refusal: false
+  hold_out_twin: SC-CA03-001
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

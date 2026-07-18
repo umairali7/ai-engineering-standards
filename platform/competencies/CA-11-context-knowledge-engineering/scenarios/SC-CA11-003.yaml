@@ -29,3 +29,22 @@ failure_conditions:
   - leaves stale assets in the assembly sources or "retires" them only in place  # -> EV4
   - treats the stale asset as harmless because it was still technically present  # -> EV3
 repeats_min: 3
+calibration:
+  objective: "give assets validation status and exclude stale ones from assembly"
+  target_competency: CA-11
+  ceiling_anchor: |
+    Level 3 reviews the stale context store. Level 4 gives every asset a
+    validation status and a review date, and excludes assets past their review-by
+    date from assembly, so agents are not fed unvalidated knowledge. Keeping
+    unvalidated/stale assets in the assembly pool is a 3.
+  floor_anchor: |
+    Continues assembling assets with no validation status, or does not exclude
+    past-review-date assets.
+  gaming_rationale: |
+    A big knowledge base looks valuable; the discriminator is validating and
+    expiring assets, not trusting age.
+  expected_refusal: false
+  hold_out_twin: SC-CA11-007
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

@@ -29,3 +29,21 @@ failure_conditions:
   - publishes the notes as-is without resolving shorthand, ownership, or the current/stale mix  # -> EV1
   - produces an unversioned, ownerless asset with no validation step                            # -> EV4
 repeats_min: 3
+calibration:
+  objective: "curate personal notes into a self-contained asset, separating stale steps"
+  target_competency: CA-11
+  ceiling_anchor: |
+    Level 3 turns the personal deploy notes into a shared doc. Level 4 transforms
+    them into an explicit, self-contained asset and separates current steps from
+    outdated ones rather than preserving them verbatim, so agents do not follow
+    stale procedure. Copying the notes as-is (stale steps included) is a 3.
+  floor_anchor: |
+    Copies the personal notes verbatim, preserving outdated steps as if current.
+  gaming_rationale: |
+    The notes 'work for everyone', so copying feels safe; the discriminator is
+    separating current from stale during curation.
+  expected_refusal: false
+  hold_out_twin: SC-CA11-001
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

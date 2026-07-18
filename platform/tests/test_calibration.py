@@ -77,3 +77,17 @@ def test_shipped_ca07_worked_example_is_calibrated_and_still_valid():
     assert ca07["rt3_rt4"] >= 9 and ca07["high_tier_families"] >= 8
     assert report["totals"]["empirically_calibrated"] == 0        # honest: no panel yet
     assert suites.validate()["valid"]                              # nothing broke
+
+
+def test_whole_corpus_is_design_time_calibrated():
+    """Every shipped scenario now carries calibration metadata with a ceiling
+    anchor, and nothing claims empirical calibration (no model panel yet). This
+    locks the fully-calibrated corpus so a new uncalibrated scenario is caught."""
+    from aies import suites
+    report = suites.calibrate()
+    t = report["totals"]
+    assert t["calibrated"] == t["scenarios"], "a scenario is missing calibration metadata"
+    assert t["ceiling_anchor"] == t["scenarios"], "a scenario is missing a ceiling anchor"
+    assert t["empirically_calibrated"] == 0        # honest until a real-model panel exists
+    for a in report["areas"]:
+        assert a["calibrated"] == a["scenarios"], f"{a['area']} not fully calibrated"

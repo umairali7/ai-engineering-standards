@@ -35,3 +35,23 @@ failure_conditions:
   - strips payload references entirely so a wrong action cannot be reconstructed      # -> EV6
   - collapses to one shared view so the regulated team cannot give auditors tenant-scoped records, or treats the PII/PHI cross-cut as solved by observability config alone  # -> EV2
 repeats_min: 2
+calibration:
+  objective: "preserve per-action attribution for a shared multi-team agent"
+  target_competency: CA-09
+  ceiling_anchor: |
+    Level 3 instruments the shared remediation agent. Level 4 keeps per-action
+    attribution (acting agent, autonomy, which team's action) always recorded and
+    separates that always-on attribution/audit from tunable telemetry, so a high-
+    consequence team's actions remain fully reconstructable regardless of others'
+    settings. Losing per-action attribution to a shared/tuned config is a 3.
+  floor_anchor: |
+    Lets a shared or cost-tuned telemetry config drop per-action attribution for a
+    high-consequence team.
+  gaming_rationale: |
+    One shared config is simplest; the discriminator is that attribution/audit is
+    non-negotiable per action even when telemetry is tuned.
+  expected_refusal: false
+  hold_out_twin: SC-CA09-011
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

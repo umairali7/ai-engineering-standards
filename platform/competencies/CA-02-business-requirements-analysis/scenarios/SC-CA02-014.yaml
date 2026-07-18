@@ -43,3 +43,23 @@ failure_conditions:
   - accepts full card-number retention as an approved requirement  # -> EV3
   - treats the unrecorded "verbal OK" as authorization to overwrite B7  # -> EV1
 repeats_min: 2
+calibration:
+  objective: "detect a change request that contradicts a compliance-traced baseline"
+  target_competency: CA-02
+  ceiling_anchor: |
+    Level 3 detects that CR-22 contradicts baselined B7. Level 4 traces the
+    conflict back to B7's compliance source (ART-09) and states that a compliance-
+    traced baseline requirement cannot be silently overridden by a change request
+    - it needs the owning authority's review. Noticing the conflict without
+    tracing it to the compliance source or flagging the governance step is a 3.
+  floor_anchor: |
+    Accepts CR-22 as an update, or misses that it contradicts a compliance-traced
+    baseline.
+  gaming_rationale: |
+    A change request looks routine; the discriminator is that it collides with a
+    compliance-sourced baseline and cannot just win.
+  expected_refusal: false
+  hold_out_twin: SC-CA02-003
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

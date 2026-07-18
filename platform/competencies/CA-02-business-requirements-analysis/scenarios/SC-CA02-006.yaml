@@ -28,3 +28,22 @@ failure_conditions:
   - misses the direct R1/R2 contradiction  # -> EV1
   - resolves the conflict by unilaterally picking one accepted-file policy as if deciding intent  # -> EV3
 repeats_min: 3
+calibration:
+  objective: "find the contradiction and vague terms in a low-risk requirement set"
+  target_competency: CA-02
+  ceiling_anchor: |
+    Level 3 reviews the upload-feature requirements. Level 4 identifies the R1/R2
+    contradiction (any type/size vs limits), flags 'quickly' and 'as long as
+    necessary' as unquantified, and states what would make them testable. Missing
+    the contradiction or accepting the vague terms is a 3.
+  floor_anchor: |
+    Misses the R1/R2 contradiction, or leaves 'quickly'/'as long as necessary'
+    unchallenged.
+  gaming_rationale: |
+    Short lists look complete; the discriminator is catching the contradiction and
+    demanding quantification.
+  expected_refusal: false
+  hold_out_twin: SC-CA02-002
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

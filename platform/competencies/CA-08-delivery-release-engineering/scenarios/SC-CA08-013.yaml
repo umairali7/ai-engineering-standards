@@ -42,3 +42,23 @@ failure_conditions:
   - promotes by tag or branch name rather than verifying the immutable digest that passed verification  # -> EV3
   - leaves the `:latest` base image and unpinned dependencies in place so the two builds stay non-reproducible  # -> EV2
 repeats_min: 2
+calibration:
+  objective: "promote the same immutable artifact that was verified in staging"
+  target_competency: CA-08
+  ceiling_anchor: |
+    Level 3 reviews the promotion pipeline. Level 4 identifies that the prod image
+    is a fresh rebuild (not what staging verified) and requires build-once /
+    promote-the-same immutable artifact by digest, so production runs exactly what
+    was tested. Accepting a prod rebuild as equivalent to the staging build is a
+    3.
+  floor_anchor: |
+    Accepts a fresh prod rebuild as promotion, or does not pin the promoted
+    artifact to the verified one.
+  gaming_rationale: |
+    A rebuild from the same source looks identical; the discriminator is promote-
+    the-verified-artifact, not rebuild-for-prod.
+  expected_refusal: false
+  hold_out_twin: SC-CA08-007
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

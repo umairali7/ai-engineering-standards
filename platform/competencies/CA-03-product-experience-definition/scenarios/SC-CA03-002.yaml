@@ -28,3 +28,22 @@ failure_conditions:
   - writes vague, untestable criteria such as "the wishlist should be delightful"  # -> EV4
   - invents unstated policy (e.g., a hard 50-item limit) and asserts it as required # -> EV1
 repeats_min: 3
+calibration:
+  objective: "write observable, testable acceptance criteria covering the key states"
+  target_competency: CA-03
+  ceiling_anchor: |
+    Level 3 writes Given/When/Then criteria. Level 4 makes them observable and
+    testable with concrete conditions and covers the key states (add, remove,
+    duplicate add, unauthenticated), not just the happy add. Vague or untestable
+    criteria, or missing a key state, is a 3.
+  floor_anchor: |
+    Writes vague/unobservable criteria, or covers only the happy add and omits
+    remove/duplicate/unauth.
+  gaming_rationale: |
+    Given/When/Then structure looks rigorous; the discriminator is testability and
+    full state coverage.
+  expected_refusal: false
+  hold_out_twin: SC-CA03-009
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

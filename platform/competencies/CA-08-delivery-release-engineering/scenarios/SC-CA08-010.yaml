@@ -30,3 +30,23 @@ failure_conditions:
   - proposes running the destructive drop in one step with only a code rollback as the safety net  # -> EV3
   - claims recovery safety without a tested backup/restore or backfill-verification path            # -> EV3
 repeats_min: 3
+calibration:
+  objective: "sequence a one-way data migration to preserve reversibility"
+  target_competency: CA-08
+  ceiling_anchor: |
+    Level 3 recognizes a code-level rollback does not undo a data migration that
+    rewrites/drops columns. Level 4 sequences the migration to preserve
+    reversibility - expand/backfill/verify before any destructive contract, with
+    backups and a data-rollback plan - so production data is recoverable. Treating
+    code rollback as sufficient, or an irreversible drop, is a 3.
+  floor_anchor: |
+    Relies on code rollback for a destructive data migration, or drops columns in
+    one irreversible step.
+  gaming_rationale: |
+    'We can roll back the deploy' is the trap; the discriminator is that data
+    migrations need their own reversibility sequencing.
+  expected_refusal: false
+  hold_out_twin: SC-CA08-015
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

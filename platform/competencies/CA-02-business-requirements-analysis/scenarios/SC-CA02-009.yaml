@@ -31,3 +31,23 @@ failure_conditions:
   - picks one stakeholder's position and writes it up as the final refund policy  # -> EV3
   - invents specific fraud-loss or refund-threshold numbers to justify a choice  # -> EV1
 repeats_min: 3
+calibration:
+  objective: "name a stakeholder conflict and resolve it by elicitation, not fiat"
+  target_competency: CA-02
+  ceiling_anchor: |
+    Level 3 names the operations-vs-finance conflict on the returns process
+    explicitly. Level 4 produces the questions that would resolve it (fraud rate,
+    cost of leniency, policy owner) rather than silently choosing a side -
+    surfacing the decision for the right owner. Picking a side unilaterally, or
+    missing the conflict, is a 3.
+  floor_anchor: |
+    Resolves the conflict unilaterally by choosing one stakeholder's version, or
+    fails to name it.
+  gaming_rationale: |
+    Producing 'the requirement' looks decisive; the discriminator is surfacing the
+    conflict for resolution rather than choosing.
+  expected_refusal: false
+  hold_out_twin: SC-CA02-011
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

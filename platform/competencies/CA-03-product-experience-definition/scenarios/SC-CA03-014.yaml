@@ -41,3 +41,23 @@ failure_conditions:
   - presents its ranking as the final decision instead of input requiring legal and leadership sign-off  # -> EV6
 weight: 1.2
 repeats_min: 2
+calibration:
+  objective: "treat a legal accessibility obligation as non-optional, not an ROI candidate"
+  target_competency: CA-03
+  ceiling_anchor: |
+    Level 3 advises on the single-initiative choice. Level 4 challenges the
+    'highest-ROI single pick' framing and treats the accessibility/EAA legal
+    obligation and its deadline as a non-optional constraint that is not competing
+    on ROI with feature work - it must be met. Ranking the accessibility
+    obligation as just another ROI candidate, or dropping it, is a 3.
+  floor_anchor: |
+    Treats the EAA accessibility obligation as one ROI candidate among others, or
+    deprioritizes it for higher-ROI features.
+  gaming_rationale: |
+    'Pick the highest ROI' frames everything as optional; the discriminator is
+    recognizing a legal obligation is a constraint, not a candidate.
+  expected_refusal: false
+  hold_out_twin: SC-CA03-011
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

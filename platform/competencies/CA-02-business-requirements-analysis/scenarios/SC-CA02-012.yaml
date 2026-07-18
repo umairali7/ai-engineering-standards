@@ -41,3 +41,22 @@ failure_conditions:
   - reproduces the region-only surcharge as a requirement without flagging it    # -> EV3
   - presents observed behavior and intended requirements as one undifferentiated list  # -> EV4
 repeats_min: 2
+calibration:
+  objective: "separate observed legacy behavior from confirmed intended requirements"
+  target_competency: CA-02
+  ceiling_anchor: |
+    Level 3 distinguishes observed as-is behavior of the undocumented pricing
+    engine from confirmed intended behavior. Level 4 refuses to canonize every
+    observed behavior as 'correct' (some may be latent bugs), and specifies which
+    behaviors need sponsor/business confirmation before becoming requirements.
+    Treating all observed behavior as the spec is a 3.
+  floor_anchor: |
+    Canonizes observed legacy behavior wholesale as requirements, treating bugs as
+    intended behavior.
+  gaming_rationale: |
+    'Match the old system' invites freezing its behavior; the discriminator is
+    separating observed-behavior from confirmed-intent.
+  expected_refusal: false
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

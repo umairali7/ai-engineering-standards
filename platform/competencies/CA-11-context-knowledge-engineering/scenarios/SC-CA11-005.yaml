@@ -27,3 +27,21 @@ failure_conditions:
   - assembles the whole store "to be safe"                                    # -> EV5
   - selects assets without pinning versions, so the run is not reproducible   # -> EV6
 repeats_min: 3
+calibration:
+  objective: "assemble only what a trivial task needs"
+  target_competency: CA-11
+  ceiling_anchor: |
+    Level 3 assembles context for the copyright-year update. Level 4 selects only
+    what the trivial task needs (the footer template) and argues assembly is a
+    budget rather than a bucket, proportionate to RT1. Loading broad context for a
+    one-line change is a 3.
+  floor_anchor: |
+    Over-assembles broad context for a trivial one-line change.
+  gaming_rationale: |
+    It costs little to add more; the discriminator is minimal assembly even when
+    it seems harmless.
+  expected_refusal: false
+  hold_out_twin: SC-CA11-002
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

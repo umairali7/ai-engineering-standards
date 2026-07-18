@@ -41,3 +41,22 @@ failure_conditions:
   - writes vague criteria like "the user should not overspend" with no observable checks  # -> EV4
   - omits the day-boundary reset and over-limit-transaction handling entirely  # -> EV2
 repeats_min: 2
+calibration:
+  objective: "write acceptance criteria covering the transaction-limit boundaries"
+  target_competency: CA-03
+  ceiling_anchor: |
+    Level 3 writes testable criteria for the transaction-limit feature. Level 4
+    covers the boundary states explicitly (amount under, exactly at, and over the
+    limit) plus currency/precision edges, so the limit behavior is unambiguous.
+    Missing the at-boundary case is a 3.
+  floor_anchor: |
+    Writes untestable criteria, or omits the exactly-at-limit / over-limit
+    boundary states.
+  gaming_rationale: |
+    A limit sounds simple; the discriminator is the exactly-at-boundary behavior
+    that off-by-one bugs live in.
+  expected_refusal: false
+  hold_out_twin: SC-CA03-002
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

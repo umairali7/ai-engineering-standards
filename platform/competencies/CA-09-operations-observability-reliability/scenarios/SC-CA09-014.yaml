@@ -36,3 +36,23 @@ failure_conditions:
   - redeploys or resets the agent emitter during diagnosis and overwrites the evidence  # -> EV3
   - fixes on a single hypothesis without seeking corroboration outside the suspect stream  # -> EV2
 repeats_min: 3
+calibration:
+  objective: "treat a gap in the agent activity stream as a diagnostic signal"
+  target_competency: CA-09
+  ceiling_anchor: |
+    Level 3 investigates the payment-failure window. Level 4 treats the gap in the
+    agent activity stream during that window as itself a signal and reasons
+    through the competing hypotheses (the agent acted and did not log, vs the
+    agent was down, vs unrelated), rather than assuming the absence means nothing
+    happened. Ignoring the gap, or assuming no activity, is a 3.
+  floor_anchor: |
+    Ignores the gap in the agent activity stream, or assumes absence of logs means
+    absence of action.
+  gaming_rationale: |
+    No logs reads as nothing happened; the discriminator is treating a telemetry
+    gap as a hypothesis to investigate.
+  expected_refusal: false
+  hold_out_twin: SC-CA09-002
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

@@ -28,3 +28,21 @@ failure_conditions:
   - writes vague, untestable criteria such as "resetting the password should be easy"  # -> EV4
   - invents an unstated policy (e.g., a specific link-expiry time) and asserts it as required  # -> EV1
 repeats_min: 3
+calibration:
+  objective: "write testable acceptance criteria proportionate to a low-risk story"
+  target_competency: CA-03
+  ceiling_anchor: |
+    Level 3 writes Given/When/Then criteria. Level 4 makes them observable and
+    testable and covers the key states (valid request, unknown email, rate
+    limiting) proportionate to the low-risk story. Vague criteria, or missing the
+    non-happy states, is a 3.
+  floor_anchor: |
+    Writes untestable criteria, or omits the unknown-email / rate-limit states.
+  gaming_rationale: |
+    A simple story invites one criterion; the discriminator is covering the real
+    states testably.
+  expected_refusal: false
+  hold_out_twin: SC-CA03-002
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

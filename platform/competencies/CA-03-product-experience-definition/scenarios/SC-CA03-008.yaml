@@ -37,3 +37,22 @@ failure_conditions:
   - invents churn-reduction percentages for features that have no data  # -> EV1
   - ranks F5 (unrelated to churn) at the top without acknowledging it is off-goal  # -> EV6
 repeats_min: 3
+calibration:
+  objective: "prioritize churn features against the goal with honest evidence weighting"
+  target_competency: CA-03
+  ceiling_anchor: |
+    Level 3 prioritizes the habit-tracking features. Level 4 justifies against the
+    stated goal (reduce first-week churn) and distinguishes strong evidence (F1)
+    from weak/assumed, ordering by expected impact on the goal rather than
+    novelty. Ranking not tied to the goal, or evidence-blind, is a 3.
+  floor_anchor: |
+    Prioritizes without tying to first-week churn, or treats weak-evidence items
+    as strong.
+  gaming_rationale: |
+    A confident roadmap looks decisive; the discriminator is goal-justification
+    and honest evidence weighting.
+  expected_refusal: false
+  hold_out_twin: SC-CA03-003
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

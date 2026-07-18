@@ -28,3 +28,21 @@ failure_conditions:
   - assembles both conventions versions or the mega-page "to be safe"          # -> EV5
   - selects assets without pinning versions or noticing the v2/v4 conflict     # -> EV6
 repeats_min: 3
+calibration:
+  objective: "assemble minimal context and resolve a version conflict to the authoritative asset"
+  target_competency: CA-11
+  ceiling_anchor: |
+    Level 3 assembles context for the settlement-record change. Level 4 selects
+    the minimal relevant set (current v4) and resolves the v4-versus-v2 conflict
+    by choosing the authoritative current version, not feeding both. Assembling
+    both conflicting versions, or the stale one, is a 3.
+  floor_anchor: |
+    Feeds both the v4 and v2 conflicting assets, or selects the stale v2.
+  gaming_rationale: |
+    Including both versions feels thorough; the discriminator is resolving to the
+    authoritative current asset.
+  expected_refusal: false
+  hold_out_twin: SC-CA11-014
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

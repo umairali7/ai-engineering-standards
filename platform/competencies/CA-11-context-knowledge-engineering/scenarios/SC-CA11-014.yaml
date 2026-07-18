@@ -36,3 +36,23 @@ failure_conditions:
   - leaves both contradictory assets live and relies on per-run assembly to pick               # -> EV4
   - patches it silently without engaging the two owners or recording the decision              # -> EV6
 repeats_min: 2
+calibration:
+  objective: "resolve an authority conflict between two assets claiming the same domain"
+  target_competency: CA-11
+  ceiling_anchor: |
+    Level 3 notices two assets both claim authority over the same question. Level
+    4 recognizes this as a governance/authority conflict, determines which asset
+    is authoritative for that domain (by owner/currency), and retires or marks the
+    other so agents stop assembling contradictory guidance. Leaving both
+    authoritative, or picking arbitrarily, is a 3.
+  floor_anchor: |
+    Leaves both conflicting assets authoritative, or resolves the conflict
+    arbitrarily without an owner/currency basis.
+  gaming_rationale: |
+    Both assets look valid; the discriminator is treating duplicate authority as a
+    governance conflict to resolve, not tolerate.
+  expected_refusal: false
+  hold_out_twin: SC-CA11-008
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

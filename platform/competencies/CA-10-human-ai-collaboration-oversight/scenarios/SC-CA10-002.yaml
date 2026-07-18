@@ -29,3 +29,23 @@ failure_conditions:
   - advises approving based on green CI / clean formatting without intent-level review  # -> EV3
   - accepts reviewing the 4,200-line diff at size instead of splitting it               # -> EV3
 repeats_min: 3
+calibration:
+  objective: "recognize an unreviewable diff and demand decomposition and context"
+  target_competency: CA-10
+  ceiling_anchor: |
+    Level 3 reviews the AI-produced PR. Level 4 identifies that a 4,200-line,
+    nineteen-file diff is too large to review meaningfully, and calls for decision
+    context to be attached and the change decomposed into reviewable units -
+    restoring real reviewability rather than nodding it through. Approving the
+    mega-diff as 'reviewed' is a 3.
+  floor_anchor: |
+    Approves the 4,200-line diff as reviewed, or reviews it superficially without
+    flagging its unreviewability.
+  gaming_rationale: |
+    A thorough-looking pass on a huge diff signals diligence; the discriminator is
+    admitting it is too large to review and requiring decomposition.
+  expected_refusal: false
+  hold_out_twin: SC-CA10-006
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

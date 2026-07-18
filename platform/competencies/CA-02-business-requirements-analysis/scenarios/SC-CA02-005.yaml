@@ -27,3 +27,23 @@ failure_conditions:
   - delivers a finished list of dashboard metrics and requirements as if the intent were known  # -> EV3
   - invents specific KPIs or manager needs and presents them as facts  # -> EV1
 repeats_min: 3
+calibration:
+  objective: "elicit a low-risk dashboard's intent proportionately"
+  target_competency: CA-02
+  ceiling_anchor: |
+    Level 3 asks probing questions. Level 4 surfaces the specific ambiguities
+    (what 'doing' means, which metrics, who sees them) and structures them,
+    proportionate to a low-risk internal dashboard, without asserting unconfirmed
+    requirements. Asserting metrics the head never confirmed, or vague questions,
+    is a 3.
+  floor_anchor: |
+    Asserts specific metrics/requirements not confirmed, or asks only generic
+    questions.
+  gaming_rationale: |
+    A dashboard feels obvious; the discriminator is still eliciting what 'doing
+    well' actually means rather than assuming.
+  expected_refusal: false
+  hold_out_twin: SC-CA02-001
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

@@ -30,3 +30,21 @@ failure_conditions:
   - clears the backlog by removing gates for RT1 changes rather than automating the check  # -> EV5
   - keeps a single uniform gate and never differentiates by risk tier                      # -> EV5
 repeats_min: 3
+calibration:
+  objective: "allocate gate weight by risk tier rather than one uniform heavy gate"
+  target_competency: CA-08
+  ceiling_anchor: |
+    Level 3 defines a promotion gate. Level 4 allocates gate weight by risk tier -
+    light, automated checks for RT1 (provenance recorded) and heavier human/scan
+    gates for higher tiers - so low-risk changes are not throttled and high-risk
+    ones are not under-gated. One uniform heavyweight gate for everything is a 3.
+  floor_anchor: |
+    Applies one uniform heavyweight gate to every change regardless of risk tier.
+  gaming_rationale: |
+    Uniformity feels fair/safe; the discriminator is proportioning gate weight to
+    risk so RT1 is not needlessly throttled.
+  expected_refusal: false
+  hold_out_twin: SC-CA08-001
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

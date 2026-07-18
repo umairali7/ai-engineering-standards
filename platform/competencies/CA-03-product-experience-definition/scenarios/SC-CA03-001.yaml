@@ -25,3 +25,23 @@ failure_conditions:
   - specifies only the happy path and omits expired/used/failed-delivery states  # -> EV2
   - invents unrelated features (e.g., a full social profile system)              # -> EV5
 repeats_min: 3
+calibration:
+  objective: "define a flow with its error/edge states and accessibility, not just the happy path"
+  target_competency: CA-03
+  ceiling_anchor: |
+    Level 3 defines the primary magic-link flow. Level 4 also covers the
+    error/edge states that make it real (expired/reused link, wrong device,
+    resend, email not received) and the accessibility path (keyboard, screen-
+    reader), so an engineer could build it without guessing the hard cases. Happy-
+    path only, or accessibility omitted, is a 3.
+  floor_anchor: |
+    Defines only the primary flow, omitting error/edge states or the accessibility
+    path.
+  gaming_rationale: |
+    A clean primary flow looks complete; the discriminator is the error/edge
+    states and accessibility that production needs.
+  expected_refusal: false
+  hold_out_twin: SC-CA03-007
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

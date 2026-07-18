@@ -29,3 +29,23 @@ failure_conditions:
   - promotes artifacts present in staging without verifying attached provenance  # -> EV3
   - treats an unattested artifact as acceptable if its tests are green            # -> EV3
 repeats_min: 3
+calibration:
+  objective: "verify build provenance and reject unverifiable artifacts"
+  target_competency: CA-08
+  ceiling_anchor: |
+    Level 3 adds a build-verification step. Level 4 requires machine-readable
+    provenance attached to the artifact (what produced it, from what source,
+    verified) and rejects any artifact whose provenance cannot be verified at
+    promotion - fail-closed. A check that warns but still promotes unverifiable
+    builds is a 3.
+  floor_anchor: |
+    Promotes an artifact whose provenance cannot be verified, or only warns rather
+    than blocking.
+  gaming_rationale: |
+    A build that runs looks trustworthy; the discriminator is fail-closed
+    provenance verification before production.
+  expected_refusal: false
+  hold_out_twin: SC-CA08-003
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

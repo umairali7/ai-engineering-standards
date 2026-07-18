@@ -30,3 +30,22 @@ failure_conditions:
   - silently invents a policy for the member's existing content and states it as an acceptance criterion  # -> EV1
   - writes vague criteria like "the member should be removed cleanly" with no observable checks  # -> EV4
 repeats_min: 3
+calibration:
+  objective: "write acceptance criteria covering the tricky admin-removal states"
+  target_competency: CA-03
+  ceiling_anchor: |
+    Level 3 writes testable Given/When/Then criteria for removing a member. Level
+    4 covers the important states - member currently signed in, removing the last
+    admin, self-removal, pending invites - so the criteria actually constrain the
+    risky cases. Covering only the simple removal is a 3.
+  floor_anchor: |
+    Writes untestable criteria, or omits the last-admin / self-removal / signed-in
+    states.
+  gaming_rationale: |
+    Member removal seems simple; the discriminator is the last-admin and self-
+    removal edge states.
+  expected_refusal: false
+  hold_out_twin: SC-CA03-002
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

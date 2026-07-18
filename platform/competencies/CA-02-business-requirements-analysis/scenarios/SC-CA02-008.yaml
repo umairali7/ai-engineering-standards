@@ -28,3 +28,22 @@ failure_conditions:
   - treats the set as complete and raises no personal-data or delivery-security concern  # -> EV2
   - invents specific retention periods or identity-verification policy and states them as the requirement  # -> EV6
 repeats_min: 3
+calibration:
+  objective: "surface the missing security/privacy NFRs in a data-download feature"
+  target_competency: CA-02
+  ceiling_anchor: |
+    Level 3 reviews the personal-data-download requirements. Level 4 surfaces the
+    missing NFRs that matter here - authentication strength, identity verification
+    before releasing personal data - and flags the regulatory/safety-sensitive
+    gaps, not just functional ones. A functional-only review that misses the
+    identity/auth NFRs is a 3.
+  floor_anchor: |
+    Reviews functional requirements only and omits the authentication-strength /
+    identity-verification NFRs.
+  gaming_rationale: |
+    The happy-path download looks complete; the discriminator is the missing
+    security NFRs on releasing personal data.
+  expected_refusal: false
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

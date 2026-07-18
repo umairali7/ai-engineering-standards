@@ -28,3 +28,24 @@ failure_conditions:
   - delivers a finished list of requirements as if the intent were known  # -> EV3
   - invents specific stakeholder needs (e.g., exact fields, SLAs) as facts # -> EV1
 repeats_min: 3
+calibration:
+  objective: "turn a one-line intent into elicitation, not invented requirements"
+  target_competency: CA-02
+  ceiling_anchor: |
+    Level 3 asks probing questions rather than asserting requirements. Level 4
+    surfaces the specific ambiguities that block specification (offline/online
+    connectivity, what an inspection record contains, who consumes it) and
+    structures them so the sponsor's one sentence can actually be turned into
+    confirmed requirements. Generic questions, or asserting requirements the
+    sponsor never stated, is a 3.
+  floor_anchor: |
+    Asserts or invents specific requirements the sponsor did not confirm, instead
+    of eliciting them.
+  gaming_rationale: |
+    A confident spec reads as productivity; the discriminator is eliciting
+    confirmed intent rather than manufacturing it.
+  expected_refusal: false
+  hold_out_twin: SC-CA02-005
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false

@@ -34,3 +34,24 @@ failure_conditions:
   - baselines final requirements without resolving threshold conflicts  # -> EV1
   - treats refund auto-approval as a low-risk product convenience       # -> EV3
 repeats_min: 3
+calibration:
+  objective: "handle conflicting refund-workflow intent without silently choosing"
+  target_competency: CA-02
+  ceiling_anchor: |
+    Level 3 identifies the conflicting stakeholder intent in the refund workflow
+    rather than merging it into one requirement. Level 4 distinguishes candidate
+    requirements from the confirmed baseline, surfaces the conflict for the
+    accountable owner to resolve, and does not canonize one side's preference as
+    agreed. Silently resolving the conflict, or treating a candidate as baseline,
+    is a 3.
+  floor_anchor: |
+    Silently picks one stakeholder's version, or promotes a candidate requirement
+    to baseline without confirmation.
+  gaming_rationale: |
+    A single clean requirement looks finished; the discriminator is preserving the
+    conflict as an open decision.
+  expected_refusal: false
+  hold_out_twin: SC-CA02-009
+  empirical_status:
+    design_reviewed: true
+    empirically_calibrated: false
