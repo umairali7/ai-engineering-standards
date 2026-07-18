@@ -265,6 +265,15 @@ a human records the promotion of `empirical_status.empirically_calibrated`; the
 tool never sets it silently. Until a panel is run, every scenario is honestly
 `empirically_calibrated: false`.
 
+**Treat the first panel as a study, not an internal exercise.** Pre-register the
+panel, thresholds, and scenario set *before* running (mirroring
+[AESQS-CS-01-R12](../AESQS/capability-scoring.md)), then report panel composition,
+selection rationale, methodology, repeatability, observed discrimination,
+limitations, and the scenarios requiring revision. The
+[empirical-calibration study template](../research/empirical-calibration-study-template.md)
+provides that structure — the study becomes the artifact that demonstrates the
+methodology works in practice.
+
 ## Working the corpus
 
 ```

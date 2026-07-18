@@ -47,6 +47,10 @@ Notes are named `RES-NN-<short-title>.md` and carry the standard metadata table 
 |----|-------|---------|------|
 | RES-01 | 2026 External Framework Refresh | CROSSWALK, KA-07, AEAR, IMPROVEMENT | 2026-07-17 |
 
+**Templates:** [Empirical Calibration Study](empirical-calibration-study-template.md)
+— the pre-registered structure for reporting a model-panel calibration study
+(AESQS Phase-2 empirical calibration).
+
 ## Related Documents
 
 - [Repository Architecture (AIES-DOC-03)](../docs/ARCHITECTURE.md)
