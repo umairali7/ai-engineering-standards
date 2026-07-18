@@ -109,6 +109,10 @@ def start_qualification(
         "run_id": run_id,
         "model": _model_block,
         "profile": profile["name"],
+        # Capture the profile VERSION as used at run time (immutable). A later
+        # edit to the profile file must not silently reinterpret this result —
+        # this is what makes a certification reproducible (STABILITY/reproducibility).
+        "profile_version": profiles.profile_version(profile),
         "risk_tier": risk_tier,
         "subject_kind": subject_kind,
         "repeats": repeats,          # override used, if any (for resume-collection)
@@ -235,6 +239,7 @@ def start_journey(
         "model": {"registry_id": entry["id"],
                   "checksum": (entry.get("provenance") or {}).get("checksum", "unknown")},
         "profile": profile["name"],
+        "profile_version": profiles.profile_version(profile),
         "risk_tier": rt,
         "subject_kind": subject_kind,
         "areas": [{"area": a, "suite_version": jversion,
@@ -312,10 +317,16 @@ def aggregate(run_id: str) -> dict:
     package = {
         "run_id": run_id,
         "kind": "evidence-package",
+        # Versioned artifact envelope: the Evidence Package is a first-class,
+        # independently-versioned artifact (it can outlive a given decision
+        # engine and be replayed through a future one). Field-append-only;
+        # see COMPATIBILITY.md. EVIDENCE_SCHEMA lives in constants.
+        "evidence_schema": C.EVIDENCE_SCHEMA,
         "grant_status": "no grant — evidence only; a human qualification "
                         "authority records any grant (PLATFORM.md D8)",
         "model": manifest["model"],
         "profile": manifest["profile"],
+        "profile_version": manifest.get("profile_version", profiles.UNVERSIONED),
         "risk_tier": rt,
         "subject_kind": manifest.get("subject_kind", "ai"),
         "suite_versions": {a["area"]: a["suite_version"] for a in manifest["areas"]},

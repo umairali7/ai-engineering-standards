@@ -441,7 +441,8 @@ def cmd_profiles(args) -> int:
         if args.profiles_cmd == "list":
             items = profiles.list_shipped()
             _out(items, args.json,
-                 "\n".join(f"{p['name']:12} {p.get('description', '')}" for p in items))
+                 "\n".join(f"{p['name']:12} v{profiles.profile_version(p):8} "
+                           f"{p.get('description', '')}" for p in items))
         elif args.profiles_cmd == "show":
             _out(profiles.load(args.name), args.json)
         elif args.profiles_cmd == "validate":

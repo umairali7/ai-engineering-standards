@@ -556,7 +556,11 @@ competency composition lives in `assessments/*.yaml`
 aies assessment list                                        # what's shipped
 aies qualify local-qwen --assessment enterprise --judge <judge>   # compose, score, decide
 aies assessment result <run>                                # re-decide a run (no inference)
+aies assessment result <run> --format html --out result.html   # presentation-grade view
 ```
+
+Markdown, JSON, and HTML are **views of the same Canonical Assessment Result** —
+they never re-decide; the outcome is verbatim from the frozen decision engine.
 
 `--assessment` selects the competency set, profile, risk tier, and sampling. After
 scoring, the platform decides an **authoritative outcome** —

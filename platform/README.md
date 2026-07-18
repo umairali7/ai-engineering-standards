@@ -23,7 +23,9 @@ the full pipeline is runnable end to end:
 `--parallel`, `--judge` auto-scoring, `--journey`, `--all-areas`), `score`,
 `import` (external eval results), `report` (Markdown/JSON/HTML), `transcript`,
 `capabilities` (per-area SDLC profile), `judge` (available/list/history),
-`audit` (repository conformance — maturity per area, ADR-0004),
+`assessment` (declarative qualification composition — list/show/validate/result,
+Markdown/JSON/HTML, ADR-0005), `audit` (repository conformance — maturity per
+area, ADR-0004),
 `runs`, `compare`, `index`, `review`, `grant`, `verify`, `journey`,
 `conform`, `runtime`/`profile`/`qualification`, `dashboard`, `plugins`.
 All twelve competency areas
@@ -57,12 +59,26 @@ environment change invalidates the grant, per D7).
 cd platform
 pip install -e .          # installs the `aies` command (Python >= 3.10)
 pytest tests/             # conformance tests keyed to AESQS requirement IDs
-aies suites validate      # suite schema, ID, risk-tier, and rubric gate
+aies suites validate      # suites + shipped assessments (one gate; CI runs it)
 ```
 
 Artifacts are written to `./aies-workspace` (override with the
 `AIES_WORKSPACE` environment variable). Everything persisted is plain
 YAML/JSON: diffable, reviewable, tool-independent.
+
+## See the whole thing run (one command, fully offline)
+
+```
+make demo        # or: bash scripts/demo.sh
+```
+
+Runs the **entire workflow** against the mock runtime — discover a deployment,
+compose a named qualification from an assessment, collect + auto-score evidence
+with a mock judge, let the frozen decision engine decide the outcome, and render
+the Canonical Assessment Result as Markdown + HTML. No GPU, no API key, no
+network. It's **executable documentation**: the same golden path is CI-gated as
+[`tests/test_demo.py`](tests/test_demo.py). For a run against a real deployment,
+`make integration-demo DEPLOYMENT=… JUDGE=…`.
 
 ## Quickstart (fully offline)
 

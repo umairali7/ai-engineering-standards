@@ -29,6 +29,19 @@ REASON_KINDS = ("mandatory-gate", "min-cl", "min-confidence",
                 "insufficient-evidence", "assessment-error")
 AIES_STANDARD_VERSION = "v0.4.0"
 
+# --- Versioned artifact envelope (STABILITY/COMPATIBILITY) --------------------
+# The Canonical Assessment Result is a platform-owned contract; this stamps the
+# shape so consumers can detect envelope changes. Field-append-only: bump only
+# on a breaking shape change (see COMPATIBILITY.md).
+RESULT_SCHEMA = 1
+
+# Engine version vs semantics version are DIFFERENT questions (ADR-0005):
+#   decision_engine_version   — which software decided (platform build)
+#   decision_semantics_version — which normative AESQS decision policy was applied
+# A platform build can change (bugfix) without changing semantics; AESQS can
+# intentionally change decision policy without a mere rebuild. Never conflate.
+DECISION_SEMANTICS_VERSION = "1.0"
+
 
 class DecisionError(Exception):
     pass
@@ -92,6 +105,7 @@ def decide(package: dict, assessment: dict) -> dict:
 
     return {
         "kind": "assessment-result",
+        "result_schema": RESULT_SCHEMA,
         "outcome": overall,
         "assessment": {"id": assessment.get("id"), "version": assessment.get("version"),
                        "schema": assessment.get("schema"), "profile": assessment.get("profile")},
@@ -118,8 +132,20 @@ def _metadata(package: dict, assessment: dict) -> dict:
         "assessment_version": assessment.get("version"),
         "assessment_schema": assessment.get("schema"),
         "profile": assessment.get("profile"),
+        # The profile version as CAPTURED at run time (from the evidence
+        # package), not re-read from disk — a later profile edit cannot rewrite
+        # a past decision. UNVERSIONED if the run predates profile versioning.
+        "profile_version": package.get("profile_version", "0.0.0"),
         "platform_version": __version__,
+        # Engine (software that decided) vs semantics (which AESQS policy) — see
+        # the module constants. Recorded so a re-decision under a new engine or a
+        # new semantics version is a distinguishable, traceable event.
+        "decision_engine_version": __version__,
+        "decision_semantics_version": DECISION_SEMANTICS_VERSION,
         "aies_version": AIES_STANDARD_VERSION,
+        # The evidence-package schema this result was decided over (the result
+        # references the evidence artifact's version — replayability).
+        "evidence_schema": package.get("evidence_schema"),
         "model": model.get("registry_id"),
         "model_checksum": model.get("checksum"),
         "runtime": (fp.get("runtime") or {}).get("id"),
@@ -198,7 +224,8 @@ def render_markdown(result: dict) -> str:
 
     out += ["## Execution metadata (immutable)", "",
             f"assessment `{m['assessment_id']}` v{m['assessment_version']} "
-            f"(schema {m['assessment_schema']}) · profile {m['profile']} · "
+            f"(schema {m['assessment_schema']}) · profile {m['profile']} "
+            f"v{m.get('profile_version', '0.0.0')} · "
             f"platform {m['platform_version']} · AIES {m['aies_version']}  ",
             f"model `{m['model']}` ({m['model_checksum']}) · runtime {m['runtime']} · "
             f"fingerprint `{m['environment_fingerprint']}`  ",
@@ -281,7 +308,7 @@ def render_html(result: dict) -> str:
     w("<table class=env>")
     for label, val in (
         ("assessment", f"{m['assessment_id']} v{m['assessment_version']} (schema {m['assessment_schema']})"),
-        ("profile", m["profile"]),
+        ("profile", f"{m['profile']} v{m.get('profile_version', '0.0.0')}"),
         ("platform / AIES", f"{m['platform_version']} / {m['aies_version']}"),
         ("model", f"{m['model']} ({m['model_checksum']})"),
         ("runtime", m["runtime"]),

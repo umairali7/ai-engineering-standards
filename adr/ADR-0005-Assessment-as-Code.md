@@ -231,11 +231,38 @@ The engine gains an assessment loader; it hard-codes no assessment. The existing
 
 **Immutable execution metadata** is a facet of the Canonical Assessment Result
 (D-B4), not of a report: an append-only block recording **assessment id +
-version + schema**, **profile (and version once profiles are versioned)**,
-**platform/engine version**, **AIES standard version**, **runtime + model
-fingerprint**, and **timestamp** — so a certification is always traceable to the
-exact inputs that produced it and drift is explainable *("why did this pass last
-July but fail today?")*.
+version + schema**, **profile + profile version** (captured at run time — a later
+edit to the profile file cannot reinterpret a past result), **platform version**,
+**AIES standard version**, **runtime + model fingerprint**, and **timestamp** — so
+a certification is always traceable to the exact inputs that produced it and drift
+is explainable *("why did this pass last July but fail today?")*.
+
+Two version fields are deliberately kept **distinct**, because they answer
+different questions:
+
+- **`decision_engine_version`** — *which software* decided (the platform build). A
+  bugfix rebuild changes this without changing semantics.
+- **`decision_semantics_version`** — *which normative AESQS decision policy* was
+  applied. AESQS may intentionally change decision policy without a mere rebuild.
+
+Conflating them would make it impossible to tell a bugfix from a policy change.
+The result also records **`evidence_schema`** — the version of the evidence
+artifact it decided over — because the **Evidence Package is an independently
+versioned artifact** that can outlive any single decision engine. One immutable
+Evidence Package may be replayed through Decision Engine v1 *and* a future v2,
+producing distinct, individually-traceable results:
+
+```
+Evidence Package (immutable, evidence_schema=N)
+  ├── Decision Engine (AESQS semantics 1.0) → Result A   (engine build X)
+  └── Decision Engine (AESQS semantics 2.0) → Result B   (engine build Y)
+```
+
+This is the same "re-decide from evidence, no inference" mechanism that powers
+`qualify --resume`, generalized across engine/semantics versions — it gives
+historical reproducibility, standards evolution, and regression testing at once.
+Both artifact envelopes carry a **schema version** (`evidence_schema`,
+`result_schema`) that is **field-append-only** per COMPATIBILITY.md.
 
 ### D-B4. Frozen pipeline and single-responsibility components (v1.0)
 

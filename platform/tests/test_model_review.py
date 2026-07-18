@@ -40,14 +40,36 @@ def test_parse_scores_robust():
     assert _parse_scores('{"EV1":3}') is None                  # missing dims
 
 
-def test_mock_reviewer_produces_nothing_parseable(ws, tmp_path):
-    """The deterministic mock never emits score JSON, so model review
-    must fail cleanly rather than inventing ratings."""
-    from aies import engine, model_review
+def test_mock_reviewer_is_judge_aware_and_emits_parseable_scores(ws, tmp_path):
+    """The mock adapter is judge-aware: when driven as a reviewer it emits a
+    deterministic, parseable EV1-EV6 JSON object, so the WHOLE pipeline —
+    including auto-scoring and the assessment decision — runs fully offline
+    (this is what `make demo` / tests/test_demo.py exercise). The scores are
+    obviously synthetic and mock evidence self-declares in provenance, so it can
+    never masquerade as a real model's qualification."""
+    from aies import engine, model_review, rating, workspace
     _register(tmp_path, "cand")
     run = engine.start_qualification("cand", "research", "RT2", ["CA-05"], repeats=1)
-    with pytest.raises(model_review.ModelReviewError):
-        model_review.run_model_review(run["run_id"], "cand")  # mock reviews itself
+    summary = model_review.run_model_review(run["run_id"], "cand")  # mock reviews itself
+    assert summary["scored"] > 0 and summary["unparseable"] == 0
+    # scores were ingested as model-kind ratings
+    ratings = [workspace.read_json(p)
+               for p in (workspace.run_dir(run["run_id"]) / "ratings").glob("*.json")]
+    assert ratings and all(r["provenance"]["rater_kind"] == "model" for r in ratings)
+
+
+def test_mock_scores_are_deterministic_and_in_range():
+    from aies.adapters.mock import MockAdapter
+    import json
+    a = MockAdapter()
+    prompt = ("You are a qualification reviewer. ... "
+              '{"EV1":<int>,"EV2":<int>,"EV3":<int>,"EV4":<int>,"EV5":<int>,"EV6":<int>}')
+    from aies.adapters.base import GenerationRequest
+    r1 = a.generate(GenerationRequest(prompt=prompt)).text
+    r2 = a.generate(GenerationRequest(prompt=prompt)).text
+    assert r1 == r2                                        # deterministic
+    scores = json.loads(r1)
+    assert all(3 <= scores[d] <= 4 for d in ("EV1", "EV2", "EV3", "EV4", "EV5", "EV6"))
 
 
 def test_reviewer_scores_ingested_and_gated(ws, tmp_path, monkeypatch):

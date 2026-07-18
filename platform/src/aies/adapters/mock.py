@@ -10,6 +10,7 @@ as qualification evidence for a real model.
 from __future__ import annotations
 
 import hashlib
+import json
 
 from .base import GenerationRequest, GenerationResponse, RuntimeAdapter
 
@@ -28,6 +29,18 @@ class MockAdapter(RuntimeAdapter):
 
     def generate(self, request: GenerationRequest) -> GenerationResponse:
         digest = hashlib.sha256(request.prompt.encode()).hexdigest()
+        # Judge-aware: when driven as a reviewer/judge, the prompt asks for a
+        # strict EV1-EV6 JSON object. Emit a deterministic, parseable one so the
+        # WHOLE pipeline — including auto-scoring and the assessment decision —
+        # runs fully offline (this is what `make demo` exercises). The scores are
+        # obviously synthetic and the adapter self-declares in provenance, so
+        # mock evidence can never masquerade as a real model's qualification.
+        if self._is_review_prompt(request.prompt):
+            return GenerationResponse(
+                text=self._mock_scores(digest),
+                usage={"prompt_chars": len(request.prompt), "latency_ms": 0},
+                raw={"adapter": self.adapter_id, "digest": digest, "mode": "judge"},
+            )
         text = (
             "[mock-adapter deterministic response]\n"
             f"prompt-digest: {digest[:16]}\n"
@@ -41,6 +54,19 @@ class MockAdapter(RuntimeAdapter):
             usage={"prompt_chars": len(request.prompt), "latency_ms": 0},
             raw={"adapter": self.adapter_id, "digest": digest},
         )
+
+    @staticmethod
+    def _is_review_prompt(prompt: str) -> bool:
+        return "qualification reviewer" in prompt and '"EV1"' in prompt
+
+    @staticmethod
+    def _mock_scores(digest: str) -> str:
+        # Deterministic per-response scores in {3,4} — high enough to pass gates
+        # so the offline demo yields a decisional result, but seeded from the
+        # digest so different responses differ (exercises aggregation/CI bounds).
+        dims = ("EV1", "EV2", "EV3", "EV4", "EV5", "EV6")
+        scores = {d: 3 + (int(digest[i], 16) % 2) for i, d in enumerate(dims)}
+        return json.dumps({**scores, "findings": []})
 
     def capabilities(self) -> dict:
         return {

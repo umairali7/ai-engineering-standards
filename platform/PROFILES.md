@@ -56,6 +56,7 @@ the file path to `--profile`. A profile is plain YAML:
 
 ```yaml
 name: my-team
+version: 1.0.0      # semver — bump when you change the weights (see below)
 description: What this profile emphasizes and why
 area_weights:
   CA-05: 1.5        # weight the areas your deployment will actually do
@@ -68,6 +69,15 @@ dimension_weight_adjustments:
 
 `aies profile validate <file>` confirms it stays within the standard's bounds
 before you use it.
+
+**Version your profile.** A profile is a *versioned normative artifact*: changing
+the weights changes what "enterprise" means, so bump the `version` when you do.
+The version used is **captured at run time** and stamped into the evidence
+package and the Canonical Assessment Result — a later edit to the profile file
+can never silently reinterpret a past certification. Two results under the same
+profile *name* but different profile *versions* are correctly distinguishable.
+An unversioned profile still loads, but is recorded as `0.0.0` (UNVERSIONED) —
+which is exactly the ambiguity versioning exists to remove.
 
 ## Related Documents
 

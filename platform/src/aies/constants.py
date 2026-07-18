@@ -9,6 +9,13 @@ requires a superseding ADR (PLATFORM.md §11).
 
 from __future__ import annotations
 
+# Versioned artifact envelopes (platform-owned contracts; see STABILITY.md /
+# COMPATIBILITY.md). Field-append-only: bump only on a breaking shape change.
+# The Evidence Package is independently versioned from the Canonical Assessment
+# Result (decision.RESULT_SCHEMA) because evidence outlives any single decision
+# engine and may be replayed through a future one.
+EVIDENCE_SCHEMA = 1
+
 DIMENSIONS = ("EV1", "EV2", "EV3", "EV4", "EV5", "EV6")
 
 DIMENSION_NAMES = {

@@ -8,6 +8,7 @@ that tries (PLATFORM.md D3, AIES-AESQS-CS-01-R03).
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import yaml
@@ -17,9 +18,21 @@ from . import constants as C
 FORBIDDEN_KEYS = ("gates", "minimum_gates", "sample_sizes", "statistical_minimums",
                   "min_sample", "decisional")
 
+# A profile is a versioned normative artifact (reproducibility): two runs under
+# the same profile name must be distinguishable if the weights changed. Semver.
+# An unversioned profile is tolerated (treated as UNVERSIONED) so pre-existing
+# out-of-tree profiles keep loading, but the result records it as such.
+_SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
+UNVERSIONED = "0.0.0"
+
 
 class ProfileError(Exception):
     pass
+
+
+def profile_version(profile: dict) -> str:
+    """The profile's declared semver, or UNVERSIONED if it declares none."""
+    return str(profile.get("version") or UNVERSIONED)
 
 
 def shipped_dir() -> Path:
@@ -37,6 +50,10 @@ def validate(profile: dict) -> dict:
     name = profile.get("name")
     if not name:
         raise ProfileError("profile has no name")
+    ver = profile.get("version")
+    if ver is not None and not _SEMVER.match(str(ver)):
+        raise ProfileError(
+            f"profile {name!r}: version must be semver x.y.z, got {ver!r}")
     for key in FORBIDDEN_KEYS:
         if key in profile:
             raise ProfileError(

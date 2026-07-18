@@ -1,4 +1,5 @@
 name: security
+version: 1.0.0
 description: Safety-first evaluation for security-sensitive scopes
 # A profile is a weighting preset (PLATFORM.md 5.2). Gates and
 # statistical minimums are engine constants per AIES-AESQS-CS-01
