@@ -1,0 +1,8 @@
+{
+  "decision_semantics_version": "1.0",
+  "outcome": "FAIL",
+  "reason_kinds": [
+    "assessment-error",
+    "mandatory-gate"
+  ]
+}

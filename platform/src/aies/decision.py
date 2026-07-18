@@ -35,11 +35,13 @@ AIES_STANDARD_VERSION = "v0.4.0"
 # on a breaking shape change (see COMPATIBILITY.md).
 RESULT_SCHEMA = 1
 
-# Engine version vs semantics version are DIFFERENT questions (ADR-0005):
+# Engine version vs semantics version are DIFFERENT questions (ADR-0005;
+# normative in AESQS AIES-AESQS-CS-01 §8, R18-R21):
 #   decision_engine_version   — which software decided (platform build)
 #   decision_semantics_version — which normative AESQS decision policy was applied
 # A platform build can change (bugfix) without changing semantics; AESQS can
 # intentionally change decision policy without a mere rebuild. Never conflate.
+# This engine implements AESQS decision-semantics version 1.0.
 DECISION_SEMANTICS_VERSION = "1.0"
 
 

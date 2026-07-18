@@ -1,9 +1,11 @@
 """Dashboard (M4, PLATFORM.md §10): a self-contained HTML overview of
 deployments, runs, and qualification records.
 
-Presentation over existing artifacts — it makes no claims the records
-do not. Single file, no external requests, theme-aware (same discipline
-as the HTML report).
+**A renderer, not a decider.** Per the platform invariant (CONFORMANCE-POLICY.md
+§4), no consumer computes outcomes: the dashboard — like the CLI, a future REST
+API, or a GitHub Action — only *renders* results the engine already produced. It
+makes no claims the records do not and re-derives no PASS/FAIL. Single file, no
+external requests, theme-aware (same discipline as the HTML report).
 """
 
 from __future__ import annotations

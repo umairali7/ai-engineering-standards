@@ -40,9 +40,18 @@ echo "-- 4. the Canonical Assessment Result (authoritative outcome) --"
 aies assessment result "$RUN"
 
 echo
-echo "-- 5. presentation-grade renders (views of the same result) --"
+echo "-- 5. per-area capability profile (planner/coder/security/… side by side) --"
+aies capabilities "$RUN" || true
+
+echo
+echo "-- 6. presentation-grade renders (views of the same result) --"
 aies assessment result "$RUN" --format html --out "$WS/assessment.html" && echo "wrote $WS/assessment.html"
 aies report "$RUN" --format html --write > /dev/null && echo "wrote evidence report (HTML)"
 
 echo
+echo "-- 7. the arbiter: is the decision engine conformant to AESQS semantics? --"
+aies conform engine || true
+
+echo
 echo "== demo complete: $WS =="
+echo "tip: 'aies serve' exposes these artifacts as a read-only JSON API."

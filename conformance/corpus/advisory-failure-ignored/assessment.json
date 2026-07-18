@@ -1,0 +1,25 @@
+{
+  "areas": [
+    "CA-05",
+    "CA-09"
+  ],
+  "competencies": [
+    {
+      "area": "CA-05",
+      "min_cl": null,
+      "requirement": "mandatory",
+      "weight": null
+    },
+    {
+      "area": "CA-09",
+      "min_cl": null,
+      "requirement": "advisory",
+      "weight": null
+    }
+  ],
+  "id": "conformance",
+  "profile": "coder",
+  "risk_tier": "RT2",
+  "schema": 1,
+  "version": "1.0.0"
+}

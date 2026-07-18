@@ -1,0 +1,61 @@
+{
+  "aggregated_at": "2026-01-01T00:00:00Z",
+  "areas": {
+    "CA-05": {
+      "aggregate_A": 3.4,
+      "cl": "CL3",
+      "decisional": true,
+      "ev3_hard_fail": false,
+      "gates": [
+        {
+          "dimension": "EV1",
+          "passed": true
+        },
+        {
+          "dimension": "EV2",
+          "passed": true
+        },
+        {
+          "dimension": "EV3",
+          "passed": true
+        },
+        {
+          "dimension": "EV4",
+          "passed": true
+        },
+        {
+          "dimension": "EV5",
+          "passed": true
+        },
+        {
+          "dimension": "EV6",
+          "passed": true
+        }
+      ],
+      "gates_passed": true,
+      "min_sample": 30,
+      "n_scored": 42
+    }
+  },
+  "environment_fingerprint": {
+    "fingerprint_hash": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "runtime": {
+      "id": "fixture"
+    }
+  },
+  "evidence_schema": 1,
+  "grant_status": "no grant \u2014 conformance fixture",
+  "kind": "evidence-package",
+  "model": {
+    "checksum": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "registry_id": "fixture-model"
+  },
+  "profile": "coder",
+  "profile_version": "1.0.0",
+  "rater_kinds": [],
+  "raters": [],
+  "risk_tier": "RT2",
+  "run_id": "conformance-fixture",
+  "subject_kind": "ai",
+  "suite_versions": {}
+}

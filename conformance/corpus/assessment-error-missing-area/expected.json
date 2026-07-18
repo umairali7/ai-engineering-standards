@@ -1,0 +1,7 @@
+{
+  "decision_semantics_version": "1.0",
+  "outcome": "INCONCLUSIVE",
+  "reason_kinds": [
+    "assessment-error"
+  ]
+}

@@ -42,6 +42,8 @@ See also [DEPLOYMENTS.md](DEPLOYMENTS.md) (qualify deployments, not models),
 [JOURNEYS.md](JOURNEYS.md) (multi-phase scenarios that test lifecycle depth),
 [SCENARIOS.md](SCENARIOS.md) (how to author competency scenarios), and
 [ASSESSMENTS.md](ASSESSMENTS.md) (declarative qualification composition).
+[REFERENCE.md](REFERENCE.md) is the complete reference — vocabulary, artifact
+schemas, and every command.
 Hit a snag? [TROUBLESHOOTING.md](TROUBLESHOOTING.md) covers the common
 endpoint, TLS, auth, performance, and judge issues.
 

@@ -456,6 +456,12 @@ def cmd_profiles(args) -> int:
     return 0
 
 
+def cmd_serve(args) -> int:
+    from . import api
+    api.serve(args.host, args.port)
+    return 0
+
+
 def cmd_plugins(args) -> int:
     from .adapters import discovered
     items = {name: {"class": cls.__name__, "version": getattr(cls, "adapter_version", "?")}
@@ -872,6 +878,16 @@ def cmd_conform(args) -> int:
                 print(conformance.render_markdown(report))
             # Non-zero exit if an evidence-backed claim is unsupported (CI gate).
             return 0 if report["summary"]["substantiated"] else 5
+        elif args.conform_cmd == "engine":
+            from . import engine_conformance as ec
+            try:
+                report = ec.verify(Path(args.corpus) if args.corpus else None)
+            except ec.ConformanceError as e:
+                print(f"error: {e}", file=sys.stderr)
+                return 2
+            _out(report, args.json, ec.render(report))
+            # Non-zero exit if the engine is not conformant to the corpus (CI gate).
+            return 0 if report["valid"] else 5
     except conformance.ConformanceError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
@@ -929,7 +945,7 @@ commands by stage (each group alphabetical):
   setup & discovery   deployment · discover · doctor · runtime
   qualification       assessment · benchmark · capabilities · compare · export · import · qualify · review · runs · score · transcript
   judging             judge available · judge history · judge list   (the judge pool + track record)
-  decision & audit    audit · conform · dashboard · grant · qualification · report · verify
+  decision & audit    audit · conform · dashboard · grant · qualification · report · serve · verify
   reference           index · journey · plugins · profile · suites
 
 typical workflow:
@@ -961,11 +977,16 @@ typical workflow:
   aies qualify <deployment> --assessment enterprise --judge <judge-dep>
   aies assessment result <run>                 re-decide an aggregated run (no inference)
 
+  # see the whole thing run, fully offline (mock runtime + mock judge):
+  make demo                                    or: bash scripts/demo.sh
+
   # optional formal record (a human decision, revocable):
   aies grant <run> --decision grant --authority "Name (ROLE-13)" --second "Name (ROLE-14)"
   aies verify <QUAL-id>                         re-check environment (D7)
   aies conform check statement.yaml            check a conformance claim
+  aies conform engine                          verify the decision engine vs the golden corpus
   aies suites validate                         validate shipped competency suites
+  aies serve --port 8722                       read-only REST API over the canonical artifacts
 
   # audit a repository's engineering practice against AIES (maturity per area):
   aies audit .                                 scorecard + ranked recommendations
@@ -1219,6 +1240,12 @@ def build_parser() -> argparse.ArgumentParser:
     db.add_argument("--write", action="store_true")
     db.set_defaults(func=cmd_dashboard)
 
+    sv = common(sub.add_parser("serve", help="thin read-only REST API over the "
+                               "canonical artifacts (JSON; computes no outcomes)"))
+    sv.add_argument("--host", default="127.0.0.1")
+    sv.add_argument("--port", type=int, default=8722)
+    sv.set_defaults(func=cmd_serve)
+
     # --- resource-model noun commands (primary surface) ---------------------
     rt = common(sub.add_parser("runtime", help="inspect runtime adapters and "
                                "the runtimes behind them"))
@@ -1237,6 +1264,11 @@ def build_parser() -> argparse.ArgumentParser:
     cfc = cfsub.add_parser("check"); cfc.add_argument("file")
     cfc.add_argument("--write", action="store_true"); cfc.add_argument("--json", action="store_true")
     cfsub.add_parser("requirements").add_argument("--json", action="store_true")
+    cfe = cfsub.add_parser("engine", help="verify the decision engine against the "
+                           "golden Evidence Package corpus (CONFORMANCE-POLICY.md)")
+    cfe.add_argument("--corpus", default=None,
+                     help="path to conformance/corpus (default: auto-discover)")
+    cfe.add_argument("--json", action="store_true")
     cf.set_defaults(func=cmd_conform)
 
     jn = common(sub.add_parser("journey", help="multi-phase journeys "

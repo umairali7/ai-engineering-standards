@@ -1,0 +1,7 @@
+{
+  "decision_semantics_version": "1.0",
+  "outcome": "INSUFFICIENT EVIDENCE",
+  "reason_kinds": [
+    "insufficient-evidence"
+  ]
+}
