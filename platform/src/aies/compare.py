@@ -185,15 +185,27 @@ def compare_ecm(ref_a: str, ref_b: str) -> dict:
     """Compare task evidence only when protocol metadata is compatible."""
     from . import ecm
     a, b = ecm.engineering_capability_matrix(ref_a), ecm.engineering_capability_matrix(ref_b)
-    compatible = (a["risk_tier"] == b["risk_tier"] and a["profile"] == b["profile"]
-                  and a["mapping"]["version"] == b["mapping"]["version"]
-                  and a["rater_kinds"] == b["rater_kinds"])
+    pa, pb = _resolve_package(ref_a), _resolve_package(ref_b)
+    ma = workspace.read_json(workspace.run_dir(a["run_id"]) / "manifest.json")
+    mb = workspace.read_json(workspace.run_dir(b["run_id"]) / "manifest.json")
+    checks = {
+        "risk_tier": a["risk_tier"] == b["risk_tier"],
+        "profile": a["profile"] == b["profile"],
+        "mapping_version": a["mapping"]["version"] == b["mapping"]["version"],
+        "rater_protocol": a["rater_kinds"] == b["rater_kinds"],
+        "suite_versions": pa["suite_versions"] == pb["suite_versions"],
+        "repeat_structure": ma.get("repeats") == mb.get("repeats"),
+    }
+    compatible = all(checks.values())
     rows = []
     for left, right in zip(a["tasks"], b["tasks"]):
+        comparable = compatible and left["status"] == right["status"] == "demonstrated"
+        winner = None if not comparable or left["observed_performance"] == right["observed_performance"] else (
+            "A" if left["observed_performance"] > right["observed_performance"] else "B")
         rows.append({"task": left["task"], "a": left["observed_performance"],
-                     "b": right["observed_performance"], "comparable": compatible
-                     and left["status"] == right["status"] == "demonstrated"})
-    return {"kind": "ecm-comparison", "compatible": compatible, "a": a, "b": b, "tasks": rows}
+                     "b": right["observed_performance"], "comparable": comparable, "winner": winner})
+    return {"kind": "ecm-comparison", "compatible": compatible, "checks": checks,
+            "a": a, "b": b, "tasks": rows}
 
 
 def render_ecm_markdown(cmp: dict) -> str:
@@ -205,7 +217,10 @@ def render_ecm_markdown(cmp: dict) -> str:
     for row in cmp["tasks"]:
         av = "—" if row["a"] is None else f"{row['a'] / 4 * 100:.0f}%"
         bv = "—" if row["b"] is None else f"{row['b'] / 4 * 100:.0f}%"
-        lines.append(f"| {row['task']} | {av} | {bv} | {'comparable' if row['comparable'] else 'incomparable / insufficient evidence'} |")
+        result = (f"comparable; winner {row['winner']}" if row["winner"] else
+                  ("comparable; tie" if row["comparable"] else "incomparable / insufficient evidence"))
+        lines.append(f"| {row['task']} | {av} | {bv} | {result} |")
     if not cmp["compatible"]:
-        lines += ["", "Protocol mismatch (risk tier, profile, mapping version, or rater kind): no task winner is emitted."]
+        failed = ", ".join(name for name, ok in cmp["checks"].items() if not ok)
+        lines += ["", f"Protocol mismatch ({failed}): no task winner is emitted."]
     return "\n".join(lines) + "\n"
