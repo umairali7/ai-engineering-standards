@@ -1,7 +1,7 @@
 # AIES Qualification Platform — developer entry points.
 # The demo is executable documentation: `make demo` runs the entire workflow
 # offline; the same golden path is CI-gated as tests/test_demo.py.
-.PHONY: install test validate audit demo integration-demo all
+.PHONY: install test validate audit release-hygiene demo integration-demo all
 
 install:            ## editable install + test deps
 	pip install -e . && pip install pytest
@@ -14,6 +14,9 @@ validate:          ## suite catalog + shipped assessments (the CI gate)
 
 audit:             ## repository self-conformance (dogfood), gated at RT2
 	aies audit .. --gate --rt 2
+
+release-hygiene:   ## reject local/generated artifacts from the tracked release tree
+	python scripts/check_release_artifacts.py ..
 
 demo:              ## core workflow, fully offline (mock runtime + mock judge)
 	bash scripts/demo.sh
@@ -29,4 +32,4 @@ integration-demo:  ## full workflow against a REAL deployment (opt-in)
 	@#   make integration-demo DEPLOYMENT=local-qwen JUDGE=gpt-oss
 	bash scripts/integration-demo.sh
 
-all: validate test audit
+all: validate test audit release-hygiene

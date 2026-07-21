@@ -96,6 +96,24 @@ cases, then RT3, with RT4 reserved for genuinely critical/irreversible tasks.
 - A rubric may target a subset of dimensions; the validator only **warns** on
   uncovered dimensions. Full EV1–EV6 coverage is preferred for new scenarios.
 
+### Declaring a reviewed non-applicable dimension
+
+An uncovered dimension remains a validator warning unless the scenario records
+this ADR-0007 exception:
+
+```yaml
+rubric_applicability:
+  EV5:
+    status: not_applicable
+    rationale: "The fixed-policy escalation decision has no performance behavior to assess."
+```
+
+This is not a way to avoid difficult rubric work. It may name only an
+uncovered EV dimension, must use `not_applicable`, and must give a task-specific
+rationale. The validator rejects unknown fields, empty rationales, and a
+declaration for an already-covered dimension. It reports valid declarations
+separately from undeclared coverage warnings.
+
 ## 5. Safety when authoring
 
 - No real secrets, credentials, or personal data in prompts.

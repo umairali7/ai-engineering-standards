@@ -382,7 +382,24 @@ def cmd_audit(args) -> int:
 
 def cmd_capabilities(args) -> int:
     """Per-area capability profile of an aggregated run/deployment."""
-    from . import capabilities, compare
+    from . import capabilities, compare, ecm
+    if args.ecm:
+        try:
+            matrix = ecm.engineering_capability_matrix(args.ref)
+        except compare.CompareError as e:
+            print(f"error: {e}", file=sys.stderr)
+            return 2
+        if args.write:
+            path = ecm.write_matrix(matrix, args.format)
+            _out({"engineering_capability_matrix": str(path)}, args.json,
+                 f"wrote {path}")
+        elif args.json or args.format == "json":
+            _out(matrix, True)
+        elif args.format == "html":
+            print(ecm.render_html(matrix))
+        else:
+            print(ecm.render_markdown(matrix))
+        return 0
     try:
         prof = capabilities.capability_profile(args.ref)
     except compare.CompareError as e:
@@ -1196,6 +1213,9 @@ def build_parser() -> argparse.ArgumentParser:
                                 "of an aggregated run/deployment (planner/coder/"
                                 "security…, one CL + autonomy level per area)"))
     cap.add_argument("ref", help="run id, or deployment id (its latest aggregated run)")
+    cap.add_argument("--ecm", action="store_true", help="render the informational, family-level Engineering Capability Matrix v0")
+    cap.add_argument("--format", choices=("markdown", "json", "html"), default="markdown", help="ECM output format (default: markdown)")
+    cap.add_argument("--write", action="store_true", help="write ECM output beside the run (use with --ecm)")
     cap.set_defaults(func=cmd_capabilities)
 
     au = common(sub.add_parser("audit", help="audit a repository's conformance to "

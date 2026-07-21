@@ -23,19 +23,21 @@ def validate(root: Path | None = None) -> dict[str, Any]:
     base = root or competencies_dir()
     errors: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
+    applicability: list[dict[str, str]] = []
     areas: list[dict[str, Any]] = []
     seen_ids: dict[str, str] = {}
 
     if not base.exists():
         errors.append(_issue(base, "competencies directory does not exist"))
-        return _report(base, areas, errors, warnings)
+        return _report(base, areas, errors, warnings, applicability=applicability)
 
     for area_dir in sorted(p for p in base.iterdir() if p.is_dir() and p.name.startswith("CA-")):
         area_code = _area_code(area_dir.name)
         if area_code is None:
             warnings.append(_issue(area_dir, "directory is not named with a CA-## prefix"))
             continue
-        area_report = _validate_area(area_dir, area_code, seen_ids, errors, warnings)
+        area_report = _validate_area(area_dir, area_code, seen_ids, errors, warnings,
+                                     applicability)
         areas.append(area_report)
 
     if not areas:
@@ -43,7 +45,7 @@ def validate(root: Path | None = None) -> dict[str, Any]:
 
     assessments = _validate_assessments(errors)
 
-    return _report(base, areas, errors, warnings, assessments)
+    return _report(base, areas, errors, warnings, assessments, applicability)
 
 
 def _validate_assessments(errors: list[dict[str, str]]) -> list[dict[str, Any]]:
@@ -85,6 +87,7 @@ def render(report: dict[str, Any]) -> str:
         f"  scenarios: {summary['scenarios']}",
         f"  assessmnt: {summary.get('assessments', 0)}",
         f"  warnings : {len(report['warnings'])}",
+        f"  declared : {len(report.get('declared_non_applicable', []))}",
         f"  errors   : {len(report['errors'])}",
     ]
     for issue in report["errors"][:20]:
@@ -202,6 +205,7 @@ def _validate_area(
     seen_ids: dict[str, str],
     errors: list[dict[str, str]],
     warnings: list[dict[str, str]],
+    applicability: list[dict[str, str]],
 ) -> dict[str, Any]:
     definition = _load_yaml(area_dir / "definition.yaml", errors)
     rubric = _load_yaml(area_dir / "rubric.yaml", errors)
@@ -236,7 +240,8 @@ def _validate_area(
         if not isinstance(scenario, dict):
             continue
         before = len(errors)
-        _validate_scenario(path, scenario, area_code, seen_ids, errors, warnings)
+        _validate_scenario(path, scenario, area_code, seen_ids, errors, warnings,
+                           applicability)
         if len(errors) == before:
             valid_scenarios += 1
 
@@ -258,7 +263,9 @@ def _validate_scenario(
     seen_ids: dict[str, str],
     errors: list[dict[str, str]],
     warnings: list[dict[str, str]],
+    applicability: list[dict[str, str]] | None = None,
 ) -> None:
+    applicability = applicability if applicability is not None else []
     missing = [field for field in SCENARIO_REQUIRED if field not in scenario]
     if missing:
         errors.append(_issue(path, f"missing required fields {missing}"))
@@ -290,7 +297,14 @@ def _validate_scenario(
         errors.append(_issue(path, "rubric must be a non-empty mapping"))
     else:
         unknown = [dim for dim in rubric if dim not in DIMENSIONS]
-        missing = [dim for dim in DIMENSIONS if dim not in rubric]
+        declared = _validate_rubric_applicability(path, scenario, rubric, errors)
+        for dim in declared:
+            applicability.append({
+                "file": str(path), "scenario_id": scenario.get("id", ""),
+                "dimension": dim,
+                "rationale": scenario["rubric_applicability"][dim]["rationale"],
+            })
+        missing = [dim for dim in DIMENSIONS if dim not in rubric and dim not in declared]
         if unknown:
             errors.append(_issue(path, f"rubric has unknown dimensions {unknown}"))
         if missing:
@@ -308,6 +322,41 @@ def _validate_scenario(
 
     if "calibration" in scenario:
         _validate_calibration(path, scenario, area_code, errors, warnings)
+
+
+_APPLICABILITY_KEYS = {"status", "rationale"}
+
+
+def _validate_rubric_applicability(path, scenario, rubric, errors) -> set[str]:
+    """Validate ADR-0007 declarations and return valid excluded dimensions."""
+    data = scenario.get("rubric_applicability")
+    if data is None:
+        return set()
+    if not isinstance(data, dict) or not data:
+        errors.append(_issue(path, "rubric_applicability must be a non-empty mapping when present"))
+        return set()
+    declared: set[str] = set()
+    for dim, declaration in data.items():
+        if dim not in DIMENSIONS:
+            errors.append(_issue(path, f"rubric_applicability has unknown dimension {dim!r}"))
+            continue
+        if dim in rubric:
+            errors.append(_issue(path, f"rubric_applicability.{dim} conflicts with a covered rubric dimension"))
+            continue
+        if not isinstance(declaration, dict):
+            errors.append(_issue(path, f"rubric_applicability.{dim} must be a mapping"))
+            continue
+        unknown = [key for key in declaration if key not in _APPLICABILITY_KEYS]
+        if unknown:
+            errors.append(_issue(path, f"rubric_applicability.{dim} has unknown keys {unknown}"))
+        if declaration.get("status") != "not_applicable":
+            errors.append(_issue(path, f"rubric_applicability.{dim}.status must be 'not_applicable'"))
+        rationale = declaration.get("rationale")
+        if not isinstance(rationale, str) or not rationale.strip():
+            errors.append(_issue(path, f"rubric_applicability.{dim}.rationale must be a non-empty string"))
+        if not unknown and declaration.get("status") == "not_applicable" and isinstance(rationale, str) and rationale.strip():
+            declared.add(dim)
+    return declared
 
 
 # Calibration metadata (CALIBRATION.md): a scenario is a measurement instrument;
@@ -373,8 +422,9 @@ def _load_yaml(path: Path, errors: list[dict[str, str]]) -> Any:
         return None
 
 
-def _report(base: Path, areas: list[dict[str, Any]], errors: list[dict[str, str]], warnings: list[dict[str, str]], assessments: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+def _report(base: Path, areas: list[dict[str, Any]], errors: list[dict[str, str]], warnings: list[dict[str, str]], assessments: list[dict[str, Any]] | None = None, applicability: list[dict[str, str]] | None = None) -> dict[str, Any]:
     assessments = assessments or []
+    applicability = applicability or []
     return {
         "valid": not errors,
         "root": str(base),
@@ -388,6 +438,7 @@ def _report(base: Path, areas: list[dict[str, Any]], errors: list[dict[str, str]
         "assessments": assessments,
         "errors": errors,
         "warnings": warnings,
+        "declared_non_applicable": applicability,
     }
 
 

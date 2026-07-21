@@ -78,7 +78,7 @@ append-only records. Grouped as in `aies --help`.
 | `benchmark` | Execute scenario suites only (stage 4) | `aies benchmark acme-7b --area CA-05 --repeats 5` |
 | `score` | Ingest a filled scoresheet (human/model rater) | `aies score run-2031` |
 | `import` / `export` | Bring external eval results in as EV evidence / round-trip out | `aies import run-2031 eval.json` |
-| `capabilities` | Per-area CL + autonomy + gate + decisional status, side by side | `aies capabilities run-2031` |
+| `capabilities` | Per-area CL + autonomy + gate + decisional status; `--ecm` renders a traceable, informational scenario-family matrix | `aies capabilities run-2031 --ecm --format html --write` |
 | `assessment` | `list` / `show` / `validate` / `result <run>` (Markdown/JSON/`--format html`) | `aies assessment result run-2031` |
 | `review` | Multi-model peer review + calibration gate | `aies review run-2031 --model-reviewer rev` |
 | `compare` | Deltas across runs on identical suite versions | `aies compare a b --profile coder` |

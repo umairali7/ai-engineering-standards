@@ -22,7 +22,8 @@ the full pipeline is runnable end to end:
 `remove`, `verify-artifact` for supply-chain provenance), `qualify` (with
 `--parallel`, `--judge` auto-scoring, `--journey`, `--all-areas`), `score`,
 `import` (external eval results), `report` (Markdown/JSON/HTML), `transcript`,
-`capabilities` (per-area SDLC profile), `judge` (available/list/history),
+`capabilities` (per-area SDLC profile; `--ecm` writes an informational,
+family-level Engineering Capability Matrix), `judge` (available/list/history),
 `assessment` (declarative qualification composition — list/show/validate/result,
 Markdown/JSON/HTML, ADR-0005), `audit` (repository conformance — maturity per
 area, ADR-0004), `corpus` (the platform reviews its **own** assessment corpus —
