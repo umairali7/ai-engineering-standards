@@ -1,10 +1,9 @@
-"""Engineering Capability Matrix v0 — read-only family-level evidence views.
+"""Engineering Capability Matrix (ECM) evidence views.
 
-This is deliberately *not* a qualification result, a task taxonomy, or a
-deployment grant. It groups the scenarios actually scored in an aggregated run
-by existing ``area`` + ``family`` metadata, exposes the evidence behind each
-row, and labels sample sufficiency. A family is a scenario-design grouping, not
-yet a normative engineering-task identifier (ADR-0006, Proposed).
+The ECM is a subject-neutral, informational decision product. It maps scored
+scenarios to the versioned AIES Engineering Task Taxonomy, retains the source
+scenario-family evidence, and keeps qualification and deployment authority
+separate from engineering-facing capability communication.
 """
 
 from __future__ import annotations
@@ -14,7 +13,7 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
-from . import compare, rating, runner, workspace
+from . import compare, constants as C, rating, runner, task_mappings, workspace
 
 
 def _scenario_index(areas: set[str]) -> dict[str, dict]:
@@ -50,6 +49,12 @@ def engineering_capability_matrix(ref: str) -> dict:
         "scenario_ids": set(), "response_records": set(), "scores": [],
         "raters": set(), "rater_kinds": set(),
     })
+    task_grouped: dict[str, dict] = defaultdict(lambda: {
+        "scenario_ids": set(), "response_records": set(), "scores": [],
+        "raters": set(), "rater_kinds": set(), "areas": set(),
+    })
+    mapping = task_mappings.load()
+    task_names = task_mappings.task_names(mapping)
 
     for record in rating.collect_ratings(run_id):
         response_name = record.get("rates_response")
@@ -74,6 +79,17 @@ def engineering_capability_matrix(ref: str) -> dict:
             row["raters"].add(provenance["rater"])
         if provenance.get("rater_kind"):
             row["rater_kinds"].add(provenance["rater_kind"])
+        for task_id in task_mappings.tasks_for_scenario(scenario, mapping):
+            task = task_grouped[task_id]
+            task["scenario_ids"].add(scenario_id)
+            task["response_records"].add(response_name)
+            task["areas"].add(area)
+            if scores:
+                task["scores"].append(sum(scores.values()) / len(scores))
+            if provenance.get("rater"):
+                task["raters"].add(provenance["rater"])
+            if provenance.get("rater_kind"):
+                task["rater_kinds"].add(provenance["rater_kind"])
 
     rows = []
     for (area, family), data in sorted(grouped.items()):
@@ -84,7 +100,7 @@ def engineering_capability_matrix(ref: str) -> dict:
         rows.append({
             "area": area,
             "scenario_family": family,
-            "label": f"{area} / {family}",
+            "label": f"{C.competency_label(area)} / {family}",
             "scenario_ids": sorted(data["scenario_ids"]),
             "distinct_scenarios": len(data["scenario_ids"]),
             "distinct_responses": len(data["response_records"]),
@@ -98,13 +114,38 @@ def engineering_capability_matrix(ref: str) -> dict:
             "area_competency_level": area_evidence.get("cl"),
         })
 
+    tasks = []
+    for task_id, task_name in task_names.items():
+        data = task_grouped.get(task_id)
+        if not data:
+            tasks.append({"task_id": task_id, "task": task_name, "scenario_ids": [],
+                          "areas": [], "distinct_scenarios": 0, "distinct_responses": 0,
+                          "rating_observations": 0, "minimum_observations": None,
+                          "observed_performance": None, "confidence_percent": 0,
+                          "status": "not assessed", "raters": [], "rater_kinds": []})
+            continue
+        n = len(data["scores"])
+        minimum = max((pkg["areas"][area]["min_sample"] for area in data["areas"]), default=0)
+        areas_decisional = all(pkg["areas"][area]["decisional"] and pkg["areas"][area]["gates_passed"]
+                              for area in data["areas"])
+        performance = round(sum(data["scores"]) / n, 3) if n else None
+        confidence = round(min(1, n / minimum) * 100) if minimum else 0
+        tasks.append({"task_id": task_id, "task": task_name,
+                      "scenario_ids": sorted(data["scenario_ids"]), "areas": sorted(data["areas"]),
+                      "distinct_scenarios": len(data["scenario_ids"]),
+                      "distinct_responses": len(data["response_records"]),
+                      "rating_observations": n, "minimum_observations": minimum,
+                      "observed_performance": performance, "confidence_percent": confidence,
+                      "status": "demonstrated" if areas_decisional and n >= minimum else "observed",
+                      "raters": sorted(data["raters"]), "rater_kinds": sorted(data["rater_kinds"])})
+
     return {
-        "kind": "engineering-capability-matrix-v0",
+        "kind": "engineering-capability-matrix-v1",
         "status": "informational",
         "mapping": {
-            "kind": "existing-scenario-family",
-            "version": "v0",
-            "scope": "area plus scenario family; not a normative task taxonomy",
+            "kind": mapping["id"],
+            "version": mapping["version"],
+            "scope": "versioned scenario-to-Engineering-Task registry",
         },
         "run_id": run_id,
         "subject": pkg["model"]["registry_id"],
@@ -113,9 +154,10 @@ def engineering_capability_matrix(ref: str) -> dict:
         "profile": pkg["profile"],
         "rater_kinds": pkg.get("rater_kinds", []),
         "rows": rows,
+        "tasks": tasks,
         "limitations": [
             "Informational only; this matrix is not qualification evidence, a grant, or deployment authorization.",
-            "Rows use existing scenario family metadata, not a standardized engineering-task taxonomy.",
+            "Task rows are derived from the versioned scenario-to-task mapping registry; scenario-family rows remain the traceable source evidence.",
             "Evidence mean is an unweighted inspection statistic, not a competency level or recommendation.",
             "A non-decisional row requires more independently scored evidence; repeats do not establish task breadth.",
         ],
@@ -123,9 +165,9 @@ def engineering_capability_matrix(ref: str) -> dict:
 
 
 def render_markdown(matrix: dict) -> str:
-    """Render a human-readable ECM v0 Markdown artifact."""
+    """Render a human-readable ECM Markdown artifact."""
     lines = [
-        "# Engineering Capability Matrix (ECM v0)",
+        "# Engineering Capability Matrix (ECM)",
         "",
         "> **INFORMATIONAL — NOT A QUALIFICATION, GRANT, OR DEPLOYMENT AUTHORIZATION.**",
         "",
@@ -134,9 +176,30 @@ def render_markdown(matrix: dict) -> str:
         f"Scope: {matrix['risk_tier']} · {matrix['profile']} profile  ",
         f"Mapping: {matrix['mapping']['scope']}",
         "",
+        "## Task Capability Profile",
+        "",
+        "| Task | Observed performance | Evidence confidence | Evidence | Status |",
+        "|---|---|---|---:|---|",
+    ]
+    for task in matrix["tasks"]:
+        performance = ("not assessed" if task["observed_performance"] is None
+                       else _bar(task["observed_performance"] / 4 * 100)
+                            + f" {task['observed_performance'] / 4 * 100:.0f}%")
+        confidence = _bar(task["confidence_percent"]) + f" {task['confidence_percent']}%"
+        evidence = ("0" if task["minimum_observations"] is None
+                    else f"{task['rating_observations']}/{task['minimum_observations']}")
+        lines.append(f"| {task['task_id']} {task['task']} | {performance} | {confidence} | {evidence} | {task['status']} |")
+    lines.extend([
+        "",
+        "Observed performance is the unweighted EV mean. Evidence confidence is the "
+        "scored-observation share of the applicable AESQS minimum. High observed "
+        "performance with low confidence is not a recommendation.",
+        "",
+        "## Scenario-family evidence",
+        "",
         "| Evidence family | Mean EV score | Scenarios | Responses | Ratings | Adequacy |",
         "|---|---:|---:|---:|---:|---|",
-    ]
+    ])
     for row in matrix["rows"]:
         mean = "—" if row["evidence_mean"] is None else f"{row['evidence_mean']:.3f}"
         lines.append(
@@ -162,6 +225,11 @@ def render_markdown(matrix: dict) -> str:
     return "\n".join(lines)
 
 
+def _bar(percent: float) -> str:
+    filled = max(0, min(10, round(percent / 10)))
+    return "█" * filled + "░" * (10 - filled)
+
+
 def render_html(matrix: dict) -> str:
     """Render a compact, self-contained HTML ECM artifact."""
     rows = "".join(
@@ -174,13 +242,216 @@ def render_html(matrix: dict) -> str:
         for row in matrix["rows"]
     ) or "<tr><td colspan='6'>No traceable scored scenario-family evidence.</td></tr>"
     limits = "".join(f"<li>{html.escape(x)}</li>" for x in matrix["limitations"])
+    task_rows = "".join(
+        "<tr><td>" + html.escape(f"{task['task_id']} {task['task']}") + "</td><td>" +
+        html.escape("not assessed" if task["observed_performance"] is None else
+                    f"{_bar(task['observed_performance'] / 4 * 100)} {task['observed_performance'] / 4 * 100:.0f}%") +
+        "</td><td>" + html.escape(f"{_bar(task['confidence_percent'])} {task['confidence_percent']}%") +
+        "</td><td>" + html.escape("0" if task["minimum_observations"] is None else
+                                   f"{task['rating_observations']}/{task['minimum_observations']}") +
+        f"</td><td>{html.escape(task['status'])}</td></tr>"
+        for task in matrix["tasks"]
+    )
     return f"""<!doctype html><html lang='en'><meta charset='utf-8'>
 <title>Engineering Capability Matrix — {html.escape(matrix['subject'])}</title>
 <style>body{{font:16px system-ui;max-width:960px;margin:3rem auto;padding:0 1rem;color:#17202a}} table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #cbd5e1;padding:.5rem;text-align:left}}th{{background:#eaf2f8}}.notice{{padding:.75rem;background:#fff3cd;font-weight:600}}</style>
-<h1>Engineering Capability Matrix (ECM v0)</h1><p class='notice'>INFORMATIONAL — NOT A QUALIFICATION, GRANT, OR DEPLOYMENT AUTHORIZATION.</p>
+<h1>Engineering Capability Matrix (ECM)</h1><p class='notice'>INFORMATIONAL — NOT A QUALIFICATION, GRANT, OR DEPLOYMENT AUTHORIZATION.</p>
 <p><b>Subject:</b> {html.escape(matrix['subject'])}<br><b>Run:</b> {html.escape(matrix['run_id'])}<br><b>Scope:</b> {html.escape(matrix['risk_tier'])} · {html.escape(matrix['profile'])}</p>
+<h2>Task Capability Profile</h2><table><thead><tr><th>Task</th><th>Observed performance</th><th>Evidence confidence</th><th>Evidence</th><th>Status</th></tr></thead><tbody>{task_rows}</tbody></table>
+<p>High observed performance with low evidence confidence is not a recommendation.</p>
 <table><thead><tr><th>Evidence family</th><th>Mean EV score</th><th>Scenarios</th><th>Responses</th><th>Ratings</th><th>Adequacy</th></tr></thead><tbody>{rows}</tbody></table>
 <h2>Limitations</h2><ul>{limits}</ul></html>"""
+
+
+def capability_summary(matrix: dict) -> dict:
+    """Derive a bounded engineer-facing summary from ECM evidence.
+
+    This deliberately distinguishes *observed patterns* from demonstrated,
+    decisional capabilities. It provides no task recommendation where the run
+    is too small or has no evidence for a task family.
+    """
+    rows = sorted(matrix["rows"], key=lambda row: (
+        row["evidence_mean"] is not None, row["evidence_mean"] or -1
+    ), reverse=True)
+    assessed = sorted({row["area"] for row in rows})
+    all_areas = runner.all_area_codes()
+    unassessed = [area for area in all_areas if area not in assessed]
+    demonstrated = [row for row in rows
+                     if row["adequacy"] == "decisional"
+                     and row["area_gates_passed"]
+                     and row["evidence_mean"] is not None]
+    observed = [row for row in rows if row["evidence_mean"] is not None]
+    provisional = [row for row in observed if row not in demonstrated]
+    task_rows = matrix["tasks"]
+    task_demonstrated = [task for task in task_rows if task["status"] == "demonstrated"]
+    task_observed = [task for task in task_rows if task["status"] == "observed"]
+    task_not_assessed = [task for task in task_rows if task["status"] == "not assessed"]
+    return {
+        "demonstrated": demonstrated,
+        "observed": observed,
+        "provisional": provisional,
+        "assessed_areas": assessed,
+        "unassessed_areas": unassessed,
+        "recommended": [row for row in demonstrated if row["evidence_mean"] >= 3.0],
+        "with_human_review": provisional,
+        "task_demonstrated": task_demonstrated,
+        "task_observed": task_observed,
+        "task_not_assessed": task_not_assessed,
+        "not_recommended": [
+            "Autonomous production changes: this informational matrix cannot authorize deployment.",
+            "Any task outside the assessed scenario families: this run contains no direct evidence for it.",
+        ],
+    }
+
+
+def render_capability_summary_markdown(matrix: dict) -> str:
+    """Render the full engineer-facing section embedded in an evidence report."""
+    summary = capability_summary(matrix)
+    lines = [
+        "## Engineering Capability Profile",
+        "",
+        "> **INFORMATIONAL — NOT A QUALIFICATION, GRANT, OR DEPLOYMENT AUTHORIZATION.**",
+        "",
+        "This section is derived solely from the scored scenario evidence in this run. "
+        "It does not infer capability for tasks that were not assessed.",
+        "",
+        "### Task Capability Profile",
+        "",
+        "| Task | Observed performance | Evidence confidence | Evidence | Status |",
+        "|---|---|---|---:|---|",
+    ]
+    for task in matrix["tasks"]:
+        performance = ("not assessed" if task["observed_performance"] is None
+                       else _bar(task["observed_performance"] / 4 * 100)
+                            + f" {task['observed_performance'] / 4 * 100:.0f}%")
+        confidence = _bar(task["confidence_percent"]) + f" {task['confidence_percent']}%"
+        evidence = ("0" if task["minimum_observations"] is None
+                    else f"{task['rating_observations']}/{task['minimum_observations']}")
+        lines.append(f"| {task['task_id']} {task['task']} | {performance} | {confidence} | {evidence} | {task['status']} |")
+    lines.extend([
+        "",
+        "A high observed-performance bar with low evidence confidence is not a recommendation.",
+        "",
+        "### Evidence by scenario family",
+        "",
+        "| Scenario family | Evidence mean (0–4) | Distinct scenarios | Ratings | Adequacy |",
+        "|---|---:|---:|---:|---|",
+    ])
+    for row in summary["observed"]:
+        mean = "—" if row["evidence_mean"] is None else f"{row['evidence_mean']:.3f}"
+        lines.append(
+            f"| {row['label']} | {mean} | {row['distinct_scenarios']} | "
+            f"{row['rating_observations']}/{row['minimum_observations']} | "
+            f"{row['adequacy']} |"
+        )
+    if not summary["observed"]:
+        lines.append("| No traceable scored scenario-family evidence | — | 0 | 0 | insufficient |")
+
+    lines.extend(["", "### Strength patterns", ""])
+    if summary["task_demonstrated"]:
+        for task in summary["task_demonstrated"]:
+            lines.append(f"- **Demonstrated:** `{task['task']}` — observed performance "
+                         f"{task['observed_performance'] / 4 * 100:.0f}% with "
+                         f"{task['rating_observations']} scored observations.")
+    if summary["task_observed"]:
+        for task in summary["task_observed"]:
+            lines.append(f"- **Observed only:** `{task['task']}` — "
+                         f"{task['observed_performance'] / 4 * 100:.0f}% observed performance, "
+                         f"{task['confidence_percent']}% evidence confidence. Do not treat this as a demonstrated capability.")
+    if not summary["task_demonstrated"] and not summary["task_observed"]:
+        lines.append("- No mapped engineering task has traceable scored evidence in this run.")
+
+    lines.extend(["", "### Improvement and evidence gaps", ""])
+    if summary["task_not_assessed"]:
+        lines.append("- **Collect direct evidence before making a claim:** "
+                     + ", ".join(f"`{task['task']}`" for task in summary["task_not_assessed"]) + ".")
+    if summary["task_observed"]:
+        lines.append("- **Increase breadth and independent scoring for observed tasks:** "
+                     + ", ".join(f"`{task['task']}`" for task in summary["task_observed"]) + ".")
+
+    lines.extend(["", "### What the evidence shows", ""])
+    if summary["demonstrated"]:
+        for row in summary["demonstrated"]:
+            lines.append(f"- **Demonstrated:** `{row['label']}` — evidence mean "
+                         f"{row['evidence_mean']:.3f} across {row['distinct_scenarios']} "
+                         "distinct scenarios.")
+    if summary["provisional"]:
+        lines.append("- **Observed, but not demonstrated:** "
+                     + ", ".join(f"`{row['label']}`" for row in summary["provisional"])
+                     + ". These rows are below the required evidence threshold; they are "
+                       "signals for investigation, not capability claims.")
+    if summary["unassessed_areas"]:
+        lines.append("- **Not assessed in this run:** "
+                     + ", ".join(f"`{area}`" for area in summary["unassessed_areas"])
+                     + ". No claim is made for these areas.")
+
+    lines.extend(["", "### Deployment Guidance", "", "**Recommended**", ""])
+    if summary["task_demonstrated"]:
+        lines.extend(f"- `{task['task']}` — only within its assessed scope and the qualification authority's approved autonomy envelope."
+                     for task in summary["task_demonstrated"])
+    else:
+        lines.append("- None. This run does not provide decisional task-level evidence for a recommendation.")
+    lines.extend(["", "**Use only with human review**", ""])
+    if summary["task_observed"]:
+        lines.extend(f"- `{task['task']}` — observed evidence only; verify every output."
+                     for task in summary["task_observed"])
+    else:
+        lines.append("- None.")
+    lines.extend(["", "**Not recommended from this evidence**", ""])
+    lines.extend(f"- {item}" for item in summary["not_recommended"])
+    lines.extend(["", "### Evidence traceability", ""])
+    for row in summary["observed"]:
+        lines.append(f"- `{row['label']}`: {', '.join(f'`{x}`' for x in row['scenario_ids'])}; "
+                     f"raters: {', '.join(row['raters']) or 'not recorded'}.")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def render_capability_summary_html(matrix: dict) -> str:
+    """Render the same bounded summary for the evidence-package HTML view."""
+    summary = capability_summary(matrix)
+    task_rows = "".join(
+        "<tr><td>" + html.escape(f"{task['task_id']} {task['task']}") + "</td><td>" +
+        html.escape("not assessed" if task["observed_performance"] is None else
+                    f"{_bar(task['observed_performance'] / 4 * 100)} {task['observed_performance'] / 4 * 100:.0f}%") +
+        "</td><td>" + html.escape(f"{_bar(task['confidence_percent'])} {task['confidence_percent']}%") +
+        "</td><td>" + html.escape("0" if task["minimum_observations"] is None else
+                                   f"{task['rating_observations']}/{task['minimum_observations']}") +
+        f"</td><td>{html.escape(task['status'])}</td></tr>"
+        for task in matrix["tasks"]
+    )
+    rows = "".join(
+        "<tr>" + "".join(f"<td>{html.escape(str(value))}</td>" for value in (
+            row["label"],
+            "—" if row["evidence_mean"] is None else f"{row['evidence_mean']:.3f}",
+            row["distinct_scenarios"],
+            f"{row['rating_observations']}/{row['minimum_observations']}",
+            row["adequacy"],
+        )) + "</tr>"
+        for row in summary["observed"]
+    ) or "<tr><td colspan='5'>No traceable scored scenario-family evidence.</td></tr>"
+    observed = ", ".join(task["task"] for task in summary["task_observed"]) or "None"
+    not_assessed_tasks = ", ".join(task["task"] for task in summary["task_not_assessed"]) or "None"
+    unassessed = ", ".join(summary["unassessed_areas"]) or "None"
+    review = "".join(f"<li><code>{html.escape(task['task'])}</code> — observed evidence only; verify every output.</li>"
+                     for task in summary["task_observed"]) or "<li>None.</li>"
+    return f"""
+<h2>Engineering Capability Profile</h2>
+<p class='banner nondec'>INFORMATIONAL — NOT A QUALIFICATION, GRANT, OR DEPLOYMENT AUTHORIZATION.</p>
+<p>Derived solely from the scored scenario evidence in this run. It does not infer capability for tasks that were not assessed.</p>
+<h3>Task Capability Profile</h3>
+<table><tr><th>Task</th><th>Observed performance</th><th>Evidence confidence</th><th>Evidence</th><th>Status</th></tr>{task_rows}</table>
+<p>High observed performance with low evidence confidence is not a recommendation.</p>
+<h3>Evidence by scenario family</h3>
+<table><tr><th>Scenario family</th><th>Evidence mean (0–4)</th><th>Distinct scenarios</th><th>Ratings</th><th>Adequacy</th></tr>{rows}</table>
+<h3>Strength patterns and evidence gaps</h3>
+<ul><li><strong>Observed, but not demonstrated:</strong> {html.escape(observed)}.</li><li><strong>Collect direct evidence before making a claim:</strong> {html.escape(not_assessed_tasks)}.</li><li><strong>Not assessed in this run:</strong> {html.escape(unassessed)}.</li></ul>
+<h3>Deployment Guidance</h3>
+<p><strong>Recommended:</strong> None unless a task row is demonstrated and the qualification authority has approved the applicable autonomy envelope.</p>
+<p><strong>Use only with human review:</strong></p><ul>{review}</ul>
+<p><strong>Not recommended from this evidence:</strong> autonomous production changes, or any task outside the assessed scenario families.</p>
+<p class='muted'>Standalone detail: <a href='engineering-capability-matrix.html'>Engineering Capability Matrix</a>.</p>
+"""
 
 
 def write_matrix(matrix: dict, format: str = "markdown") -> Path:

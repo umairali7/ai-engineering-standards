@@ -334,7 +334,11 @@ def cmd_report(args) -> int:
         return 0
     try:
         if args.format == "json":
-            print(report.render_json(args.run))
+            if args.write:
+                paths = report.write_reports(args.run)
+                _out({"report": paths["json"]}, args.json, f"wrote {paths['json']}")
+            else:
+                print(report.render_json(args.run))
         elif args.format == "html":
             from . import report_html
             if args.write:
@@ -345,7 +349,11 @@ def cmd_report(args) -> int:
             else:
                 print(report_html.render_html(args.run))
         else:
-            print(report.render_markdown(args.run))
+            if args.write:
+                paths = report.write_reports(args.run)
+                _out({"report": paths["markdown"]}, args.json, f"wrote {paths['markdown']}")
+            else:
+                print(report.render_markdown(args.run))
     except FileNotFoundError:
         print(f"error: no evidence package for {args.run!r} — run "
               f"`aies qualify --resume {args.run}` first", file=sys.stderr)
@@ -382,7 +390,7 @@ def cmd_audit(args) -> int:
 
 def cmd_capabilities(args) -> int:
     """Per-area capability profile of an aggregated run/deployment."""
-    from . import capabilities, compare, ecm
+    from . import capabilities, compare, constants as C, ecm
     if args.ecm:
         try:
             matrix = ecm.engineering_capability_matrix(args.ref)
@@ -409,21 +417,38 @@ def cmd_capabilities(args) -> int:
         _out(prof, True)
         return 0
     print(f"Capability profile — {prof['subject']}  "
-          f"({prof['risk_tier']}, {prof['profile']} profile)")
+          f"({C.risk_tier_label(prof['risk_tier'])}, {prof['profile']} profile)")
     if "model" in prof["rater_kinds"]:
         print("  judge-produced evidence — not a grant")
     print()
-    print(f"  {'AREA':6} {'ROLE / SDLC PHASE':34} {'CL':4} {'AGG':5} "
-          f"{'AL':4} GATES  SAMPLE")
+    print(f"  {'AREA / COMPETENCY':52} {'CL':4} {'AGG':5} "
+          f"{'AUTONOMY':18} GATES  SAMPLE")
     for r in prof["areas"]:
         gate = "PASS " if r["gates_passed"] else "FAIL "
         sample = ("decisional" if r["decisional"]
                   else f"NON-DEC {r['n_scored']}/{r['min_sample']}")
-        print(f"  {r['area']:6} {r['name'][:34]:34} {r['cl']:4} "
-              f"{r['aggregate']:.2f}  {(r['al_at_rt'] or '-'):4} {gate} {sample}")
+        label = C.competency_label(r['area'])
+        print(f"  {label[:52]:52} {r['cl']:4} "
+              f"{r['aggregate']:.2f}  {C.autonomy_level_label(r['al_at_rt'])[:18]:18} {gate} {sample}")
     print("\n  CL = competency level · AGG = weighted aggregate · "
-          f"AL = autonomy ceiling at {prof['risk_tier']}. Read across areas for "
+          f"AL = autonomy ceiling at {C.risk_tier_label(prof['risk_tier'])}. Read across areas for "
           "strengths/gaps (e.g. strong coder, weak security). See GUIDE §5.2b.")
+    return 0
+
+
+def cmd_guidance(args) -> int:
+    """Render bounded deployment guidance from an aggregated run."""
+    from . import compare, guidance
+    try:
+        if args.write:
+            path = guidance.write(args.ref)
+            _out({"deployment_guidance": str(path)}, args.json, f"wrote {path}")
+        else:
+            _out({"deployment_guidance": guidance.render_markdown(args.ref)}, args.json,
+                 guidance.render_markdown(args.ref))
+    except compare.CompareError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
     return 0
 
 
@@ -518,11 +543,11 @@ def cmd_benchmark(args) -> int:
 def cmd_compare(args) -> int:
     from . import compare
     try:
-        cmp = compare.compare(args.a, args.b)
+        cmp = compare.compare_ecm(args.a, args.b) if args.ecm else compare.compare(args.a, args.b)
         if args.json or args.format == "json":
             _out(cmp, True)
         else:
-            print(compare.render_markdown(cmp))
+            print(compare.render_ecm_markdown(cmp) if args.ecm else compare.render_markdown(cmp))
     except compare.CompareError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
@@ -1213,10 +1238,15 @@ def build_parser() -> argparse.ArgumentParser:
                                 "of an aggregated run/deployment (planner/coder/"
                                 "security…, one CL + autonomy level per area)"))
     cap.add_argument("ref", help="run id, or deployment id (its latest aggregated run)")
-    cap.add_argument("--ecm", action="store_true", help="render the informational, family-level Engineering Capability Matrix v0")
+    cap.add_argument("--ecm", action="store_true", help="render the informational Engineering Capability Matrix with mapped engineering tasks")
     cap.add_argument("--format", choices=("markdown", "json", "html"), default="markdown", help="ECM output format (default: markdown)")
     cap.add_argument("--write", action="store_true", help="write ECM output beside the run (use with --ecm)")
     cap.set_defaults(func=cmd_capabilities)
+
+    gd = common(sub.add_parser("guidance", help="render bounded deployment guidance from ECM evidence"))
+    gd.add_argument("ref", help="aggregated run id, or deployment id")
+    gd.add_argument("--write", action="store_true", help="write deployment-guidance.md beside the run")
+    gd.set_defaults(func=cmd_guidance)
 
     au = common(sub.add_parser("audit", help="audit a repository's conformance to "
                                "AIES engineering practices (maturity per area; "
@@ -1270,6 +1300,7 @@ def build_parser() -> argparse.ArgumentParser:
     cp.add_argument("a", help="run id or model registry id (latest aggregated run)")
     cp.add_argument("b", help="run id or model registry id (latest aggregated run)")
     cp.add_argument("--format", choices=("markdown", "json"), default="markdown")
+    cp.add_argument("--ecm", action="store_true", help="compare task-level ECM evidence only when protocols match")
     cp.set_defaults(func=cmd_compare)
 
     rn = common(sub.add_parser("runs", help="result history: list runs"))

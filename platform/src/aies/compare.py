@@ -143,13 +143,13 @@ def render_markdown(cmp: dict) -> str:
     a(f"| Run | `{cmp['a']['run_id']}` | `{cmp['b']['run_id']}` |")
     a(f"| Profile | {cmp['a']['profile']} | {cmp['b']['profile']} |")
     a("")
-    a(f"Scoped risk tier: **{cmp['risk_tier']}**")
+    a(f"Scoped risk tier: **{C.risk_tier_label(cmp['risk_tier'])}**")
     a("")
     for caveat in cmp["caveats"]:
         a(f"> **Caveat:** {caveat}")
         a("")
     for area, d in cmp["areas"].items():
-        a(f"## {area} (suite `{d['suite_version']}`)")
+        a(f"## {C.competency_label(area)} (suite `{d['suite_version']}`)")
         a("")
         a("| Dimension | A (decision) | B (decision) | Delta (B-A) |")
         a("|---|---|---|---|")
@@ -179,3 +179,33 @@ def render_markdown(cmp: dict) -> str:
       "additional claims (PLATFORM.md §9).")
     a("")
     return "\n".join(lines)
+
+
+def compare_ecm(ref_a: str, ref_b: str) -> dict:
+    """Compare task evidence only when protocol metadata is compatible."""
+    from . import ecm
+    a, b = ecm.engineering_capability_matrix(ref_a), ecm.engineering_capability_matrix(ref_b)
+    compatible = (a["risk_tier"] == b["risk_tier"] and a["profile"] == b["profile"]
+                  and a["mapping"]["version"] == b["mapping"]["version"]
+                  and a["rater_kinds"] == b["rater_kinds"])
+    rows = []
+    for left, right in zip(a["tasks"], b["tasks"]):
+        rows.append({"task": left["task"], "a": left["observed_performance"],
+                     "b": right["observed_performance"], "comparable": compatible
+                     and left["status"] == right["status"] == "demonstrated"})
+    return {"kind": "ecm-comparison", "compatible": compatible, "a": a, "b": b, "tasks": rows}
+
+
+def render_ecm_markdown(cmp: dict) -> str:
+    lines = ["# Engineering Capability Matrix Comparison", "",
+             "> **INFORMATIONAL — NOT A QUALIFICATION OR SELECTION GRANT.**", "",
+             f"A: `{cmp['a']['subject']}` · B: `{cmp['b']['subject']}`", "",
+             "| Task | A observed performance | B observed performance | Comparison |",
+             "|---|---:|---:|---|"]
+    for row in cmp["tasks"]:
+        av = "—" if row["a"] is None else f"{row['a'] / 4 * 100:.0f}%"
+        bv = "—" if row["b"] is None else f"{row['b'] / 4 * 100:.0f}%"
+        lines.append(f"| {row['task']} | {av} | {bv} | {'comparable' if row['comparable'] else 'incomparable / insufficient evidence'} |")
+    if not cmp["compatible"]:
+        lines += ["", "Protocol mismatch (risk tier, profile, mapping version, or rater kind): no task winner is emitted."]
+    return "\n".join(lines) + "\n"

@@ -56,16 +56,16 @@ def render_markdown(record_id: str) -> str:
     a("")
     a("## Scope of the grant")
     a("")
-    a(f"Profile **{scope['profile']}** · scoped risk tier **{scope['risk_tier']}** · "
+    a(f"Profile **{scope['profile']}** · scoped risk tier **{C.risk_tier_label(scope['risk_tier'])}** · "
       f"subject kind **{scope['subject_kind']}**")
     a("")
-    a("| Competency area | Level | RT1 | RT2 | RT3 | RT4 |")
+    a("| Competency area | Level | RT1 — Minimal | RT2 — Moderate | RT3 — Significant | RT4 — Critical |")
     a("|---|---|---|---|---|---|")
     for area, d in scope["areas"].items():
         env = d.get("al_envelope", {})
         a(f"| {area} | {d.get('cl') or 'none'} | "
-          f"{env.get('RT1','-')} | {env.get('RT2','-')} | "
-          f"{env.get('RT3','-')} | {env.get('RT4','-')} |")
+          f"{C.autonomy_level_label(env.get('RT1'))} | {C.autonomy_level_label(env.get('RT2'))} | "
+          f"{C.autonomy_level_label(env.get('RT3'))} | {C.autonomy_level_label(env.get('RT4'))} |")
     a("")
     a("Autonomy levels are recommendations bounded by min(risk-tier cap, "
       "CL-earned cap); AL4 is never granted at initial qualification.")
@@ -126,14 +126,14 @@ def render_html(record_id: str) -> str:
         w(f"<tr><td>{k}</td><td>{e(v)}</td></tr>")
     w("</table>")
     w(f"<h2>Scope of the grant</h2><p>Profile <strong>{e(scope['profile'])}</strong> "
-      f"&middot; risk tier <strong>{e(scope['risk_tier'])}</strong></p>")
+      f"&middot; risk tier <strong>{e(C.risk_tier_label(scope['risk_tier']))}</strong></p>")
     w("<table><tr><th>Competency area</th><th>Level</th>"
-      "<th>RT1</th><th>RT2</th><th>RT3</th><th>RT4</th></tr>")
+      "<th>RT1 — Minimal</th><th>RT2 — Moderate</th><th>RT3 — Significant</th><th>RT4 — Critical</th></tr>")
     for area, d in scope["areas"].items():
         env = d.get("al_envelope", {})
         w(f"<tr><td>{e(area)}</td><td>{e(d.get('cl') or 'none')}</td>"
-          f"<td>{e(env.get('RT1','-'))}</td><td>{e(env.get('RT2','-'))}</td>"
-          f"<td>{e(env.get('RT3','-'))}</td><td>{e(env.get('RT4','-'))}</td></tr>")
+          f"<td>{e(C.autonomy_level_label(env.get('RT1')))}</td><td>{e(C.autonomy_level_label(env.get('RT2')))}</td>"
+          f"<td>{e(C.autonomy_level_label(env.get('RT3')))}</td><td>{e(C.autonomy_level_label(env.get('RT4')))}</td></tr>")
     w("</table>")
     if r.get("conditions"):
         w("<h2>Conditions</h2><ul>")

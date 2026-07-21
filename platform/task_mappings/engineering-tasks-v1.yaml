@@ -1,0 +1,39 @@
+id: aies-engineering-tasks-v1
+version: 1.0.0
+schema: 1
+status: draft
+description: >-
+  Subject-neutral Engineering Task Taxonomy and scenario mapping registry for
+  ECM. A mapping identifies what a scenario measures; it does not grant a
+  qualification or assert a subject capability.
+tasks:
+  - {id: ET-01, name: Requirements Analysis}
+  - {id: ET-02, name: Architecture Design}
+  - {id: ET-03, name: API Design}
+  - {id: ET-04, name: Code Generation}
+  - {id: ET-05, name: Refactoring}
+  - {id: ET-06, name: Debugging}
+  - {id: ET-07, name: Testing}
+  - {id: ET-08, name: Documentation}
+  - {id: ET-09, name: Performance Optimization}
+  - {id: ET-10, name: Security Review}
+  - {id: ET-11, name: Database Design}
+  - {id: ET-12, name: Migration}
+  - {id: ET-13, name: Infrastructure}
+  - {id: ET-14, name: Observability}
+  - {id: ET-15, name: Production Operations}
+rules:
+  - {area: CA-01, tasks: [ET-15], rationale: "AI-native SDLC foundations and autonomy operations."}
+  - {area: CA-02, tasks: [ET-01], rationale: "Requirements elicitation, intent, and traceability."}
+  - {area: CA-03, tasks: [ET-01], rationale: "Product definition and acceptance criteria inform requirements work."}
+  - {area: CA-04, tasks: [ET-02], rationale: "Architecture options, reviews, and decision records."}
+  - {area: CA-05, tasks: [ET-04], rationale: "Default implementation evidence."}
+  - {area: CA-05, family: refactoring, tasks: [ET-05], rationale: "Behavior-preserving code restructuring."}
+  - {area: CA-05, family: defect-fix, tasks: [ET-06], rationale: "Defect diagnosis and repair."}
+  - {area: CA-06, tasks: [ET-07], rationale: "Test design, review, evaluation, and quality strategy."}
+  - {area: CA-07, tasks: [ET-10], rationale: "Security, privacy, threat, and control review."}
+  - {area: CA-08, tasks: [ET-15], rationale: "Release engineering and production delivery operations."}
+  - {area: CA-09, tasks: [ET-14], rationale: "Observability, incident diagnosis, and reliability signals."}
+  - {area: CA-10, tasks: [ET-15], rationale: "Human oversight and operational control of AI work."}
+  - {area: CA-11, tasks: [ET-08], rationale: "Context assets, curation, and knowledge documentation."}
+  - {area: CA-12, tasks: [ET-15], rationale: "Risk, governance, guardrails, and operational safety."}

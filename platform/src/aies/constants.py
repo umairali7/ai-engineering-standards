@@ -28,6 +28,51 @@ DIMENSION_NAMES = {
 }
 
 RISK_TIERS = ("RT1", "RT2", "RT3", "RT4")
+RISK_TIER_NAMES = {
+    "RT1": "Minimal",
+    "RT2": "Moderate",
+    "RT3": "Significant",
+    "RT4": "Critical",
+}
+
+AUTONOMY_LEVEL_NAMES = {
+    "AL0": "Manual",
+    "AL1": "Assisted",
+    "AL2": "Collaborative",
+    "AL3": "Delegated",
+    "AL4": "Autonomous",
+}
+
+COMPETENCY_NAMES = {
+    "CA-01": "AI-Native SDLC Foundations",
+    "CA-02": "Business & Requirements Analysis with AI",
+    "CA-03": "Product & Experience Definition with AI",
+    "CA-04": "Architecture & Solution Design",
+    "CA-05": "AI-Assisted Implementation",
+    "CA-06": "Testing, Quality & Evaluation Engineering",
+    "CA-07": "Security & Privacy Engineering",
+    "CA-08": "Delivery & Release Engineering",
+    "CA-09": "Operations, Observability & Reliability",
+    "CA-10": "Human-AI Collaboration & Oversight",
+    "CA-11": "Context & Knowledge Engineering",
+    "CA-12": "Governance, Risk & AI Safety",
+}
+
+
+def risk_tier_label(tier: str | None) -> str:
+    """Return the human-readable risk-tier label while retaining its code."""
+    return f"{tier} — {RISK_TIER_NAMES[tier]}" if tier in RISK_TIER_NAMES else (tier or "-")
+
+
+def autonomy_level_label(level: str | None) -> str:
+    """Return the human-readable autonomy label while retaining its code."""
+    return (f"{level} — {AUTONOMY_LEVEL_NAMES[level]}"
+            if level in AUTONOMY_LEVEL_NAMES else (level or "-"))
+
+
+def competency_label(code: str | None) -> str:
+    """Return the human-readable competency label while retaining its code."""
+    return f"{code} — {COMPETENCY_NAMES[code]}" if code in COMPETENCY_NAMES else (code or "-")
 
 # AIES-AESQS-CS-01 §2 — risk-tier dimension weights.
 WEIGHTS = {

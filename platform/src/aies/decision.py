@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import datetime
 
-from . import __version__, workspace
+from . import __version__, constants as C, workspace
 
 OUTCOMES = ("PASS", "FAIL", "INCONCLUSIVE", "INSUFFICIENT EVIDENCE")
 _SEVERITY = {"FAIL": 3, "INCONCLUSIVE": 2, "INSUFFICIENT EVIDENCE": 1, "PASS": 0}
@@ -187,7 +187,7 @@ def render_markdown(result: dict) -> str:
     out.append(f"## {result['outcome']}")
     out.append("")
     out.append(f"**Subject:** `{result['subject']}` · **Risk tier:** "
-               f"{result['risk_tier']} · **Profile:** {result['assessment']['profile']}")
+               f"{C.risk_tier_label(result['risk_tier'])} · **Profile:** {result['assessment']['profile']}")
     out.append("")
     out.append("_The outcome is authoritative (conformity). The diagnostic and "
                "analytics sections below are informational and do not decide._")
@@ -264,7 +264,7 @@ def render_html(result: dict) -> str:
       f"<span class=muted>v{_esc(a['version'])}</span></h1>")
     w(f"<div class='banner grant'><span class={cls}>{_esc(outcome)}</span></div>")
     w(f"<p><strong>Subject:</strong> <code>{_esc(result['subject'])}</code> "
-      f"&middot; <strong>Risk tier:</strong> {_esc(result['risk_tier'])} "
+      f"&middot; <strong>Risk tier:</strong> {_esc(C.risk_tier_label(result['risk_tier']))} "
       f"&middot; <strong>Profile:</strong> {_esc(a['profile'])}</p>")
     w("<p class=muted>The outcome is authoritative (conformity). The diagnostic "
       "and analytics sections below are informational and do not decide.</p>")

@@ -32,6 +32,7 @@ def _residual_risks(pkg: dict) -> list[str]:
         risks.append("Scores are **judge-produced** — advisory until the judge is "
                      "calibrated against human anchors (AIES-AESQS-PR-01-R09).")
     for area, d in pkg["areas"].items():
+        area = C.competency_label(area)
         if not d["decisional"]:
             risks.append(f"**{area}**: non-decisional — grow the sample "
                          "(more `--repeats` or distinct scenarios) or combine runs.")
@@ -62,7 +63,7 @@ def render_markdown(run_id: str) -> str:
     a("")
     a(f"**Run:** `{pkg['run_id']}`  ")
     a(f"**Model:** `{pkg['model']['registry_id']}` ({pkg['model']['checksum']})  ")
-    a(f"**Profile:** {pkg['profile']} | **Scoped risk tier:** {pkg['risk_tier']} | "
+    a(f"**Profile:** {pkg['profile']} | **Scoped risk tier:** {C.risk_tier_label(pkg['risk_tier'])} | "
       f"**Subject kind:** {pkg['subject_kind']}")
     a("")
     a(f"> **{pkg['grant_status'].upper()}**")
@@ -79,7 +80,7 @@ def render_markdown(run_id: str) -> str:
     nondecisional = [area for area, d in pkg["areas"].items() if not d["decisional"]]
     if nondecisional:
         a("> **NON-DECISIONAL** - sample below the AESQS minimum for "
-          f"{', '.join(nondecisional)} (AIES-AESQS-CS-01 §6). These results "
+          f"{', '.join(C.competency_label(area) for area in nondecisional)} (AIES-AESQS-CS-01 §6). These results "
           "MUST NOT be presented as qualification evidence.")
         a("")
 
@@ -94,7 +95,7 @@ def render_markdown(run_id: str) -> str:
         verdicts[area] = v
         gates = ("PASS" if d.get("gates_passed") and not d.get("ev3_hard_fail")
                  else "FAIL")
-        a(f"| {area} | {'yes' if d['decisional'] else '**no**'} | {gates} | "
+        a(f"| {C.competency_label(area)} | {'yes' if d['decisional'] else '**no**'} | {gates} | "
           f"{d.get('cl') or '-'} | **{v}** — {why} |")
     a("")
     if all(v == "READY" for v in verdicts.values()):
@@ -103,7 +104,7 @@ def render_markdown(run_id: str) -> str:
           "(`aies grant <run> …`); the platform does not grant (D8).")
     else:
         blocked = [ar for ar, v in verdicts.items() if v != "READY"]
-        a(f"**Overall: BLOCKED** — not grant-ready for {', '.join(blocked)}. "
+        a(f"**Overall: BLOCKED** — not grant-ready for {', '.join(C.competency_label(area) for area in blocked)}. "
           "Resolve the blockers above before a grant.")
     a("")
     a("### Residual risk")
@@ -127,7 +128,7 @@ def render_markdown(run_id: str) -> str:
     a("")
 
     for area, d in pkg["areas"].items():
-        a(f"## {area} - {pkg['risk_tier']}")
+        a(f"## {C.competency_label(area)} — {C.risk_tier_label(pkg['risk_tier'])}")
         a("")
         a(f"Suite version: `{pkg['suite_versions'].get(area, 'unknown')}` | "
           f"scored items: {d['n_scored']} (minimum {d['min_sample']}) | "
@@ -165,12 +166,19 @@ def render_markdown(run_id: str) -> str:
         a("| Risk tier | Recommended max AL |")
         a("|---|---|")
         for rt, al in d["al_envelope"].items():
-            a(f"| {rt} | {al} |")
+            a(f"| **{C.risk_tier_label(rt)}** | **{C.autonomy_level_label(al)}** |")
         a("")
         a("AL4 is never recommended at initial qualification "
           "(AIES-AESQS-CS-01-R08). Recommendations inform a human decision; "
           "they are not grants.")
         a("")
+
+    from . import ecm
+    a(ecm.render_capability_summary_markdown(ecm.engineering_capability_matrix(run_id)).rstrip())
+    a("")
+    a("For the standalone, engineer-facing artifact, see the "
+      "[Engineering Capability Matrix](engineering-capability-matrix.md).")
+    a("")
 
     a("---")
     a(f"Raters: {', '.join(pkg['raters'])} | Aggregated: {pkg['aggregated_at']} | "
@@ -180,9 +188,17 @@ def render_markdown(run_id: str) -> str:
 
 
 def write_reports(run_id: str) -> dict[str, str]:
+    from . import ecm
+
     rdir = workspace.run_dir(run_id)
     md = render_markdown(run_id)
     (rdir / "report.md").write_text(md, encoding="utf-8")
     js = render_json(run_id)
     (rdir / "report.json").write_text(js, encoding="utf-8")
-    return {"markdown": str(rdir / "report.md"), "json": str(rdir / "report.json")}
+    matrix = ecm.engineering_capability_matrix(run_id)
+    ecm_paths = {
+        f"ecm_{format}": str(ecm.write_matrix(matrix, format))
+        for format in ("markdown", "json", "html")
+    }
+    return {"markdown": str(rdir / "report.md"), "json": str(rdir / "report.json"),
+            **ecm_paths}

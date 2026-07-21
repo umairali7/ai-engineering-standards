@@ -66,15 +66,29 @@ def render_html(run_id: str) -> str:
     w(f"<div class=muted>Run <code>{_esc(pkg['run_id'])}</code></div>")
     w(f"<p><strong>Deployment:</strong> <code>{_esc(pkg['model']['registry_id'])}</code> "
       f"&middot; <strong>Profile:</strong> {_esc(pkg['profile'])} "
-      f"&middot; <strong>Scoped risk tier:</strong> {_esc(pkg['risk_tier'])} "
+      f"&middot; <strong>Scoped risk tier:</strong> {_esc(C.risk_tier_label(pkg['risk_tier']))} "
       f"&middot; <strong>Subject:</strong> {_esc(pkg['subject_kind'])}</p>")
 
     w(f"<div class='banner grant'>{_esc(pkg['grant_status'])}</div>")
     nondec = [a for a, d in pkg["areas"].items() if not d["decisional"]]
     if nondec:
         w(f"<div class='banner nondec'>NON-DECISIONAL — sample below the AESQS "
-          f"minimum for {_esc(', '.join(nondec))} (AIES-AESQS-CS-01 §6). "
+          f"minimum for {_esc(', '.join(C.competency_label(area) for area in nondec))} (AIES-AESQS-CS-01 §6). "
           "These results must not be presented as qualification evidence.</div>")
+
+    from .report import _area_verdict
+    w("<h2>Grant Readiness</h2>")
+    w("<table><tr><th>Area</th><th>Decisional</th><th>Gates</th><th>CL</th>"
+      "<th>Verdict — informs a human grant</th></tr>")
+    for area, d in pkg["areas"].items():
+        verdict, why = _area_verdict(d)
+        gates = "PASS" if d.get("gates_passed") and not d.get("ev3_hard_fail") else "FAIL"
+        verdict_class = "pass" if verdict == "READY" else "fail"
+        w(f"<tr><td>{_esc(C.competency_label(area))}</td>"
+          f"<td>{'yes' if d['decisional'] else 'no'}</td><td>{gates}</td>"
+          f"<td>{_esc(d.get('cl') or '-')}</td>"
+          f"<td class={verdict_class}><strong>{_esc(verdict)}</strong> — {_esc(why)}</td></tr>")
+    w("</table>")
 
     w("<h2>Environment Fingerprint</h2><table class=env>")
     for k in ("machine", "cpu", "gpu", "ram_gb", "os", "python"):
@@ -87,7 +101,7 @@ def render_html(run_id: str) -> str:
       "is a re-qualification trigger (PLATFORM.md D7).</p>")
 
     for area, d in pkg["areas"].items():
-        w(f"<h2>{_esc(area)} — {_esc(pkg['risk_tier'])}</h2>")
+        w(f"<h2>{_esc(C.competency_label(area))} — {_esc(C.risk_tier_label(pkg['risk_tier']))}</h2>")
         w(f"<p class=muted>Suite <code>{_esc(pkg['suite_versions'].get(area,'?'))}</code> "
           f"&middot; scored items: {d['n_scored']} (minimum {d['min_sample']}) "
           f"&middot; decisional: {'yes' if d['decisional'] else 'NO'}</p>")
@@ -119,8 +133,12 @@ def render_html(run_id: str) -> str:
           f"<strong>Score-bounded CL:</strong> {_esc(d['cl'] or 'none')}</p>")
         w("<table><tr><th>Risk tier</th><th>Recommended max AL</th></tr>")
         for tier, al in d["al_envelope"].items():
-            w(f"<tr><td>{tier}</td><td>{al}</td></tr>")
+            w(f"<tr><td><strong>{_esc(C.risk_tier_label(tier))}</strong></td>"
+              f"<td><strong>{_esc(C.autonomy_level_label(al))}</strong></td></tr>")
         w("</table>")
+
+    from . import ecm
+    w(ecm.render_capability_summary_html(ecm.engineering_capability_matrix(run_id)))
 
     w("<footer>Raters: " + _esc(", ".join(pkg["raters"]))
       + f" &middot; Aggregated {_esc(pkg['aggregated_at'])}"

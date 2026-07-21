@@ -42,6 +42,8 @@ jobs:
         run: pytest tests/ -q
       - name: Suite catalog validation
         run: aies suites validate
+      - name: Release hygiene
+        run: python scripts/check_release_artifacts.py ..
       - name: Decision-engine conformance (golden Evidence Package corpus)
         # The arbiter: the reference engine must reproduce every expected outcome
         # in conformance/corpus. Drift from AESQS decision semantics fails here.

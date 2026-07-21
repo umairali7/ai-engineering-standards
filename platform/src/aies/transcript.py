@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import json
 
-from . import rating, runner, workspace
+from . import constants as C, rating, runner, workspace
 
 
 def _scenario_meta() -> dict:
@@ -61,7 +61,7 @@ def render_markdown(run_id: str, area: str | None = None) -> str:
     a("")
     a(f"**Model:** `{manifest['model']['registry_id']}`  ·  "
       f"**Profile:** {manifest.get('profile','?')}  ·  "
-      f"**Risk tier:** {manifest.get('risk_tier','?')}  ·  "
+      f"**Risk tier:** {C.risk_tier_label(manifest.get('risk_tier'))}  ·  "
       f"**Responses:** {len(responses)}")
     a("")
     a("Each item below is one scenario response: the task, the model's answer, "
@@ -74,7 +74,7 @@ def render_markdown(run_id: str, area: str | None = None) -> str:
         rfile = f"{rec['scenario_id']}-r{rec['repeat']}.json"
         j = rec.get("journey")
         head = (f"## {rec['scenario_id']}  ·  {rec.get('area','?')}  ·  "
-                f"{rec.get('risk_tier','?')}  ·  repeat {rec['repeat']}")
+                f"{C.risk_tier_label(rec.get('risk_tier'))}  ·  repeat {rec['repeat']}")
         if j:
             head += f"  ·  journey {j.get('id')} [{j.get('phase','')}]"
         a(head)

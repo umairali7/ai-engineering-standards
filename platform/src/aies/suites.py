@@ -44,6 +44,13 @@ def validate(root: Path | None = None) -> dict[str, Any]:
         errors.append(_issue(base, "no competency area directories found"))
 
     assessments = _validate_assessments(errors)
+    from . import task_mappings
+    try:
+        mapping_problems = task_mappings.validate(task_mappings.load())
+    except Exception as exc:  # pragma: no cover - malformed registry is surfaced
+        mapping_problems = [str(exc)]
+    for problem in mapping_problems:
+        errors.append(_issue(task_mappings.registry_path(), f"task mapping: {problem}"))
 
     return _report(base, areas, errors, warnings, assessments, applicability)
 
