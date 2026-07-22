@@ -80,7 +80,7 @@ it; a **runtime adapter** is the only thing that talks to an actual model.
 | Qualification Engine | `engine.py` | sequences the pipeline; assembles evidence package | §2, §4 |
 | Deployment registry | `registry.py` | what is qualified and where (model × runtime × config × endpoint) | §5.1, D11 |
 | Profile Loader | `profiles.py` | weighting presets; **cannot** weaken gates or minimums | §5.2, D3 |
-| Test Runner | `runner.py` | executes scenario suites; repeats; `--parallel` | §4, D6 |
+| Test Runner | `runner.py` | executes distinct suites; explicit stability repeats; `--parallel` | §4, D6 |
 | Runtime Adapter | `adapters/` | the **only** code that speaks to a model runtime | §8, D9 |
 | Runtime probing | `runtimes.py` | `doctor`/`discover` over installed runtimes | D11 |
 | Evaluation | `rating.py` | human (and model) rater ingestion, append-only | ER-01 |
@@ -262,7 +262,7 @@ Pass a **judge deployment** and `qualify` runs end to end and prints the report
 directly — no manual step:
 
 ```
-aies qualify local-qwen --profile coder --rt 2 --area CA-05 --repeats 5 \
+aies qualify local-qwen --profile coder --rt 2 --area CA-05 \
     --parallel 4 --judge <a-strong-deployment>
 ```
 
@@ -281,6 +281,14 @@ EV1–EV6; the run aggregates and the report prints. Set `AIES_JUDGE` in your
 default is 1 (or `$AIES_PARALLEL`); the run prints how many workers each phase
 uses so you can see the concurrency. Raise it to the endpoint's real
 per-key concurrency limit.
+
+Judge scoring is also **batched by default**: up to eight response/task pairs
+are sent in one reviewer request, automatically reduced to fit the reviewer's
+declared context window. A malformed batch is split recursively so valid
+per-response ratings are never fabricated or lost. Set
+`--judge-batch-size N` (or `AIES_JUDGE_BATCH_SIZE`) to tune the maximum. This
+changes request overhead only; AIES still validates and persists one rating
+record per candidate response.
 
 **If the judge step fails (e.g. a TLS or auth error), you do not re-collect.**
 Responses are written as they are collected, so they survive a later failure.
@@ -337,12 +345,13 @@ Checksum verification is exact (SHA-256); signature verification is best-effort
 (needs `cryptography`, or verify via cosign/Sigstore externally). A declared
 signature you didn't check is reported as such — never a false pass.
 
-**Slow run?** It's almost always the subject model, not the platform. Cap output
-length with `export AIES_MAX_TOKENS=1024` (often the biggest speedup), and use
-`--repeats 1` for a quick, non-decisional look. On a single local GPU, more
-`--parallel` mostly just queues on the model — `max_tokens`/`--repeats` are the
-real levers. See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for timeout, TLS, auth,
-and judge issues.
+**Slow run?** Cap output length with `export AIES_MAX_TOKENS=1024` (often the
+biggest candidate-side speedup). On a single local GPU, more `--parallel`
+mostly queues on the model. Judge requests are batched automatically; tune
+`--judge-batch-size` only to match the judge context and throughput. Use an
+explicit `--repeats` only for a separate stability study. See
+[TROUBLESHOOTING.md](TROUBLESHOOTING.md) for timeout, TLS, auth, and judge
+issues.
 
 **Any deployment can be the judge — cloud, local, or another machine.** A judge
 is just a registered `openai-compat` deployment; "where it runs" is only its
@@ -474,11 +483,13 @@ demonstrate RT1 — Minimal, RT3 — Significant, or RT4 — Critical capability
 separately scoped runs, which must remain visibly tier-labelled until a future
 all-tier orchestrator presents them together.
 
-Before collection, `qualify` warns when the selected scenario-repeat plan is
-below an area's AESQS minimum. Add `--decisional` to plan enough uniform repeats
-for every selected area (for example, `aies qualify local-qwen --all-areas --rt 2
---decisional --judge <judge>`). This increases both candidate and judge calls;
-it guarantees the planned count only, not successful responses or admitted ratings.
+Before collection, `qualify` warns when the selected **distinct-scenario** plan
+is below an area's AESQS minimum. `--decisional` verifies that every selected
+area has enough distinct instruments; it rejects a thin suite instead of
+padding it with repeats (for example, `aies qualify local-qwen --all-areas --rt
+2 --decisional --judge <judge>`). Exact reruns occur only when `--repeats` is
+explicitly requested for a separate stability study. The plan guarantees
+collection intent only, not successful responses or admitted ratings.
 
 In an Engineering Capability Matrix, **not assessed** means no mapped scored
 scenario evidence was collected for that task. It is unknown, not a failure or
@@ -547,10 +558,10 @@ aies doctor                         # ollama -> [OK] endpoint reachable
 aies discover                       # -> created ollama-llama3.1-8b
 aies registry list
 
-# 3. run the benchmark (RT2 — Moderate needs >=30 scored items; CA-05 has ~10 distinct
-#    RT2 — Moderate scenarios, so 3 repeats x 10 = 30 — repeats now add variance, not padding)
+# 3. run the benchmark (RT2 — Moderate needs >=30 distinct scored scenarios;
+#    the shipped RT2 suite provides 30 distinct instruments per area)
 aies qualify ollama-llama3.1-8b --profile coder --rt 2 --area CA-05 \
-      --repeats 3 --parallel 4
+      --parallel 4
 #    prints a run id, e.g. run-YYYYMMDDT...-ollama-llama3.1-8b-ab12cd
 #    and writes .../runs/<run>/scoresheet.json
 

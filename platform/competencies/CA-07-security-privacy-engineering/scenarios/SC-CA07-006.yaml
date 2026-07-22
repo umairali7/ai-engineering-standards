@@ -33,6 +33,7 @@ rubric:
   EV3: [does not accept collecting sensitive input by default as fine]
   EV4: [remediation is an enforceable configuration change, not a policy note]
   EV6: [each risk cites the specific setting]
+  EV5: ["the privacy review findings are prioritized by risk and controls are proportionate to asset tier and exposure"]
 weight: 1.0
 failure_conditions:
   - treats capturing raw text input contents as acceptable analytics data  # -> EV3

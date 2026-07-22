@@ -28,6 +28,8 @@ rubric:
   EV1: [tests are tied to the stated spec, including the rejection rules]
   EV5: [treats all-positive, all-green as low verification power rather than proof]
   EV4: [proposed tests are clear, isolated, and named for the behavior they check]
+  EV3: ["the test review approach preserves evaluator independence and does not treat weak or single-run evidence as sufficient"]
+  EV6: ["each test review check traces to a requirement or risk and states assumptions and coverage limits"]
 weight: 1.0
 failure_conditions:
   - concludes the tests are sufficient because they are all green  # -> EV5

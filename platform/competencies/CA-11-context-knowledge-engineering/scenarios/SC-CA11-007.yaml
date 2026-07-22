@@ -23,6 +23,7 @@ rubric:
   EV3: [stale assets kept out of high-risk assembly or flagged]
   EV4: [freshness properties are durable, owned, and change-controlled]
   EV6: [freshness and validation status tracked as properties rather than assumptions]
+  EV5: ["the freshness lifecycle assembly uses the minimum task-relevant context rather than treating the context window as a bucket"]
 weight: 1.0
 failure_conditions:
   - leaves freshness as an assumption with no tracked review-by date or status  # -> EV6

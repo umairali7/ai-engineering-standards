@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -104,7 +105,9 @@ def cmd_qualify(args) -> int:
                           f"{workers} worker(s)…", file=sys.stderr)
                 scoring = model_review.run_model_review(
                     args.resume, jdep,
-                    runtime=getattr(args, "reviewer_runtime", None), workers=workers)
+                    runtime=getattr(args, "reviewer_runtime", None), workers=workers,
+                    batch_size=(getattr(args, "judge_batch_size", None)
+                                or config.judge_batch_size()))
                 review_pkg = review.assemble_review_package(
                     args.resume, reviewer_label=f"model:{jdep}",
                     consider_advisory_review=getattr(args, "consider_advisory_review", False),
@@ -148,11 +151,16 @@ def cmd_qualify(args) -> int:
                         f"{row['area']} ({row['planned_items']}/{row['minimum_items']})"
                         for row in plan["areas"] if not row["decisional_if_scored"])
                     print("warning: the selected sample is non-decisional if all responses are scored: "
-                          + blocked + ". Add --decisional to plan enough repeats.", file=sys.stderr)
+                          + blocked + ". Add distinct scenarios; --decisional cannot pad breadth with repeats.", file=sys.stderr)
                 elif getattr(args, "decisional", False):
                     print("decisional sample plan confirmed for every selected area.", file=sys.stderr)
-                judge_hint = (" plus the same number of judge calls" if
-                              (getattr(args, "judge", None) or config.default_judge()) else "")
+                judge_hint = ""
+                if getattr(args, "judge", None) or config.default_judge():
+                    batch = (getattr(args, "judge_batch_size", None)
+                             or config.judge_batch_size())
+                    judge_hint = (f" plus approximately {math.ceil(plan['planned_items'] / batch)} "
+                                  f"batched judge calls (up to {batch} items each; "
+                                  "context limits may split batches)")
                 print(f"sample plan: {plan['planned_items']} candidate calls{judge_hint}.", file=sys.stderr)
                 if plan["unassessed_tasks"]:
                     print("warning: no direct scenario mapping for task(s): "
@@ -185,7 +193,9 @@ def cmd_qualify(args) -> int:
             try:
                 summary = model_review.run_model_review(
                     run_id, jdep, runtime=getattr(args, "reviewer_runtime", None),
-                    workers=workers)
+                    workers=workers,
+                    batch_size=(getattr(args, "judge_batch_size", None)
+                                or config.judge_batch_size()))
             except Exception as e:
                 print(f"error: automated scoring failed ({e}). The responses were "
                       f"collected; you can score manually — see the scoresheet in "
@@ -658,7 +668,9 @@ def cmd_review(args) -> int:
                       f"across {workers} worker(s)…", file=sys.stderr)
             scoring = model_review.run_model_review(
                 args.run, args.model_reviewer,
-                runtime=getattr(args, "reviewer_runtime", None), workers=workers)
+                runtime=getattr(args, "reviewer_runtime", None), workers=workers,
+                batch_size=(getattr(args, "judge_batch_size", None)
+                            or config.judge_batch_size()))
             if not (args.json):
                 print(f"reviewer model {scoring['reviewer']}: scored "
                       f"{scoring['scored']}/{scoring['responses']} responses "
@@ -1249,7 +1261,7 @@ def build_parser() -> argparse.ArgumentParser:
                    help="qualify across ALL competency areas CA-01…CA-12 "
                         "(a full SDLC capability profile; see `aies capabilities`)")
     q.add_argument("--decisional", action="store_true",
-                   help="plan enough uniform repeats for every selected area to meet "
+                   help="require the distinct-scenario plan for every selected area to meet "
                         "the AESQS sample minimum when admitted ratings are available")
     q.add_argument("--journey", default=None, metavar="JOURNEY_ID",
                    help="run a multi-phase journey instead of area suites")
@@ -1257,6 +1269,9 @@ def build_parser() -> argparse.ArgumentParser:
                    help="auto-score responses with this judge deployment (or 'self') "
                         "and print the report directly — no manual scoring. "
                         "Defaults to $AIES_JUDGE.")
+    q.add_argument("--judge-batch-size", type=int, default=None, metavar="N",
+                   help="responses per automated judge request (default 8, or "
+                        "$AIES_JUDGE_BATCH_SIZE; automatically bounded by context)")
     q.add_argument("--consider-advisory-review", action="store_true",
                    help="record that a human considered the automated reviewer scores in the generated report")
     q.add_argument("--human-evaluation", default=None, metavar="NAME",
@@ -1264,7 +1279,8 @@ def build_parser() -> argparse.ArgumentParser:
     q.add_argument("--reviewer-runtime", default=None,
                    help="disambiguate the judge deployment's runtime")
     q.add_argument("--repeats", type=int, default=None,
-                   help="override per-scenario repeats")
+                   help="explicit repeats for a separate stability study; repeats do not "
+                        "substitute for distinct scenario breadth")
     q.add_argument("--parallel", type=int, default=None, metavar="N",
                    help="concurrent inference calls for BOTH response collection "
                         "and judge scoring (default 1, or $AIES_PARALLEL; records "
@@ -1416,6 +1432,9 @@ def build_parser() -> argparse.ArgumentParser:
     rv.add_argument("--parallel", type=int, default=None, metavar="N",
                     help="concurrent reviewer calls when using --model-reviewer "
                          "(default 1, or $AIES_PARALLEL)")
+    rv.add_argument("--judge-batch-size", type=int, default=None, metavar="N",
+                    help="responses per reviewer request (default 8, or "
+                         "$AIES_JUDGE_BATCH_SIZE; automatically bounded by context)")
     rv.add_argument("--reviewer-qualified", action="store_true",
                     help="the reviewer holds a current review-class (CA-06) qualification")
     rv.add_argument("--calibration", default=None,

@@ -36,8 +36,10 @@ class MockAdapter(RuntimeAdapter):
         # obviously synthetic and the adapter self-declares in provenance, so
         # mock evidence can never masquerade as a real model's qualification.
         if self._is_review_prompt(request.prompt):
+            scored = (self._mock_batch_scores(request.prompt)
+                      if "\n\nITEMS:\n" in request.prompt else self._mock_scores(digest))
             return GenerationResponse(
-                text=self._mock_scores(digest),
+                text=scored,
                 usage={"prompt_chars": len(request.prompt), "latency_ms": 0},
                 raw={"adapter": self.adapter_id, "digest": digest, "mode": "judge"},
             )
@@ -83,6 +85,18 @@ class MockAdapter(RuntimeAdapter):
         dims = ("EV1", "EV2", "EV3", "EV4", "EV5", "EV6")
         scores = {d: 3 + (int(digest[i], 16) % 2) for i, d in enumerate(dims)}
         return json.dumps({**scores, "findings": []})
+
+    @classmethod
+    def _mock_batch_scores(cls, prompt: str) -> str:
+        """Honor the production batch-review contract in offline tests/demo."""
+        raw = prompt.split("\n\nITEMS:\n", 1)[1].split("\n\nReply with ONLY", 1)[0]
+        items = json.loads(raw)
+        rows = []
+        for item in items:
+            digest = hashlib.sha256(json.dumps(item, sort_keys=True).encode()).hexdigest()
+            scores = json.loads(cls._mock_scores(digest))
+            rows.append({"item_id": item["item_id"], **scores})
+        return json.dumps({"items": rows})
 
     def capabilities(self) -> dict:
         return {

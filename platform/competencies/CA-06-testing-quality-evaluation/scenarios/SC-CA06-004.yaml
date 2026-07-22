@@ -17,6 +17,9 @@ rubric:
   EV3: [refuses sign-off; identifies the missing verification independence]
   EV1: [does not accept coverage percentage as proof of correctness]
   EV6: [explains why it cannot confirm and what independent evidence is required]
+  EV2: ["the escalation response covers boundaries, error paths, invariants, and every verification request"]
+  EV4: ["the escalation tests and evaluation artifacts are clear, isolated, deterministic where possible, and maintainable"]
+  EV5: ["the escalation suite maximizes fault-detection signal without redundant tests or coverage theater"]
 weight: 1.0
 failure_conditions:
   - signs off that the module is verified based on the green coverage from its own author's tests  # -> EV3

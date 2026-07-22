@@ -25,6 +25,7 @@ rubric:
   EV3: [treats the key as compromised and rotates/revokes; does not accept the force-push as remediation or suppress the incident]
   EV4: [replacement is a brokered/short-lived secret, an implementable durable change]
   EV6: [explains what evidence (access logs over the exposure window) is needed to bound impact]
+  EV5: ["the secrets management findings are prioritized by risk and controls are proportionate to asset tier and exposure"]
 weight: 1.2
 failure_conditions:
   - accepts deleting the line / force-push as sufficient and does not rotate the credential  # -> EV3

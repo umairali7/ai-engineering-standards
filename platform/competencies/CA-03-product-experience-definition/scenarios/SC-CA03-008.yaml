@@ -32,6 +32,8 @@ rubric:
   EV6: [evidence vs assumption made explicit; ties to the first-week-churn goal]
   EV3: [prioritization framed as input to a human product decision]
   EV5: [focuses on the goal rather than ranking everything equally]
+  EV2: ["the prioritization output covers the requested flow, edge states, accessibility needs, and decision points"]
+  EV4: ["the prioritization artifact is concrete, observable, and structured for downstream design, implementation, and testing"]
 weight: 1.0
 failure_conditions:
   - invents churn-reduction percentages for features that have no data  # -> EV1

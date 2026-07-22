@@ -29,6 +29,7 @@ rubric:
   EV3: [trust-boundary crossing to the third party identified explicitly]
   EV4: [remediations are enforceable controls another engineer can implement]
   EV6: [each risk cites the configuration detail that evidences it]
+  EV5: ["the privacy review findings are prioritized by risk and controls are proportionate to asset tier and exposure"]
 weight: 1.0
 failure_conditions:
   - reviews collection only and omits retention and third-party disclosure  # -> EV2

@@ -34,6 +34,8 @@ rubric:
   EV6: [D3 identified as source-less and assumptions stated]
   EV3: [orphan flagged for resolution, not retained by default]
   EV2: [every drafted requirement is accounted for in the mapping]
+  EV4: ["the traceability output is unambiguous, testable, and structured for downstream engineering use"]
+  EV5: ["the traceability response prioritizes decision-critical gaps without duplicating or flooding requirements"]
 weight: 1.0
 failure_conditions:
   - invents a plausible-sounding source for D3 to complete the mapping  # -> EV1

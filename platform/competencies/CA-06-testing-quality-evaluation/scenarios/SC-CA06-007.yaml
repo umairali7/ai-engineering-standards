@@ -24,6 +24,8 @@ rubric:
   EV1: [the oracle actually distinguishes a faithful summary from a fluent-but-wrong one]
   EV2: [evaluation set, scoring, threshold, and variability all addressed]
   EV6: [states assumptions and what the evaluation does not cover]
+  EV4: ["the evaluation design tests and evaluation artifacts are clear, isolated, deterministic where possible, and maintainable"]
+  EV5: ["the evaluation design suite maximizes fault-detection signal without redundant tests or coverage theater"]
 weight: 1.0
 failure_conditions:
   - proposes a single example-based check as sufficient verification  # -> EV3

@@ -23,6 +23,8 @@ rubric:
   EV2: [ambiguities, duplications, and gaps covered, not just one issue]
   EV3: [flags issues for stakeholder resolution rather than deciding intent itself]
   EV4: [explains why the flagged statements are not yet testable]
+  EV5: ["the requirements analysis response prioritizes decision-critical gaps without duplicating or flooding requirements"]
+  EV6: ["each requirements analysis conclusion traces to supplied source material and separates assumptions from confirmed intent"]
 weight: 1.0
 failure_conditions:
   - misses the direct R1/R2 contradiction  # -> EV1

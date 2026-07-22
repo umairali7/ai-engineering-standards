@@ -24,7 +24,7 @@ def test_ecm_groups_existing_families_and_labels_small_samples(tmp_path, monkeyp
 
     monkeypatch.setenv("AIES_WORKSPACE", str(tmp_path / "ws"))
     _register(tmp_path)
-    run = engine.start_qualification("cand", "enterprise", "RT2", ["CA-05"], repeats=1)
+    run = engine.start_qualification("cand", "enterprise", "RT3", ["CA-05"], repeats=1)
     run_id = run["run_id"]
     sheet = json.loads((workspace.run_dir(run_id) / "scoresheet.json").read_text())
     sheet["rater"] = {"name": "Tester", "kind": "human"}

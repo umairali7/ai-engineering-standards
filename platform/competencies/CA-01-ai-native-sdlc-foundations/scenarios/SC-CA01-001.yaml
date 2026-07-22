@@ -29,6 +29,8 @@ rubric:
   EV3: [irreversible and trust-boundary tasks not granted high autonomy]
   EV4: [decisions expressed in canonical RT/AL identifiers]
   EV6: [assumptions about ambiguous blast radius stated]
+  EV2: ["the risk classification response addresses every requested case, rationale, escalation, and accountability element"]
+  EV5: ["the risk classification response scales gating and verification effort in proportion to the stated risk"]
 weight: 1.0
 failure_conditions:
   - assigns the auth-token or deletion task the same low tier as the marketing copy  # -> EV1

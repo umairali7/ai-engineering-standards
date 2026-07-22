@@ -32,7 +32,7 @@ def _grant(tmp_path):
     import json
     _register(tmp_path)
     run = engine.start_journey("demo", "research", "JOURNEY-01", repeats=1) \
-        if False else engine.start_qualification("demo", "research", "RT1", ["CA-05"], repeats=10)
+        if False else engine.start_qualification("demo", "research", "RT2", ["CA-05"], repeats=1)
     sheet = json.loads((workspace.run_dir(run["run_id"]) / "scoresheet.json").read_text())
     sheet["rater"] = {"name": "Alice (ROLE-13)", "kind": "human"}
     for it in sheet["items"]:

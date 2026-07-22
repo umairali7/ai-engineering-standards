@@ -25,6 +25,8 @@ rubric:
   EV3: [no production-mutating action taken during diagnosis]
   EV5: [narrows candidates efficiently using provenance and timing rather than guessing]
   EV6: [conclusions tied to recorded evidence, unknowns stated]
+  EV2: ["the incident diagnosis response covers system and agent evidence, decision triggers, fallback state, and operator action"]
+  EV4: ["the incident diagnosis telemetry, runbook, and state transitions are durable and operable by another responder"]
 weight: 1.0
 failure_conditions:
   - blames the agent-authored change with no supporting telemetry           # -> EV6

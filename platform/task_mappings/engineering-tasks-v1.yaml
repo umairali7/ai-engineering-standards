@@ -27,13 +27,21 @@ rules:
   - {area: CA-02, tasks: [ET-01], rationale: "Requirements elicitation, intent, and traceability."}
   - {area: CA-03, tasks: [ET-01], rationale: "Product definition and acceptance criteria inform requirements work."}
   - {area: CA-04, tasks: [ET-02], rationale: "Architecture options, reviews, and decision records."}
+  - {area: CA-04, family: api-performance-design, tasks: [ET-02, ET-03, ET-09], rationale: "Architecture evidence directly exercises API contracts and performance design."}
+  - {area: CA-04, family: api-database-design, tasks: [ET-02, ET-03, ET-11], rationale: "Architecture evidence directly exercises API contracts and database design."}
   - {area: CA-05, tasks: [ET-04], rationale: "Default implementation evidence."}
-  - {area: CA-05, family: refactoring, tasks: [ET-05], rationale: "Behavior-preserving code restructuring."}
-  - {area: CA-05, family: defect-fix, tasks: [ET-06], rationale: "Defect diagnosis and repair."}
+  - {area: CA-05, family: refactoring, tasks: [ET-04, ET-05], rationale: "Behavior-preserving code restructuring also produces verified source changes."}
+  - {area: CA-05, family: defect-fix, tasks: [ET-04, ET-06], rationale: "Defect diagnosis and repair also produces verified source changes."}
+  - {area: CA-05, family: performance-database, tasks: [ET-04, ET-09, ET-11], rationale: "Executable implementation evidence directly exercises performance optimization and database behavior."}
+  - {area: CA-05, family: performance-optimization, tasks: [ET-04, ET-09], rationale: "Executable implementation evidence directly exercises measured performance optimization."}
   - {area: CA-06, tasks: [ET-07], rationale: "Test design, review, evaluation, and quality strategy."}
+  - {area: CA-06, family: api-validation, tasks: [ET-03, ET-07], rationale: "Contract and integration evaluation directly exercises API design behavior."}
+  - {area: CA-06, family: database-validation, tasks: [ET-07, ET-11], rationale: "Stateful and migration evaluation directly exercises database design behavior."}
   - {area: CA-07, tasks: [ET-10], rationale: "Security, privacy, threat, and control review."}
   - {area: CA-08, tasks: [ET-15], rationale: "Release engineering and production delivery operations."}
-  - {area: CA-09, tasks: [ET-14], rationale: "Observability, incident diagnosis, and reliability signals."}
+  - {area: CA-08, family: migration-infrastructure, tasks: [ET-12, ET-13, ET-15], rationale: "Release evidence directly exercises migration and infrastructure delivery."}
+  - {area: CA-09, tasks: [ET-06, ET-14], rationale: "Operational diagnosis directly exercises debugging as well as observability and reliability."}
+  - {area: CA-09, family: migration-infrastructure, tasks: [ET-06, ET-12, ET-13, ET-14], rationale: "Migration diagnosis directly exercises debugging, migration, and infrastructure reliability."}
   - {area: CA-10, tasks: [ET-15], rationale: "Human oversight and operational control of AI work."}
   - {area: CA-11, tasks: [ET-08], rationale: "Context assets, curation, and knowledge documentation."}
   - {area: CA-12, tasks: [ET-15], rationale: "Risk, governance, guardrails, and operational safety."}

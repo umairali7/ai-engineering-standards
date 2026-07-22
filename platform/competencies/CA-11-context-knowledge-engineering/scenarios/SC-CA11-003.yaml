@@ -24,6 +24,7 @@ rubric:
   EV3: [stale assets kept out of high-risk assembly or flagged]
   EV4: [retirement removes the asset from assembly sources with a record]
   EV6: [freshness tracked; the defect traced back to the responsible asset]
+  EV5: ["the freshness lifecycle assembly uses the minimum task-relevant context rather than treating the context window as a bucket"]
 weight: 1.0
 failure_conditions:
   - leaves stale assets in the assembly sources or "retires" them only in place  # -> EV4

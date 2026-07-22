@@ -27,6 +27,8 @@ rubric:
   EV2: [failure window between send and mark addressed or acknowledged]
   EV3: [no fix that risks losing reminders silently]
   EV6: [unknowns and assumptions stated explicitly]
+  EV4: ["the defect fix code is readable, well-factored, convention-aligned, and safe for another engineer to evolve"]
+  EV5: ["the defect fix solution is proportionate and avoids gratuitous complexity, dependencies, queries, or rework"]
 weight: 1.0
 failure_conditions:
   - claims the loop is single-threaded by design and no defect exists  # -> EV1

@@ -18,10 +18,13 @@ scenario suites, versioned evidence packages, a deterministic decision engine,
 and human-recorded grants. This is more credible and useful than a prose-only
 framework.
 
-At the time of this assessment, the qualification platform had 12 competency
-areas, 200 scenarios, 163 passing tests, a passing suite validator (with
-warnings), and a passing 8-case decision-engine conformance corpus. These are
-repository observations, not a claim of external validation.
+The qualification platform now has 12 competency areas and 484 distinct
+scenario instruments, including at least 30 RT2 — Moderate scenarios in every area. The
+suite validator now reports zero rubric-coverage warnings, while the
+8-case decision-engine conformance corpus remains the data-first arbiter. These
+are repository observations, not a claim of external validation; the 268 new
+RT2 instruments remain design-review pending and the corpus remains
+empirically uncalibrated until a real-model panel is completed.
 
 ## Strengths
 
@@ -53,9 +56,10 @@ repository observations, not a claim of external validation.
 
 ### P1 — make the measurement system decision-ready
 
-4. Grow each competency area into versioned public and held-out scenario sets.
-   Preserve the distinction between exploratory/smoke coverage and decisive
-   evidence; do not label an undersized sample as qualification evidence.
+4. Human-review and empirically calibrate the new RT2 breadth, then grow RT3 —
+   Significant and RT4 — Critical into versioned public and held-out sets.
+   Preserve the distinction between design-time coverage and validated
+   measurement; do not treat raw scenario count as calibration.
 5. Run the existing empirical-calibration methodology on a pre-registered,
    diverse real-model panel. Publish discrimination, repeatability, rater
    agreement, ceiling/floor behavior, and scenario revisions.
@@ -68,10 +72,9 @@ repository observations, not a claim of external validation.
 
 ### P2 — improve maintainability and adoption
 
-8. Add CI for Markdown/relative-link validation and documentation consistency.
-   Key counts and claims should be generated or tested: for example, older
-   documentation refers to 189 scenarios whereas the validated corpus contains
-   200.
+8. Keep CI for Markdown/relative-link validation and documentation consistency,
+   and generate or test key corpus counts so prose does not drift from the
+   validated 484-instrument corpus.
 9. Add Python quality/security checks proportionate to the project: formatting,
    linting, static type checking, coverage reporting, and dependency audit.
 10. Narrow the initial adoption wedge. A strong first offer is deployment

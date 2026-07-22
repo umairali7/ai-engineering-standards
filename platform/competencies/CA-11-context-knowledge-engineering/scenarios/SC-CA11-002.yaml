@@ -24,6 +24,8 @@ rubric:
   EV2: [relevance, version, and budget all considered]
   EV5: [minimal relevant set chosen; everything-in-context rejected]
   EV6: [selected asset versions pinned so consumption is traceable]
+  EV3: ["the context assembly plan protects context sources from untrusted writes, stale high-risk use, and delivery-chain poisoning"]
+  EV4: ["the context assembly assets are owned, versioned, change-controlled, and maintained through a single authoritative source"]
 weight: 1.0
 failure_conditions:
   - assembles the whole store "to be safe"  # -> EV5

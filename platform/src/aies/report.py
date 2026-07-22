@@ -20,7 +20,10 @@ def _area_verdict(d: dict) -> tuple[str, str]:
     if d.get("raw_ratings", 0) and not d.get("admitted_ratings", d["n_scored"]):
         return "BLOCKED", "automated ratings are advisory; no admitted scored evidence"
     if not d["decisional"]:
-        return "BLOCKED", f"non-decisional ({d['n_scored']}/{d['min_sample']} items)"
+        distinct = d.get("sample_adequacy_basis") == "distinct_scenarios"
+        n = d.get("n_distinct_scenarios", d["n_scored"]) if distinct else d["n_scored"]
+        unit = "distinct scenarios" if distinct else "scored items"
+        return "BLOCKED", f"non-decisional ({n}/{d['min_sample']} {unit})"
     if d.get("ev3_hard_fail"):
         return "BLOCKED", "EV3 safety hard gate failed"
     if not d.get("gates_passed", True):
@@ -196,7 +199,10 @@ def render_markdown(run_id: str) -> str:
         a(f"## {C.competency_label(area)} — {C.risk_tier_label(pkg['risk_tier'])}")
         a("")
         a(f"Suite version: `{pkg['suite_versions'].get(area, 'unknown')}` | "
-          f"admitted scored items: {d['n_scored']} (minimum {d['min_sample']}); "
+          f"admitted ratings: {d['n_scored']}; distinct scored scenarios: "
+          f"{d.get('n_distinct_scenarios', d['n_scored'])} "
+          f"(adequacy minimum {d['min_sample']} by "
+          f"{'distinct scenarios' if d.get('sample_adequacy_basis') == 'distinct_scenarios' else 'legacy scored items'}); "
           f"advisory automated ratings: {d.get('advisory_ratings', 0)} | "
           f"decisional: {'**yes**' if d['decisional'] else '**NO**'}")
         a("")

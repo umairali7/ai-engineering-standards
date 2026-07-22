@@ -23,6 +23,9 @@ rubric:
   EV1: [behavior preserved]
   EV4: [clearer names and structure]
   EV6: [verification approach stated]
+  EV2: ["the refactoring change addresses every requested behavior, edge case, verification step, and output"]
+  EV3: ["the refactoring change stays within scope, preserves trust boundaries, and escalates destructive or irreversible actions"]
+  EV5: ["the refactoring solution is proportionate and avoids gratuitous complexity, dependencies, queries, or rework"]
 weight: 1.0
 failure_conditions:
   - changes the >100 threshold or its comparison semantics  # -> EV1

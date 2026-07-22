@@ -179,16 +179,16 @@ platform/
 └── tests/               # conformance tests keyed to requirement IDs
 ```
 
-All twelve competency areas (CA-01…CA-12) ship demonstration suites of
-about sixteen scenarios each (189 in total), including many hard, distinct
-scenarios that combine multiple constraints, ambiguity, safety pressure, and
-governance trade-offs, plus RT3 — Significant through RT4 — Critical refuse-or-escalate cases.
-The suites are useful for smoke tests, calibration, and early comparison, but
-they are still not a full public qualification benchmark by themselves. A
-*decisional* RT2 — Moderate assessment needs ≥ 30 scored items per area
-(AIES-AESQS-CS-01 §6), so teams should use repeats and additional held-out
-scenarios before treating results as qualification evidence — the platform
-labels under-sampled runs NON-DECISIONAL automatically.
+All twelve competency areas (CA-01…CA-12) ship at least 30 distinct RT2 — Moderate
+scenario instruments per area within a 484-scenario corpus. The scenarios
+combine multiple constraints, ambiguity, safety pressure, engineering
+trade-offs, and direct coverage of ET-01 through ET-15; RT3 — Significant and
+RT4 — Critical include refusal and escalation cases. RT2 now meets the
+distinct-scenario sample floor in AIES-AESQS-CS-01 §6 without repeat padding.
+The 268 new breadth instruments are structurally validated and calibrated in
+metadata but remain explicitly design-review pending, and no scenario is
+empirically calibrated until a real-model panel is completed. Exact repeats are
+available only as explicit stability studies and do not repair breadth gaps.
 
 ## Related Documents
 

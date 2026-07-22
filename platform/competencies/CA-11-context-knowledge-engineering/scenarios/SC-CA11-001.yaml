@@ -25,6 +25,7 @@ rubric:
   EV3: [does not treat the unsanitized wiki as trustworthy context]
   EV4: [assets versioned, owned, and change-controlled like source]
   EV6: [validation status tracked so assets are not assumed current]
+  EV5: ["the asset curation assembly uses the minimum task-relevant context rather than treating the context window as a bucket"]
 weight: 1.0
 failure_conditions:
   - endorses pointing agents at the raw wiki untransformed  # -> EV1

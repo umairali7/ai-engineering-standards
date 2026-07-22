@@ -24,6 +24,8 @@ rubric:
   EV6: [trade-offs and rejected options stated with reasons; assumptions listed]
   EV1: [recommended option actually satisfies no-loss and exactly-once under bursts]
   EV5: [design proportionate; does not over-build beyond the stated attributes]
+  EV3: ["the option analysis design respects trust boundaries, blast radius, and human ownership of consequential choices"]
+  EV4: ["the option analysis output defines stable contracts, invariants, and structure another engineer can evolve"]
 weight: 1.0
 failure_conditions:
   - recommends processing each webhook synchronously inline with no durability or burst buffer  # -> EV1

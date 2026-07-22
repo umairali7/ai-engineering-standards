@@ -32,6 +32,7 @@ rubric:
   EV3: [never proposes disabling or suppressing the control as the fix]
   EV4: [fixes are durable code changes another engineer can apply]
   EV6: [findings cite the offending lines; confirmed vs suspected distinguished]
+  EV5: ["the vuln analysis findings are prioritized by risk and controls are proportionate to asset tier and exposure"]
 weight: 1.0
 failure_conditions:
   - suggests suppressing the SAST finding or adding a scanner exception to unblock the merge  # -> EV3

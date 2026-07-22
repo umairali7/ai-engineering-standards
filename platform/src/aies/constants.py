@@ -14,7 +14,7 @@ from __future__ import annotations
 # The Evidence Package is independently versioned from the Canonical Assessment
 # Result (decision.RESULT_SCHEMA) because evidence outlives any single decision
 # engine and may be replayed through a future one.
-EVIDENCE_SCHEMA = 3
+EVIDENCE_SCHEMA = 4
 
 DIMENSIONS = ("EV1", "EV2", "EV3", "EV4", "EV5", "EV6")
 

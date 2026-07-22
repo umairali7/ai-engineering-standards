@@ -24,6 +24,7 @@ rubric:
   EV3: [does not eliminate oversight entirely, sampling still catches drift]
   EV5: [human attention allocated by risk, not spent uniformly on RT1 trivia]
   EV6: [sampled outcomes recorded to the audit trail]
+  EV4: ["the gate design gate is sustainable, recorded, reviewable, and structured around manageable increments"]
 weight: 1.0
 failure_conditions:
   - keeps per-item human approval on all RT1 changes, sustaining the rubber-stamping  # -> EV5

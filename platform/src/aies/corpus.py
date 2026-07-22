@@ -50,8 +50,6 @@ def _jaccard(a: set, b: set) -> float:
 
 def _load_scenarios(root=None) -> dict[str, list[dict]]:
     """Per-area list of {id, prompt, ceiling, family, twin} for the corpus."""
-    import yaml
-
     from . import runner, suites
 
     base = root or runner.competencies_dir()
@@ -65,16 +63,15 @@ def _load_scenarios(root=None) -> dict[str, list[dict]]:
         scen_dir = area_dir / "scenarios"
         for f in sorted(scen_dir.glob("*.yaml")) if scen_dir.exists() else []:
             try:
-                sc = yaml.safe_load(f.read_text(encoding="utf-8"))
+                documents = runner.load_scenario_documents(f)
             except Exception:                                # pragma: no cover
                 continue
-            if not isinstance(sc, dict):
-                continue
-            cal = sc.get("calibration") or {}
-            out.setdefault(area, []).append({
-                "id": sc.get("id", f.stem), "prompt": sc.get("prompt", ""),
-                "ceiling": cal.get("ceiling_anchor", ""), "family": sc.get("family"),
-                "twin": cal.get("hold_out_twin")})
+            for sc in documents:
+                cal = sc.get("calibration") or {}
+                out.setdefault(area, []).append({
+                    "id": sc.get("id", f.stem), "prompt": sc.get("prompt", ""),
+                    "ceiling": cal.get("ceiling_anchor", ""), "family": sc.get("family"),
+                    "twin": cal.get("hold_out_twin")})
     return out
 
 

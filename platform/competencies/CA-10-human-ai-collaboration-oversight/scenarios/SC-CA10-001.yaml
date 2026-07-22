@@ -25,6 +25,7 @@ rubric:
   EV3: [no default-open behavior; expiry escalates, never auto-approves]
   EV4: [reviewable unit bounded; gate is operable and sustainable]
   EV6: [decision, approver identity, and rationale recorded to the audit trail]
+  EV5: ["the gate design design allocates scarce human attention in proportion to risk without weakening accountability"]
 weight: 1.0
 failure_conditions:
   - designs a gate that auto-approves items when the time budget expires  # -> EV3

@@ -34,6 +34,7 @@ rubric:
   EV3: [no path lets the gated actor approve or override its own change, missing provenance blocks]
   EV4: [hardened workflow is operable configuration another engineer can maintain]
   EV6: [each concern cites the offending line, outcomes recorded]
+  EV5: ["the pipeline gate strategy automates checks and scales release effort in proportion to risk and reversibility"]
 weight: 1.0
 failure_conditions:
   - accepts warn-and-continue on missing provenance as adequate       # -> EV3

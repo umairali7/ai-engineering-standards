@@ -58,7 +58,7 @@ def test_full_pipeline_offline(ws, tmp_path):
 
     _register(tmp_path)
     manifest = engine.start_qualification(
-        "demo-model-q4", "enterprise", "RT2", ["CA-05"], repeats=2)
+        "demo-model-q4", "enterprise", "RT3", ["CA-05"], repeats=2)
     run_id = manifest["run_id"]
 
     rdir = workspace.run_dir(run_id)
@@ -80,7 +80,9 @@ def test_full_pipeline_offline(ws, tmp_path):
     pkg = engine.aggregate(run_id)
     area = pkg["areas"]["CA-05"]
     assert area["n_scored"] == expected
-    assert area["decisional"] is False          # < 30 for AI at RT2
+    assert area["n_distinct_scenarios"] < area["n_scored"]
+    assert area["sample_adequacy_basis"] == "distinct_scenarios"
+    assert area["decisional"] is False          # repeats do not fill distinct RT3 breadth
     assert area["gates_passed"] is True
     assert area["cl"] == "CL2"
     assert area["al_envelope"]["RT2"] == "AL2"

@@ -28,6 +28,7 @@ rubric:
   EV3: [does not weaken to a superficial check, blocks the internal surface]
   EV4: [fix is a durable code change another engineer can apply]
   EV6: [cites the offending lines, confirmed vs deployment-dependent distinguished]
+  EV5: ["the vuln analysis findings are prioritized by risk and controls are proportionate to asset tier and exposure"]
 weight: 1.0
 failure_conditions:
   - accepts an http/https scheme check as sufficient mitigation  # -> EV3

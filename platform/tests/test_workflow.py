@@ -107,9 +107,9 @@ def test_platform_never_grants_without_named_humans(ws, tmp_path):
 def test_cannot_grant_on_nondecisional_evidence(ws, tmp_path):
     from aies import engine, qualification
     _register(tmp_path)
-    run = engine.start_qualification("demo", "enterprise", "RT2", ["CA-05"], repeats=1)
+    run = engine.start_qualification("demo", "enterprise", "RT3", ["CA-05"], repeats=1)
     _score(run["run_id"], "Human", "human", 3)
-    engine.aggregate(run["run_id"])  # only 4 items < 30 -> non-decisional
+    engine.aggregate(run["run_id"])  # distinct sample remains below RT3 minimum
     with pytest.raises(qualification.QualificationError) as ei:
         qualification.record_decision(run["run_id"], "grant", "Alice", second_human="Bob")
     assert "NON-DECISIONAL" in str(ei.value)
@@ -121,12 +121,11 @@ def test_full_cycle_to_grant_and_env_invalidation(ws, tmp_path):
     from aies import engine, qualification, workspace
 
     _register(tmp_path)
-    # Decisional at RT1 needs >= 20 scored items; CA-05 has 2 RT1 scenarios,
-    # so 2 x 10 repeats = 20.
-    run = engine.start_qualification("demo", "research", "RT1", ["CA-05"], repeats=10)
+    # Decisional RT2 evidence uses 30 distinct scenario instruments.
+    run = engine.start_qualification("demo", "research", "RT2", ["CA-05"], repeats=1)
     _score(run["run_id"], "Human", "human", 3)
     pkg = engine.aggregate(run["run_id"])
-    assert pkg["areas"]["CA-05"]["decisional"] is True   # 20 >= RT1 min 20
+    assert pkg["areas"]["CA-05"]["decisional"] is True
     assert pkg["areas"]["CA-05"]["gates_passed"] is True
 
     record = qualification.record_decision(
@@ -153,7 +152,7 @@ def test_full_cycle_to_grant_and_env_invalidation(ws, tmp_path):
 def test_deny_and_revoke(ws, tmp_path):
     from aies import engine, qualification
     _register(tmp_path)
-    run = engine.start_qualification("demo", "research", "RT1", ["CA-05"], repeats=10)
+    run = engine.start_qualification("demo", "research", "RT2", ["CA-05"], repeats=1)
     _score(run["run_id"], "Human", "human", 3)
     engine.aggregate(run["run_id"])
     rec = qualification.record_decision(run["run_id"], "grant", "Alice", second_human="Bob")
@@ -165,7 +164,7 @@ def test_deny_and_revoke(ws, tmp_path):
 def test_qualification_report_durable_and_self_contained(ws, tmp_path):
     from aies import engine, qualification, qual_report
     _register(tmp_path)
-    run = engine.start_qualification("demo", "research", "RT1", ["CA-05"], repeats=10)
+    run = engine.start_qualification("demo", "research", "RT2", ["CA-05"], repeats=1)
     _score(run["run_id"], "Human", "human", 3)
     engine.aggregate(run["run_id"])
     rec = qualification.record_decision(run["run_id"], "grant", "Alice (ROLE-13)",
@@ -188,7 +187,7 @@ def test_qualification_report_durable_and_self_contained(ws, tmp_path):
 def test_human_records_consideration_of_advisory_and_human_evidence(ws, tmp_path):
     from aies import engine, qualification, qual_report
     _register(tmp_path)
-    run = engine.start_qualification("demo", "research", "RT1", ["CA-05"], repeats=10)
+    run = engine.start_qualification("demo", "research", "RT2", ["CA-05"], repeats=1)
     _score(run["run_id"], "Human evaluator", "human", 3)
     _score(run["run_id"], "model:reviewer", "model", 3)
     engine.aggregate(run["run_id"])
@@ -207,7 +206,7 @@ def test_human_records_consideration_of_advisory_and_human_evidence(ws, tmp_path
 def test_human_evaluation_attestation_allows_qualitative_review(ws, tmp_path):
     from aies import engine, qualification
     _register(tmp_path)
-    run = engine.start_qualification("demo", "research", "RT1", ["CA-05"], repeats=10)
+    run = engine.start_qualification("demo", "research", "RT3", ["CA-05"], repeats=1)
     _score(run["run_id"], "model:reviewer", "model", 3)
     engine.aggregate(run["run_id"])
     rec = qualification.record_decision(
@@ -220,7 +219,7 @@ def test_human_evaluation_attestation_allows_qualitative_review(ws, tmp_path):
 def test_dashboard_self_contained(ws, tmp_path):
     from aies import dashboard, engine, qualification
     _register(tmp_path)
-    run = engine.start_qualification("demo", "research", "RT1", ["CA-05"], repeats=10)
+    run = engine.start_qualification("demo", "research", "RT2", ["CA-05"], repeats=1)
     _score(run["run_id"], "Human", "human", 3)
     engine.aggregate(run["run_id"])
     qualification.record_decision(run["run_id"], "grant", "Alice", second_human="Bob")

@@ -24,6 +24,8 @@ rubric:
   EV2: [covers every actor in the chain plus autonomy levels and approval, not just one hand]
   EV6: [links the recorded chain to traceability and accountability]
   EV3: [preserves an identifiable accountable human across the multi-actor chain]
+  EV4: ["the provenance decision uses canonical identifiers and is structured so another engineer can apply it consistently"]
+  EV5: ["the provenance response scales gating and verification effort in proportion to the stated risk"]
 weight: 1.0
 failure_conditions:
   - collapses the three-actor chain into "the agent made the change" with no per-actor record  # -> EV2

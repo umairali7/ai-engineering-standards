@@ -23,6 +23,8 @@ rubric:
   EV4: [the experience is concrete and testable rather than described aspirationally]
   EV3: [treats mandatory-category and prioritization decisions as human product calls, flagged not decided]
   EV6: [assumptions about unspecified behavior stated for confirmation]
+  EV1: ["the experience definition definition satisfies the stated user goal without fabricated research, metrics, or product intent"]
+  EV5: ["the experience definition scope stays proportionate to the stated goal and avoids unrequested product expansion"]
 weight: 1.0
 failure_conditions:
   - specifies only successful toggling and ignores the OS-push-permission and save-failure states  # -> EV2

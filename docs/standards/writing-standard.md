@@ -48,7 +48,7 @@ The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", and "MAY" in this docu
 ## 6. Cross-References
 
 - [AIES-STD-03-R15 — Cross-references include relative links and document IDs] References to other AIES documents MUST use a relative link from the citing file's location together with the target's document ID: `[Taxonomy (AIES-SHARED-02)](../../Shared/Taxonomy/README.md)`.
-- [AIES-STD-03-R16 — Individual requirements are cited by complete requirement ID] References to individual requirements MUST cite the requirement ID (e.g., "per [AIES-AESQS-CS-01-R13 — Repeated-task variance can fail EV1 or EV3 gates](../../AESQS/capability-scoring.md#6-statistical-requirements)").
+- [AIES-STD-03-R16 — Individual requirements are cited by complete requirement ID] References to individual requirements MUST cite the requirement ID (e.g., "per [AIES-AESQS-CS-01-R13 — Stability variance can fail or suspend EV1 or EV3 claims](../../AESQS/capability-scoring.md#6-statistical-requirements)").
 
 ## 7. Heading and Anchor Stability
 

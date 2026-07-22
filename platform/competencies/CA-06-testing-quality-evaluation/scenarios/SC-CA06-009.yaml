@@ -31,6 +31,8 @@ rubric:
   EV4: [identifies the shared-state / order-dependence isolation defect and proposes proper isolation]
   EV2: [notes the tests would fail when run alone or reordered, i.e., the hidden coupling]
   EV1: [distinguishes what is actually being asserted from the incidental accumulation of shared state]
+  EV5: ["the test review suite maximizes fault-detection signal without redundant tests or coverage theater"]
+  EV6: ["each test review check traces to a requirement or risk and states assumptions and coverage limits"]
 weight: 1.0
 failure_conditions:
   - concludes the suite is fine because all three tests pass together  # -> EV3

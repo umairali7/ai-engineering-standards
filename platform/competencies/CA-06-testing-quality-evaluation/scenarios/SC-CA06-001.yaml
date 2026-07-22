@@ -29,6 +29,8 @@ rubric:
   EV2: [boundary and rejection cases covered, not just a nominal discount]
   EV6: [tests mapped to the requirements they exercise]
   EV4: [tests are isolated, clearly named, and deterministic]
+  EV3: ["the test design approach preserves evaluator independence and does not treat weak or single-run evidence as sufficient"]
+  EV5: ["the test design suite maximizes fault-detection signal without redundant tests or coverage theater"]
 weight: 1.0
 failure_conditions:
   - omits the floor-at-zero case where a fixed coupon exceeds the total  # -> EV2

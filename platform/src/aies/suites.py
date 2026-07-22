@@ -9,7 +9,7 @@ from typing import Any
 import yaml
 
 from .constants import DIMENSIONS, RISK_TIERS
-from .runner import SCENARIO_REQUIRED, competencies_dir
+from .runner import SCENARIO_REQUIRED, SuiteError, competencies_dir, load_scenario_documents
 
 AREA_RE = re.compile(r"^CA-(\d{2})")
 SCENARIO_RE = re.compile(r"^SC-(CA\d{2})-(\d{3})$")
@@ -126,20 +126,20 @@ def calibrate(root: Path | None = None) -> dict[str, Any]:
             continue
         scen_dir = area_dir / "scenarios"
         files = sorted(scen_dir.glob("*.yaml")) if scen_dir.exists() else []
-        row = {"area": area_code, "scenarios": len(files), "calibrated": 0,
+        expanded: list[dict] = []
+        for f in files:
+            try:
+                expanded.extend(load_scenario_documents(f))
+            except (OSError, yaml.YAMLError, SuiteError):
+                continue
+        row = {"area": area_code, "scenarios": len(expanded), "calibrated": 0,
                "ceiling_anchor": 0, "floor_trap": 0, "refuse_case": 0,
                "hold_out_twins": 0, "design_reviewed": 0, "empirically_calibrated": 0,
                "rt3_rt4": 0, "families": 0, "high_tier_families": 0,
                "rt": {"RT1": 0, "RT2": 0, "RT3": 0, "RT4": 0}}
         families: set[str] = set()
         high_families: set[str] = set()
-        for f in files:
-            try:
-                sc = yaml.safe_load(f.read_text(encoding="utf-8"))
-            except Exception:  # pragma: no cover
-                continue
-            if not isinstance(sc, dict):
-                continue
+        for sc in expanded:
             if sc.get("risk_tier") in row["rt"]:
                 row["rt"][sc["risk_tier"]] += 1
             fam = sc.get("family")
@@ -242,23 +242,29 @@ def _validate_area(
                 errors.append(_issue(area_dir / "rubric.yaml", f"unknown sub_criteria dimensions {unknown}"))
 
     valid_scenarios = 0
+    expanded_count = 0
     for path in scenario_files:
-        scenario = _load_yaml(path, errors)
-        if not isinstance(scenario, dict):
+        try:
+            scenarios = load_scenario_documents(path)
+        except (OSError, yaml.YAMLError, SuiteError) as exc:
+            errors.append(_issue(path, f"could not load scenario document: {exc}"))
             continue
-        before = len(errors)
-        _validate_scenario(path, scenario, area_code, seen_ids, errors, warnings,
-                           applicability)
-        if len(errors) == before:
-            valid_scenarios += 1
+        packed = len(scenarios) > 1
+        expanded_count += len(scenarios)
+        for scenario in scenarios:
+            before = len(errors)
+            _validate_scenario(path, scenario, area_code, seen_ids, errors, warnings,
+                               applicability, packed=packed)
+            if len(errors) == before:
+                valid_scenarios += 1
 
-    if len(scenario_files) < 10:
+    if expanded_count < 10:
         warnings.append(_issue(scenario_dir, "fewer than 10 scenarios; target suites need broad coverage"))
 
     return {
         "area": area_code,
         "path": str(area_dir),
-        "scenarios": len(scenario_files),
+        "scenarios": expanded_count,
         "valid_scenarios": valid_scenarios,
     }
 
@@ -271,6 +277,7 @@ def _validate_scenario(
     errors: list[dict[str, str]],
     warnings: list[dict[str, str]],
     applicability: list[dict[str, str]] | None = None,
+    packed: bool = False,
 ) -> None:
     applicability = applicability if applicability is not None else []
     missing = [field for field in SCENARIO_REQUIRED if field not in scenario]
@@ -284,7 +291,7 @@ def _validate_scenario(
         expected_area = scenario_id[3:7].replace("CA", "CA-")
         if expected_area != area_code:
             errors.append(_issue(path, f"id prefix {expected_area} does not match directory {area_code}"))
-        if path.stem != scenario_id:
+        if not packed and path.stem != scenario_id:
             errors.append(_issue(path, "file name must match scenario id"))
         if scenario_id in seen_ids:
             errors.append(_issue(path, f"duplicate scenario id also used by {seen_ids[scenario_id]}"))

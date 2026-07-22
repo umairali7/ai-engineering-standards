@@ -24,6 +24,7 @@ rubric:
   EV3: [implicated grant suspended; not restored without re-qualification]
   EV4: [corrective actions tracked to closure through governed work items]
   EV6: [findings route to qualification consequences; recorded in the audit trail]
+  EV5: ["the incident governance controls and evidence demands are proportionate to risk and use the narrowest sufficient scope"]
 weight: 1.0
 failure_conditions:
   - closes the incident out with no post-incident review  # -> EV2

@@ -28,6 +28,7 @@ rubric:
   EV3: [does not treat the wildcard-plus-credentials CORS setting as acceptable]
   EV4: [remediations are durable configuration changes another engineer can apply]
   EV6: [each finding cites the line, deployment-dependent assumptions stated]
+  EV5: ["the vuln analysis findings are prioritized by risk and controls are proportionate to asset tier and exposure"]
 weight: 1.0
 failure_conditions:
   - calls the wildcard-origin-with-credentials CORS configuration fine  # -> EV1

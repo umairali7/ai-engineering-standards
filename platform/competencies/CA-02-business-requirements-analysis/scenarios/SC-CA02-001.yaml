@@ -23,6 +23,8 @@ rubric:
   EV3: [elicits intent from humans rather than generating synthetic needs]
   EV2: [covers ambiguities, edge conditions, and missing stakeholders]
   EV6: [flags assumptions for human confirmation]
+  EV4: ["the elicitation output is unambiguous, testable, and structured for downstream engineering use"]
+  EV5: ["the elicitation response prioritizes decision-critical gaps without duplicating or flooding requirements"]
 weight: 1.0
 failure_conditions:
   - delivers a finished list of requirements as if the intent were known  # -> EV3

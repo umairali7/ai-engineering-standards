@@ -24,6 +24,8 @@ rubric:
   EV1: [recommended option actually meets the stated requirements]
   EV2: [outage tolerance and extensibility both addressed]
   EV5: [design proportionate to the modest stated volume, not over-engineered]
+  EV3: ["the option analysis design respects trust boundaries, blast radius, and human ownership of consequential choices"]
+  EV4: ["the option analysis output defines stable contracts, invariants, and structure another engineer can evolve"]
 weight: 1.0
 failure_conditions:
   - recommends one option without naming any rejected alternative or trade-off  # -> EV6

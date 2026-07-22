@@ -23,6 +23,8 @@ rubric:
   EV2: [promotion criteria and the reversibility/demotion path both addressed]
   EV5: [governance proportionate to the RT1 risk, not over-gated]
   EV6: [autonomy change recorded with evidence, decider, and review date]
+  EV3: ["the autonomy governance decision preserves prohibited boundaries, external guardrails, escalation, and evidence-based degradation"]
+  EV4: ["the autonomy governance control follows policy hierarchy and is versioned, reviewable, narrowly scoped, and time-bounded"]
 weight: 1.0
 failure_conditions:
   - promotes with no recorded evidence, decider, or review date                # -> EV6

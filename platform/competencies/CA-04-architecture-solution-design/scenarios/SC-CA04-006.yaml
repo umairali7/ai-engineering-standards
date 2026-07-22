@@ -24,6 +24,8 @@ rubric:
   EV1: [does not assert a deduplication or staging layer already exists]
   EV4: [proposes an explicit idempotency key / upsert contract rather than a vague "add checks"]
   EV5: [improvements proportionate to a simple nightly import]
+  EV3: ["the design review design respects trust boundaries, blast radius, and human ownership of consequential choices"]
+  EV6: ["the design review recommendation records assumptions, trade-offs, evidence, and rejected alternatives"]
 weight: 1.0
 failure_conditions:
   - approves the design as fine and misses the duplicate-insertion / non-idempotency problem  # -> EV2

@@ -24,6 +24,7 @@ rubric:
   EV3: [rollback path tested before promotion; no big-bang release of the payment change]
   EV5: [release strategy proportionate to the change's risk and reversibility]
   EV6: [infrastructure assumptions stated explicitly]
+  EV4: ["the release strategy controls are versioned, reusable, operable, and not dependent on one-off manual waivers"]
 weight: 1.0
 failure_conditions:
   - proposes a single big-bang deploy of the payment change with no progressive exposure  # -> EV3

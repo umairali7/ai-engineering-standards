@@ -58,6 +58,20 @@ def test_mock_reviewer_is_judge_aware_and_emits_parseable_scores(ws, tmp_path):
     assert ratings and all(r["provenance"]["rater_kind"] == "model" for r in ratings)
 
 
+def test_batched_judge_reduces_calls_but_records_every_response(ws, tmp_path):
+    from aies import engine, model_review
+    _register(tmp_path, "candidate")
+    _register(tmp_path, "reviewer")
+    run = engine.start_qualification(
+        "candidate", "research", "RT2", ["CA-05"], repeats=1, workers=4)
+    summary = model_review.run_model_review(
+        run["run_id"], "reviewer", workers=4, batch_size=8)
+    assert summary["scored"] == summary["responses"]
+    assert summary["ratings_written"] == summary["responses"]
+    assert summary["judge_calls"] < summary["responses"]
+    assert summary["batch_fallbacks"] == 0
+
+
 def test_mock_scores_are_deterministic_and_in_range():
     from aies.adapters.mock import MockAdapter
     import json

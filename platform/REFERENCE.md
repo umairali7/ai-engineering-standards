@@ -47,7 +47,7 @@ Every artifact carries a schema version; envelopes are field-append-only
 |---|---|---|---|
 | Assessment | `schema` | `1` | authored (`assessments/*.yaml`) |
 | Profile | `version` | semver | authored (`profiles/*.yaml`) |
-| Evidence Package | `evidence_schema` | `3` | `qualify --resume` / `aggregate` |
+| Evidence Package | `evidence_schema` | `4` | `qualify --resume` / `aggregate` |
 | Canonical Assessment Result | `result_schema` | `1` | the decision engine |
 | Decision semantics | `decision_semantics_version` | `1.0` (AESQS CS-01 §8) | the standard |
 

@@ -8,8 +8,9 @@ def test_shipped_competency_suites_are_valid():
 
     assert report["valid"], report["errors"]
     assert report["summary"]["areas"] == 12
-    assert report["summary"]["scenarios"] >= 132
+    assert report["summary"]["scenarios"] == 484
     assert report["summary"]["valid_scenarios"] == report["summary"]["scenarios"]
+    assert report["warnings"] == []
 
 
 def test_validator_rejects_bad_scenario(tmp_path: Path):

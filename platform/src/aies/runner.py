@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import datetime
 import hashlib
+import copy
 from pathlib import Path
 
 import yaml
@@ -47,6 +48,36 @@ def _suite_version(area_dir: Path) -> str:
     return "suite-sha256:" + h.hexdigest()[:16]
 
 
+def _deep_merge(base: dict, override: dict) -> dict:
+    """Merge scenario-pack defaults without sharing mutable values."""
+    out = copy.deepcopy(base)
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(out.get(key), dict):
+            out[key] = _deep_merge(out[key], value)
+        else:
+            out[key] = copy.deepcopy(value)
+    return out
+
+
+def load_scenario_documents(path: Path) -> list[dict]:
+    """Load one scenario or expand a declarative scenario pack."""
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if isinstance(data, dict) and data.get("kind") == "aies-scenario-pack-v1":
+        defaults = data.get("defaults")
+        entries = data.get("scenarios")
+        if not isinstance(defaults, dict) or not isinstance(entries, list) or not entries:
+            raise SuiteError(f"{path.name}: scenario pack needs mapping defaults and scenarios")
+        out = []
+        for index, entry in enumerate(entries, start=1):
+            if not isinstance(entry, dict):
+                raise SuiteError(f"{path.name}: scenario pack item {index} must be a mapping")
+            out.append(_deep_merge(defaults, entry))
+        return out
+    if not isinstance(data, dict):
+        raise SuiteError(f"{path.name}: scenario must be a mapping")
+    return [data]
+
+
 def load_area(area: str) -> tuple[dict, list[dict], str]:
     """Load an area's definition and scenarios. `area` may be the CA code
     (CA-05) or the full directory name."""
@@ -62,11 +93,11 @@ def load_area(area: str) -> tuple[dict, list[dict], str]:
     definition = yaml.safe_load((area_dir / "definition.yaml").read_text(encoding="utf-8"))
     scenarios = []
     for p in sorted((area_dir / "scenarios").glob("*.yaml")):
-        sc = yaml.safe_load(p.read_text(encoding="utf-8"))
-        missing = [f for f in SCENARIO_REQUIRED if f not in sc]
-        if missing:
-            raise SuiteError(f"{p.name}: missing fields {missing}")
-        scenarios.append(sc)
+        for sc in load_scenario_documents(p):
+            missing = [f for f in SCENARIO_REQUIRED if f not in sc]
+            if missing:
+                raise SuiteError(f"{p.name}/{sc.get('id', '?')}: missing fields {missing}")
+            scenarios.append(sc)
     if not scenarios:
         raise SuiteError(f"{area_dir.name} has no scenarios")
     return definition, scenarios, _suite_version(area_dir)
@@ -160,7 +191,7 @@ def execute_suite(
     workers: int = 1,
     skip_existing: bool = False,
 ) -> list[Path]:
-    """Execute scenarios (with per-scenario repeats) and append response
+    """Execute each scenario once, or with an explicit repeat override, and append response
     records. Returns the paths written, in deterministic scenario/repeat
     order regardless of `workers`.
 
@@ -186,7 +217,7 @@ def execute_suite(
     rdir = workspace.run_dir(run_id) / "responses"
     tasks = []  # (scenario, repeat)
     for sc in scenarios:
-        n_repeats = repeats or int(sc.get("repeats_min", 1))
+        n_repeats = repeats or 1
         for r in range(1, n_repeats + 1):
             if skip_existing and (rdir / f"{sc['id']}-r{r}.json").exists():
                 continue

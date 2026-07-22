@@ -24,6 +24,7 @@ rubric:
   EV3: [autonomy steps down before disabling; pause works without redeploy]
   EV4: [degradation is a designed, maintainable state machine]
   EV6: [assumptions about the runtime stated explicitly]
+  EV5: ["the degradation design response prioritizes decision-changing signals and delegates diagnosis before mutating remediation"]
 weight: 1.0
 failure_conditions:
   - grants AL3 with no degradation triggers or fallback level (one-way autonomy)  # -> EV3

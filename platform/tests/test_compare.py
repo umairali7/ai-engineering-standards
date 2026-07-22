@@ -35,7 +35,7 @@ def _register(tmp_path, model_id):
 
 def _qualified_run(tmp_path, model_id, score):
     from aies import engine, rating, workspace
-    manifest = engine.start_qualification(model_id, "enterprise", "RT2",
+    manifest = engine.start_qualification(model_id, "enterprise", "RT3",
                                           ["CA-05"], repeats=1)
     run_id = manifest["run_id"]
     sheet = json.loads((workspace.run_dir(run_id) / "scoresheet.json")
@@ -70,7 +70,7 @@ def test_history_and_comparison_deltas(ws, tmp_path):
     for dim, v in area["dimensions"].items():
         assert v["delta"] == 1.0, dim
     assert area["aggregate"]["delta"] == 1.0
-    # Non-decisional caveat surfaces (4 items < 30 for AI at RT2).
+    # Non-decisional caveat surfaces (distinct sample below AI RT3 minimum).
     assert any("NON-DECISIONAL" in c for c in cmp["caveats"])
     md = compare.render_markdown(cmp)
     assert "Delta (B-A)" in md and "+1.0" in md
@@ -102,7 +102,7 @@ def test_cross_tier_comparison_refused(ws, tmp_path):
     run_a = _qualified_run(tmp_path, "model-a", 3)
     pkg_path = workspace.run_dir(run_a) / "evidence-package.json"
     pkg = workspace.read_json(pkg_path)
-    pkg["risk_tier"] = "RT3"
+    pkg["risk_tier"] = "RT2"
     workspace.write_json(pkg_path, pkg, overwrite=True)
     _register(tmp_path, "model-b")
     run_b = _qualified_run(tmp_path, "model-b", 3)

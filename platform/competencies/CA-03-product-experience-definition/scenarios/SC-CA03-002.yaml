@@ -23,6 +23,8 @@ rubric:
   EV2: [important states covered, including non-happy paths]
   EV1: [criteria faithfully express the story, no fabricated behavior]
   EV6: [open decisions flagged; ties back to the story]
+  EV3: ["the acceptance criteria response leaves evidence-dependent product and risk decisions with an accountable human"]
+  EV5: ["the acceptance criteria scope stays proportionate to the stated goal and avoids unrequested product expansion"]
 weight: 1.0
 failure_conditions:
   - writes vague, untestable criteria such as "the wishlist should be delightful"  # -> EV4

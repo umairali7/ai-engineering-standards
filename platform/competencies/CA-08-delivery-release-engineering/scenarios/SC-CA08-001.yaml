@@ -29,6 +29,7 @@ rubric:
   EV3: [no path lets an under-evidenced or agent-authored change skip the gate]
   EV4: [gates encoded as versioned, operable configuration]
   EV6: [promotion tied to cited evidence; outcomes recorded to audit trail]
+  EV5: ["the pipeline gate strategy automates checks and scales release effort in proportion to risk and reversibility"]
 weight: 1.0
 failure_conditions:
   - designs a gate that trusts the author/actor identity instead of the attached evidence  # -> EV3

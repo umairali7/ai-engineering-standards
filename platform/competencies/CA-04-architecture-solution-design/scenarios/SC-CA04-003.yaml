@@ -23,6 +23,8 @@ rubric:
   EV3: [decision framed around isolating the high-risk component behind an enforced boundary]
   EV4: [contract-first, agent-legible structure is explicit]
   EV2: [consequences and new operational costs stated, not just benefits]
+  EV1: ["the decision record reasoning is technically sound and satisfies the stated requirements and quality attributes"]
+  EV5: ["the decision record solution is the simplest proportionate design that meets the stated constraints"]
 weight: 1.0
 failure_conditions:
   - records only the decision and its upside, with no rejected alternative or rationale  # -> EV6

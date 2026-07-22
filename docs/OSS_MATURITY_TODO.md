@@ -25,12 +25,12 @@ foundation to a genuinely reusable public OSS standard and platform.
 | Done | P0 | Clean release artifacts | `make release-hygiene` and CI reject tracked `.env`, `.DS_Store`, `__pycache__`, `.pytest_cache`, egg-info, bytecode, or `aies-workspace`; the tracked release tree passes |
 | Open | P0 | Publish independent pilot | Two full real-model runs, one hosted and one local, with reports and lessons learned |
 | Done | P1 | Add suite validator | `aies suites validate` checks schemas, IDs, dimensions, risk tiers, repeats, and suite counts; CI runs it |
-| In progress | P1 | Grow scenario suites | Current: 212 scenarios across 12 areas, with RT2 — Moderate distinct coverage around 10/area and high-tier behavioral diversity met; target: full decisional-distinct sizes (30/50/100) plus held-out sets |
+| In progress | P1 | Grow scenario suites | Current: 484 scenarios across 12 areas, with at least 30 distinct RT2 — Moderate instruments per area and high-tier behavioral diversity met; remaining target: human review and empirical calibration, full distinct RT3 — Significant / RT4 — Critical sizes, and protected held-out sets |
 | Open | P1 | Empirically calibrate the real-model panel | Score independently rated real-model runs, run `aies suites empirical`, publish the pre-registered panel/study, and have a human record any scenario promotion; design-time calibration alone remains insufficient |
 | Done | P1 | Widen high-tier behavioral diversity | Added distinct RT3 — Significant through RT4 — Critical decision kinds in CA-02, CA-03, CA-04, CA-05, CA-06, CA-08, and CA-10; `aies corpus health` now meets its diversity target without repeated refusal/escalation padding |
 | Done | P1 | Fill justified RT4 — Critical coverage gaps | Added genuinely RT4 — Critical-appropriate scenarios for CA-08 regulated release authorization, CA-10 critical override governance, and CA-11 legal-hold context isolation |
-| In progress | P1 | Separate deliberate partial rubrics from coverage defects | ADR-0007 is accepted and `rubric_applicability` is schema-validated and separately reported. Human-review each of the 124 legacy omissions as add-rubric / declare-with-rationale / revise; unexpected omissions remain warnings until the reviewed migration is complete |
-| In progress | P1 | Make RT2 — Moderate runs diversity-ready without repeats | Qualification-grade RT2 — Moderate runs use 30 distinct scenarios per competency area with `--repeats 1`; current corpus has 9–10 distinct RT2 — Moderate scenarios per area and needs 241 individually reviewed additions plus explicit public/held-out selection policy. Repeats remain optional stability evidence and never count toward distinct-task breadth |
+| Done | P1 | Separate deliberate partial rubrics from coverage defects | ADR-0007 is accepted; all 124 legacy omissions were reviewed and resolved with explicit, task-family-specific anchors. The migration ledger records every disposition, while future undeclared omissions remain validator warnings |
+| Done | P1 | Make RT2 — Moderate runs diversity-ready without repeats | Every area has at least 30 distinct RT2 — Moderate instruments; the default all-area plan is 387 unique candidate calls, `--decisional` cannot pad breadth with repeats, and explicit repeats remain separate stability evidence under ADR-0011. The 268 new instruments are structurally validated and transparently marked human-design-review pending |
 | Done | P1 | Add scenario authoring guide | [AIES-PLAT-07 — Authoring Competency Scenarios](../platform/SCENARIOS.md) — schema, quality bar, risk-tier and rubric guidance, validation |
 | Done | P1 | Add ecosystem bridge | `aies import` ingests external EV1–EV6 eval results (Inspect/DeepEval/other) as automated ratings; `aies export` writes a generic eval-log JSON that round-trips through import |
 | Done | P1 | Executable repository conformance audit | `aies audit <repo>` — maturity per competency area, three-state evidence (verified/asserted/gap), `--gate --rt N` for CI ([ADR-0004](../adr/ADR-0004-Repository-Conformance-Audit.md)) |
@@ -43,7 +43,7 @@ foundation to a genuinely reusable public OSS standard and platform.
 | Done | P1 | Deliver an evidence-derived ECM companion artifact | `aies capabilities <run-or-deployment> --ecm` writes task-mapped Markdown/JSON/HTML from canonical records; it retains source scenario-family evidence, labels evidence confidence and `not assessed` gaps, and cannot alter qualification or grant outcomes |
 | Done | P1 | Define ECM confidence and evidence-coverage rules | Every task result exposes rating observations, distinct scenarios/responses, rater protocol, mapping version, deterministic evidence confidence, and status; sparse or non-decisional evidence renders “collect more evidence”, not a strength claim |
 | Done | P2 | Establish a governed Engineering Task Mapping registry | The versioned, schema-validated `engineering-tasks-v1.yaml` maps every shipped scenario to ET-01 through ET-15 with rationale; validation and tests prevent unmapped or unknown task claims |
-| In progress | P2 | Refine task mappings beyond scenario families | Review scenario-level mappings and add genuinely assessed API, performance, testing, security, migration, infrastructure, and production-operation scenarios before claiming those task rows |
+| In progress | P2 | Refine task mappings beyond scenario families | Structural coverage is complete: every ET-01 through ET-15 task has at least 30 directly mapped RT2 — Moderate instruments, including dedicated API, performance, database, migration, infrastructure, refactoring, and operational-debugging evidence. Human mapping review and empirical task discrimination remain before external demonstrated-capability claims |
 | Done | P2 | Add bounded Deployment Guidance | ECM and the embedded report render deterministic Recommended / Use only with human review / Not recommended sections from task evidence and qualification constraints; no guidance can create a grant |
 | Open | P2 | Add matched-run ECM comparison and workload-based selection guidance | Comparison only renders task-level deltas when suite/profile/risk tier/repeats/rater protocol are compatible. A later selection view accepts a declared workload mix and operational constraints (for example latency, cost, context window, tool reliability, availability), explains evidence and constraints, and never creates a global “best model” or bypasses risk/autonomy gates |
 | In progress | P2 | Publish security contact | GitHub Private Vulnerability Reporting is live; a dedicated security email and encryption key remain to be published |
@@ -52,15 +52,17 @@ foundation to a genuinely reusable public OSS standard and platform.
 
 ## 3. Scenario Suite Status
 
-The platform now ships 212 scenarios across 12 competency areas. The
+The platform now ships 484 scenarios across 12 competency areas. The
 `SC-CAxx-011`…`016` scenarios are complex, distinct cases (multi-constraint,
 adversarial, cross-cutting, and RT3 — Significant through RT4 — Critical refuse-or-escalate) intended to exercise
 judgment rather than single-concept recall, and to reduce run repetition by
 giving decisional samples more distinct prompts.
 
-These are still demonstration suites. Qualification-grade operation requires
-larger, versioned, held-out suites and enough scored samples to meet the
-AESQS minimums per risk tier.
+RT2 — Moderate now has enough distinct public instruments for its 30-scenario
+per-area breadth minimum without repeats. Qualification-grade operation still
+requires human design review of the new tranche, independently admitted
+ratings, empirical calibration, and protected held-out suites. Higher tiers
+still require distinct expansion before no-repeat decisional use.
 
 Completed scenario tranche:
 
@@ -69,12 +71,13 @@ Completed scenario tranche:
 | yes | Added one complex integration scenario per competency area (`SC-CA01-011` through `SC-CA12-011`) |
 | yes | Added agentic tool-security coverage to CA-07 via `SC-CA07-011` |
 | yes | Added external-framework governance response coverage to CA-12 via `SC-CA12-011` |
-| yes | Added 12 distinct high-tier scenarios for the identified behavioral-diversity and RT4 — Critical coverage gaps; the current validated corpus contains 212 scenarios and `aies corpus health` reports no high-tier diversity gaps |
+| yes | Added 12 distinct high-tier scenarios for the identified behavioral-diversity and RT4 — Critical coverage gaps; `aies corpus health` reports no high-tier diversity gaps |
+| yes | Added 268 complex RT2 — Moderate instruments: every competency now has at least 30 distinct RT2 scenarios and every ET task has at least 30 direct mappings; packed storage does not change per-scenario validation or evidence identity |
 | yes | Added a [AIES-PLAT-07 — Authoring Competency Scenarios](../platform/SCENARIOS.md) so contributors can grow suites consistently |
 
-Next implementation item: grow each area to full **decisional-distinct** sizes
-(≥ 20/30/50/100 distinct scenarios per RT1 — Minimal through RT4 — Critical) and add **held-out** suites, so a
-decisional run draws distinct prompts without leaning on repeats.
+Next implementation item: human-review and empirically calibrate the new RT2
+tranche, then grow RT1 — Minimal, RT3 — Significant, and RT4 — Critical to full
+**decisional-distinct** sizes and add protected **held-out** suites.
 
 ## 4. Implementation Sequence
 

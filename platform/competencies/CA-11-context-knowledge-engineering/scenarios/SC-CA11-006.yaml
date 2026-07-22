@@ -24,6 +24,7 @@ rubric:
   EV3: [does not publish the unsanitized mix of current and stale steps as trustworthy]
   EV4: [asset is versioned, owned, and change-controlled rather than a personal file]
   EV6: [validation status tracked so the asset is not assumed current]
+  EV5: ["the asset curation assembly uses the minimum task-relevant context rather than treating the context window as a bucket"]
 weight: 1.0
 failure_conditions:
   - publishes the notes as-is without resolving shorthand, ownership, or the current/stale mix  # -> EV1

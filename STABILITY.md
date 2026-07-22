@@ -61,7 +61,7 @@ extension is permitted (see COMPATIBILITY.md). A breaking change requires an ADR
 | **RuntimeAdapter** (semantic core) | Platform | `v1.0` | `platform/src/aies/adapters/base.py` |
 | **Assessment schema** | Standard | `1` | `assessments.SUPPORTED_SCHEMA` |
 | **Profile schema** | Standard | `1` | `platform/profiles/*.yaml` |
-| **Evidence Package schema** | Platform | `1` | `constants.EVIDENCE_SCHEMA` |
+| **Evidence Package schema** | Platform | `4` | `constants.EVIDENCE_SCHEMA` |
 | **Canonical Assessment Result schema** | Platform | `1` | `decision.RESULT_SCHEMA` |
 | **Decision semantics** | Standard (AESQS) | `1.0` | `decision.DECISION_SEMANTICS_VERSION` |
 | **Report Renderer contract** (view-only) | Platform | `v1.0` | `decision.render_*`, `report_html` |

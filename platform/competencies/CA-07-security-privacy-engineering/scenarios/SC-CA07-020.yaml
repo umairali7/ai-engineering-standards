@@ -27,6 +27,7 @@ rubric:
   EV3: [does not grant an indefinite blanket exception that removes least-privilege/minimization on customer data]
   EV4: [the scoped, time-boxed exception (or API fix) is a durable, implementable arrangement]
   EV6: [documents the decision, scope, conditions, and expiry — the record a designated approver owes]
+  EV5: ["the governance findings are prioritized by risk and controls are proportionate to asset tier and exposure"]
 weight: 1.2
 failure_conditions:
   - grants the standing indefinite blanket direct-read exception to speed the team up          # -> EV3

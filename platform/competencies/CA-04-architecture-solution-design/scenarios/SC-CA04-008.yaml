@@ -24,6 +24,8 @@ rubric:
   EV2: [failure modes, per-server divergence, and operational burden addressed]
   EV1: [does not assert a cache-invalidation or pub/sub mechanism already exists]
   EV4: [proposes an explicit invalidation/revocation contract rather than only lowering the TTL]
+  EV5: ["the design review solution is the simplest proportionate design that meets the stated constraints"]
+  EV6: ["the design review recommendation records assumptions, trade-offs, evidence, and rejected alternatives"]
 weight: 1.0
 failure_conditions:
   - approves the cache as a sound performance win and misses the revoked-access staleness window  # -> EV3

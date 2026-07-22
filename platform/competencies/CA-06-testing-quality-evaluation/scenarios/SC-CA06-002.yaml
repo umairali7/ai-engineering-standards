@@ -26,6 +26,8 @@ rubric:
   EV3: [names the snapshot/characterization nature; does not endorse green coverage as verification]
   EV2: [raises uncovered cases such as empty list and non-integer means]
   EV5: [treats high coverage with low verification power as the real problem]
+  EV4: ["the test review tests and evaluation artifacts are clear, isolated, deterministic where possible, and maintainable"]
+  EV6: ["each test review check traces to a requirement or risk and states assumptions and coverage limits"]
 weight: 1.0
 failure_conditions:
   - concludes the tests are fine because coverage is 100% and they pass  # -> EV3

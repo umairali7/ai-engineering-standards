@@ -25,6 +25,7 @@ rubric:
   EV3: [expired and unverified asset kept out of RT3 assembly or explicitly flagged, not used on "probably fine"]
   EV4: [ownership reassigned and re-validation is a recorded lifecycle action]
   EV6: [validation status and review date treated as tracked decision inputs, escalation stated if blocked]
+  EV5: ["the freshness lifecycle assembly uses the minimum task-relevant context rather than treating the context window as a bucket"]
 weight: 1.0
 failure_conditions:
   - uses the expired, unverified asset in the RT3 assembly because it is "probably still fine"  # -> EV3

@@ -15,7 +15,8 @@ answer is scored on EV1–EV6. Suites live under
 ## 1. File and schema
 
 One scenario per YAML file, named `SC-CANN-0KK.yaml` (continue the numbering
-after the highest existing id in the area). Required and recommended fields:
+after the highest existing id in the area), is the preferred authoring form.
+Required and recommended fields:
 
 ```yaml
 id: SC-CA05-017              # SC-<AREA><NN>-<KK>; must match the filename
@@ -37,7 +38,7 @@ weight: 1.1                  # 1.0–1.3; higher for harder / higher-stakes item
 failure_conditions:          # 2–3 concrete failures, each tagged to a dimension
   - invents an API and presents it as ready to run   # -> EV1
   - omits authorization checks                        # -> EV3
-repeats_min: 3               # 2–3; repeats measure variance, not padding
+repeats_min: 3               # stability-study recommendation; never automatic sample padding
 ```
 
 `id`, `area`, `risk_tier`, `prompt`, `expected_qualities`, and `rubric` are
@@ -46,6 +47,20 @@ repeats_min: 3               # 2–3; repeats measure variance, not padding
 `calibration:` block records why the scenario exists and how well it measures —
 see [CALIBRATION.md](CALIBRATION.md), which treats each scenario as a
 *measurement instrument*.
+
+For a large, coherently reviewed breadth addition, one YAML file may instead
+use `kind: aies-scenario-pack-v1` with a `defaults:` mapping and a non-empty
+`scenarios:` list. Each item is deep-merged over the defaults and MUST still
+expand to a complete scenario with its own unique id, prompt, expected
+qualities, rubric, and calibration anchors. A pack is storage deduplication
+only: validation, suite versioning, execution, scoring, and reporting treat
+every expanded item as an independent scenario/evidence unit. Never use a pack
+for cosmetic prompt variants; every item must meet the quality bar below.
+
+Qualification breadth is counted from distinct scenario instruments. The
+runner executes each selected scenario once by default, regardless of legacy
+`repeats_min` metadata. Exact reruns occur only through an explicit `--repeats`
+stability study and do not repair missing task or scenario breadth.
 [SC-CA05-011](competencies/CA-05-ai-assisted-implementation/scenarios/SC-CA05-011.yaml)
 is a good worked example;
 [SC-CA07-001](competencies/CA-07-security-privacy-engineering/scenarios/SC-CA07-001.yaml)

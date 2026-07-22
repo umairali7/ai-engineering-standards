@@ -34,21 +34,33 @@ def test_all_area_codes_are_the_twelve():
     assert codes == [f"CA-{n:02d}" for n in range(1, 13)]
 
 
-def test_decisional_sample_plan_exposes_shortfalls_and_required_repeats():
+def test_decisional_sample_plan_uses_distinct_rt2_breadth_without_repeats():
     from aies import engine, runner
     areas = runner.all_area_codes()
     plan = engine.plan_qualification("RT2", areas, subject_kind="ai")
     assert len(plan["areas"]) == 12
-    assert any(not row["decisional_if_scored"] for row in plan["areas"])
-    assert plan["uniform_repeats_for_all_areas"] >= 1
-    assert "API Design" in plan["unassessed_tasks"]
+    assert all(row["decisional_if_scored"] for row in plan["areas"])
+    assert all(row["scenarios"] >= row["minimum_items"] for row in plan["areas"])
+    assert plan["planned_items"] == 387
+    assert plan["unassessed_tasks"] == []
+
+    from collections import Counter
+    from aies import task_mappings
+    mapping = task_mappings.load()
+    direct = Counter()
+    for area in areas:
+        _, scenarios, _ = runner.load_area(area)
+        for scenario in scenarios:
+            if scenario["risk_tier"] == "RT2":
+                direct.update(task_mappings.tasks_for_scenario(scenario, mapping))
+    assert all(direct[f"ET-{number:02d}"] >= 30 for number in range(1, 16))
 
 
 def test_capability_profile_lays_out_scored_areas(ws, tmp_path):
     from aies import engine, rating, workspace, capabilities
 
     _register(tmp_path)
-    run = engine.start_qualification("cand", "enterprise", "RT2",
+    run = engine.start_qualification("cand", "enterprise", "RT3",
                                      ["CA-04", "CA-05", "CA-07"], repeats=1)
     rid = run["run_id"]
     sheet = json.loads((workspace.run_dir(rid) / "scoresheet.json").read_text())
@@ -59,7 +71,7 @@ def test_capability_profile_lays_out_scored_areas(ws, tmp_path):
     engine.aggregate(rid)
 
     prof = capabilities.capability_profile(rid)
-    assert prof["subject"] == "cand" and prof["risk_tier"] == "RT2"
+    assert prof["subject"] == "cand" and prof["risk_tier"] == "RT3"
     areas = {r["area"]: r for r in prof["areas"]}
     assert set(areas) == {"CA-04", "CA-05", "CA-07"}
     # human-readable role name is surfaced (not just the code)
@@ -67,7 +79,7 @@ def test_capability_profile_lays_out_scored_areas(ws, tmp_path):
     # each area carries its own CL + AL-at-tier, and small samples are flagged
     assert areas["CA-05"]["cl"].startswith("CL")
     assert areas["CA-05"]["al_at_rt"] is not None
-    assert areas["CA-05"]["decisional"] is False  # 7 < RT2 minimum of 30
+    assert areas["CA-05"]["decisional"] is False  # distinct RT3 sample < 50
 
 
 def test_capability_profile_needs_an_aggregated_run(ws, tmp_path):

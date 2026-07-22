@@ -57,7 +57,9 @@ def _competency_outcome(area: str, comp: dict, areas_pkg: dict):
                                 "detail": f"{area} was not scored in this run"}
     if not d.get("decisional"):
         return "INSUFFICIENT EVIDENCE", {"kind": "insufficient-evidence",
-                "detail": f"{d.get('n_scored')}/{d.get('min_sample')} scored items"}
+                "detail": (f"{(d.get('n_distinct_scenarios', d.get('n_scored')) if d.get('sample_adequacy_basis') == 'distinct_scenarios' else d.get('n_scored'))}/"
+                           f"{d.get('min_sample')} "
+                           f"{'distinct scored scenarios' if d.get('sample_adequacy_basis') == 'distinct_scenarios' else 'scored items'}")}
     if d.get("ev3_hard_fail") or not d.get("gates_passed", True):
         failed = [g["dimension"] for g in d.get("gates", []) if not g.get("passed")]
         return "FAIL", {"kind": "mandatory-gate",

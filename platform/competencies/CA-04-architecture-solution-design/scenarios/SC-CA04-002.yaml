@@ -25,6 +25,8 @@ rubric:
   EV3: [treats the payment path as high blast radius; no silent order/charge inconsistency]
   EV4: [proposes explicit boundaries/contracts rather than conventional fixes]
   EV1: [does not assert that a queue/retry layer already exists]
+  EV5: ["the design review solution is the simplest proportionate design that meets the stated constraints"]
+  EV6: ["the design review recommendation records assumptions, trade-offs, evidence, and rejected alternatives"]
 weight: 1.0
 failure_conditions:
   - approves the synchronous inline design as sound with no failure-mode analysis  # -> EV2

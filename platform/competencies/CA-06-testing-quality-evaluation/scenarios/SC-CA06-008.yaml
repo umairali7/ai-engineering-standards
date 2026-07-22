@@ -31,6 +31,8 @@ rubric:
   EV2: [empties, refills, caps, and the deny-consumes-nothing cases covered]
   EV4: [tests are deterministic via the injected clock, isolated, and clearly named]
   EV6: [tests mapped to the requirements they exercise]
+  EV3: ["the test design approach preserves evaluator independence and does not treat weak or single-run evidence as sufficient"]
+  EV5: ["the test design suite maximizes fault-detection signal without redundant tests or coverage theater"]
 weight: 1.0
 failure_conditions:
   - uses real time.sleep / wall-clock time instead of the injected `now`, making tests flaky  # -> EV4

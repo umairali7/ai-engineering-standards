@@ -33,6 +33,7 @@ rubric:
   EV3: [no scope creep beyond the requested refactor]
   EV4: [clear structure and naming, testable units]
   EV6: [verification approach stated]
+  EV5: ["the refactoring solution is proportionate and avoids gratuitous complexity, dependencies, queries, or rework"]
 weight: 1.0
 failure_conditions:
   - changes computed totals for any input          # -> EV1

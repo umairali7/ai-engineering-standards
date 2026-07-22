@@ -23,6 +23,8 @@ rubric:
   EV2: [signals, sampling, and investigation triggers all specified]
   EV5: [monitoring focuses attention by risk, single-approver saturation considered]
   EV6: [signals framed as control telemetry rather than individual blame, findings recorded]
+  EV3: ["the accountability design keeps accountability with a named human and prevents default-open or self-approval behavior"]
+  EV4: ["the accountability gate is sustainable, recorded, reviewable, and structured around manageable increments"]
 weight: 1.0
 failure_conditions:
   - tracks only throughput or approval counts and no review-depth or rationale-quality signal  # -> EV2

@@ -25,6 +25,7 @@ rubric:
   EV3: [irreversible step gated behind tested recovery and verification, not a big-bang destructive migration]
   EV5: [release strategy proportionate to the change's irreversibility]
   EV6: [infrastructure assumptions stated explicitly]
+  EV4: ["the release strategy controls are versioned, reusable, operable, and not dependent on one-off manual waivers"]
 weight: 1.0
 failure_conditions:
   - proposes running the destructive drop in one step with only a code rollback as the safety net  # -> EV3

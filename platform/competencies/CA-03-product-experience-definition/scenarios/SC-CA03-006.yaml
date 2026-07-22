@@ -21,6 +21,8 @@ rubric:
   EV1: [the defined experience actually delivers a usable CSV export]
   EV5: [scope limited to the export feature, no gold-plating]
   EV6: [assumptions about unspecified behavior are stated]
+  EV3: ["the experience definition response leaves evidence-dependent product and risk decisions with an accountable human"]
+  EV4: ["the experience definition artifact is concrete, observable, and structured for downstream design, implementation, and testing"]
 weight: 1.0
 failure_conditions:
   - specifies only the successful-download path and omits empty/large/failed-generation states  # -> EV2

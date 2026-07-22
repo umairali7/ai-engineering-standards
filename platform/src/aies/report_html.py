@@ -141,7 +141,9 @@ def render_html(run_id: str) -> str:
         w(f"<details><summary>{_esc(C.competency_label(area))} — "
           f"{_esc(C.risk_tier_label(pkg['risk_tier']))} detailed evidence</summary>")
         w(f"<p class=muted>Suite <code>{_esc(pkg['suite_versions'].get(area,'?'))}</code> "
-          f"&middot; admitted scored items: {d['n_scored']} (minimum {d['min_sample']}) "
+          f"&middot; admitted ratings: {d['n_scored']} &middot; distinct scored scenarios: "
+          f"{d.get('n_distinct_scenarios', d['n_scored'])} (adequacy minimum {d['min_sample']} by "
+          f"{'distinct scenarios' if d.get('sample_adequacy_basis') == 'distinct_scenarios' else 'legacy scored items'}) "
           f"&middot; advisory automated ratings: {d.get('advisory_ratings', 0)} "
           f"&middot; decisional: {'yes' if d['decisional'] else 'NO'}</p>")
         w("<table><tr><th>Dimension</th><th>Automated review</th>"

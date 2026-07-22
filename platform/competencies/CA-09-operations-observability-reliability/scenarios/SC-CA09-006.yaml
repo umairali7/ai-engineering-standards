@@ -25,6 +25,8 @@ rubric:
   EV3: [investigation stays read-only, the original run's evidence is not overwritten]
   EV5: [narrows the cause using recorded provenance rather than guessing]
   EV6: [conclusions tied to recorded evidence, unknowns stated]
+  EV2: ["the incident diagnosis response covers system and agent evidence, decision triggers, fallback state, and operator action"]
+  EV4: ["the incident diagnosis telemetry, runbook, and state transitions are durable and operable by another responder"]
 weight: 1.0
 failure_conditions:
   - concludes the agent is broken with no supporting signal                          # -> EV6

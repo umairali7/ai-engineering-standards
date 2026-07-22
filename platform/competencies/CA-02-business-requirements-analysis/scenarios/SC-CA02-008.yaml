@@ -23,6 +23,8 @@ rubric:
   EV3: [shows risk-tier awareness for the personal-data and delivery-security aspects; routes them to the right owners]
   EV6: [flags requirements lacking a confirmable policy source rather than inventing the policy]
   EV4: [frames the gaps as resolvable, testable requirements once stakeholders decide]
+  EV1: ["the requirements analysis findings reflect the supplied stakeholder input without inventing requirements or evidence"]
+  EV5: ["the requirements analysis response prioritizes decision-critical gaps without duplicating or flooding requirements"]
 weight: 1.0
 failure_conditions:
   - treats the set as complete and raises no personal-data or delivery-security concern  # -> EV2

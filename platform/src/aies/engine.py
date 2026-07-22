@@ -36,11 +36,15 @@ def plan_qualification(risk_tier: str, areas: list[str], *, subject_kind: str = 
         selected = [s for s in scenarios if s["risk_tier"] == risk_tier] or scenarios
         for scenario in selected:
             covered_tasks.update(task_mappings.tasks_for_scenario(scenario, mapping))
-        planned = sum(repeats or int(s.get("repeats_min", 1)) for s in selected)
+        # Distinct instruments establish sample breadth. Exact prompt repeats
+        # are never scheduled implicitly and never pad a decisional minimum;
+        # a caller can still request them explicitly for a stability study.
+        planned = len(selected) * (repeats or 1)
         required = math.ceil(minimum / len(selected)) if selected else minimum
         required_uniform_repeats = max(required_uniform_repeats, required)
         rows.append({"area": area, "scenarios": len(selected), "planned_items": planned,
-                     "minimum_items": minimum, "decisional_if_scored": planned >= minimum,
+                     "minimum_items": minimum,
+                     "decisional_if_scored": len(selected) >= minimum,
                      "uniform_repeats_for_minimum": required})
     return {"risk_tier": risk_tier, "subject_kind": subject_kind,
             "minimum_items": minimum, "areas": rows,
@@ -123,14 +127,15 @@ def start_qualification(
 
     plan = plan_qualification(risk_tier, areas, subject_kind=subject_kind, repeats=repeats)
     if decisional:
-        required = plan["uniform_repeats_for_all_areas"]
-        if repeats is not None and repeats < required:
+        short = [row for row in plan["areas"] if not row["decisional_if_scored"]]
+        if short:
+            detail = ", ".join(
+                f"{row['area']} ({row['scenarios']}/{row['minimum_items']} distinct)"
+                for row in short)
             raise EngineError(
-                f"--decisional needs at least {required} repeats for every selected area at "
-                f"{C.risk_tier_label(risk_tier)}; --repeats {repeats} is insufficient"
+                f"--decisional requires distinct scenario breadth at "
+                f"{C.risk_tier_label(risk_tier)}: {detail}; exact repeats cannot fill the gap"
             )
-        repeats = max(repeats or 0, required)
-        plan = plan_qualification(risk_tier, areas, subject_kind=subject_kind, repeats=repeats)
 
     run_id = _new_run_id(model_id)
     all_scenarios: list[tuple[dict, list[dict], str]] = []
@@ -172,6 +177,7 @@ def start_qualification(
         "subject_kind": subject_kind,
         "repeats": repeats,          # override used, if any (for resume-collection)
         "sample_plan": plan,
+        "sample_adequacy_policy": "distinct-scenarios-v1",
         "decisional_target": decisional,
         "scoped_areas": list(areas),  # the CA codes as requested (for resume-collection)
         # The assessment this run was composed under (ADR-0005), if any — the
@@ -181,12 +187,12 @@ def start_qualification(
         "areas": [
             {"area": d.get("area", a), "suite_version": v,
              "n_scenarios": len(s),
-             "planned_items": sum(repeats or int(x.get("repeats_min", 1)) for x in s)}
+             "planned_items": len(s) * (repeats or 1)}
             for (d, s, v), a in zip(all_scenarios, areas)
         ],
         "sampling_rule": (
-            "all scenarios of the scoped risk tier in the named suites, "
-            f"repeats per scenario minimum (override: {repeats}); "
+            "all distinct scenarios of the scoped risk tier in the named suites, "
+            f"one execution each (explicit repeat override: {repeats}); "
             "pre-registered before scoring per AIES-AESQS-CS-01-R12"
         ),
         "generation_parameters": gen_params,
@@ -354,6 +360,8 @@ def aggregate(run_id: str) -> dict:
     by_area: dict[str, list[dict]] = {a["area"]: [] for a in manifest.get("areas", [])}
     raw_by_area: dict[str, int] = {a["area"]: 0 for a in manifest.get("areas", [])}
     admitted_by_area: dict[str, int] = {a["area"]: 0 for a in manifest.get("areas", [])}
+    admitted_scenarios_by_area: dict[str, set[str]] = {
+        a["area"]: set() for a in manifest.get("areas", [])}
     responses = {p.name: workspace.read_json(p)
                  for p in (rdir / "responses").glob("*.json")}
     for r in ratings:
@@ -363,14 +371,28 @@ def aggregate(run_id: str) -> dict:
         if is_admitted(r):
             by_area.setdefault(area, []).append(r["scores"])
             admitted_by_area[area] = admitted_by_area.get(area, 0) + 1
+            scenario_id = r.get("scenario_id") or (resp or {}).get("scenario_id")
+            if scenario_id:
+                admitted_scenarios_by_area.setdefault(area, set()).add(scenario_id)
 
     areas = {}
     for area, item_scores in sorted(by_area.items()):
         res = scoring.score_area(area, rt, item_scores,
                                  subject_kind=manifest.get("subject_kind", "ai"),
                                  weight_adjustments=adjustments)
+        distinct_scenarios = len(admitted_scenarios_by_area.get(area, set()))
+        # ADR-0011: repeat observations and multiple raters do not establish
+        # breadth. They remain in the score distribution and raw provenance,
+        # but the adequacy decision counts unique instruments only.
+        if manifest.get("sample_adequacy_policy") == "distinct-scenarios-v1":
+            res.decisional = distinct_scenarios >= res.min_sample
         areas[area] = {
             "n_scored": res.n_scored,
+            "n_distinct_scenarios": distinct_scenarios,
+            "sample_adequacy_basis": (
+                "distinct_scenarios"
+                if manifest.get("sample_adequacy_policy") == "distinct-scenarios-v1"
+                else "legacy_scored_items"),
             "raw_ratings": raw_by_area.get(area, 0),
             "admitted_ratings": admitted_by_area.get(area, 0),
             "advisory_ratings": raw_by_area.get(area, 0) - admitted_by_area.get(area, 0),
@@ -418,6 +440,7 @@ def aggregate(run_id: str) -> dict:
         "profile_version": manifest.get("profile_version", profiles.UNVERSIONED),
         "risk_tier": rt,
         "subject_kind": manifest.get("subject_kind", "ai"),
+        "sample_adequacy_policy": manifest.get("sample_adequacy_policy", "legacy-scored-items"),
         "suite_versions": {a["area"]: a["suite_version"] for a in manifest["areas"]},
         "environment_fingerprint": manifest["environment_fingerprint"],
         "areas": areas,

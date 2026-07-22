@@ -31,7 +31,7 @@ def _register(tmp_path, model_id="demo", runtime="mock"):
 def test_report_has_grant_readiness_and_residual_risk(ws, tmp_path):
     from aies import engine, report
     _register(tmp_path)
-    run = engine.start_qualification("demo", "enterprise", "RT2", ["CA-05"], repeats=1)
+    run = engine.start_qualification("demo", "enterprise", "RT3", ["CA-05"], repeats=1)
     _fill_and_aggregate(run["run_id"], score=3)
     md = report.render_markdown(run["run_id"])
     assert "## Grant Readiness" in md and "### Residual risk" in md
@@ -44,7 +44,7 @@ def test_report_has_grant_readiness_and_residual_risk(ws, tmp_path):
     assert Path(paths["ecm_markdown"]).exists()
     assert Path(paths["ecm_json"]).exists()
     assert Path(paths["ecm_html"]).exists()
-    # a small CA-05 run is under the RT2 minimum -> BLOCKED / non-decisional flagged
+    # a small CA-05 run is under the RT3 minimum -> BLOCKED / non-decisional flagged
     assert "BLOCKED" in md and "non-decisional" in md
 
 
@@ -130,14 +130,14 @@ def test_parallel_record_count(ws, tmp_path):
 def test_html_report_self_contained(ws, tmp_path):
     from aies import engine, report_html
     _register(tmp_path)
-    run = engine.start_qualification("demo", "enterprise", "RT2", ["CA-05"], repeats=1)
+    run = engine.start_qualification("demo", "enterprise", "RT3", ["CA-05"], repeats=1)
     _fill_and_aggregate(run["run_id"])
     htmldoc = report_html.render_html(run["run_id"])
     assert htmldoc.startswith("<!doctype html>")
     # self-contained: no external resource references
     for needle in ("http://", "https://", "src=", "<link"):
         assert needle not in htmldoc, needle
-    assert "NON-DECISIONAL" in htmldoc          # 4 items < 30 for AI at RT2
+    assert "NON-DECISIONAL" in htmldoc          # distinct sample < 50 for AI at RT3
     assert "Environment Fingerprint" in htmldoc
 
 

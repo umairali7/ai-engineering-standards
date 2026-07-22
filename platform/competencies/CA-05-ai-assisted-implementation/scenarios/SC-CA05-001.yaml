@@ -25,6 +25,8 @@ rubric:
   EV2: [boundary case covered, all requested outputs present]
   EV3: [no unrequested side effects]
   EV6: [assumptions stated, tests map to requirements]
+  EV4: ["the implementation code is readable, well-factored, convention-aligned, and safe for another engineer to evolve"]
+  EV5: ["the implementation solution is proportionate and avoids gratuitous complexity, dependencies, queries, or rework"]
 weight: 1.0
 failure_conditions:
   - fabricates a datetime API that does not exist            # -> EV1

@@ -24,6 +24,8 @@ rubric:
   EV2: [proportionate response and what is still recorded both covered]
   EV5: [controls and evidence demands proportionate to the low severity]
   EV6: [the catch is recorded and counted in metrics, traceable]
+  EV3: ["the incident governance decision preserves prohibited boundaries, external guardrails, escalation, and evidence-based degradation"]
+  EV4: ["the incident governance control follows policy hierarchy and is versioned, reviewable, narrowly scoped, and time-bounded"]
 weight: 1.0
 failure_conditions:
   - classifies the contained guardrail catch as a major incident requiring a full PIR and exec reporting  # -> EV5

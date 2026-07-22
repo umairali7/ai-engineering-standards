@@ -24,6 +24,7 @@ rubric:
   EV3: [an unverifiable artifact is not promotable by default, no location-based trust]
   EV4: [verification encoded as reusable, operable gate configuration]
   EV6: [promotion cites provenance evidence, outcomes recorded to the audit trail]
+  EV5: ["the provenance verification strategy automates checks and scales release effort in proportion to risk and reversibility"]
 weight: 1.0
 failure_conditions:
   - promotes artifacts present in staging without verifying attached provenance  # -> EV3

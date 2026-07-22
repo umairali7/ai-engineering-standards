@@ -131,6 +131,20 @@ def default_judge() -> str | None:
     return _get("AIES_JUDGE")
 
 
+def judge_batch_size() -> int:
+    """Maximum responses placed in one automated-review request.
+
+    The reviewer still emits and AIES still persists one independent rating
+    record per response.  Batching reduces inference overhead; it does not
+    change the evidence unit.  Invalid values fall back to the conservative
+    operational default rather than breaking qualification startup.
+    """
+    try:
+        return max(1, int(_get("AIES_JUDGE_BATCH_SIZE", "8")))
+    except (TypeError, ValueError):
+        return 8
+
+
 def generation_defaults() -> dict:
     """Generation parameters applied to every request unless a deployment
     manifest or CLI flag overrides them. Only set keys are emitted."""

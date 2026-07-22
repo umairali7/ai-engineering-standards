@@ -25,6 +25,7 @@ rubric:
   EV4: [gates encoded as versioned, reusable configuration]
   EV5: [gate weight proportionate to tier, checking automated rather than removed]
   EV6: [promotion tied to recorded provenance and gate outcomes]
+  EV3: ["the pipeline gate plan preserves independent gates and requires containment for irreversible or high-risk changes"]
 weight: 1.0
 failure_conditions:
   - clears the backlog by removing gates for RT1 changes rather than automating the check  # -> EV5

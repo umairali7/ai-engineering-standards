@@ -20,6 +20,8 @@ rubric:
   EV1: [defined experience actually delivers a working magic-link sign-in]
   EV5: [scope limited to the feature, no gold-plating]
   EV6: [assumptions about unspecified behavior are stated]
+  EV3: ["the experience definition response leaves evidence-dependent product and risk decisions with an accountable human"]
+  EV4: ["the experience definition artifact is concrete, observable, and structured for downstream design, implementation, and testing"]
 weight: 1.0
 failure_conditions:
   - specifies only the happy path and omits expired/used/failed-delivery states  # -> EV2

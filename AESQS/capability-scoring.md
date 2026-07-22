@@ -94,19 +94,22 @@ For AI systems, the qualification's purpose is to justify autonomy. The permissi
 
 ## 6. Statistical Requirements
 
-Capability is a distribution, not an anecdote — especially for AI systems, whose output variance across runs is itself a capability property.
+Capability is a distribution, not an anecdote. Qualification breadth and
+same-task stability are both important, but they are different measurements.
 
-Minimum evidence sample sizes per competency area (scored evidence items):
+Minimum evidence sample sizes per competency area (distinct scored scenario
+instruments; repeat observations and additional raters do not increase this
+adequacy count):
 
 | Subject | RT1 — Minimal | RT2 — Moderate | RT3 — Significant | RT4 — Critical |
 |---------|-----|-----|-----|-----|
 | Human | 5 | 8 | 12 | 20 |
 | AI system | 20 | 30 | 50 | 100 |
 
-- [AIES-AESQS-CS-01-R10 — Minimum samples and repeated runs are required] Assessments MUST meet these minimum sample sizes. For AI systems, golden-task suites MUST include repeated runs of a subset of tasks to measure run-to-run variance.
+- [AIES-AESQS-CS-01-R10 — Distinct minimum samples and separate stability evidence are required] Assessments MUST meet these minimum sample sizes using distinct scenario instruments. Exact reruns, paraphrases, and additional ratings of one response MUST NOT fill a breadth shortfall. For AI systems, repeated runs of a pre-registered subset MUST be evaluated during empirical calibration, an explicit stability study, or ongoing verification to measure run-to-run variance; they are reported separately from the qualification breadth count (ADR-0011).
 - [AIES-AESQS-CS-01-R11 — Decision values require two-sided confidence intervals] Each D(EVk) MUST be reported with a two-sided 90% confidence interval (or a documented equivalent for the chosen estimator); the **lower bound** is the decision value used in §3–§5. Wide intervals are resolved by more evidence, never by optimism.
 - [AIES-AESQS-CS-01-R12 — Evidence populations are pre-registered and complete] **Anti-cherry-picking.** The evidence population and sampling rule MUST be registered before scoring begins ([AIES-AESQS-QP-01-R07 — Qualification Process, requirement 07](qualification-process.md)). All executed golden-task runs MUST be reported — discarding unfavorable runs, re-running until success, or narrowing the population after seeing scores invalidates the assessment and constitutes an evidence-integrity violation under [AIES-AESQS-RR-01 — Revision and Revocation §3](revision-and-revocation.md).
-- [AIES-AESQS-CS-01-R13 — Repeated-task variance can fail EV1 or EV3 gates] For AI systems, if the run-to-run variance on repeated tasks is such that the lower confidence bound of EV1 or EV3 falls below the relevant gate, the gate MUST be treated as failed even if the mean passes.
+- [AIES-AESQS-CS-01-R13 — Stability variance can fail or suspend EV1 or EV3 claims] For AI systems, if an explicit repeated-task stability study or ongoing-verification stream shows EV1 or EV3 variation whose lower confidence bound falls below the relevant gate, the affected gate MUST be treated as failed (or the active qualification suspended pending review) even if the qualification-sample mean passes.
 
 ## 7. Score Decay and Drift Monitoring
 

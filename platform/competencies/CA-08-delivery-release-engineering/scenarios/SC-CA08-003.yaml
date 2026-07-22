@@ -29,6 +29,7 @@ rubric:
   EV3: [no author-based shortcut that lets a change skip provenance]
   EV4: [hardened gate is operable configuration another engineer can maintain]
   EV6: [each gap cites the missing evidence; gate outcomes recorded]
+  EV5: ["the provenance verification strategy automates checks and scales release effort in proportion to risk and reversibility"]
 weight: 1.0
 failure_conditions:
   - accepts green CI as sufficient for promoting AI-produced changes         # -> EV1
