@@ -98,6 +98,8 @@ def assemble_review_package(
     reviewer_label: str,
     reviewer_qualified_for_review: bool = False,
     calibration: dict | None = None,
+    consider_advisory_review: bool = False,
+    human_evaluation: str | None = None,
 ) -> dict:
     """Assemble the human review package for a run.
 
@@ -136,6 +138,14 @@ def assemble_review_package(
         "risk_tier": risk_tier,
         "reviewer": {"label": reviewer_label, "admitted": admitted,
                      "reason": admit_reason, "calibration": calibration},
+        "human_consideration": {
+            "automated_advisory_review": {
+                "available": any((r.get("provenance") or {}).get("rater_kind") == "model"
+                                 for r in ratings),
+                "considered": consider_advisory_review,
+            },
+            "human_evaluation": {"evaluator": human_evaluation},
+        },
         "items": items,
         "divergences_for_resolution": all_divergences,
         "summary": {

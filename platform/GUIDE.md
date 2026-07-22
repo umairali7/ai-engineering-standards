@@ -408,7 +408,8 @@ Have a second deployment critique and score the same responses, then assemble
 the peer-review package. The platform drives the reviewer for you:
 
 ```
-aies review <run> --model-reviewer local-gpt-oss --calibration anchors.json
+aies review <run> --model-reviewer local-gpt-oss \
+  --consider-advisory-review --human-evaluation "Your Name"
 ```
 
 `--model-reviewer` sends each candidate response to that deployment, asks for
@@ -424,6 +425,30 @@ it is not admitted as corroborating peer review and cannot justify a grant.
 points between the human and the model are surfaced for you to resolve — never
 averaged (§7). Re-running the same reviewer reuses already-recorded scores
 instead of making duplicate API/model calls.
+
+This command records the named human's evidence consideration in the review
+package and report. It is available even for a non-decisional run; it is a
+review record, **not** a grant.
+
+### One-command automated evaluation
+
+For normal evaluations, use `qualify` with a local or hosted judge. It collects
+responses, scores them, aggregates the evidence, and writes the Markdown, HTML,
+JSON, and ECM artifacts in one command:
+
+```
+aies qualify <deployment> --profile enterprise --rt 2 --area CA-05 \
+  --judge local-gpt-oss --parallel 4
+```
+
+If responses were already collected because a prior judge failed, resume with
+the replacement judge in the same one-command form. Existing ratings from that
+same judge are reused rather than duplicated:
+
+```
+aies qualify --resume <run-id> --judge local-gpt-oss --parallel 4 \
+  --consider-advisory-review --human-evaluation "Your Name"
+```
 
 ### 5.5 Aggregate and report
 

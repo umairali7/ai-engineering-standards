@@ -54,8 +54,9 @@ footer { margin-top: 3rem; color: var(--muted); font-size: .8rem;
 def render_html(run_id: str) -> str:
     pkg = workspace.read_json(workspace.run_dir(run_id) / "evidence-package.json")
     fp = pkg["environment_fingerprint"]
-    from .report import _score_sources, _source_cell
+    from .report import _human_review_record, _score_sources, _source_cell
     source_scores = _score_sources(run_id)
+    human_review = _human_review_record(run_id)
     p: list[str] = []
     w = p.append
     subject = pkg.get("subject") or {}
@@ -96,6 +97,18 @@ def render_html(run_id: str) -> str:
           f"<td>{_esc(d.get('cl') or '-')}</td>"
           f"<td class={verdict_class}><strong>{_esc(verdict)}</strong> — {_esc(why)}</td></tr>")
     w("</table>")
+
+    if human_review:
+        advisory = human_review.get("automated_advisory_review") or {}
+        evaluator = (human_review.get("human_evaluation") or {}).get("evaluator")
+        w("<h2>Human Review Record</h2><table>")
+        w("<tr><th>Review input</th><th>Human record</th></tr>")
+        w(f"<tr><td>Advisory automated scores</td><td>"
+          f"{'considered' if advisory.get('considered') else 'not declared'}</td></tr>")
+        w(f"<tr><td>Human evaluation</td><td>{_esc(evaluator or 'not declared')}</td></tr>")
+        w("</table><p class=muted>This is a human review declaration over evidence; "
+          "it is not a grant. Formal grants remain blocked until decisional and "
+          "gate-passing evidence exists.</p>")
 
     w("<h2>Environment Fingerprint</h2><table class=env>")
     for k in ("machine", "cpu", "gpu", "ram_gb", "os", "python"):

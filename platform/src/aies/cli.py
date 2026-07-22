@@ -90,11 +90,36 @@ def cmd_qualify(args) -> int:
                  f"aies qualify --resume {summary['run_id']}), or add --judge by re-running")
             return 0
         if args.resume:
+            # A resumed run can be fully automatic too: score already-collected
+            # responses with --judge, then aggregate and render in this one call.
+            from . import config, model_review, report_html, review, workspace
+            judge = getattr(args, "judge", None) or config.default_judge()
+            scoring = None
+            if judge:
+                manifest = workspace.read_json(workspace.run_dir(args.resume) / "manifest.json")
+                jdep = manifest["model"]["registry_id"] if judge == "self" else judge
+                workers = getattr(args, "parallel", None) or config.default_parallel()
+                if not args.json:
+                    print(f"scoring existing responses with judge '{jdep}' across "
+                          f"{workers} worker(s)…", file=sys.stderr)
+                scoring = model_review.run_model_review(
+                    args.resume, jdep,
+                    runtime=getattr(args, "reviewer_runtime", None), workers=workers)
+                if (getattr(args, "consider_advisory_review", False)
+                        or getattr(args, "human_evaluation", None)):
+                    review_pkg = review.assemble_review_package(
+                        args.resume, reviewer_label=f"model:{jdep}",
+                        consider_advisory_review=getattr(args, "consider_advisory_review", False),
+                        human_evaluation=getattr(args, "human_evaluation", None))
+                    (workspace.run_dir(args.resume) / "review-package.json").write_text(
+                        json.dumps(review_pkg, indent=2), encoding="utf-8")
             package = engine.aggregate(args.resume)
             from . import report
             paths = report.write_reports(args.resume)
+            paths["html"] = report_html.write_html(args.resume)
             outcome = _assessment_result(args.resume)
             _out({"package": package, "reports": paths,
+                  **({"scoring": scoring} if scoring else {}),
                   **({"assessment_result": outcome} if outcome else {})}, args.json,
                  f"aggregated {args.resume}\n"
                  f"  markdown: {paths['markdown']}\n  json    : {paths['json']}"
@@ -146,8 +171,19 @@ def cmd_qualify(args) -> int:
                       f"collected; you can score manually — see the scoresheet in "
                       f"{workspace.run_dir(run_id)}.", file=sys.stderr)
                 return 2
+            if (getattr(args, "consider_advisory_review", False)
+                    or getattr(args, "human_evaluation", None)):
+                from . import review as _review
+                review_pkg = _review.assemble_review_package(
+                    run_id, reviewer_label=f"model:{jdep}",
+                    consider_advisory_review=getattr(args, "consider_advisory_review", False),
+                    human_evaluation=getattr(args, "human_evaluation", None))
+                (workspace.run_dir(run_id) / "review-package.json").write_text(
+                    json.dumps(review_pkg, indent=2), encoding="utf-8")
             pkg = _engine.aggregate(run_id)
             _report.write_reports(run_id)
+            from . import report_html
+            report_html.write_html(run_id)
             outcome = _assessment_result(run_id)
             if args.json:
                 _out({"run_id": run_id, "judge": jdep, "self_judged": self_judged,
@@ -613,12 +649,6 @@ def cmd_review(args) -> int:
                       f"({scoring['unparseable']} unparseable)")
             if not args.reviewer or args.reviewer == "reviewer-model":
                 args.reviewer = f"model:{args.model_reviewer}"
-            # Render immediately: automated reviewer scores are operational
-            # evidence, while any human scores remain an optional separate view.
-            engine.aggregate(args.run)
-            report_paths = report.write_reports(args.run)
-            from . import report_html
-            report_paths["html"] = report_html.write_html(args.run)
         calibration = None
         if args.calibration:
             cal = json.loads(Path(args.calibration).read_text(encoding="utf-8"))
@@ -626,9 +656,18 @@ def cmd_review(args) -> int:
         pkg = review.assemble_review_package(
             args.run, reviewer_label=args.reviewer,
             reviewer_qualified_for_review=args.reviewer_qualified,
-            calibration=calibration)
+            calibration=calibration,
+            consider_advisory_review=getattr(args, "consider_advisory_review", False),
+            human_evaluation=getattr(args, "human_evaluation", None))
         (workspace.run_dir(args.run) / "review-package.json").write_text(
             json.dumps(pkg, indent=2), encoding="utf-8")
+        if getattr(args, "model_reviewer", None):
+            # Render after persisting the human-review declaration, so the
+            # evidence report and review package tell the same complete story.
+            from . import engine, report, report_html
+            engine.aggregate(args.run)
+            report_paths = report.write_reports(args.run)
+            report_paths["html"] = report_html.write_html(args.run)
         if args.json:
             _out({**pkg, **({"scoring": scoring, "reports": report_paths}
                             if report_paths else {})}, True)
@@ -644,6 +683,11 @@ def cmd_review(args) -> int:
                 print(f"    {d['response']} {d['dimension']}: "
                       f"human {d['human']} vs model {d['model']} (Δ{d['delta']}){gc}")
             print(f"  {s['note']}")
+            consideration = pkg["human_consideration"]
+            advisory = consideration["automated_advisory_review"]
+            evaluator = consideration["human_evaluation"]["evaluator"]
+            print(f"  advisory scores: {'considered by human' if advisory['considered'] else 'not declared'}")
+            print(f"  human evaluation: {evaluator or 'not declared'}")
             if report_paths:
                 print("  evidence report updated from automated reviewer scores")
                 print("  human scores: optional; shown separately when supplied")
@@ -1184,6 +1228,10 @@ def build_parser() -> argparse.ArgumentParser:
                    help="auto-score responses with this judge deployment (or 'self') "
                         "and print the report directly — no manual scoring. "
                         "Defaults to $AIES_JUDGE.")
+    q.add_argument("--consider-advisory-review", action="store_true",
+                   help="record that a human considered the automated reviewer scores in the generated report")
+    q.add_argument("--human-evaluation", default=None, metavar="NAME",
+                   help="record a named qualitative or scored human evaluation in the generated report")
     q.add_argument("--reviewer-runtime", default=None,
                    help="disambiguate the judge deployment's runtime")
     q.add_argument("--repeats", type=int, default=None,
@@ -1343,6 +1391,10 @@ def build_parser() -> argparse.ArgumentParser:
                     help="the reviewer holds a current review-class (CA-06) qualification")
     rv.add_argument("--calibration", default=None,
                     help="JSON {model:[...], human_anchor:[...]} for bootstrap calibration")
+    rv.add_argument("--consider-advisory-review", action="store_true",
+                    help="record that a human considered the advisory automated-review scores")
+    rv.add_argument("--human-evaluation", default=None, metavar="NAME",
+                    help="record a named qualitative or scored human evaluation; no grant required")
     rv.set_defaults(func=cmd_review)
 
     gr = common(sub.add_parser("grant", help="record a human qualification decision"))

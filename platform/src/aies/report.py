@@ -81,6 +81,14 @@ def _source_cell(sources: dict, source: str, dimension: str) -> str:
     return f"{round(mean(values), 3)} (n={len(values)})" if values else "—"
 
 
+def _human_review_record(run_id: str) -> dict | None:
+    """Read the optional human consideration declared through `aies review`."""
+    path = workspace.run_dir(run_id) / "review-package.json"
+    if not path.exists():
+        return None
+    return (workspace.read_json(path).get("human_consideration") or None)
+
+
 def render_json(run_id: str) -> str:
     pkg = workspace.read_json(workspace.run_dir(run_id) / "evidence-package.json")
     return json.dumps(pkg, indent=2)
@@ -90,6 +98,7 @@ def render_markdown(run_id: str) -> str:
     pkg = workspace.read_json(workspace.run_dir(run_id) / "evidence-package.json")
     fp = pkg["environment_fingerprint"]
     source_scores = _score_sources(run_id)
+    human_review = _human_review_record(run_id)
     lines: list[str] = []
     a = lines.append
 
@@ -151,6 +160,21 @@ def render_markdown(run_id: str) -> str:
     for r in _residual_risks(pkg):
         a(f"- {r}")
     a("")
+
+    if human_review:
+        advisory = human_review.get("automated_advisory_review") or {}
+        evaluator = (human_review.get("human_evaluation") or {}).get("evaluator")
+        a("## Human Review Record")
+        a("")
+        a("| Review input | Human record |")
+        a("|---|---|")
+        a(f"| Advisory automated scores | "
+          f"{'considered' if advisory.get('considered') else 'not declared'} |")
+        a(f"| Human evaluation | {evaluator or 'not declared'} |")
+        a("")
+        a("This is a human review declaration over evidence; it is not a grant. "
+          "Formal grants remain blocked until decisional and gate-passing evidence exists.")
+        a("")
 
     a("## Environment Fingerprint")
     a("")

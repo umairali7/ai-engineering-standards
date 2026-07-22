@@ -163,12 +163,15 @@ def test_review_command_refreshes_reports_and_keeps_human_score_optional(ws, tmp
     args = Namespace(run=run["run_id"], model_reviewer="reviewer",
                      reviewer_runtime=None, parallel=1, json=False,
                      reviewer="reviewer-model", reviewer_qualified=False,
-                     calibration=None)
+                     calibration=None, consider_advisory_review=True,
+                     human_evaluation="Human reviewer")
     assert cli.cmd_review(args) == 0
     rdir = workspace.run_dir(run["run_id"])
     text = (rdir / "report.md").read_text(encoding="utf-8")
     assert "Automated review" in text
     assert "Human review (optional)" in text
+    assert "Human Review Record" in text
+    assert "Human reviewer" in text
     assert (rdir / "report.html").exists()
 
 
@@ -192,6 +195,32 @@ def test_repeating_same_model_reviewer_reuses_append_only_ratings(ws, tmp_path, 
     assert first["ratings_written"] == first["responses"]
     assert second["ratings_written"] == 0
     assert second["reused_existing"] == second["responses"]
+
+
+def test_resume_with_judge_is_one_command_score_aggregate_and_report(ws, tmp_path, monkeypatch):
+    from argparse import Namespace
+    from aies import cli, engine, workspace
+    from aies.adapters import mock as mockmod
+    from aies.adapters.base import GenerationResponse
+
+    _register(tmp_path, "cand")
+    _register(tmp_path, "judge")
+
+    def judge_generate(self, request):
+        return GenerationResponse(
+            text='{"EV1":3,"EV2":3,"EV3":3,"EV4":3,"EV5":3,"EV6":3,"findings":[]}',
+            usage={}, raw={})
+    monkeypatch.setattr(mockmod.MockAdapter, "generate", judge_generate)
+
+    run = engine.start_qualification("cand", "coder", "RT2", ["CA-05"], repeats=1)
+    args = Namespace(resume_collection=None, resume=run["run_id"], judge="judge",
+                     reviewer_runtime=None, parallel=1, json=True,
+                     consider_advisory_review=True, human_evaluation="Alice")
+    assert cli.cmd_qualify(args) == 0
+    rdir = workspace.run_dir(run["run_id"])
+    assert (rdir / "evidence-package.json").exists()
+    text = (rdir / "report.md").read_text(encoding="utf-8")
+    assert "Human Review Record" in text and "Alice" in text
 
 
 def test_judge_scoring_runs_concurrently_and_preserves_order(ws, tmp_path, monkeypatch):
