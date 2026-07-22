@@ -57,12 +57,14 @@ and selection remain separate products.
 | Done | Correct Grant Readiness rendering | A fully decisional, gate-passing package renders `Overall: READY`; missing admitted evidence renders gates as not evaluated rather than failed; Markdown and HTML tests cover both paths |
 | Done | Report corpus maturity honestly | Corpus health distinguishes calibration metadata, human design review, and empirical calibration; 268 pending human reviews cannot render as fully design-time calibrated |
 | Done | Make repository-audit detection deterministic | CI checks are found regardless of filesystem/YAML ordering; the AIES repository no longer reports its existing pytest CI gate as absent |
-| Open | Align rating admission with AIES-AESQS-ER-01 — Evaluation Rubrics | Human raters have verified identity, scope, qualification, and current calibration; automated raters cannot be the sole decisional scoring basis |
-| Open | Model evidence items separately from rater observations | Repeats and multiple ratings never inflate statistical sample size or confidence; per-item consensus/reconciliation is explicit |
+| In progress | Align rating admission with AIES-AESQS-ER-01 — Evaluation Rubrics | Accepted ADR-0012 defines the required evidence-item/rater separation; human raters have verified identity, scope, qualification, and current calibration, and automated raters cannot be the sole decisional scoring basis |
+| In progress | Model evidence items separately from rater observations | Accepted ADR-0012 governs implementation; repeats and multiple ratings never inflate statistical sample size or confidence and per-item consensus/reconciliation is explicit |
 | Open | Enforce double-rating and agreement rules | RT1 — Minimal / RT2 — Moderate double-rate at least 20%; RT3 — Significant / RT4 — Critical double-rate every item; required agreement and divergence resolution are machine-checked |
 | Open | Enforce the two-human qualification process | Every grant, conditional grant, and denial records an assessor and independent peer reviewer with qualification and conflict declarations |
 | Open | Complete the qualification scope tuple | Records include subject, role, phases, maximum risk tier, competency × CL claims, framework version, applicable agent-definition version, sponsor, and validity window |
-| Open | Make qualification lifecycle events immutable | Grant, condition change, renewal, suspension, invalidation, revocation, and supersession append separate ART-15 — Audit Trail Record events; prior records are never overwritten |
+| In progress | Make qualification lifecycle events immutable | Accepted ADR-0012 governs implementation; grant, condition change, renewal, suspension, invalidation, revocation, and supersession append separate ART-15 — Audit Trail Record events and prior records are never overwritten |
+| Done | Show detailed live progress for every run | `qualify`, resume, `review`, and `score` display progress implicitly with completed/total, percentage, current-stage elapsed time, total run elapsed time, throughput, ETA, current item/batch, failures, and resumability; the same state persists in `progress.json`, while `aies runs progress <run-id>` is an optional second-terminal observer |
+| Done | Make automated Engineering Evaluation self-contained | Complete automated scoring closes the engineering-evaluation workflow and generates all report/ECM artifacts; human evaluation is an optional, visible reviewed/not-reviewed field and never blocks the evaluation; formal qualification remains a separate ADR-0012 protocol |
 | Open | Enforce expiry and requalification | Expired or materially changed qualifications are treated as absent; renewal and targeted re-evaluation are supported |
 | Open | Correct endpoint deployment fingerprints | Remote qualifications bind to behaviorally relevant deployment/runtime/config identity, not irrelevant client-machine RAM/CPU changes |
 | Open | Govern ECM task decision semantics in an ADR | Define admitted distinct-task evidence, uncertainty, safety floors, task thresholds, and valid `demonstrated` semantics before Deployment Guidance can emit `Use` |
@@ -142,7 +144,7 @@ and selection remain separate products.
 
 | Status | Cleanup item | Acceptance signal |
 |---|---|---|
-| Open | Expand CI path coverage | Changes to Shared, AEBOK, AESQS, AEOS, AEAR, AECT, ECM, ADRs, governed docs, platform, and conformance trigger relevant checks |
+| Done | Expand CI path coverage | Changes to Shared, AEBOK, AESQS, AEOS, AEAR, AECT, ECM, ADRs, governed docs, platform, and conformance trigger relevant checks |
 | Open | Test supported Python versions | CI covers supported production versions including 3.13/3.14, or package metadata narrows the declared range |
 | Open | Add documentation governance checks | CI detects duplicate document/requirement IDs, missing meaningful titles, broken links, invalid metadata/status transitions, and stale references |
 | Open | Add code-quality checks | Formatting, linting, type checking, and coverage thresholds run in CI |
@@ -150,13 +152,13 @@ and selection remain separate products.
 | Open | Publish a real security contact | Dedicated email and optional encryption key replace the placeholder fallback; private vulnerability reporting remains preferred |
 | Open | Add ownership and protected-branch evidence | CODEOWNERS and externally attested branch-protection/human-review gates satisfy the repository’s own audit |
 | Open | Align versions | Package version, standards milestone, artifact versions, changelog, tags, and release names answer different versioning questions explicitly and consistently |
-| Open | Correct current CI identity wording | Workflow and active docs say Engineering Assessment Platform rather than Qualification Platform |
+| Done | Correct current CI identity wording | Workflow and active docs say Engineering Assessment Platform rather than Qualification Platform |
 
 ## 4. Current Verified Baseline
 
 Last verified on 2026-07-22:
 
-- `pytest platform/tests -q`: **180 passed**.
+- `pytest platform/tests -q`: **190 passed**.
 - `aies suites validate`: **484 scenarios, 12 areas, 0 warnings, 0 errors**.
 - Decision-engine conformance: **8/8 cases passed**, semantics 1.0.
 - Release hygiene: **PASS**.

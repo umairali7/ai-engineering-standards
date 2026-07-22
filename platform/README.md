@@ -94,9 +94,10 @@ make demo-full   # comprehensive tour of the whole platform
 ```
 
 `make demo` runs the **core workflow** against the mock runtime — discover a
-deployment, compose a named qualification from an assessment, collect +
-auto-score evidence with a mock judge, let the frozen decision engine decide the
-outcome, and render the Canonical Assessment Result as Markdown + HTML.
+deployment, compose a named assessment, collect responses, retain a mock
+judge's scores as automated evaluation observations, and render the Canonical
+Assessment Result as Markdown + HTML. Synthetic mock-judge scores do not become
+qualification evidence.
 
 `make demo-full` is the **comprehensive tour**: the three subjects AIES can
 assess (a model deployment via `qualify`, a repository via `audit`, and the
@@ -124,9 +125,25 @@ aies qualify --resume <run-id> # stage 5: gated, weighted aggregation
 aies report <run-id> --format markdown         # evidence package
 
 aies runs list                # result history
+aies runs progress <run-id>   # durable live stage, %, elapsed, rate, ETA, failures
 aies compare <dep-a> <dep-b>  # deltas on identical suite versions only
 aies suites validate          # validate suite catalog before publishing changes
 ```
+
+Long-running collection and judge-review commands continuously display the
+current stage, completed/total work, percentage, elapsed time, throughput, ETA,
+failure count, and current scenario or batch. The same state is written to the
+run's `progress.json`, so another terminal can inspect it with
+`aies runs progress <run-id>` even if the original CLI is still running.
+Progress is implicit in `qualify`, `qualify --resume`, `review`, and `score`;
+the separate `runs progress` command is only an optional second-terminal view.
+
+An automated judge can complete an **Engineering Evaluation** and generate the
+entire report/ECM bundle without human review. Reports display `Human
+evaluation: ☐ Not reviewed (optional)` until a named human evaluation is
+recorded, then display it as reviewed. This optional status never blocks the
+engineering evaluation. Formal qualification and grants remain a separate,
+human-governed protocol under ADR-0012.
 
 **Qualify deployments, not bare models** (PLATFORM.md D11). A deployment
 is the named tuple of model × runtime × config × endpoint; `aies discover`

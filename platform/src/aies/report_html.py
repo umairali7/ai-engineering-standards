@@ -54,9 +54,12 @@ footer { margin-top: 3rem; color: var(--muted); font-size: .8rem;
 
 
 def render_html(run_id: str) -> str:
+    from . import evaluation as evaluation_view
+
     pkg = workspace.read_json(workspace.run_dir(run_id) / "evidence-package.json")
     fp = pkg["environment_fingerprint"]
-    from .report import _human_review_record, _score_sources, _source_cell
+    from .report import (_human_evaluation_label, _human_review_record,
+                         _score_sources, _source_cell)
     source_scores = _score_sources(run_id)
     human_review = _human_review_record(run_id)
     p: list[str] = []
@@ -85,16 +88,40 @@ def render_html(run_id: str) -> str:
         reason = admission.get("reviewer_reason") or "reviewer admission not recorded"
         w("<div class='banner nondec'><strong>ADVISORY AUTOMATED REVIEW</strong> "
           f"&mdash; {admission['advisory_ratings']} automated rating(s) are excluded from "
-          "qualification scoring until the reviewer is admitted through qualification or "
-          f"human-anchor calibration. {_esc(reason)}</div>")
+          "qualification scoring. Reviewer admission permits corroborating peer review, "
+          "not automated-only qualification evidence. "
+          f"{_esc(reason)} (AIES-AESQS-ER-01-R10; ADR-0012)</div>")
     nondec = [a for a, d in pkg["areas"].items() if not d["decisional"]]
     if nondec:
         w(f"<div class='banner nondec'>NON-DECISIONAL — sample below the AESQS "
           f"minimum for {_esc(', '.join(C.competency_label(area) for area in nondec))} (AIES-AESQS-CS-01 §6). "
           "These results must not be presented as qualification evidence.</div>")
 
+    evaluation = evaluation_view.summarize(run_id)
+    w("<h2>Engineering Evaluation</h2>")
+    w(f"<p><strong>Evaluation status: {_esc(str(evaluation.get('status', 'not-scored')).upper())}</strong>"
+      f" &middot; <strong>Human evaluation:</strong> {_esc(_human_evaluation_label(evaluation))}</p>")
+    w("<p class=muted>Automated scores are sufficient to complete this informational "
+      "engineering evaluation and its ECM decision products. Human evaluation is "
+      "optional here; formal qualification and grants use the separate protocol below.</p>")
+    w("<table><tr><th>Area</th><th>Automated score coverage</th>"
+      "<th>Observed automated mean</th><th>Human eval</th><th>Evaluation status</th></tr>")
+    for area, evaluation_area in (evaluation.get("areas") or {}).items():
+        automated = (evaluation_area.get("sources") or {}).get("automated") or {}
+        mean_value = automated.get("observed_mean")
+        status = str(evaluation_area.get("status", "not-scored")).upper()
+        if evaluation_area.get("completed_by"):
+            status += f" — {evaluation_area['completed_by']}"
+        w(f"<tr><td>{_esc(C.competency_label(area))}</td>"
+          f"<td>{automated.get('responses_scored', 0)}/{automated.get('responses_total', 0)} "
+          f"({automated.get('coverage_percent', 0):.1f}%)</td>"
+          f"<td>{_esc(mean_value if mean_value is not None else '—')}</td>"
+          f"<td>{_esc(_human_evaluation_label(evaluation))}</td>"
+          f"<td><strong>{_esc(status)}</strong></td></tr>")
+    w("</table>")
+
     from .report import _area_verdict, _gate_status, _overall_readiness
-    w("<h2>Grant Readiness</h2>")
+    w("<h2>Grant Readiness (Formal Qualification)</h2>")
     w("<table><tr><th>Area</th><th>Decisional</th><th>Gates</th><th>CL</th>"
       "<th>Verdict — informs a human grant</th></tr>")
     verdicts = {}
@@ -115,8 +142,9 @@ def render_html(run_id: str) -> str:
           "human authority records any grant.</p>")
     else:
         labels = ", ".join(C.competency_label(area) for area in blocked)
-        w(f"<p class='fail'><strong>Overall: BLOCKED</strong> — not grant-ready "
-          f"for {_esc(labels)}.</p>")
+        w(f"<p class='fail'><strong>Overall: BLOCKED</strong> — formal qualification "
+          f"is not grant-ready for {_esc(labels)}. This does not block the completed "
+          "Engineering Evaluation above.</p>")
     threshold_met = sum(1 for d in pkg["areas"].values()
                         if d["decisional"] and d.get("gates_passed") and not d.get("ev3_hard_fail"))
     w(f"<p><strong>Qualification coverage:</strong> {threshold_met}/{len(pkg['areas'])} "
@@ -126,11 +154,12 @@ def render_html(run_id: str) -> str:
     if human_review:
         advisory = human_review.get("automated_advisory_review") or {}
         evaluator = (human_review.get("human_evaluation") or {}).get("evaluator")
-        w("<h2>Human Review Record</h2><table>")
+        w("<h2>Optional Human Evaluation Record</h2><table>")
         w("<tr><th>Review input</th><th>Human record</th></tr>")
         w(f"<tr><td>Advisory automated scores</td><td>"
           f"{'considered' if advisory.get('considered') else 'not declared'}</td></tr>")
-        w(f"<tr><td>Human evaluation</td><td>{_esc(evaluator or 'not declared')}</td></tr>")
+        human_label = f"☑ Reviewed — {evaluator}" if evaluator else "☐ Not reviewed (optional)"
+        w(f"<tr><td>Human evaluation</td><td>{_esc(human_label)}</td></tr>")
         w("</table><p class=muted>This is a human review declaration over evidence; "
           "it is not a grant. Formal grants remain blocked until decisional and "
           "gate-passing evidence exists.</p>")
@@ -158,7 +187,7 @@ def render_html(run_id: str) -> str:
           f"&middot; advisory automated ratings: {d.get('advisory_ratings', 0)} "
           f"&middot; decisional: {'yes' if d['decisional'] else 'NO'}</p>")
         w("<table><tr><th>Dimension</th><th>Automated review</th>"
-          "<th>Human review (optional)</th><th>Admitted n</th><th>Admitted mean</th><th>90% CI</th>"
+          "<th>Human eval (optional)</th><th>Admitted n</th><th>Admitted mean</th><th>90% CI</th>"
           "<th>Decision value</th><th>Gate</th><th>Result</th></tr>")
         gates = {g["dimension"]: g for g in d["gates"]}
         for dim in C.DIMENSIONS:

@@ -31,6 +31,14 @@ def _out(data, as_json: bool, human: str | None = None) -> None:
         print(human if human is not None else json.dumps(data, indent=2, default=str))
 
 
+def _live_progress(args):
+    """One renderer per command so stage/bucket throttling stays coherent."""
+    if getattr(args, "json", False):
+        return None
+    from .progress import CliProgress
+    return CliProgress()
+
+
 def cmd_doctor(args) -> int:
     from . import doctor
     record = doctor.run_doctor()
@@ -81,9 +89,11 @@ def cmd_registry(args) -> int:
 
 def cmd_qualify(args) -> int:
     from . import engine
+    live_progress = _live_progress(args)
     try:
         if getattr(args, "resume_collection", None):
-            summary = engine.resume_collection(args.resume_collection)
+            summary = engine.resume_collection(args.resume_collection,
+                                                 progress_callback=live_progress)
             _out(summary, args.json,
                  f"filled {summary['filled']} missing response(s) for "
                  f"{summary['run_id']} — now {summary['responses']}/{summary['planned']} "
@@ -107,24 +117,37 @@ def cmd_qualify(args) -> int:
                     args.resume, jdep,
                     runtime=getattr(args, "reviewer_runtime", None), workers=workers,
                     batch_size=(getattr(args, "judge_batch_size", None)
-                                or config.judge_batch_size()))
+                                or config.judge_batch_size()),
+                    progress_callback=live_progress)
                 review_pkg = review.assemble_review_package(
                     args.resume, reviewer_label=f"model:{jdep}",
                     consider_advisory_review=getattr(args, "consider_advisory_review", False),
                     human_evaluation=getattr(args, "human_evaluation", None))
                 (workspace.run_dir(args.resume) / "review-package.json").write_text(
                     json.dumps(review_pkg, indent=2), encoding="utf-8")
+            from . import progress
+            progress.update(args.resume, "aggregation", 0, 1,
+                            callback=live_progress)
             package = engine.aggregate(args.resume)
-            from . import report
+            progress.update(args.resume, "aggregation", 1, 1, status="completed",
+                            callback=live_progress)
+            from . import evaluation, report
+            progress.update(args.resume, "report-generation", 0, 1,
+                            callback=live_progress)
             paths = report.write_reports(args.resume)
+            progress.update(args.resume, "report-generation", 1, 1,
+                            status="completed", callback=live_progress)
             outcome = _assessment_result(args.resume)
-            _out({"package": package, "reports": paths,
+            evaluation_summary = evaluation.summarize(args.resume)
+            _out({"package": package, "engineering_evaluation": evaluation_summary,
+                  "reports": paths,
                   **({"scoring": scoring} if scoring else {}),
                   **({"assessment_result": outcome} if outcome else {})}, args.json,
                  f"complete report bundle generated for {args.resume}\n"
                  f"  report (Markdown): {paths['markdown']}\n"
                  f"  report (JSON)    : {paths['json']}\n"
                  f"  report (HTML)    : {paths['html']}\n"
+                 f"  evaluation (JSON): {paths['engineering_evaluation']}\n"
                  f"  ECM (Markdown)   : {paths['ecm_markdown']}\n"
                  f"  ECM (JSON)       : {paths['ecm_json']}\n"
                  f"  ECM (HTML)       : {paths['ecm_html']}"
@@ -141,7 +164,8 @@ def cmd_qualify(args) -> int:
             manifest = engine.start_journey(
                 args.model, args.profile, args.journey,
                 repeats=args.repeats, subject_kind="ai",
-                runtime=getattr(args, "runtime", None))
+                runtime=getattr(args, "runtime", None),
+                progress_callback=live_progress)
         else:
             plan = engine.plan_qualification(f"RT{args.rt}", args.area,
                                               subject_kind="ai", repeats=args.repeats)
@@ -177,13 +201,15 @@ def cmd_qualify(args) -> int:
                 workers=workers,
                 assessment=getattr(args, "_assessment", None),
                 decisional=getattr(args, "decisional", False),
+                progress_callback=live_progress,
             )
         run_id = manifest["run_id"]
         # Automated scoring: if a judge is given (or AIES_JUDGE is set), score
         # the responses with it and output the report directly — no manual step.
         judge = getattr(args, "judge", None) or config.default_judge()
         if judge:
-            from . import engine as _engine, model_review, report as _report, review as _review
+            from . import (engine as _engine, evaluation as _evaluation,
+                           model_review, report as _report, review as _review)
             jdep = manifest["model"]["registry_id"] if judge == "self" else judge
             self_judged = jdep == manifest["model"]["registry_id"]
             n_resp = len(list((workspace.run_dir(run_id) / "responses").glob("*.json")))
@@ -195,7 +221,8 @@ def cmd_qualify(args) -> int:
                     run_id, jdep, runtime=getattr(args, "reviewer_runtime", None),
                     workers=workers,
                     batch_size=(getattr(args, "judge_batch_size", None)
-                                or config.judge_batch_size()))
+                                or config.judge_batch_size()),
+                    progress_callback=live_progress)
             except Exception as e:
                 print(f"error: automated scoring failed ({e}). The responses were "
                       f"collected; you can score manually — see the scoresheet in "
@@ -207,12 +234,22 @@ def cmd_qualify(args) -> int:
                 human_evaluation=getattr(args, "human_evaluation", None))
             (workspace.run_dir(run_id) / "review-package.json").write_text(
                 json.dumps(review_pkg, indent=2), encoding="utf-8")
+            from . import progress as _progress
+            _progress.update(run_id, "aggregation", 0, 1,
+                             callback=live_progress)
             pkg = _engine.aggregate(run_id)
+            _progress.update(run_id, "aggregation", 1, 1, status="completed",
+                             callback=live_progress)
+            _progress.update(run_id, "report-generation", 0, 1,
+                             callback=live_progress)
             _report.write_reports(run_id)
+            _progress.update(run_id, "report-generation", 1, 1,
+                             status="completed", callback=live_progress)
             outcome = _assessment_result(run_id)
             if args.json:
                 _out({"run_id": run_id, "judge": jdep, "self_judged": self_judged,
-                      "scoring": summary, "evidence_package": pkg,
+                      "scoring": summary, "engineering_evaluation":
+                      _evaluation.summarize(run_id), "evidence_package": pkg,
                       **({"assessment_result": outcome} if outcome else {})}, True)
             else:
                 print(_report.render_markdown(run_id))
@@ -226,9 +263,11 @@ def cmd_qualify(args) -> int:
                     print("WARNING: the model scored its own output (self-judging) — "
                           "expect inflation/bias. Use --judge <a different deployment> "
                           "for a trustworthy read.")
-                print("This is an evidence report. To record a formal, revocable "
-                      f"grant, a human runs:  aies grant {run_id} --decision grant "
-                      "--authority \"You\" --second \"Peer\"")
+                print("Engineering evaluation complete; human evaluation is optional. "
+                      "Formal qualification/grant is a separate governed workflow. "
+                      "When its human protocol is satisfied, record it with:  "
+                      f"aies grant {run_id} --decision grant --authority \"You\" "
+                      "--second \"Peer\"")
             return 0
         sheet = workspace.run_dir(run_id) / "scoresheet.json"
         _out(manifest, args.json,
@@ -328,7 +367,8 @@ def cmd_score(args) -> int:
     try:
         source = Path(args.file) if args.file else workspace.run_dir(args.run) / "scoresheet.json"
         sheet = json.loads(source.read_text(encoding="utf-8"))
-        written = rating.ingest_scores(args.run, sheet)
+        written = rating.ingest_scores(args.run, sheet,
+                                       progress_callback=_live_progress(args))
         _out({"ratings_written": written}, args.json,
              f"{len(written)} rating records written for {args.run}\n"
              f"next: aies qualify --resume {args.run}")
@@ -644,7 +684,27 @@ def cmd_discover(args) -> int:
 
 
 def cmd_runs(args) -> int:
-    from . import compare
+    from . import compare, workspace
+    if args.runs_cmd == "progress":
+        path = workspace.run_dir(args.run) / "progress.json"
+        if not path.exists():
+            print(f"error: run {args.run!r} has no progress state", file=sys.stderr)
+            return 2
+        event = workspace.read_json(path)
+        eta = "—" if event.get("eta_seconds") is None else f"{event['eta_seconds']:.0f}s"
+        _out(event, args.json,
+             f"{event['run_id']}\n"
+             f"  stage      : {event['stage']} ({event['status']})\n"
+             f"  progress   : {event['completed']}/{event['total']} "
+             f"({event['percent']:.1f}%)\n"
+             f"  stage time : {event['elapsed_seconds']:.1f}s\n"
+             f"  total time : {event.get('total_elapsed_seconds', event['elapsed_seconds']):.1f}s\n"
+             f"  throughput : {event['throughput_per_second']:.2f}/s\n"
+             f"  ETA        : {eta}\n"
+             f"  failures   : {event['failures']}\n"
+             f"  current    : {event.get('current') or '—'}\n"
+             f"  resumable  : {'yes' if event.get('resumable') else 'no'}")
+        return 0
     runs = compare.list_runs(model=args.model)
     _out(runs, args.json,
          "\n".join(
@@ -656,6 +716,7 @@ def cmd_runs(args) -> int:
 
 def cmd_review(args) -> int:
     from . import rating, review, workspace
+    live_progress = _live_progress(args)
     try:
         report_paths = None
         scoring = None
@@ -670,7 +731,8 @@ def cmd_review(args) -> int:
                 args.run, args.model_reviewer,
                 runtime=getattr(args, "reviewer_runtime", None), workers=workers,
                 batch_size=(getattr(args, "judge_batch_size", None)
-                            or config.judge_batch_size()))
+                            or config.judge_batch_size()),
+                progress_callback=live_progress)
             if not (args.json):
                 print(f"reviewer model {scoring['reviewer']}: scored "
                       f"{scoring['scored']}/{scoring['responses']} responses "
@@ -697,13 +759,23 @@ def cmd_review(args) -> int:
         # metadata, but cannot manufacture an evidence package.
         assessment_result = None
         if rating.collect_ratings(args.run):
-            from . import engine, report
+            from . import engine, evaluation, progress, report
+            progress.update(args.run, "aggregation", 0, 1,
+                            callback=live_progress)
             engine.aggregate(args.run)
+            progress.update(args.run, "aggregation", 1, 1, status="completed",
+                            callback=live_progress)
+            progress.update(args.run, "report-generation", 0, 1,
+                            callback=live_progress)
             report_paths = report.write_reports(args.run)
+            progress.update(args.run, "report-generation", 1, 1,
+                            status="completed", callback=live_progress)
             assessment_result = _assessment_result(args.run)
         if args.json:
             _out({**pkg, **({"reports": report_paths} if report_paths else {}),
                   **({"scoring": scoring} if scoring else {}),
+                  **({"engineering_evaluation": evaluation.summarize(args.run)}
+                     if report_paths else {}),
                   **({"assessment_result": assessment_result}
                      if assessment_result else {})}, True)
         else:
@@ -718,6 +790,9 @@ def cmd_review(args) -> int:
                 print(f"    {d['response']} {d['dimension']}: "
                       f"human {d['human']} vs model {d['model']} (Δ{d['delta']}){gc}")
             print(f"  {s['note']}")
+            if scoring:
+                print("  engineering evaluation: COMPLETE when every response has an "
+                      "automated score; human evaluation is optional")
             consideration = pkg["human_consideration"]
             advisory = consideration["automated_advisory_review"]
             evaluator = consideration["human_evaluation"]["evaluator"]
@@ -1418,6 +1493,9 @@ def build_parser() -> argparse.ArgumentParser:
     rl = rnsub.add_parser("list")
     rl.add_argument("--model", default=None)
     rl.add_argument("--json", action="store_true")
+    rp = rnsub.add_parser("progress", help="show detailed durable progress for a run")
+    rp.add_argument("run")
+    rp.add_argument("--json", action="store_true")
     rn.set_defaults(func=cmd_runs)
 
     rv = common(sub.add_parser("review", help="assemble a multi-deployment peer-review package"))

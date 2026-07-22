@@ -48,6 +48,7 @@ Every artifact carries a schema version; envelopes are field-append-only
 | Assessment | `schema` | `1` | authored (`assessments/*.yaml`) |
 | Profile | `version` | semver | authored (`profiles/*.yaml`) |
 | Evidence Package | `evidence_schema` | `4` | `qualify --resume` / `aggregate` |
+| Engineering Evaluation Summary | `evaluation_schema` | `1` | every complete report bundle (`engineering-evaluation.json`) |
 | Canonical Assessment Result | `result_schema` | `1` | the decision engine |
 | Decision semantics | `decision_semantics_version` | `1.0` (AESQS CS-01 §8) | the standard |
 
@@ -74,15 +75,15 @@ append-only records. Grouped as in `aies --help`.
 
 | Command | Contract | Example |
 |---|---|---|
-| `qualify` | Full pipeline for a deployment → evidence package. `--assessment`, `--judge`, `--all-areas`, `--journey`, `--parallel`, `--repeats`, `--resume`, `--resume-collection` | `aies qualify local-qwen --assessment enterprise --judge gpt-oss` |
+| `qualify` | Full pipeline for a deployment → engineering evaluation and evidence package. Live progress is implicit; an automated judge can complete the evaluation without human review. `--assessment`, `--judge`, `--all-areas`, `--journey`, `--parallel`, `--repeats`, `--resume`, `--resume-collection` | `aies qualify local-qwen --assessment enterprise --judge gpt-oss` |
 | `benchmark` | Execute scenario suites only (stage 4) | `aies benchmark acme-7b --area CA-05 --repeats 5` |
 | `score` | Ingest a filled scoresheet (human/model rater) | `aies score run-2031` |
 | `import` / `export` | Bring external eval results in as EV evidence / round-trip out | `aies import run-2031 eval.json` |
 | `capabilities` | Per-area CL + autonomy + gate + decisional status; `--ecm` renders a traceable, informational scenario-family matrix | `aies capabilities run-2031 --ecm --format html --write` |
 | `assessment` | `list` / `show` / `validate` / `result <run>` (Markdown/JSON/`--format html`) | `aies assessment result run-2031` |
-| `review` | Multi-model peer review + calibration gate | `aies review run-2031 --model-reviewer rev` |
+| `review` | Automated review, optional human-evaluation record, implicit live progress, and refreshed report bundle | `aies review run-2031 --model-reviewer rev` |
 | `compare` | Deltas across runs on identical suite versions | `aies compare a b --profile coder` |
-| `runs` / `transcript` | List runs / render a whole run (task + answer + scores) | `aies transcript run-2031` |
+| `runs list` / `runs progress` / `transcript` | List runs, optionally observe another command's durable progress from a second terminal, or render a whole run (task + answer + scores). The originating command already shows progress implicitly. | `aies runs progress run-2031` |
 
 ### Judging
 

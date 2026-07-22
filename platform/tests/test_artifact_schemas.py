@@ -93,6 +93,18 @@ def test_evidence_package_envelope_shape(ws_run):
     assert pkg["subject"]["kind"] == "ai_deployment"
 
 
+def test_engineering_evaluation_summary_is_separately_versioned(ws_run):
+    from aies import evaluation
+
+    summary = evaluation.summarize(ws_run)
+    assert summary["kind"] == "engineering-evaluation-summary"
+    assert summary["evaluation_schema"] == evaluation.EVALUATION_SCHEMA == 1
+    assert summary["status"] == "complete"
+    assert summary["human_evaluation"] == {
+        "status": "reviewed", "optional": True, "evaluator": "R"}
+    assert summary["areas"]["CA-05"]["completed_by"] == "human"
+
+
 import pytest  # noqa: E402
 
 

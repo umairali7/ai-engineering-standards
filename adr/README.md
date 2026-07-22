@@ -76,6 +76,7 @@ Accepted ADRs are never edited to change the decision. If circumstances change, 
 | [ADR-0009](ADR-0009-Engineering-Assessment-Platform-Identity.md) | Establish the Engineering Assessment Platform identity | Accepted |
 | [ADR-0010](ADR-0010-Human-Readable-Identifier-Convention.md) | Canonical human-readable identifier display convention | Accepted |
 | [ADR-0011](ADR-0011-Distinct-Scenario-Breadth-and-Separate-Stability-Studies.md) | Count distinct scenario breadth and separate stability studies | Accepted |
+| [ADR-0012](ADR-0012-Qualification-Evidence-Rater-Protocol-and-Immutable-Lifecycle.md) | Separate evaluation observations from qualification evidence and use immutable lifecycle events | Accepted |
 
 ## Related Documents
 

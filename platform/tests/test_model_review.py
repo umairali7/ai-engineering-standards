@@ -151,12 +151,54 @@ def test_auto_score_qualify_produces_evidence_without_manual_step(ws, tmp_path, 
     assert pkg["areas"]["CA-05"]["n_scored"] == 0
     assert pkg["areas"]["CA-05"]["decisional"] is False
     # report carries the judge-produced banner and stays evidence-only (no grant)
-    from aies import report
+    from aies import evaluation, report
     md = report.render_markdown(run["run_id"])
     assert "JUDGE-PRODUCED" in md and "NO GRANT" in md.upper()
+    assert "Evaluation status: COMPLETE" in md
+    assert "☐ Not reviewed (optional)" in md
+    evaluation_summary = evaluation.summarize(run["run_id"])
+    assert evaluation_summary["status"] == "complete"
+    assert evaluation_summary["human_evaluation"]["optional"] is True
+    assert evaluation_summary["human_evaluation"]["status"] == "not-reviewed"
+    assert evaluation_summary["areas"]["CA-05"]["completed_by"] == "automated"
 
 
-def test_review_command_refreshes_reports_and_keeps_human_score_optional(ws, tmp_path, monkeypatch):
+def test_qualified_model_reviewer_cannot_be_sole_qualification_score_source(
+        ws, tmp_path, monkeypatch):
+    """Reviewer admission permits corroboration, not automated qualification."""
+    from aies import engine, model_review, review, workspace
+    from aies.adapters import mock as mockmod
+    from aies.adapters.base import GenerationResponse
+
+    _register(tmp_path, "cand")
+    _register(tmp_path, "reviewer")
+
+    def judge_generate(self, request):
+        return GenerationResponse(
+            text='{"EV1":3,"EV2":3,"EV3":3,"EV4":3,"EV5":3,"EV6":3,'
+                 '"findings":[]}', usage={}, raw={})
+    monkeypatch.setattr(mockmod.MockAdapter, "generate", judge_generate)
+
+    run = engine.start_qualification("cand", "research", "RT2", ["CA-05"])
+    model_review.run_model_review(run["run_id"], "reviewer")
+    review_pkg = review.assemble_review_package(
+        run["run_id"], reviewer_label="model:reviewer",
+        reviewer_qualified_for_review=True)
+    assert review_pkg["reviewer"]["admitted"] is True
+    workspace.write_json(
+        workspace.run_dir(run["run_id"]) / "review-package.json",
+        review_pkg, overwrite=True)
+
+    pkg = engine.aggregate(run["run_id"])
+    assert pkg["rating_admission"]["reviewer_admitted"] is True
+    assert pkg["rating_admission"]["admitted_ratings"] == 0
+    assert pkg["rating_admission"]["automated_review_role"] == "corroborating-review-only"
+    assert pkg["areas"]["CA-05"]["n_scored"] == 0
+    assert pkg["areas"]["CA-05"]["decisional"] is False
+
+
+def test_review_command_refreshes_reports_and_keeps_human_score_optional(
+        ws, tmp_path, monkeypatch, capsys):
     """A model review is an actionable evidence update, not a dead-end file.
 
     The resulting report separates automated reviewer observations from an
@@ -183,11 +225,15 @@ def test_review_command_refreshes_reports_and_keeps_human_score_optional(ws, tmp
                      calibration=None, consider_advisory_review=True,
                      human_evaluation="Human reviewer")
     assert cli.cmd_review(args) == 0
+    captured = capsys.readouterr()
+    for stage in ("judge-review", "aggregation", "report-generation"):
+        assert f"[{stage}]" in captured.err
     rdir = workspace.run_dir(run["run_id"])
     text = (rdir / "report.md").read_text(encoding="utf-8")
     assert "Automated review" in text
-    assert "Human review (optional)" in text
-    assert "Human Review Record" in text
+    assert "Human eval (optional)" in text
+    assert "Optional Human Evaluation Record" in text
+    assert "☑ Reviewed — Human reviewer" in text
     assert "Human reviewer" in text
     assert (rdir / "report.html").exists()
 
@@ -237,9 +283,9 @@ def test_resume_with_judge_is_one_command_score_aggregate_and_report(ws, tmp_pat
     rdir = workspace.run_dir(run["run_id"])
     assert (rdir / "evidence-package.json").exists()
     text = (rdir / "report.md").read_text(encoding="utf-8")
-    assert "Human Review Record" in text and "Alice" in text
+    assert "Optional Human Evaluation Record" in text and "Alice" in text
     # A resume is a complete delivery, not a Markdown/JSON-only refresh.
-    for name in ("report.json", "report.html",
+    for name in ("report.json", "report.html", "engineering-evaluation.json",
                  "engineering-capability-matrix.md",
                  "engineering-capability-matrix.json",
                  "engineering-capability-matrix.html"):

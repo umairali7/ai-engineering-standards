@@ -19,7 +19,7 @@ import json
 import re
 
 from . import constants as C
-from . import rating, runner, workspace
+from . import progress, rating, runner, workspace
 from .adapters import resolve
 from .adapters.base import GenerationRequest
 
@@ -159,7 +159,7 @@ def _make_batches(recs: list[dict], prompts: dict[str, str], *, max_items: int,
 
 def run_model_review(run_id: str, reviewer_deployment: str,
                      runtime: str | None = None, workers: int = 1,
-                     batch_size: int = 1) -> dict:
+                     batch_size: int = 1, progress_callback=None) -> dict:
     """Have a reviewer deployment score every response in a run; ingest the
     parseable ones as model-kind ratings. Returns a summary.
 
@@ -196,6 +196,20 @@ def run_model_review(run_id: str, reviewer_deployment: str,
     recs = [r for r in all_recs
             if f"{r['scenario_id']}-r{r['repeat']}.json" not in existing]
     prompts = _scenario_prompts({r["area"] for r in recs})
+    progress_done = len(existing)
+    progress_failures = 0
+    progress.update(run_id, "judge-review", progress_done, len(all_recs),
+                    message=(f"reviewer {reviewer_deployment}; {len(existing)} "
+                             "existing ratings reused"),
+                    callback=progress_callback)
+
+    def _review_progress(delta: int, current: str, failed: int = 0) -> None:
+        nonlocal progress_done, progress_failures
+        progress_done += delta
+        progress_failures += failed
+        progress.update(run_id, "judge-review", progress_done, len(all_recs),
+                        current=current, failures=progress_failures,
+                        callback=progress_callback)
 
     def _score_one(rec: dict):
         task = prompts.get(rec["scenario_id"], "(scenario prompt unavailable)")
@@ -237,19 +251,26 @@ def run_model_review(run_id: str, reviewer_deployment: str,
                 future_batches = {pool.submit(_score_batch, batch): batch for batch in batches}
                 outcomes = []
                 for future in as_completed(future_batches):
+                    batch = future_batches[future]
+                    ids = [item["item_id"] for item in batch]
                     try:
-                        outcomes.append(future.result())
+                        result = future.result()
+                        outcomes.append(result)
+                        _review_progress(len(result[0]), f"{ids[0]}..{ids[-1]}")
                     except Exception as exc:  # successful batches remain ingestible below
-                        ids = [item["item_id"] for item in future_batches[future]]
                         scoring_errors.append(f"{ids[0]}..{ids[-1]}: {exc}")
+                        _review_progress(len(batch), f"{ids[0]}..{ids[-1]}", len(batch))
         else:
             outcomes = []
             for batch in batches:
+                ids = [item["item_id"] for item in batch]
                 try:
-                    outcomes.append(_score_batch(batch))
+                    result = _score_batch(batch)
+                    outcomes.append(result)
+                    _review_progress(len(result[0]), f"{ids[0]}..{ids[-1]}")
                 except Exception as exc:
-                    ids = [item["item_id"] for item in batch]
                     scoring_errors.append(f"{ids[0]}..{ids[-1]}: {exc}")
+                    _review_progress(len(batch), f"{ids[0]}..{ids[-1]}", len(batch))
         scored = []
         for rows, calls, fallbacks in outcomes:
             scored.extend(rows)
@@ -258,10 +279,18 @@ def run_model_review(run_id: str, reviewer_deployment: str,
     elif workers and workers > 1 and recs:
         from concurrent.futures import ThreadPoolExecutor
         with ThreadPoolExecutor(max_workers=workers) as pool:
-            scored = list(pool.map(_score_one, recs))  # preserves recs order
+            scored = []
+            for row in pool.map(_score_one, recs):  # preserves recs order
+                scored.append(row)
+                rec = row[0]
+                _review_progress(1, f"{rec['scenario_id']}-r{rec['repeat']}")
         judge_calls = len(recs)
     else:
-        scored = [_score_one(rec) for rec in recs]
+        scored = []
+        for rec in recs:
+            row = _score_one(rec)
+            scored.append(row)
+            _review_progress(1, f"{rec['scenario_id']}-r{rec['repeat']}")
         judge_calls = len(recs)
 
     scored.sort(key=lambda pair: (pair[0]["scenario_id"], int(pair[0]["repeat"])))
@@ -293,13 +322,22 @@ def run_model_review(run_id: str, reviewer_deployment: str,
         sheet = {"run_id": run_id,
                  "rater": {"name": reviewer_label, "kind": "model"},
                  "items": items}
-        written = rating.ingest_scores(run_id, sheet)
+        written = rating.ingest_scores(run_id, sheet,
+                                       progress_callback=progress_callback)
     if scoring_errors:
+        progress.update(run_id, "judge-review", progress_done, len(all_recs),
+                        status="partial", failures=progress_failures,
+                        message="review stopped; successful ratings were preserved",
+                        callback=progress_callback)
         sample = "; ".join(scoring_errors[:2])
         raise ModelReviewError(
             f"{len(scoring_errors)} judge batch(es) failed; {len(written)} successful "
             f"per-response rating(s) were saved and will be reused on resume. "
             f"First failure: {sample}")
+    progress.update(run_id, "judge-review", len(all_recs), len(all_recs),
+                    status="completed", failures=failed,
+                    message=f"{len(existing) + parsed} responses scored; {failed} unparseable",
+                    callback=progress_callback)
     return {"reviewer": reviewer_deployment, "responses": len(all_recs),
             "scored": len(existing) + parsed, "newly_scored": parsed,
             "reused_existing": len(existing), "unparseable": failed,

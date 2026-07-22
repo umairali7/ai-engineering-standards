@@ -143,6 +143,7 @@ def execute_journey(
     environment_fp: dict,
     repeats: int | None = None,
     parameters: dict | None = None,
+    progress_callback=None,
 ) -> list[Path]:
     """Execute a journey (journeys.py): steps run in order per repeat, each
     step's response threaded into the next step's prompt. Each step is
@@ -158,6 +159,7 @@ def execute_journey(
     risk_tier = journey["risk_tier"]
     n_repeats = repeats or 1
     written: list[Path] = []
+    total = n_repeats * len(journey["steps"])
     for r in range(1, n_repeats + 1):
         prior: list[dict] = []
         for step in journey["steps"]:
@@ -174,6 +176,8 @@ def execute_journey(
             path = rdir / f"{step['id']}-r{r}.json"
             workspace.write_json(path, record)
             written.append(path)
+            if progress_callback:
+                progress_callback(len(written), total, step["id"], "completed")
             prior.append({"id": step["id"], "area": step["area"],
                           "phase": step.get("phase", ""), "response": response.text})
     return written
@@ -190,6 +194,7 @@ def execute_suite(
     parameters: dict | None = None,
     workers: int = 1,
     skip_existing: bool = False,
+    progress_callback=None,
 ) -> list[Path]:
     """Execute each scenario once, or with an explicit repeat override, and append response
     records. Returns the paths written, in deterministic scenario/repeat
@@ -237,6 +242,13 @@ def execute_suite(
 
     written: list[Path] = []
     failures: list[tuple[str, str]] = []  # (scenario-repeat, error)
+    completed = 0
+
+    def _notify(sc: dict, r: int, status: str) -> None:
+        nonlocal completed
+        completed += 1
+        if progress_callback:
+            progress_callback(completed, len(tasks), f"{sc['id']}-r{r}", status)
 
     if workers and workers > 1:
         with ThreadPoolExecutor(max_workers=workers) as pool:
@@ -245,15 +257,19 @@ def execute_suite(
                 sc, r = futs[fut]
                 try:
                     written.append(fut.result())
+                    _notify(sc, r, "completed")
                 except Exception as e:  # noqa: BLE001 — surfaced below, work preserved
                     failures.append((f"{sc['id']}-r{r}", str(e)))
+                    _notify(sc, r, "failed")
     else:
         for task in tasks:
             sc, r = task
             try:
                 written.append(_run_and_write(task))
+                _notify(sc, r, "completed")
             except Exception as e:  # noqa: BLE001
                 failures.append((f"{sc['id']}-r{r}", str(e)))
+                _notify(sc, r, "failed")
 
     written.sort()  # deterministic return order; the record SET is worker-independent
 

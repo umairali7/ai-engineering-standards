@@ -112,12 +112,21 @@ def _human_review_record(run_id: str) -> dict | None:
     return (workspace.read_json(path).get("human_consideration") or None)
 
 
+def _human_evaluation_label(evaluation_summary: dict) -> str:
+    record = evaluation_summary.get("human_evaluation") or {}
+    if record.get("status") == "reviewed":
+        return f"☑ Reviewed — {record.get('evaluator') or 'named human'}"
+    return "☐ Not reviewed (optional)"
+
+
 def render_json(run_id: str) -> str:
     pkg = workspace.read_json(workspace.run_dir(run_id) / "evidence-package.json")
     return json.dumps(pkg, indent=2)
 
 
 def render_markdown(run_id: str) -> str:
+    from . import evaluation as evaluation_view
+
     pkg = workspace.read_json(workspace.run_dir(run_id) / "evidence-package.json")
     fp = pkg["environment_fingerprint"]
     source_scores = _score_sources(run_id)
@@ -142,10 +151,10 @@ def render_markdown(run_id: str) -> str:
 
     if (pkg.get("rating_admission") or {}).get("advisory_ratings", 0):
         a("> **SCORES ARE JUDGE-PRODUCED (automated).** A judge model rated these "
-          "responses; scores reflect the judge's opinion, not ground truth. A "
-          "grant still requires a human authority (PLATFORM.md D8), and judge "
-          "scores carry decisional weight only when calibrated "
-          "(AIES-AESQS-PR-01-R09).")
+          "responses; scores reflect the judge's opinion, not ground truth. "
+          "Automated ratings are retained as engineering-evaluation and "
+          "corroborating-review observations, but are never the sole basis of "
+          "qualification evidence (AIES-AESQS-ER-01-R10; ADR-0012).")
         a("")
 
     nondecisional = [area for area, d in pkg["areas"].items() if not d["decisional"]]
@@ -155,8 +164,34 @@ def render_markdown(run_id: str) -> str:
           "MUST NOT be presented as qualification evidence.")
         a("")
 
+    evaluation = evaluation_view.summarize(run_id)
+    a("## Engineering Evaluation")
+    a("")
+    a(f"**Evaluation status: {str(evaluation.get('status', 'not-scored')).upper()}**  ")
+    a(f"**Human evaluation:** {_human_evaluation_label(evaluation)}")
+    a("")
+    a("Automated scores are sufficient to complete this informational engineering "
+      "evaluation and its ECM decision products. Human evaluation is optional here; "
+      "formal qualification and grants use the separate protocol below.")
+    a("")
+    a("| Area | Automated score coverage | Observed automated mean | Human eval | Evaluation status |")
+    a("|---|---|---|---|---|")
+    for area, evaluation_area in (evaluation.get("areas") or {}).items():
+        automated = (evaluation_area.get("sources") or {}).get("automated") or {}
+        mean_value = automated.get("observed_mean")
+        completed_by = evaluation_area.get("completed_by")
+        status = str(evaluation_area.get("status", "not-scored")).upper()
+        if completed_by:
+            status += f" — {completed_by}"
+        a(f"| {C.competency_label(area)} | "
+          f"{automated.get('responses_scored', 0)}/{automated.get('responses_total', 0)} "
+          f"({automated.get('coverage_percent', 0):.1f}%) | "
+          f"{mean_value if mean_value is not None else '—'} | "
+          f"{_human_evaluation_label(evaluation)} | **{status}** |")
+    a("")
+
     # Grant-readiness summary (synthesis of the per-area detail below).
-    a("## Grant Readiness")
+    a("## Grant Readiness (Formal Qualification)")
     a("")
     a("| Area | Decisional | Gates | CL | Verdict — informs a human grant |")
     a("|---|---|---|---|---|")
@@ -174,8 +209,9 @@ def render_markdown(run_id: str) -> str:
           "gates. A named human authority may record a grant "
           "(`aies grant <run> …`); the platform does not grant (D8).")
     else:
-        a(f"**Overall: BLOCKED** — not grant-ready for {', '.join(C.competency_label(area) for area in blocked)}. "
-          "Resolve the blockers above before a grant.")
+        a(f"**Overall: BLOCKED** — formal qualification is not grant-ready for "
+          f"{', '.join(C.competency_label(area) for area in blocked)}. This does "
+          "not block the completed Engineering Evaluation above.")
     a("")
     a("### Residual risk")
     a("")
@@ -186,13 +222,13 @@ def render_markdown(run_id: str) -> str:
     if human_review:
         advisory = human_review.get("automated_advisory_review") or {}
         evaluator = (human_review.get("human_evaluation") or {}).get("evaluator")
-        a("## Human Review Record")
+        a("## Optional Human Evaluation Record")
         a("")
         a("| Review input | Human record |")
         a("|---|---|")
         a(f"| Advisory automated scores | "
           f"{'considered' if advisory.get('considered') else 'not declared'} |")
-        a(f"| Human evaluation | {evaluator or 'not declared'} |")
+        a(f"| Human evaluation | {'☑ Reviewed — ' + evaluator if evaluator else '☐ Not reviewed (optional)'} |")
         a("")
         a("This is a human review declaration over evidence; it is not a grant. "
           "Formal grants remain blocked until decisional and gate-passing evidence exists.")
@@ -223,7 +259,7 @@ def render_markdown(run_id: str) -> str:
           f"advisory automated ratings: {d.get('advisory_ratings', 0)} | "
           f"decisional: {'**yes**' if d['decisional'] else '**NO**'}")
         a("")
-        a("| Dimension | Automated review | Human review (optional) | Admitted n | Admitted mean | 90% CI | Decision value | Gate | Result |")
+        a("| Dimension | Automated review | Human eval (optional) | Admitted n | Admitted mean | 90% CI | Decision value | Gate | Result |")
         a("|---|---|---|---|---|---|---|---|---|")
         gates = {g["dimension"]: g for g in d["gates"]}
         for dim in C.DIMENSIONS:
@@ -292,13 +328,16 @@ def write_reports(run_id: str) -> dict[str, str]:
     part of the evidence-package presentation bundle alongside the Markdown,
     JSON, and standalone Engineering Capability Matrix (ECM) views.
     """
-    from . import ecm, report_html
+    from . import ecm, evaluation, report_html
 
     rdir = workspace.run_dir(run_id)
     md = render_markdown(run_id)
     (rdir / "report.md").write_text(md, encoding="utf-8")
     js = render_json(run_id)
     (rdir / "report.json").write_text(js, encoding="utf-8")
+    evaluation_path = rdir / "engineering-evaluation.json"
+    evaluation_path.write_text(json.dumps(evaluation.summarize(run_id), indent=2) + "\n",
+                               encoding="utf-8")
     matrix = ecm.engineering_capability_matrix(run_id)
     ecm_contents = {
         "markdown": ecm.render_markdown(matrix),
@@ -314,4 +353,5 @@ def write_reports(run_id: str) -> dict[str, str]:
     html_path = rdir / "report.html"
     html_path.write_text(report_html.render_html(run_id), encoding="utf-8")
     return {"markdown": str(rdir / "report.md"), "json": str(rdir / "report.json"),
-            "html": str(html_path), **ecm_paths}
+            "html": str(html_path), "engineering_evaluation": str(evaluation_path),
+            **ecm_paths}

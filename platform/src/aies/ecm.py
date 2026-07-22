@@ -40,6 +40,8 @@ def engineering_capability_matrix(ref: str) -> dict:
     mean of the six recorded EV scores, included to help inspection; it is not
     a qualification score, competency level, or recommendation.
     """
+    from . import evaluation
+
     pkg = compare._resolve_package(ref)
     run_id = pkg["run_id"]
     response_dir = workspace.run_dir(run_id) / "responses"
@@ -55,8 +57,6 @@ def engineering_capability_matrix(ref: str) -> dict:
     })
     mapping = task_mappings.load()
     task_names = task_mappings.task_names(mapping)
-    admitted_raters = set(pkg.get("admitted_raters") or [])
-
     for record in rating.collect_ratings(run_id):
         response_name = record.get("rates_response")
         response = responses.get(response_name)
@@ -76,8 +76,10 @@ def engineering_capability_matrix(ref: str) -> dict:
         if scores:
             row["scores"].append(sum(scores.values()) / len(scores))
         provenance = record.get("provenance") or {}
-        record_admitted = (provenance.get("rater_kind") == "human"
-                            or provenance.get("rater") in admitted_raters)
+        # Legacy packages may list a calibrated model as admitted. ADR-0012
+        # narrows qualification-score admission to human-resolved evidence;
+        # automated observations still feed the informational ECM `scores`.
+        record_admitted = provenance.get("rater_kind") == "human"
         if provenance.get("rater"):
             row["raters"].add(provenance["rater"])
         if provenance.get("rater_kind"):
@@ -159,6 +161,7 @@ def engineering_capability_matrix(ref: str) -> dict:
         "risk_tier": pkg["risk_tier"],
         "profile": pkg["profile"],
         "rater_kinds": pkg.get("rater_kinds", []),
+        "engineering_evaluation": evaluation.summarize(run_id),
         "rows": rows,
         "tasks": tasks,
         "limitations": [
@@ -166,8 +169,17 @@ def engineering_capability_matrix(ref: str) -> dict:
             "Task rows are derived from the versioned scenario-to-task mapping registry; scenario-family rows remain the traceable source evidence.",
             "Evidence mean is an unweighted inspection statistic, not a competency level or recommendation.",
             "A non-decisional row requires more independently scored evidence; repeats do not establish task breadth.",
+            "Automated ratings can complete the engineering evaluation; optional human evaluation adds assurance but is not required to generate this ECM.",
         ],
     }
+
+
+def _human_evaluation_label(matrix: dict) -> str:
+    record = ((matrix.get("engineering_evaluation") or {}).get(
+        "human_evaluation") or {})
+    if record.get("status") == "reviewed":
+        return f"☑ Reviewed — {record.get('evaluator') or 'named human'}"
+    return "☐ Not reviewed (optional)"
 
 
 def render_markdown(matrix: dict) -> str:
@@ -180,7 +192,8 @@ def render_markdown(matrix: dict) -> str:
         f"Subject: `{matrix['subject']}`  ",
         f"Run: `{matrix['run_id']}`  ",
         f"Scope: {C.risk_tier_label(matrix['risk_tier'])} · {matrix['profile']} profile  ",
-        f"Mapping: {matrix['mapping']['scope']}",
+        f"Mapping: {matrix['mapping']['scope']}  ",
+        f"Human evaluation: {_human_evaluation_label(matrix)}",
         "",
         "## Task Capability Profile",
         "",
@@ -255,7 +268,7 @@ def _task_status(task: dict) -> str:
     if task["status"] == "not assessed":
         return "not assessed"
     if task["admitted_rating_observations"] == 0:
-        return "advisory observation"
+        return "evaluated — automated"
     return task["status"]
 
 
@@ -283,17 +296,18 @@ def render_html(matrix: dict) -> str:
     summary = capability_summary(matrix)
     observed = ", ".join(task["task"] for task in summary["task_observed"]) or "None"
     unassessed = ", ".join(task["task"] for task in summary["task_not_assessed"]) or "None"
-    advisory = sum(task["rating_observations"] for task in matrix["tasks"]
-                   if task["admitted_rating_observations"] == 0)
+    automated = sum(task["rating_observations"] for task in matrix["tasks"]
+                    if task["admitted_rating_observations"] == 0)
+    human_label = _human_evaluation_label(matrix)
     return f"""<!doctype html><html lang='en'><meta charset='utf-8'>
 <title>Engineering Capability Matrix — {html.escape(matrix['subject'])}</title>
 <style>body{{font:16px system-ui;max-width:1100px;margin:3rem auto;padding:0 1rem;color:#17202a}} table{{border-collapse:collapse;width:100%;margin:.75rem 0}}th,td{{border:1px solid #cbd5e1;padding:.5rem;text-align:left;vertical-align:top}}th{{background:#eaf2f8}}.notice{{padding:.75rem;background:#fff3cd;font-weight:600}}.summary{{padding:.8rem 1rem;background:#f8fafc;border-left:4px solid #64748b}}details{{margin:1.25rem 0}}summary{{cursor:pointer;font-weight:650}}</style>
 <h1>Engineering Capability Matrix (ECM)</h1><p class='notice'>INFORMATIONAL — NOT A QUALIFICATION, GRANT, OR DEPLOYMENT AUTHORIZATION.</p>
-<p><b>Subject:</b> {html.escape(matrix['subject'])}<br><b>Run:</b> {html.escape(matrix['run_id'])}<br><b>Scope:</b> {html.escape(C.risk_tier_label(matrix['risk_tier']))} · {html.escape(matrix['profile'])}</p>
-<p class='summary'><strong>At a glance:</strong> {len(summary['task_demonstrated'])} demonstrated task(s), {len(summary['task_observed'])} observed task(s), and {len(summary['task_not_assessed'])} task(s) without direct evidence. {advisory} raw rating observation(s) are advisory until admitted.</p>
+<p><b>Subject:</b> {html.escape(matrix['subject'])}<br><b>Run:</b> {html.escape(matrix['run_id'])}<br><b>Scope:</b> {html.escape(C.risk_tier_label(matrix['risk_tier']))} · {html.escape(matrix['profile'])}<br><b>Human evaluation:</b> {html.escape(human_label)}</p>
+<p class='summary'><strong>At a glance:</strong> {len(summary['task_demonstrated'])} demonstrated task(s), {len(summary['task_observed'])} observed task(s), and {len(summary['task_not_assessed'])} task(s) without direct evidence. {automated} automated rating observation(s) complete the engineering evaluation where coverage is complete; formal qualification admission is separate.</p>
 <h2>Task Capability Profile</h2><table><thead><tr><th>Task</th><th>Observed performance</th><th>Direct evidence sample</th><th>Qualification evidence</th><th>Status</th></tr></thead><tbody>{task_rows}</tbody></table>
 <p>Observed performance is an unweighted EV mean. A task has no task-specific pass threshold yet: scenario breadth is shown directly. The area reference is not a task qualification score; advisory ratings never become qualification evidence until the reviewer is admitted.</p>
-<h2>Evidence Summary</h2><ul><li><strong>Observed patterns (verify with human review):</strong> {html.escape(observed)}.</li><li><strong>Direct evidence still needed:</strong> {html.escape(unassessed)}.</li></ul>
+<h2>Evidence Summary</h2><ul><li><strong>Automated evaluation observations:</strong> {html.escape(observed)}.</li><li><strong>Direct evidence still needed:</strong> {html.escape(unassessed)}.</li><li><strong>Human evaluation:</strong> {html.escape(human_label)}.</li></ul>
 <details><summary>Scenario-family evidence and traceability ({len(matrix['rows'])} rows)</summary><table><thead><tr><th>Evidence family</th><th>Mean EV score</th><th>Scenarios</th><th>Responses</th><th>Ratings</th><th>Adequacy</th></tr></thead><tbody>{rows}</tbody></table></details>
 <h2>Limitations</h2><ul>{limits}</ul></html>"""
 
@@ -424,9 +438,9 @@ def render_capability_summary_markdown(matrix: dict) -> str:
                      for task in summary["task_demonstrated"])
     else:
         lines.append("- None. This run does not provide decisional task-level evidence for a recommendation.")
-    lines.extend(["", "**Use only with human review**", ""])
+    lines.extend(["", "**Optional human validation (adds assurance)**", ""])
     if summary["task_observed"]:
-        lines.extend(f"- `{task['task']}` — observed evidence only; verify every output."
+        lines.extend(f"- `{task['task']}` — automated evaluation is complete where coverage is complete; human validation remains optional."
                      for task in summary["task_observed"])
     else:
         lines.append("- None.")
@@ -465,7 +479,7 @@ def render_capability_summary_html(matrix: dict) -> str:
     observed = ", ".join(task["task"] for task in summary["task_observed"]) or "None"
     not_assessed_tasks = ", ".join(task["task"] for task in summary["task_not_assessed"]) or "None"
     unassessed = ", ".join(summary["unassessed_areas"]) or "None"
-    review = "".join(f"<li><code>{html.escape(task['task'])}</code> — observed evidence only; verify every output.</li>"
+    review = "".join(f"<li><code>{html.escape(task['task'])}</code> — automated evaluation is complete where coverage is complete; human validation remains optional.</li>"
                      for task in summary["task_observed"]) or "<li>None.</li>"
     return f"""
 <h2>Engineering Capability Matrix (ECM)</h2>
@@ -481,7 +495,7 @@ def render_capability_summary_html(matrix: dict) -> str:
 <ul><li><strong>Observed, but not demonstrated:</strong> {html.escape(observed)}.</li><li><strong>Collect direct evidence before making a claim:</strong> {html.escape(not_assessed_tasks)}.</li><li><strong>Unassessed competency areas:</strong> {html.escape(unassessed)}.</li></ul>
 <h3>Deployment Guidance</h3>
 <p><strong>Recommended:</strong> None unless a task row is demonstrated and the qualification authority has approved the applicable autonomy envelope.</p>
-<p><strong>Use only with human review:</strong></p><ul>{review}</ul>
+<p><strong>Optional human validation (adds assurance):</strong></p><ul>{review}</ul>
 <p><strong>Not recommended from this evidence:</strong> autonomous production changes, or any task outside the assessed scenario families.</p>
 <p class='muted'>Standalone detail: <a href='engineering-capability-matrix.html'>Engineering Capability Matrix</a>.</p>
 """

@@ -392,8 +392,10 @@ items per area — grow `--repeats`; under-sampled runs are labelled
 The report is marked **JUDGE-PRODUCED**: the scores are the judge's opinion,
 not ground truth. Two cautions: (1) use a *different, capable* deployment as
 the judge — `--judge self` (a model grading its own work) is biased and warned
-against; (2) judge scores carry decisional *weight* only once the judge is
-calibrated (§5.4). For a first **validity check** — does AIES separate a model
+against; (2) judge scores are engineering-evaluation observations and may be
+admitted for corroborating peer review after calibration (§5.4), but they are
+never the sole basis of qualification evidence (AIES-AESQS-ER-01-R10;
+ADR-0012). For a first **validity check** — does AIES separate a model
 you rate strong from one you rate weak? — score at least one run yourself, or
 review the judge, so you are testing AIES and not the judge.
 
@@ -441,7 +443,9 @@ ratings — nothing is fabricated). It also immediately refreshes `report.md`,
 or uncalibrated reviewer is still visible as **advisory automated evidence**;
 it is not admitted as corroborating peer review and cannot justify a grant.
 `--reviewer-qualified` or bootstrap calibration against human-scored anchors
-(`--calibration`) admits it for that peer-review role. Divergences of ≥ 2
+(`--calibration`) admits it for that corroborating peer-review role; it does
+not promote the model's scores into automated-only qualification evidence.
+Divergences of ≥ 2
 points between the human and the model are surfaced for you to resolve — never
 averaged (§7). Re-running the same reviewer reuses already-recorded scores
 instead of making duplicate API/model calls.
@@ -453,8 +457,12 @@ review record, **not** a grant.
 ### One-command automated evaluation
 
 For normal evaluations, use `qualify` with a local or hosted judge. It collects
-responses, scores them, aggregates the evidence, and writes the Markdown, HTML,
-JSON, and ECM artifacts in one command:
+responses, scores them, and writes the complete report and ECM bundle in one
+command. Human evaluation is optional for this Engineering Evaluation: the
+report records either `☐ Not reviewed (optional)` or `☑ Reviewed — <name>`.
+Automated scoring completeness, rather than a human-review declaration, closes
+the evaluation workflow. Formal qualification/grant readiness is displayed
+separately and applies ADR-0012's human protocol.
 
 ```
 aies qualify <deployment> --profile enterprise --rt 2 --area CA-05 \

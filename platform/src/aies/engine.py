@@ -13,7 +13,7 @@ import uuid
 
 from . import config
 from . import constants as C
-from . import doctor, profiles, registry, runner, rating, scoring, workspace
+from . import doctor, profiles, progress, registry, runner, rating, scoring, workspace
 from .adapters import resolve
 
 
@@ -75,6 +75,7 @@ def start_qualification(
     workers: int | None = None,
     assessment: dict | None = None,
     decisional: bool = False,
+    progress_callback=None,
 ) -> dict:
     """Stages 2-4: discovery, environment, benchmark execution.
 
@@ -198,21 +199,51 @@ def start_qualification(
         "generation_parameters": gen_params,
         "discovery": discovery,
         "environment_fingerprint": fp,
-        "status": "responses-collected",
+        "status": "collecting-responses",
         "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     }
     workspace.write_json(workspace.run_dir(run_id) / "manifest.json", manifest, overwrite=True)
 
     # Stage 4 — benchmark execution.
-    for (definition, scenarios, suite_version), area in zip(all_scenarios, areas):
-        runner.execute_suite(run_id, entry, adapter, scenarios, suite_version, fp,
-                             repeats=repeats, parameters=gen_params, workers=workers)
+    total_items = plan["planned_items"]
+    completed_items = failures = 0
+    progress.update(run_id, "response-collection", 0, total_items,
+                    message=f"collecting across {workers} worker(s)",
+                    callback=progress_callback)
+
+    def _collection_progress(_done, _total, current, status):
+        nonlocal completed_items, failures
+        completed_items += 1
+        failures += int(status == "failed")
+        progress.update(run_id, "response-collection", completed_items, total_items,
+                        current=current, failures=failures,
+                        callback=progress_callback)
+
+    try:
+        for (definition, scenarios, suite_version), area in zip(all_scenarios, areas):
+            runner.execute_suite(run_id, entry, adapter, scenarios, suite_version, fp,
+                                 repeats=repeats, parameters=gen_params, workers=workers,
+                                 progress_callback=_collection_progress)
+    except Exception:
+        manifest["status"] = "collection-partial" if completed_items > failures else "collection-failed"
+        workspace.write_json(workspace.run_dir(run_id) / "manifest.json", manifest, overwrite=True)
+        progress.update(run_id, "response-collection", completed_items, total_items,
+                        status="partial" if completed_items > failures else "failed",
+                        failures=failures, message="collection stopped; run is resumable",
+                        callback=progress_callback)
+        raise
 
     rating.build_scoresheet(run_id)
+    manifest["status"] = "responses-collected"
+    workspace.write_json(workspace.run_dir(run_id) / "manifest.json", manifest, overwrite=True)
+    progress.update(run_id, "response-collection", total_items, total_items,
+                    status="completed", message="responses collected; scoresheet ready",
+                    callback=progress_callback)
     return manifest
 
 
-def resume_collection(run_id: str, workers: int | None = None) -> dict:
+def resume_collection(run_id: str, workers: int | None = None,
+                      progress_callback=None) -> dict:
     """Fill only the *missing* responses of a partially-collected run (e.g. one
     whose collection failed partway on a flaky endpoint), then rebuild the
     scoresheet — no re-collecting what already succeeded.
@@ -240,23 +271,50 @@ def resume_collection(run_id: str, workers: int | None = None) -> dict:
 
     before = len(list((rdir / "responses").glob("*.json")))
     filled = 0
-    for area in scoped:
-        definition, scenarios, suite_version = runner.load_area(area)
-        code = definition.get("area", area)
-        if recorded_sv.get(code) and recorded_sv[code] != suite_version:
-            raise EngineError(
-                f"suite {code} changed since collection "
-                f"({recorded_sv[code]} -> {suite_version}); cannot resume — "
-                "start a fresh run")
-        in_scope = [s for s in scenarios if s["risk_tier"] == risk_tier] or scenarios
-        written = runner.execute_suite(run_id, entry, adapter, in_scope, suite_version,
-                                       fp, repeats=repeats, parameters=gen_params,
-                                       workers=workers, skip_existing=True)
-        filled += len(written)
+    planned = sum(a["planned_items"] for a in manifest["areas"])
+    failed = 0
+    progress.update(run_id, "response-collection", before, planned,
+                    message="resuming missing responses", callback=progress_callback)
+
+    def _resume_progress(_done, _total, current, status):
+        nonlocal filled, failed
+        filled += int(status == "completed")
+        failed += int(status == "failed")
+        progress.update(run_id, "response-collection", before + filled + failed, planned,
+                        current=current, failures=failed, callback=progress_callback)
+
+    try:
+        for area in scoped:
+            definition, scenarios, suite_version = runner.load_area(area)
+            code = definition.get("area", area)
+            if recorded_sv.get(code) and recorded_sv[code] != suite_version:
+                raise EngineError(
+                    f"suite {code} changed since collection "
+                    f"({recorded_sv[code]} -> {suite_version}); cannot resume — "
+                    "start a fresh run")
+            in_scope = [s for s in scenarios if s["risk_tier"] == risk_tier] or scenarios
+            runner.execute_suite(run_id, entry, adapter, in_scope, suite_version,
+                                 fp, repeats=repeats, parameters=gen_params,
+                                 workers=workers, skip_existing=True,
+                                 progress_callback=_resume_progress)
+    except Exception:
+        after = len(list((rdir / "responses").glob("*.json")))
+        manifest["status"] = "collection-partial" if after else "collection-failed"
+        workspace.write_json(mpath, manifest, overwrite=True)
+        progress.update(run_id, "response-collection", after, planned,
+                        status="partial" if after else "failed", failures=failed,
+                        message="resume stopped; successful responses were preserved",
+                        callback=progress_callback)
+        raise
 
     rating.build_scoresheet(run_id)
     after = len(list((rdir / "responses").glob("*.json")))
-    planned = sum(a["planned_items"] for a in manifest["areas"])
+    manifest["status"] = "responses-collected"
+    workspace.write_json(mpath, manifest, overwrite=True)
+    progress.update(run_id, "response-collection", after, planned,
+                    status="completed", failures=failed,
+                    message="resume complete; scoresheet ready",
+                    callback=progress_callback)
     return {"run_id": run_id, "filled": filled, "responses": after,
             "was": before, "planned": planned}
 
@@ -268,6 +326,7 @@ def start_journey(
     repeats: int | None = None,
     subject_kind: str = "ai",
     runtime: str | None = None,
+    progress_callback=None,
 ) -> dict:
     """Run a multi-phase journey (journeys.py) against a deployment.
 
@@ -319,13 +378,38 @@ def start_journey(
             "not sample volume — combine repeats/journeys to reach decisional sizes."),
         "generation_parameters": gen_params,
         "environment_fingerprint": fp,
-        "status": "responses-collected",
+        "status": "collecting-responses",
         "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     }
     workspace.write_json(workspace.run_dir(run_id) / "manifest.json", manifest, overwrite=True)
-    runner.execute_journey(run_id, entry, adapter, journey, jversion, fp,
-                           repeats=repeats, parameters=gen_params)
+    total_steps = (repeats or 1) * len(journey["steps"])
+    progress.update(run_id, "journey-collection", 0, total_steps,
+                    callback=progress_callback)
+
+    def _journey_progress(done, total, current, status):
+        progress.update(run_id, "journey-collection", done, total,
+                        current=current, failures=int(status == "failed"),
+                        callback=progress_callback)
+
+    try:
+        runner.execute_journey(run_id, entry, adapter, journey, jversion, fp,
+                               repeats=repeats, parameters=gen_params,
+                               progress_callback=_journey_progress)
+    except Exception:
+        collected = len(list((workspace.run_dir(run_id) / "responses").glob("*.json")))
+        manifest["status"] = "collection-partial" if collected else "collection-failed"
+        workspace.write_json(workspace.run_dir(run_id) / "manifest.json", manifest,
+                             overwrite=True)
+        progress.update(run_id, "journey-collection", collected, total_steps,
+                        status="partial" if collected else "failed", failures=1,
+                        message="journey stopped; successful steps were preserved",
+                        callback=progress_callback)
+        raise
     rating.build_scoresheet(run_id)
+    manifest["status"] = "responses-collected"
+    workspace.write_json(workspace.run_dir(run_id) / "manifest.json", manifest, overwrite=True)
+    progress.update(run_id, "journey-collection", total_steps, total_steps,
+                    status="completed", callback=progress_callback)
     return manifest
 
 
@@ -343,19 +427,18 @@ def aggregate(run_id: str) -> dict:
     adjustments = profile.get("dimension_weight_adjustments") or {}
     rt = manifest["risk_tier"]
 
-    # Model and automated ratings are retained as auditable observations, but
-    # cannot enter the qualification aggregate unless their reviewer has been
-    # explicitly admitted by a recorded qualification or calibration review.
+    # Model and automated ratings are retained as auditable evaluation
+    # observations. ADR-0012 makes their reviewer-admission status relevant to
+    # corroborating peer review, but never sufficient to admit those scores
+    # directly into qualification statistics. Until the resolved-evidence-item
+    # protocol lands, only human rating observations enter this legacy v4
+    # aggregate; automated-only runs remain engineering evaluations.
     review_path = rdir / "review-package.json"
     review_pkg = workspace.read_json(review_path) if review_path.exists() else {}
     reviewer = review_pkg.get("reviewer") or {}
-    admitted_model_raters = ({reviewer.get("label")} if reviewer.get("admitted")
-                              and reviewer.get("label") else set())
-
     def is_admitted(record: dict) -> bool:
         provenance = record.get("provenance") or {}
-        return (provenance.get("rater_kind") == "human"
-                or provenance.get("rater") in admitted_model_raters)
+        return provenance.get("rater_kind") == "human"
 
     by_area: dict[str, list[dict]] = {a["area"]: [] for a in manifest.get("areas", [])}
     raw_by_area: dict[str, int] = {a["area"]: 0 for a in manifest.get("areas", [])}
@@ -453,6 +536,8 @@ def aggregate(run_id: str) -> dict:
             "advisory_ratings": sum(1 for r in ratings if not is_admitted(r)),
             "reviewer_admitted": bool(reviewer.get("admitted")),
             "reviewer_reason": reviewer.get("reason"),
+            "automated_review_role": "corroborating-review-only",
+            "qualification_score_policy": "human-observations-only-pending-v5-resolution",
         },
         "aggregated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     }

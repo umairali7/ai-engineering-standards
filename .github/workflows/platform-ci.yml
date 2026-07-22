@@ -1,18 +1,45 @@
 name: platform-ci
 
-# Continuous integration for the AIES Qualification Platform (M4,
+# Continuous integration for the AIES Engineering Assessment Platform,
 # docs/PLATFORM.md §10). Runs the conformance test suite — the tests
 # keyed to AESQS requirement IDs that keep the engine faithful to the
-# standard (ADR-0002 anti-drift mitigation) — on every change under
-# platform/.
+# standard — on every platform, conformance, or governed-standard change.
 
 on:
   push:
     # conformance/** is the golden corpus (the arbiter, outside platform/): a
     # change to it MUST re-run the conformance gate, or the policy isn't enforced.
-    paths: ["platform/**", "conformance/**", ".github/workflows/platform-ci.yml"]
+    paths:
+      - "platform/**"
+      - "conformance/**"
+      - "Shared/**"
+      - "AEBOK/**"
+      - "AESQS/**"
+      - "AEOS/**"
+      - "AEAR/**"
+      - "AECT/**"
+      - "ECM/**"
+      - "adr/**"
+      - "docs/**"
+      - "templates/**"
+      - "*.md"
+      - ".github/workflows/platform-ci.yml"
   pull_request:
-    paths: ["platform/**", "conformance/**", ".github/workflows/platform-ci.yml"]
+    paths:
+      - "platform/**"
+      - "conformance/**"
+      - "Shared/**"
+      - "AEBOK/**"
+      - "AESQS/**"
+      - "AEOS/**"
+      - "AEAR/**"
+      - "AECT/**"
+      - "ECM/**"
+      - "adr/**"
+      - "docs/**"
+      - "templates/**"
+      - "*.md"
+      - ".github/workflows/platform-ci.yml"
 
 jobs:
   conformance:
@@ -42,6 +69,8 @@ jobs:
         run: pytest tests/ -q
       - name: Suite catalog validation
         run: aies suites validate
+      - name: Governed document ID uniqueness
+        run: python scripts/check_document_ids.py ..
       - name: Release hygiene
         run: python scripts/check_release_artifacts.py ..
       - name: Decision-engine conformance (golden Evidence Package corpus)
