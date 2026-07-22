@@ -83,7 +83,7 @@ append-only records. Grouped as in `aies --help`.
 | `assessment` | `list` / `show` / `validate` / `result <run>` (Markdown/JSON/`--format html`) | `aies assessment result run-2031` |
 | `review` | Automated review, optional human-evaluation record, implicit live progress, and refreshed report bundle | `aies review run-2031 --model-reviewer rev` |
 | `compare` | Deltas across runs on identical suite versions | `aies compare a b --profile coder` |
-| `runs list` / `runs progress` / `transcript` | List runs, optionally observe another command's durable progress from a second terminal, or render a whole run (task + answer + scores). The originating command already shows progress implicitly. | `aies runs progress run-2031` |
+| `runs list` / `runs progress` / `transcript` | List runs, optionally observe another command's durable progress from a second terminal, or render a whole run. The originating command already shows stage and total timing, ETA, plus the current human-readable task and task ordinal. | `aies runs progress run-2031` |
 
 ### Judging
 

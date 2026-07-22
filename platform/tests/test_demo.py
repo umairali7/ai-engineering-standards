@@ -21,8 +21,7 @@ def _cli(*argv) -> int:
     saved = sys.argv
     sys.argv = ["aies", *argv]
     try:
-        cli.main()
-        return 0
+        return int(cli.main() or 0)
     except SystemExit as e:
         return int(e.code or 0)
     finally:
@@ -44,10 +43,11 @@ def test_offline_end_to_end_demo(demo_ws):
     assert _cli("discover") == 0
     assert _cli("assessment", "list") == 0
 
-    # 2. compose + collect + auto-score + decide — the whole pipeline, offline.
-    #    A DIFFERENT deployment judges (never self-judge). qualify exits 0.
+    # 2. compose + collect + auto-score — the whole evaluation pipeline,
+    #    offline.  A DIFFERENT deployment judges (never self-judge), and each
+    #    distinct instrument runs once: repeats must never substitute for breadth.
     assert _cli("qualify", "mock-mock-small", "--assessment", "coder",
-                "--judge", "mock-mock-large", "--repeats", "5") == 0
+                "--judge", "mock-mock-large") == 0
 
     # find the run the pipeline just produced
     runs = sorted((demo_ws / "runs").glob("run-*"))
@@ -73,6 +73,17 @@ def test_offline_end_to_end_demo(demo_ws):
     assert result["metadata"]["profile_version"] == "1.0.0"          # captured, not re-read
     assert result["metadata"]["evidence_schema"] == constants.EVIDENCE_SCHEMA
     assert result["metadata"]["decision_semantics_version"] == decision.DECISION_SEMANTICS_VERSION
+    evaluation = json.loads(
+        (runs[-1] / "engineering-evaluation.json").read_text(encoding="utf-8"))
+    assert evaluation["status"] == "complete"
+    assert evaluation["human_evaluation"]["status"] == "not-reviewed"
+    assert evaluation["human_evaluation"]["optional"] is True
+    assert result["outcome"] == "INSUFFICIENT EVIDENCE"
+
+    # Automated-only formal fields are intentionally empty; the human-readable
+    # legacy profile must render that state rather than formatting None as a
+    # numeric score.  ECM remains the primary engineering-facing artifact.
+    assert _cli("capabilities", run_id) == 0
 
     # 4. re-deciding from the SAME evidence is identical (no inference) — the
     #    property that makes results reproducible and replayable.
@@ -84,6 +95,15 @@ def test_offline_end_to_end_demo(demo_ws):
 
     # 5. HTML render is a view (assessment result --format html)
     out = demo_ws / "assessment.html"
-    assert _cli("assessment", "result", run_id, "--format", "html", "--out", str(out)) in (0, 1)
+    # The command renders the valid result and uses exit 1 as a formal gate
+    # signal.  The demo must assert and contain that expected non-zero status.
+    assert _cli("assessment", "result", run_id) == 1
+    assert _cli("assessment", "result", run_id, "--format", "html", "--out", str(out)) == 1
     doc = out.read_text(encoding="utf-8")
     assert doc.startswith("<!doctype html>") and result["outcome"] in doc
+
+    # A completed automated evaluation is useful, but it cannot silently cross
+    # the formal human qualification boundary.
+    assert _cli("grant", run_id, "--decision", "grant",
+                "--authority", "A. Architect (ROLE-13)",
+                "--second", "P. Peer (ROLE-14)") == 2

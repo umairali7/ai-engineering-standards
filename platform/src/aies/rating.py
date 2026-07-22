@@ -32,6 +32,8 @@ def build_scoresheet(run_id: str) -> dict:
             "response_record": p.name,
             "scenario_id": rec["scenario_id"],
             "repeat": rec["repeat"],
+            "task_label": ((rec.get("scenario") or {}).get("progress_label")
+                           or f"Scenario {rec['scenario_id']}-r{rec['repeat']}"),
             "raw_response_preview": rec["raw_response"][:400],
             "scores": {dim: None for dim in C.DIMENSIONS},
             "findings": [],
@@ -67,11 +69,19 @@ def ingest_scores(run_id: str, sheet: dict, progress_callback=None) -> list[str]
     items = sheet.get("items", [])
     progress.update(run_id, "score-admission", 0, len(items),
                     message=f"validating and recording {kind} ratings",
+                    parallelism=1,
                     callback=progress_callback)
     current = ""
     try:
         for index, item in enumerate(items, start=1):
-            current = item.get("response_record", "unknown response")
+            current = (item.get("task_label") or item.get("response_record")
+                       or "unknown response")
+            task_label = f"Task {index}/{len(items)} · {current}"
+            progress.update(run_id, "score-admission", index - 1, len(items),
+                            current=task_label, current_index=index,
+                            activity="Recording EV1–EV6 scores",
+                            active_tasks=[task_label], parallelism=1,
+                            callback=progress_callback)
             scores = item.get("scores") or {}
             missing = [d for d in C.DIMENSIONS if scores.get(d) is None]
             if missing:
@@ -110,7 +120,10 @@ def ingest_scores(run_id: str, sheet: dict, progress_callback=None) -> list[str]
             workspace.write_json(rdir / "ratings" / name, record)
             written.append(name)
             progress.update(run_id, "score-admission", index, len(items),
-                            current=item["response_record"], callback=progress_callback)
+                            current=task_label, current_index=index,
+                            activity="Recorded scores", active_tasks=[],
+                            parallelism=1,
+                            callback=progress_callback)
     except Exception as exc:
         progress.update(run_id, "score-admission", len(written), len(items),
                         status="partial" if written else "failed", current=current,

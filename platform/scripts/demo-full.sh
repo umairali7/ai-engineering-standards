@@ -3,9 +3,10 @@
 #
 # A narrated tour of everything AIES does, against the mock runtime: the three
 # subjects it can assess (a model deployment, a repository, and the standard
-# itself), instrument quality (calibration), the governance lifecycle (human
-# grant + environment re-verification), decision-engine conformance, the Phase-2
-# empirical harness, and the read-only API. No model, key, GPU, or network.
+# itself), instrument quality (calibration), a complete automated Engineering
+# Evaluation, the formal qualification/grant boundary, decision-engine
+# conformance, the Phase-2 empirical harness, and the read-only API. No model,
+# key, GPU, or network.
 #
 #   make demo-full     (or: bash scripts/demo-full.sh)
 set -euo pipefail
@@ -31,9 +32,9 @@ aies suites calibrate | sed -n '1,12p'
 hr "3. Declarative assessments (composition as data, ADR-0005)"
 aies assessment list
 
-hr "4. Qualify a deployment: compose -> collect -> auto-score -> DECIDE"
-echo "Running the 'coder' assessment, auto-scored by a different mock as judge..."
-RUN=$(aies qualify "$CANDIDATE" --assessment coder --judge "$JUDGE" --repeats 5 --json \
+hr "4. Assess a deployment: compose -> collect -> automated Engineering Evaluation"
+echo "Running the 'coder' assessment once per distinct instrument, auto-scored by a different mock judge..."
+RUN=$(aies qualify "$CANDIDATE" --assessment coder --judge "$JUDGE" --json \
         | py 'print(json.load(sys.stdin)["run_id"])')
 echo "run: $RUN"
 
@@ -48,25 +49,48 @@ aies review "$RUN" --reviewer "model:$JUDGE" \
     --calibration "$WS/mock-judge-calibration.json" > /dev/null
 echo "mock judge admitted through a synthetic bootstrap-calibration fixture (offline CI only)"
 
-hr "5. The Canonical Assessment Result (authoritative outcome + 3 layers)"
-aies assessment result "$RUN" | sed -n '1,26p'
+hr "5. Engineering Evaluation COMPLETE; Formal Qualification remains separate"
+echo "Automated coverage is enough to complete the informational Engineering Evaluation:"
+cat "$WS/runs/$RUN/engineering-evaluation.json" | py 'd=json.load(sys.stdin); print("  status:", d["status"].upper()); print("  human evaluation:", "reviewed" if d["human_evaluation"]["status"] == "reviewed" else "not reviewed (optional)"); [print(" ", a, v["status"].upper(), "by", v.get("completed_by") or "mixed") for a,v in d["areas"].items()]'
+echo
+echo "The Canonical Assessment Result answers the stricter formal-qualification question."
+RESULT_EXIT=0
+aies assessment result "$RUN" > "$WS/assessment-result.md" || RESULT_EXIT=$?
+if [ "$RESULT_EXIT" -ne 0 ] && [ "$RESULT_EXIT" -ne 1 ]; then
+  echo "unexpected assessment-result exit: $RESULT_EXIT" >&2
+  exit "$RESULT_EXIT"
+fi
+sed -n '1,26p' "$WS/assessment-result.md"
+echo "formal result exit $RESULT_EXIT is expected and contained by the demo"
 
 hr "6. Per-area capability profile (planner / coder / security ... side by side)"
-aies capabilities "$RUN" || true
+aies capabilities "$RUN"
 
 hr "7. Presentation-grade renders (views of the SAME result — no re-deciding)"
-aies assessment result "$RUN" --format html --out "$WS/assessment.html" && echo "wrote $WS/assessment.html"
+HTML_EXIT=0
+aies assessment result "$RUN" --format html --out "$WS/assessment.html" || HTML_EXIT=$?
+if { [ "$HTML_EXIT" -eq 0 ] || [ "$HTML_EXIT" -eq 1 ]; } && [ -s "$WS/assessment.html" ]; then
+  echo "wrote $WS/assessment.html (formal gate exit $HTML_EXIT contained)"
+else
+  echo "assessment HTML render failed with exit $HTML_EXIT" >&2
+  exit "${HTML_EXIT:-2}"
+fi
 aies report "$RUN" --format html --write > /dev/null && echo "wrote evidence report (HTML)"
 
-hr "8. The human grant lifecycle (the platform prepares evidence; a human grants)"
-aies grant "$RUN" --decision grant \
-    --authority "A. Architect (ROLE-13)" --second "P. Peer (ROLE-14)" > /dev/null \
-    && echo "grant recorded" || echo "(grant step skipped)"
-QUAL=$(aies qualification list --json 2>/dev/null | py 'r=json.load(sys.stdin); print(r[0]["record_id"] if r else "")' || true)
-if [ -n "$QUAL" ]; then
-  echo "Qualification Record: $QUAL"
-  echo "Re-verify the environment (D7 — a fingerprint change would invalidate it):"
-  aies verify "$QUAL" && echo "verify: environment unchanged, grant valid"
+hr "8. Formal grant boundary (expected refusal on automated-only evidence)"
+if aies grant "$RUN" --decision grant \
+    --authority "A. Architect (ROLE-13)" --second "P. Peer (ROLE-14)" \
+    > "$WS/unexpected-grant.txt" 2> "$WS/grant-refusal.txt"; then
+  echo "ERROR: automated-only evidence unexpectedly produced a grant" >&2
+  exit 1
+else
+  if ! grep -q "cannot grant on NON-DECISIONAL evidence" "$WS/grant-refusal.txt"; then
+    echo "grant command failed for an unexpected reason:" >&2
+    cat "$WS/grant-refusal.txt" >&2
+    exit 1
+  fi
+  echo "grant correctly refused for non-decisional evidence; Engineering Evaluation remains complete and usable"
+  grep -m1 "cannot grant on NON-DECISIONAL evidence" "$WS/grant-refusal.txt"
 fi
 
 hr "9. Decision-engine CONFORMANCE (the standard as a subject)"
@@ -98,6 +122,6 @@ aies corpus review SC-CA07-015 --reviewer "$JUDGE" 2>/dev/null | sed -n '1,14p' 
 
 hr "DEMO COMPLETE"
 echo "Subjects assessed:  a model deployment (qualify)  +  a repository (audit)  +  the standard (conform engine)"
-echo "Also shown:  calibrated instruments, the human grant lifecycle, and the Phase-2 empirical harness."
+echo "Also shown:  calibrated instruments, the qualification boundary, and the Phase-2 empirical harness."
 echo "The same canonical result is served read-only over JSON:  aies serve --port 8722"
 echo "workspace: $WS"

@@ -522,16 +522,24 @@ def cmd_capabilities(args) -> int:
     if "model" in prof["rater_kinds"]:
         print("  judge-produced evidence — not a grant")
     print()
-    print(f"  {'AREA / COMPETENCY':52} {'CL':4} {'AGG':5} "
+    print(f"  {'AREA / COMPETENCY':52} {'CL':18} {'AGG':5} "
           f"{'AUTONOMY':18} GATES  SAMPLE")
     for r in prof["areas"]:
-        gate = "PASS " if r["gates_passed"] else "FAIL "
-        sample = ("decisional" if r["decisional"]
-                  else f"NON-DEC {r['n_scored']}/{r['min_sample']}")
+        aggregate = r["aggregate"]
+        if aggregate is None:
+            gate = "N/A  "
+            sample = f"NO ADMITTED {r['n_scored']}/{r['min_sample']}"
+        else:
+            gate = "PASS " if r["gates_passed"] else "FAIL "
+            sample = ("decisional" if r["decisional"]
+                      else f"NON-DEC {r['n_scored']}/{r['min_sample']}")
         label = C.competency_label(r['area'])
         cl = C.identifier_label(r['cl']) if r['cl'] else "none"
+        agg = f"{aggregate:.2f}" if aggregate is not None else "-"
+        autonomy = (C.autonomy_level_label(r['al_at_rt'])
+                    if r['al_at_rt'] else "none")
         print(f"  {label[:52]:52} {cl[:18]:18} "
-              f"{r['aggregate']:.2f}  {C.autonomy_level_label(r['al_at_rt'])[:18]:18} {gate} {sample}")
+              f"{agg:5} {autonomy[:18]:18} {gate} {sample}")
     print("\n  CL = competency level · AGG = weighted aggregate · "
           f"AL = autonomy ceiling at {C.risk_tier_label(prof['risk_tier'])}. Read across areas for "
           "strengths/gaps (e.g. strong coder, weak security). See GUIDE §5.2b.")
@@ -692,6 +700,16 @@ def cmd_runs(args) -> int:
             return 2
         event = workspace.read_json(path)
         eta = "—" if event.get("eta_seconds") is None else f"{event['eta_seconds']:.0f}s"
+        active_tasks = event.get("active_tasks") or []
+        if active_tasks:
+            current_display = " | ".join(active_tasks)
+        elif event.get("current"):
+            position = (f" {event['current_index']}/{event['total']}"
+                        if event.get("current_index") is not None else "")
+            current_display = (f"{event.get('activity') or 'Current task'}"
+                               f"{position}: {event['current']}")
+        else:
+            current_display = "—"
         _out(event, args.json,
              f"{event['run_id']}\n"
              f"  stage      : {event['stage']} ({event['status']})\n"
@@ -702,7 +720,9 @@ def cmd_runs(args) -> int:
              f"  throughput : {event['throughput_per_second']:.2f}/s\n"
              f"  ETA        : {eta}\n"
              f"  failures   : {event['failures']}\n"
-             f"  current    : {event.get('current') or '—'}\n"
+             f"  active     : {event.get('active_count', 0)}/"
+             f"{event.get('parallelism') or max(1, event.get('active_count', 0))}\n"
+             f"  current    : {current_display}\n"
              f"  resumable  : {'yes' if event.get('resumable') else 'no'}")
         return 0
     runs = compare.list_runs(model=args.model)

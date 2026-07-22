@@ -89,7 +89,8 @@ jobs:
           aies plugins
       - name: Demo — comprehensive workflow end-to-end, offline (executable docs)
         # The whole platform against the mock runtime: qualify a deployment, the
-        # canonical result, the human grant + verify lifecycle, decision-engine
-        # conformance, the Phase-2 empirical harness, and the repository audit.
+        # complete automated evaluation, the formal no-grant boundary,
+        # decision-engine conformance, the Phase-2 empirical harness, and the
+        # repository audit.
         # The core golden path is also gated as tests/test_demo.py above.
         run: bash scripts/demo-full.sh

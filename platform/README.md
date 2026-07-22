@@ -102,7 +102,9 @@ qualification evidence.
 `make demo-full` is the **comprehensive tour**: the three subjects AIES can
 assess (a model deployment via `qualify`, a repository via `audit`, and the
 standard itself via `conform engine`), the calibrated measurement instruments,
-the human **grant → verify** lifecycle, and the Phase-2 empirical harness.
+a completed automated Engineering Evaluation with optional human-evaluation
+status, the stricter formal qualification/grant boundary, and the Phase-2
+empirical harness. The mock run deliberately does not fabricate a human grant.
 
 No GPU, no API key, no network. It's **executable documentation** — the core
 path is CI-gated as [`tests/test_demo.py`](tests/test_demo.py) and the
@@ -137,6 +139,13 @@ run's `progress.json`, so another terminal can inspect it with
 `aies runs progress <run-id>` even if the original CLI is still running.
 Progress is implicit in `qualify`, `qualify --resume`, `review`, and `score`;
 the separate `runs progress` command is only an optional second-terminal view.
+The live line identifies the current human-readable scenario family and
+calibrated task objective with its ordinal—for example, `Executing task 2/30:
+Performance Optimization — Remove event-loop blocking […]`. Judge progress
+identifies the task currently being scored across EV1 — Correctness through
+EV6 — Traceability. Parallel execution reports the dynamic active set and the
+effective worker capacity (`active N/<parallelism>`); neither value is
+hard-coded, so the display follows `--parallel N` or the configured default.
 
 An automated judge can complete an **Engineering Evaluation** and generate the
 entire report/ECM bundle without human review. Reports display `Human

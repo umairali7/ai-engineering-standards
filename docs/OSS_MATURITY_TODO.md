@@ -63,7 +63,7 @@ and selection remain separate products.
 | Open | Enforce the two-human qualification process | Every grant, conditional grant, and denial records an assessor and independent peer reviewer with qualification and conflict declarations |
 | Open | Complete the qualification scope tuple | Records include subject, role, phases, maximum risk tier, competency × CL claims, framework version, applicable agent-definition version, sponsor, and validity window |
 | In progress | Make qualification lifecycle events immutable | Accepted ADR-0012 governs implementation; grant, condition change, renewal, suspension, invalidation, revocation, and supersession append separate ART-15 — Audit Trail Record events and prior records are never overwritten |
-| Done | Show detailed live progress for every run | `qualify`, resume, `review`, and `score` display progress implicitly with completed/total, percentage, current-stage elapsed time, total run elapsed time, throughput, ETA, current item/batch, failures, and resumability; the same state persists in `progress.json`, while `aies runs progress <run-id>` is an optional second-terminal observer |
+| Done | Show detailed live progress for every run | `qualify`, resume, `review`, and `score` display progress implicitly with completed/total, percentage, current-stage elapsed time, total run elapsed time, throughput, ETA, the current human-readable scenario family/task objective and ordinal, failures, and resumability; parallel runs expose the dynamic active task set and effective worker capacity for any `--parallel N`; the same state persists in `progress.json`, while `aies runs progress <run-id>` is an optional second-terminal observer |
 | Done | Make automated Engineering Evaluation self-contained | Complete automated scoring closes the engineering-evaluation workflow and generates all report/ECM artifacts; human evaluation is an optional, visible reviewed/not-reviewed field and never blocks the evaluation; formal qualification remains a separate ADR-0012 protocol |
 | Open | Enforce expiry and requalification | Expired or materially changed qualifications are treated as absent; renewal and targeted re-evaluation are supported |
 | Open | Correct endpoint deployment fingerprints | Remote qualifications bind to behaviorally relevant deployment/runtime/config identity, not irrelevant client-machine RAM/CPU changes |
@@ -104,6 +104,7 @@ and selection remain separate products.
 | Done | Add protocol-compatible ECM comparison | Task deltas and winners appear only when risk, profile, suites, mappings, repeats, and rater protocol are compatible |
 | Open | Build AIES Select | A declared workload mix plus latency, cost, context, tool reliability, availability, and risk constraints produces an explained fit ranking over compatible evidence—never a global best-subject claim |
 | Open | Build organization decision products | Inventory shows approved subjects, demonstrated task fit, qualification scope, conditions, drift, expiry, incidents, and requalification status |
+| Open | Rebuild `demo-full` as the AIES killer demo | A concise, fully offline and CI-gated narrative demonstrates subject-neutral assessment, implicit live task/ETA progress, complete automated Engineering Evaluation, optional human-evaluation status, ECM strengths/gaps, compatible comparison, the formal qualification boundary, conformance, corpus health, and a browsable linked artifact bundle; every expected non-zero governance outcome is asserted rather than accidentally failing `pipefail`, and a real independently reviewed pilot can replace synthetic fixtures without rewriting the story |
 
 ### P3 — Standards and adoption
 
@@ -158,7 +159,7 @@ and selection remain separate products.
 
 Last verified on 2026-07-22:
 
-- `pytest platform/tests -q`: **190 passed**.
+- `pytest platform/tests -q`: **191 passed**.
 - `aies suites validate`: **484 scenarios, 12 areas, 0 warnings, 0 errors**.
 - Decision-engine conformance: **8/8 cases passed**, semantics 1.0.
 - Release hygiene: **PASS**.

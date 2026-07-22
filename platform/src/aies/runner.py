@@ -23,6 +23,17 @@ class SuiteError(Exception):
     pass
 
 
+def scenario_progress_label(sc: dict, repeat: int | None = None) -> str:
+    """Return a concise human-readable task label for live progress."""
+    family = str(sc.get("family") or "scenario").replace("-", " ").title()
+    objective = str((sc.get("calibration") or {}).get("objective") or "").strip()
+    detail = objective[:1].upper() + objective[1:] if objective else "Execute scenario"
+    item_id = str(sc.get("id", "unknown"))
+    if repeat is not None:
+        item_id += f"-r{repeat}"
+    return f"{family} — {detail} [{item_id}]"
+
+
 def competencies_dir() -> Path:
     return Path(__file__).resolve().parent.parent.parent / "competencies"
 
@@ -113,6 +124,11 @@ def _build_record(run_id, model_entry, adapter, sc, r, suite_version,
         "run_id": f"{run_id}-{sc['id']}-r{r}",
         "suite_version": suite_version,
         "scenario_id": sc["id"],
+        "scenario": {
+            "family": sc.get("family"),
+            "objective": (sc.get("calibration") or {}).get("objective"),
+            "progress_label": scenario_progress_label(sc, r),
+        },
         "area": sc["area"],
         "risk_tier": sc["risk_tier"],
         "repeat": r,
@@ -164,10 +180,16 @@ def execute_journey(
         prior: list[dict] = []
         for step in journey["steps"]:
             prompt = render_step_prompt(step, prior)
+            pseudo = {"id": step["id"], "area": step["area"],
+                      "risk_tier": risk_tier, "prompt": prompt,
+                      "family": step.get("phase") or "journey step",
+                      "calibration": {"objective": step.get("title") or step["id"]}}
+            label = (f"Task {len(written) + 1}/{total} · "
+                     f"{scenario_progress_label(pseudo, r)}")
+            if progress_callback:
+                progress_callback(len(written), total, label, "started")
             response = adapter.generate(GenerationRequest(
                 prompt=prompt, parameters=parameters or {}))
-            pseudo = {"id": step["id"], "area": step["area"],
-                      "risk_tier": risk_tier, "prompt": prompt}
             record = _build_record(run_id, model_entry, adapter, pseudo, r,
                                    journey_version, environment_fp, response, parameters)
             record["journey"] = {"id": journey["id"], "step": step["id"],
@@ -177,7 +199,7 @@ def execute_journey(
             workspace.write_json(path, record)
             written.append(path)
             if progress_callback:
-                progress_callback(len(written), total, step["id"], "completed")
+                progress_callback(len(written), total, label, "completed")
             prior.append({"id": step["id"], "area": step["area"],
                           "phase": step.get("phase", ""), "response": response.text})
     return written
@@ -218,6 +240,7 @@ def execute_suite(
     context-free error, and never silent data loss.
     """
     from concurrent.futures import ThreadPoolExecutor, as_completed
+    import threading
 
     rdir = workspace.run_dir(run_id) / "responses"
     tasks = []  # (scenario, repeat)
@@ -229,26 +252,43 @@ def execute_suite(
             tasks.append((sc, r))
     if not tasks:
         return []
+    task_ordinals = {(sc["id"], repeat): index
+                     for index, (sc, repeat) in enumerate(tasks, start=1)}
 
-    def _run_and_write(task) -> Path:
-        sc, r = task
-        request = GenerationRequest(prompt=sc["prompt"], parameters=parameters or {})
-        response = adapter.generate(request)
-        record = _build_record(run_id, model_entry, adapter, sc, r, suite_version,
-                               environment_fp, response, parameters)
-        path = rdir / f"{sc['id']}-r{r}.json"
-        workspace.write_json(path, record)
-        return path
+    def _task_label(sc: dict, repeat: int) -> str:
+        ordinal = task_ordinals[(sc["id"], repeat)]
+        return (f"Task {ordinal}/{len(tasks)} · "
+                f"{scenario_progress_label(sc, repeat)}")
 
     written: list[Path] = []
     failures: list[tuple[str, str]] = []  # (scenario-repeat, error)
     completed = 0
+    notification_lock = threading.Lock()
 
     def _notify(sc: dict, r: int, status: str) -> None:
         nonlocal completed
-        completed += 1
-        if progress_callback:
-            progress_callback(completed, len(tasks), f"{sc['id']}-r{r}", status)
+        with notification_lock:
+            if status in {"completed", "failed"}:
+                completed += 1
+            if progress_callback:
+                progress_callback(completed, len(tasks), _task_label(sc, r),
+                                  status)
+
+    def _run_and_write(task) -> Path:
+        sc, r = task
+        _notify(sc, r, "started")
+        try:
+            request = GenerationRequest(prompt=sc["prompt"], parameters=parameters or {})
+            response = adapter.generate(request)
+            record = _build_record(run_id, model_entry, adapter, sc, r, suite_version,
+                                   environment_fp, response, parameters)
+            path = rdir / f"{sc['id']}-r{r}.json"
+            workspace.write_json(path, record)
+        except Exception:
+            _notify(sc, r, "failed")
+            raise
+        _notify(sc, r, "completed")
+        return path
 
     if workers and workers > 1:
         with ThreadPoolExecutor(max_workers=workers) as pool:
@@ -257,19 +297,15 @@ def execute_suite(
                 sc, r = futs[fut]
                 try:
                     written.append(fut.result())
-                    _notify(sc, r, "completed")
                 except Exception as e:  # noqa: BLE001 — surfaced below, work preserved
                     failures.append((f"{sc['id']}-r{r}", str(e)))
-                    _notify(sc, r, "failed")
     else:
         for task in tasks:
             sc, r = task
             try:
                 written.append(_run_and_write(task))
-                _notify(sc, r, "completed")
             except Exception as e:  # noqa: BLE001
                 failures.append((f"{sc['id']}-r{r}", str(e)))
-                _notify(sc, r, "failed")
 
     written.sort()  # deterministic return order; the record SET is worker-independent
 

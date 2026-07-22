@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import datetime
 import math
+import threading
 import uuid
 
 from . import config
@@ -207,17 +208,29 @@ def start_qualification(
     # Stage 4 — benchmark execution.
     total_items = plan["planned_items"]
     completed_items = failures = 0
+    collection_progress_lock = threading.Lock()
+    active_collection_tasks: dict[str, None] = {}
     progress.update(run_id, "response-collection", 0, total_items,
                     message=f"collecting across {workers} worker(s)",
+                    parallelism=max(1, workers),
                     callback=progress_callback)
 
     def _collection_progress(_done, _total, current, status):
         nonlocal completed_items, failures
-        completed_items += 1
-        failures += int(status == "failed")
-        progress.update(run_id, "response-collection", completed_items, total_items,
-                        current=current, failures=failures,
-                        callback=progress_callback)
+        with collection_progress_lock:
+            if status == "started":
+                active_collection_tasks[current] = None
+            if status in {"completed", "failed"}:
+                completed_items += 1
+                failures += int(status == "failed")
+                active_collection_tasks.pop(current, None)
+            activity = {"started": "Executing task", "completed": "Completed task",
+                        "failed": "Failed task"}.get(status, "Current task")
+            progress.update(run_id, "response-collection", completed_items, total_items,
+                            current=current, activity=activity, failures=failures,
+                            active_tasks=list(active_collection_tasks),
+                            parallelism=max(1, workers),
+                            callback=progress_callback)
 
     try:
         for (definition, scenarios, suite_version), area in zip(all_scenarios, areas):
@@ -273,15 +286,28 @@ def resume_collection(run_id: str, workers: int | None = None,
     filled = 0
     planned = sum(a["planned_items"] for a in manifest["areas"])
     failed = 0
+    resume_progress_lock = threading.Lock()
+    active_resume_tasks: dict[str, None] = {}
     progress.update(run_id, "response-collection", before, planned,
-                    message="resuming missing responses", callback=progress_callback)
+                    message="resuming missing responses",
+                    parallelism=max(1, workers), callback=progress_callback)
 
     def _resume_progress(_done, _total, current, status):
         nonlocal filled, failed
-        filled += int(status == "completed")
-        failed += int(status == "failed")
-        progress.update(run_id, "response-collection", before + filled + failed, planned,
-                        current=current, failures=failed, callback=progress_callback)
+        with resume_progress_lock:
+            if status == "started":
+                active_resume_tasks[current] = None
+            filled += int(status == "completed")
+            failed += int(status == "failed")
+            if status in {"completed", "failed"}:
+                active_resume_tasks.pop(current, None)
+            activity = {"started": "Executing task", "completed": "Completed task",
+                        "failed": "Failed task"}.get(status, "Current task")
+            progress.update(run_id, "response-collection", before + filled + failed,
+                            planned, current=current, activity=activity,
+                            active_tasks=list(active_resume_tasks),
+                            parallelism=max(1, workers),
+                            failures=failed, callback=progress_callback)
 
     try:
         for area in scoped:
@@ -384,11 +410,17 @@ def start_journey(
     workspace.write_json(workspace.run_dir(run_id) / "manifest.json", manifest, overwrite=True)
     total_steps = (repeats or 1) * len(journey["steps"])
     progress.update(run_id, "journey-collection", 0, total_steps,
-                    callback=progress_callback)
+                    parallelism=1, callback=progress_callback)
 
     def _journey_progress(done, total, current, status):
+        active = [current] if status == "started" else []
         progress.update(run_id, "journey-collection", done, total,
-                        current=current, failures=int(status == "failed"),
+                        current=current,
+                        activity=("Executing journey task" if status == "started"
+                                  else "Completed journey task" if status == "completed"
+                                  else "Failed journey task"),
+                        failures=int(status == "failed"),
+                        active_tasks=active, parallelism=1,
                         callback=progress_callback)
 
     try:
