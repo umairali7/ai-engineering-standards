@@ -85,7 +85,7 @@ def render_markdown(record_id: str) -> str:
     a("|---|---|---|")
     a(f"| Automated advisory review | {'yes' if advisory.get('available') else 'no'} | "
       f"{'considered by authority' if advisory.get('considered_by_authority') else 'not declared'} |")
-    a(f"| Human-scored evaluation | {'yes' if human_evaluation.get('available') else 'no'} | "
+    a(f"| Human evaluation | {'yes' if human_evaluation.get('scored_ratings_available') else 'no scored ratings'} | "
       f"{human_evaluation.get('evaluator') or 'not declared'} |")
     a("")
     a("## Accountable humans")
@@ -159,7 +159,7 @@ def render_html(record_id: str) -> str:
     w("<tr><th>Evidence source</th><th>Available</th><th>Human decision record</th></tr>")
     w(f"<tr><td>Automated advisory review</td><td>{'yes' if advisory.get('available') else 'no'}</td>"
       f"<td>{'considered by authority' if advisory.get('considered_by_authority') else 'not declared'}</td></tr>")
-    w(f"<tr><td>Human-scored evaluation</td><td>{'yes' if human_evaluation.get('available') else 'no'}</td>"
+    w(f"<tr><td>Human evaluation</td><td>{'yes' if human_evaluation.get('scored_ratings_available') else 'no scored ratings'}</td>"
       f"<td>{e(human_evaluation.get('evaluator') or 'not declared')}</td></tr>")
     w("</table>")
     w("<h2>Accountable humans</h2><ul>")

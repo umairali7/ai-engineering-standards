@@ -204,15 +204,17 @@ def test_human_records_consideration_of_advisory_and_human_evidence(ws, tmp_path
     assert "considered by authority" in md
 
 
-def test_human_evaluation_attestation_requires_human_scores(ws, tmp_path):
+def test_human_evaluation_attestation_allows_qualitative_review(ws, tmp_path):
     from aies import engine, qualification
     _register(tmp_path)
     run = engine.start_qualification("demo", "research", "RT1", ["CA-05"], repeats=10)
     _score(run["run_id"], "model:reviewer", "model", 3)
     engine.aggregate(run["run_id"])
-    with pytest.raises(qualification.QualificationError, match="human-scored ratings"):
-        qualification.record_decision(
-            run["run_id"], "deny", "Alice", human_evaluation="Alice")
+    rec = qualification.record_decision(
+        run["run_id"], "deny", "Alice", human_evaluation="Alice")
+    human = rec["evidence_consideration"]["human_evaluation"]
+    assert human["evaluator"] == "Alice"
+    assert human["scored_ratings_available"] is False
 
 
 def test_dashboard_self_contained(ws, tmp_path):

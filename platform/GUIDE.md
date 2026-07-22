@@ -449,6 +449,10 @@ aies verify QR-<...>                      # re-checks the environment fingerprin
 aies dashboard --write                    # HTML overview of everything
 ```
 
+`--human-evaluation` records a named qualitative or scored human review; it
+does **not** require a second scoresheet. If human scores were ingested, the
+evidence report shows them separately beside the automated reviewer scores.
+
 The durable, auditor-facing **qualification report** is rendered from the
 record itself:
 

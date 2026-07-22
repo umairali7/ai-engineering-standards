@@ -92,10 +92,6 @@ def record_decision(
         raise QualificationError(
             "cannot record advisory-review consideration: this evidence package "
             "contains no model-review ratings")
-    if human_evaluation and "human" not in rater_kinds:
-        raise QualificationError(
-            "cannot record a human evaluation without human-scored ratings; "
-            "ingest the completed scoresheet first")
 
     if decision in ("grant", "grant-with-conditions"):
         if not second_human or not second_human.strip():
@@ -155,7 +151,10 @@ def record_decision(
                 "considered_by_authority": consider_advisory_review,
             },
             "human_evaluation": {
-                "available": "human" in rater_kinds,
+                # A human may evaluate evidence qualitatively without entering
+                # a second numerical scoresheet. Human-scored ratings, when
+                # present, remain separately visible in the evidence report.
+                "scored_ratings_available": "human" in rater_kinds,
                 "evaluator": human_evaluation,
             },
         },

@@ -1357,7 +1357,7 @@ def build_parser() -> argparse.ArgumentParser:
     gr.add_argument("--consider-advisory-review", action="store_true",
                     help="attest that the authority considered available advisory model-review scores")
     gr.add_argument("--human-evaluation", default=None, metavar="NAME",
-                    help="named human evaluator whose completed scoresheet was considered")
+                    help="named human evaluator whose qualitative or scored review was considered")
     gr.set_defaults(func=cmd_grant)
 
     vf = common(sub.add_parser("verify", help="verify a grant against the current "
