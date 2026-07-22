@@ -181,6 +181,7 @@ def test_cannot_grant_on_nondecisional_evidence(ws, tmp_path):
     with pytest.raises(qualification.QualificationError) as ei:
         qualification.record_decision(run["run_id"], "grant", "Alice", second_human="Bob")
     assert "NON-DECISIONAL" in str(ei.value)
+    assert "CA-05 — AI-Assisted Implementation" in str(ei.value)
 
 
 def test_full_cycle_to_grant_and_env_invalidation(ws, tmp_path):
@@ -309,6 +310,30 @@ def test_all_lifecycle_changes_are_append_only_events(ws, tmp_path):
     renewal_event = next(event for event in events if event["event_type"] == "renewed")
     assert renewal_event["changes"]["peer_reviewer_id"] == "test-human-peer"
     assert renewal_event["qualification_scope"]["validity"]["until"].startswith("2027-07")
+
+
+def test_concurrent_qualification_records_claim_unique_ids(ws, tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+    from aies import engine, qualification
+
+    _register(tmp_path)
+    run = engine.start_qualification("demo", "research", "RT2", ["CA-05"], repeats=1)
+    _score(run["run_id"], "Human", "human", 3)
+    engine.aggregate(run["run_id"])
+
+    def issue(_index):
+        return qualification.record_decision(
+            run["run_id"], "grant", "Authority", second_human="Peer",
+            **_decision_people(run["run_id"]))
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        records = list(pool.map(issue, range(12)))
+    record_ids = [record["record_id"] for record in records]
+    assert len(set(record_ids)) == len(record_ids)
+    for record_id in record_ids:
+        path = qualification._records_dir() / f"{record_id}.json"
+        assert path.exists()
+        assert qualification.get_record(record_id)["history"][0]["event_type"] == "issued"
 
 
 def test_expired_qualification_is_treated_as_inactive_and_evented(ws, tmp_path, monkeypatch):

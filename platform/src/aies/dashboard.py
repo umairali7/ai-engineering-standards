@@ -80,5 +80,5 @@ def render_dashboard() -> str:
 
 def write_dashboard() -> str:
     path = workspace.ensure() / "dashboard.html"
-    path.write_text(render_dashboard(), encoding="utf-8")
+    workspace.write_view(path, render_dashboard())
     return str(path)

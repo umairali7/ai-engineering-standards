@@ -112,11 +112,26 @@ stage 8 role envelope   →  (in the evidence package & Qualification Record)
         overview        →  aies dashboard --write
 ```
 
+Assessment maintainers can inspect design-review debt without opening scenario
+packs manually:
+
+```text
+aies corpus review-pending              # inventory + structural readiness
+aies corpus review SC-CA01-021          # inspect one packed scenario by ID
+```
+
+The first command is deliberately non-decisional: it exposes a pending
+disposition for every unreviewed instrument but never records human approval.
+See [AIES-PLAT-10 — Assessment Calibration](CALIBRATION.md) for the independent
+review and empirical-calibration boundaries.
+
 ---
 
 ## 4. Setup
 
-Requirements: Python ≥ 3.10. The platform's only dependency is PyYAML.
+Requirements: Python 3.10–3.14 (the currently CI-tested range). The platform's
+only required application dependencies are PyYAML and the CA certificate bundle
+used for verified HTTPS connections.
 
 ```
 cd platform
@@ -303,11 +318,34 @@ aies qualify --resume <run-id> --judge <judge-id> --parallel 8
 Every successful aggregation or resume writes the complete linked report bundle
 in the run directory: Qualification Evidence Package, Canonical Assessment
 Result when the run used a declarative assessment, Engineering Capability
-Matrix, qualification-bounded Deployment Guidance, and Executive Summary.
+Matrix, source-separated Grounding Diagnostics, qualification-bounded
+Deployment Guidance, and Executive Summary.
 Markdown, JSON, and HTML views are generated for each audience-facing product,
 with `report-bundle.json` as the machine-readable index. The command prints the
 primary paths; if any artifact cannot be rendered, it fails rather than claiming
 completion.
+
+These files do not all have the same storage semantics. Responses, rating
+observations, resolutions, human-rater records, Qualification Records, and
+lifecycle events are append-only source records. The run manifest, scoresheet,
+progress state, and latest fingerprint are workflow-owned mutable state.
+Evidence/assessment packages are versioned derived canonical snapshots.
+Markdown/JSON/HTML reports, ECM, Deployment Guidance, Executive Summary,
+dashboard, and bundle index are regenerable views and can be refreshed without
+changing source evidence. The workspace writer rejects attempts to overwrite an
+append-only record or to write a presentation view into an evidence path.
+
+**Grounding diagnostics are descriptive, not a new qualification score.** A
+structured reviewer may record unsupported assertions, fabricated APIs or
+entities, invalid citations/provenance, false success/test claims, and whether
+an abstention was appropriate. Automated and human observations remain
+separate. The report shows coverage and an observed grounding-reliability
+percentage only where that check was actually performed; `unavailable` never
+means zero hallucinations. These observations map to the existing EV1 —
+Correctness, EV3 — Safety & Security, and EV6 — Traceability dimensions and
+cannot alter their scores, gates, competency level, or a human Qualification
+Record. Human scoresheets and external imports may include the same optional
+`grounding_diagnostics` object.
 
 **Bring external eval results in as evidence.** If you already scored the
 responses with another tool (a custom Inspect/DeepEval task, a second judge, an

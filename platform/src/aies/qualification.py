@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import datetime
 import copy
+import json
 import uuid
 
 from . import constants as C, workspace
@@ -149,6 +150,28 @@ def _next_qual_id() -> str:
     return f"QUAL-{year}-{n:03d}"
 
 
+def _write_new_record(record: dict) -> dict:
+    """Atomically claim a human-readable id and persist an issued snapshot.
+
+    ``_next_qual_id`` is only a candidate generator: concurrent processes may
+    observe the same directory state. Exclusive file creation is the actual
+    uniqueness guarantee. A loser recomputes and retries; no existing record is
+    overwritten and no global lock or platform-specific primitive is required.
+    """
+    for _attempt in range(1000):
+        record_id = _next_qual_id()
+        path = _records_dir() / f"{record_id}.json"
+        record["record_id"] = record_id
+        try:
+            with path.open("x", encoding="utf-8") as stream:
+                json.dump(record, stream, indent=2, sort_keys=False)
+            return record
+        except FileExistsError:
+            continue
+    raise QualificationError(
+        "could not allocate a unique Qualification Record id after 1000 attempts")
+
+
 def record_decision(
     run_id: str,
     decision: str,
@@ -211,12 +234,14 @@ def record_decision(
         nondecisional = [a for a, d in pkg["areas"].items() if not d["decisional"]]
         if nondecisional:
             raise QualificationError(
-                f"cannot grant on NON-DECISIONAL evidence for {', '.join(nondecisional)} "
+                "cannot grant on NON-DECISIONAL evidence for "
+                f"{', '.join(C.competency_label(area) for area in nondecisional)} "
                 "(AIES-AESQS-CS-01 §6); grow the sample or deny")
         gate_failures = [a for a, d in pkg["areas"].items() if not d["gates_passed"]]
         if gate_failures:
             raise QualificationError(
-                f"cannot grant: gates failed for {', '.join(gate_failures)} "
+                "cannot grant: gates failed for "
+                f"{', '.join(C.competency_label(area) for area in gate_failures)} "
                 "(AIES-AESQS-CS-01-R04/R05); re-scope to a lower tier or deny")
     human_protocol = {"schema": 1, "satisfied": False, "reasons": []}
     if pkg.get("evidence_schema", 0) >= 5:
@@ -325,7 +350,8 @@ def record_decision(
     record = {
         "kind": "qualification-record",
         "qualification_schema": 2,
-        "record_id": _next_qual_id(),
+        # Assigned atomically when the immutable issued snapshot is persisted.
+        "record_id": None,
         "subject": {"deployment": dep_id, "checksum": pkg["model"]["checksum"],
                     "runtime": runtime, "model": model_name},
         "scope": {
@@ -383,8 +409,7 @@ def record_decision(
         # Current-state history is projected exclusively from immutable events.
         "history": [],
     }
-    path = _records_dir() / f"{record['record_id']}.json"
-    workspace.write_json(path, record)
+    _write_new_record(record)
     _append_event(record["record_id"], "issued", status, authority,
                   reason=rationale or f"qualification decision: {decision}")
     return get_record(record["record_id"])
@@ -549,13 +574,14 @@ def record_lifecycle_event(
         if missing_areas:
             raise QualificationError(
                 "renewal evidence does not cover the full qualification scope: "
-                + ", ".join(missing_areas))
+                + ", ".join(C.competency_label(area) for area in missing_areas))
         blocked = [area for area in sorted(required_areas)
                    if not renewal_areas[area].get("decisional")
                    or not renewal_areas[area].get("gates_passed")]
         if blocked:
             raise QualificationError(
-                "renewal evidence is not decisional and gate-passing for " + ", ".join(blocked))
+                "renewal evidence is not decisional and gate-passing for "
+                + ", ".join(C.competency_label(area) for area in blocked))
         current_subject = ((current.get("scope") or {}).get("subject") or {}).get("id")
         renewal_subject = (renewal_evidence.get("subject") or {}).get("id")
         if current_subject and renewal_subject != current_subject:

@@ -64,7 +64,21 @@ The standard as a whole follows Semantic Versioning ([GOVERNANCE.md §6.1](../GO
 
 ## 11. Why isn't a license chosen yet, and what is proposed?
 
-Choosing a license for a *standard* is itself a governance decision with long consequences — it determines how organizations may reproduce requirement text in their internal policies, how derivative national or sector profiles may be built, and how attribution and share-alike obligations propagate. Rather than lock this in casually, the project treats it as a Class 3 decision to be finalized **before the v1.0 release**. The current proposal is **Creative Commons CC-BY-SA-4.0** for standard documents: attribution preserves provenance, and share-alike keeps derivatives open. Until ratification, redistribution terms are not final (constraint C-4 in the [Charter](PROJECT_CHARTER.md)); contributions are accepted under the DCO on that understanding ([CONTRIBUTING.md §7](../CONTRIBUTING.md#7-developer-certificate-of-origin)).
+Choosing licenses for a standard and its executable reference platform is a
+governance decision with long consequences. Proposed
+[ADR-0014](../adr/ADR-0014-Dual-License-Standards-and-Software.md) guarantees an
+open result while matching license to work type: **CC BY-SA 4.0** keeps adapted
+standards and reusable assessment content attributable and open, while the
+OSI-approved **Apache 2.0** license gives executable software conventional
+open-source terms including an explicit patent grant. The proposal defines a
+path-level boundary for scenarios, rubrics, code, tests, and mixed files.
+
+The ADR remains Proposed. Under the Class 3 process it requires a complete
+affiliation disclosure, an announced seven-calendar-day public comment window,
+resolved objections, and Maintainer lazy consensus. Until ratification, no
+license is granted and redistribution terms are not final (constraint C-4 in
+the [Charter](PROJECT_CHARTER.md)); contributions remain under the DCO
+understanding ([CONTRIBUTING.md §7](../CONTRIBUTING.md#7-developer-certificate-of-origin)).
 
 ## 12. How are breaking changes handled?
 

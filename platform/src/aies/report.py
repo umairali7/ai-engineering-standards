@@ -134,7 +134,7 @@ def render_json(run_id: str) -> str:
 
 
 def render_markdown(run_id: str) -> str:
-    from . import evaluation as evaluation_view
+    from . import diagnostics, evaluation as evaluation_view
 
     pkg = workspace.read_json(workspace.run_dir(run_id) / "evidence-package.json")
     fp = pkg["environment_fingerprint"]
@@ -197,6 +197,9 @@ def render_markdown(run_id: str) -> str:
           f"({automated.get('coverage_percent', 0):.1f}%) | "
           f"{mean_value if mean_value is not None else '—'} | "
           f"{_human_evaluation_label(evaluation)} | **{status}** |")
+    a("")
+    a(diagnostics.render_report_section_markdown(
+        diagnostics.summarize(run_id)).rstrip())
     a("")
 
     # Grant-readiness summary (synthesis of the per-area detail below).
@@ -353,17 +356,17 @@ def write_reports(run_id: str) -> dict[str, str]:
     part of the evidence-package presentation bundle alongside the Markdown,
     JSON, and standalone Engineering Capability Matrix (ECM) views.
     """
-    from . import (decision, ecm, evaluation, executive_summary, guidance,
+    from . import (decision, diagnostics, ecm, evaluation, executive_summary, guidance,
                    report_html)
 
     rdir = workspace.run_dir(run_id)
     md = render_markdown(run_id)
-    (rdir / "report.md").write_text(md, encoding="utf-8")
+    workspace.write_view(rdir / "report.md", md)
     js = render_json(run_id)
-    (rdir / "report.json").write_text(js, encoding="utf-8")
+    workspace.write_view(rdir / "report.json", js)
     evaluation_path = rdir / "engineering-evaluation.json"
-    evaluation_path.write_text(json.dumps(evaluation.summarize(run_id), indent=2) + "\n",
-                               encoding="utf-8")
+    workspace.write_view(
+        evaluation_path, json.dumps(evaluation.summarize(run_id), indent=2) + "\n")
     matrix = ecm.engineering_capability_matrix(run_id)
     ecm_contents = {
         "markdown": ecm.render_markdown(matrix),
@@ -374,10 +377,10 @@ def write_reports(run_id: str) -> dict[str, str]:
     suffixes = {"markdown": "md", "json": "json", "html": "html"}
     for format, content in ecm_contents.items():
         path = rdir / f"engineering-capability-matrix.{suffixes[format]}"
-        path.write_text(content, encoding="utf-8")
+        workspace.write_view(path, content)
         ecm_paths[f"ecm_{format}"] = str(path)
     html_path = rdir / "report.html"
-    html_path.write_text(report_html.render_html(run_id), encoding="utf-8")
+    workspace.write_view(html_path, report_html.render_html(run_id))
 
     # A declarative assessment produces its canonical outcome and three views.
     # Runs without an assessment still receive the other audience-specific
@@ -389,8 +392,8 @@ def write_reports(run_id: str) -> dict[str, str]:
         assessment_result = decision.assess_run(run_id)
         assessment_md = rdir / "assessment-result.md"
         assessment_html = rdir / "assessment-result.html"
-        assessment_md.write_text(decision.render_markdown(assessment_result), encoding="utf-8")
-        assessment_html.write_text(decision.render_html(assessment_result), encoding="utf-8")
+        workspace.write_view(assessment_md, decision.render_markdown(assessment_result))
+        workspace.write_view(assessment_html, decision.render_html(assessment_result))
         assessment_paths = {
             "assessment_markdown": str(assessment_md),
             "assessment_json": str(rdir / "assessment-result.json"),
@@ -409,12 +412,26 @@ def write_reports(run_id: str) -> dict[str, str]:
         "executive_json": rdir / "executive-summary.json",
         "executive_html": rdir / "executive-summary.html",
     }
-    executive_paths["executive_markdown"].write_text(
-        executive_summary.render_markdown(summary), encoding="utf-8")
-    executive_paths["executive_json"].write_text(
-        executive_summary.render_json(summary), encoding="utf-8")
-    executive_paths["executive_html"].write_text(
-        executive_summary.render_html(summary), encoding="utf-8")
+    workspace.write_view(
+        executive_paths["executive_markdown"], executive_summary.render_markdown(summary))
+    workspace.write_view(
+        executive_paths["executive_json"], executive_summary.render_json(summary))
+    workspace.write_view(
+        executive_paths["executive_html"], executive_summary.render_html(summary))
+
+    diagnostic_summary = diagnostics.summarize(run_id)
+    diagnostic_paths = {
+        "diagnostics_markdown": rdir / "grounding-diagnostics.md",
+        "diagnostics_json": rdir / "grounding-diagnostics.json",
+        "diagnostics_html": rdir / "grounding-diagnostics.html",
+    }
+    workspace.write_view(
+        diagnostic_paths["diagnostics_markdown"],
+        diagnostics.render_markdown(diagnostic_summary))
+    workspace.write_view(
+        diagnostic_paths["diagnostics_json"], diagnostics.render_json(diagnostic_summary))
+    workspace.write_view(
+        diagnostic_paths["diagnostics_html"], diagnostics.render_html(diagnostic_summary))
 
     paths = {
         "markdown": str(rdir / "report.md"), "json": str(rdir / "report.json"),
@@ -422,6 +439,7 @@ def write_reports(run_id: str) -> dict[str, str]:
         **ecm_paths, **assessment_paths,
         **{f"guidance_{format}": path for format, path in guidance_paths.items()},
         **{key: str(path) for key, path in executive_paths.items()},
+        **{key: str(path) for key, path in diagnostic_paths.items()},
     }
     bundle = {
         "kind": "aies-report-bundle", "report_bundle_schema": 1,
@@ -433,9 +451,10 @@ def write_reports(run_id: str) -> dict[str, str]:
             "engineering_capability_matrix": "engineers",
             "deployment_guidance": "operations and managers; requires human qualification for Use",
             "executive_summary": "leadership",
+            "grounding_diagnostics": "source-separated informational reviewer observations",
         },
     }
     bundle_path = rdir / "report-bundle.json"
-    bundle_path.write_text(json.dumps(bundle, indent=2) + "\n", encoding="utf-8")
+    workspace.write_view(bundle_path, json.dumps(bundle, indent=2) + "\n")
     paths["bundle_manifest"] = str(bundle_path)
     return paths

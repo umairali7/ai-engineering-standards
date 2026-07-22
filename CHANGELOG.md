@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Review-ready RT2 instrument tranche and governed open-license proposal**:
+  all 268 new RT2 — Moderate instruments now include competency-specific
+  behavioral floor anchors and gaming-resistance rationales. `aies corpus
+  review-pending` expands scenario packs and produces a deterministic
+  per-instrument structural preflight with explicit pending human dispositions;
+  `aies corpus review <scenario-id>` can now inspect packed scenarios directly.
+  Automation does not mark any instrument human-reviewed. Proposed ADR-0014
+  guarantees an openly licensed outcome after governance: CC BY-SA 4.0 for
+  standards and assessment content, Apache 2.0 for executable software, and an
+  authoritative path boundary. The existing no-license grant remains in force
+  until affiliation disclosure, the announced seven-day Class 3 comment
+  window, objection disposition, and Maintainer acceptance are recorded.
+
+- **Source-separated grounding diagnostics**: model review, optional human scoresheets, and external eval imports can record structured observations for unsupported assertions, fabricated APIs/entities, invalid citations/provenance, false success/test claims, and appropriate abstention. Every report bundle now emits linked Markdown/JSON/HTML Grounding Diagnostics with coverage and descriptive observed grounding reliability. Unavailable checks never render as zero hallucinations, automated and human observations are not blended, and the diagnostic cannot alter EV scores, qualification gates, competency levels, or grants.
+- **Concurrency-safe Qualification Records and explicit workspace mutation policy**: Qualification Records atomically claim their human-readable IDs using exclusive file creation, with concurrent regression coverage. Workspace artifacts are classified as append-only records, derived canonical snapshots, mutable workflow state/configuration, or regenerable views; guarded writers prevent presentation renderers from replacing evidence. CI now tests the documented Python 3.10–3.14 range.
+- **Scope-accurate assessment diagnostics**: named assessments no longer emit an all-area task-coverage warning for tasks intentionally outside their declared composition. Explicit `--all-areas` runs retain the warning if taxonomy coverage is genuinely missing, and qualification blockers render competency titles beside their CA codes.
 - **Accepted ECM task-decision governance (ADR-0013)**: ECM schema 2 counts one qualification-eligible resolved item per distinct mapped scenario, enforces task-specific RT breadth, lower 90% confidence bounds, risk-tier gates and EV3 hard-fail, reviewed mapping admission, human-rater agreement, parent-area floors, and CL1 minimum before `demonstrated`. Reports expose dimension uncertainty and exact blockers. Deployment Guidance emits `Use`/`Use with Review` only when a demonstrated task is bounded by a matching active human Qualification Record, role/phases, conditions, and autonomy; comparison winners additionally require matching scenario sets, semantics, rater protocol, and instrument maturity. Task-mapping schema 2 records per-rule human review provenance; shipped mappings remain honestly pending individual review.
 - **Linked decision-product bundle**: every completed aggregation now writes separate Qualification Evidence, applicable Canonical Assessment Result, Engineering Capability Matrix, Deployment Guidance, and Executive Summary Markdown/JSON/HTML products plus a machine-readable `report-bundle.json` index. Audience and authority boundaries remain explicit; the default bundled guidance has no Qualification Record and therefore emits no `Use` recommendation.
 - **Operationally bounded guidance**: qualified Deployment Guidance now performs a read-only current deployment-fingerprint check and exposes the applicable human conditions, validity window, role/phase/autonomy constraints, instrument-calibration limitations, and thin task-gate margins. Drift, expiry, invalidation, missing scope, or missing authority suppresses `Use` without silently mutating the Qualification Record.

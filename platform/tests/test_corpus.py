@@ -126,6 +126,27 @@ def test_structural_review_of_a_shipped_scenario_is_clean():
     assert not ({"score", "grade", "confidence", "overall"} & set(r))
 
 
+def test_structural_review_resolves_a_packed_scenario_by_id():
+    from aies import corpus
+    r = corpus.review_scenario("SC-CA01-021")
+    assert r["scenario"] == "SC-CA01-021"
+    assert r["source"].endswith("RT2-breadth-pack-v1.yaml")
+    assert r["structural_summary"]["gap"] == 0
+
+
+def test_pending_review_preflight_is_complete_but_never_approves():
+    from aies import corpus
+    r = corpus.pending_reviews()
+    assert r["kind"] == "calibration-design-review-preflight"
+    assert r["pending"] == 268
+    assert r["structurally_ready"] == 268
+    assert r["with_structural_gaps"] == 0
+    assert r["status"] == "pending-independent-human-review"
+    assert all(item["human_disposition"]["status"] == "pending"
+               for item in r["items"])
+    assert "Only a named independent human" in r["authority_boundary"]
+
+
 def test_structural_review_flags_a_missing_ceiling(tmp_path):
     from aies import corpus
     _scn(tmp_path, "SC-CA07-901", "review this handler", ceiling="")   # ceiling blank

@@ -18,7 +18,8 @@ Generic import schema (JSON):
       "items": [
         {"scenario_id": "SC-CA05-001", "repeat": 1,
          "scores": {"EV1": 3, "EV2": 3, "EV3": 4, "EV4": 3, "EV5": 3, "EV6": 3},
-         "findings": ["short note for any score <= 2"]}
+         "findings": ["short note for any score <= 2"],
+         "grounding_diagnostics": null}              # optional, informational
       ]
     }
 
@@ -35,7 +36,7 @@ import json
 from pathlib import Path
 
 from . import constants as C
-from . import rating, workspace
+from . import diagnostics, rating, workspace
 
 
 class EvalImportError(Exception):
@@ -69,7 +70,7 @@ def import_eval(run_id: str, path: str, source: str | None = None) -> dict:
     label = source or data.get("source") or "external"
     rater_name = label if str(label).startswith("import:") else f"import:{label}"
 
-    items, skipped = [], []
+    items, skipped, diagnostics_unavailable = [], [], []
     for i, it in enumerate(data["items"]):
         sid = it.get("scenario_id")
         rep = it.get("repeat", 1)
@@ -82,11 +83,19 @@ def import_eval(run_id: str, path: str, source: str | None = None) -> dict:
         if low and not findings:  # ingest requires a finding for any low score
             findings = [{"dimension": low[0], "score": scores[low[0]],
                          "finding": "imported low score; see external eval"}]
+        try:
+            grounding = diagnostics.normalize(it.get("grounding_diagnostics"))
+        except ValueError:
+            # Optional malformed diagnostics must not erase otherwise-valid EV
+            # observations. Preserve the honest state as unavailable.
+            grounding = None
+            diagnostics_unavailable.append(str(sid))
         items.append({
             "response_record": f"{sid}-r{rep}.json",
             "scenario_id": sid, "repeat": rep,
             "scores": {d: int(scores[d]) for d in C.DIMENSIONS},
             "findings": findings,
+            "grounding_diagnostics": grounding,
         })
 
     if not items:
@@ -102,4 +111,5 @@ def import_eval(run_id: str, path: str, source: str | None = None) -> dict:
     })
     return {"source": rater_name, "items": len(data["items"]),
             "imported": len(items), "skipped": len(skipped),
+            "diagnostics_unavailable": len(diagnostics_unavailable),
             "ratings_written": len(written)}

@@ -33,8 +33,17 @@ def test_parse_scores_robust():
     ok = _parse_scores('noise ```json\n{"EV1":3,"EV2":2,"EV3":3,"EV4":3,"EV5":2,'
                        '"EV6":4,"findings":["ev2 thin"]}\n``` trailing')
     assert ok is not None
-    scores, findings = ok
+    scores, findings, grounding = ok
     assert scores["EV1"] == 3 and scores["EV6"] == 4 and findings
+    assert grounding is None
+    grounded = _parse_scores(
+        '{"EV1":3,"EV2":3,"EV3":3,"EV4":3,"EV5":3,"EV6":3,"findings":[],'
+        '"grounding_diagnostics":{"grounding_assessed":true,'
+        '"unsupported_assertions":1,"fabricated_apis_or_entities":0,'
+        '"invalid_citations_or_provenance":0,"false_success_or_test_claims":1,'
+        '"appropriate_abstention":false,"notes":["unsupported success claim"]}}')
+    assert grounded[2]["unsupported_assertions"] == 1
+    assert grounded[2]["appropriate_abstention"] is False
     assert _parse_scores("I cannot score this.") is None      # no JSON
     assert _parse_scores('{"EV1":5,"EV2":3,"EV3":3,"EV4":3,"EV5":3,"EV6":3}') is None  # out of range
     assert _parse_scores('{"EV1":3}') is None                  # missing dims
@@ -47,7 +56,7 @@ def test_mock_reviewer_is_judge_aware_and_emits_parseable_scores(ws, tmp_path):
     (this is what `make demo` / tests/test_demo.py exercise). The scores are
     obviously synthetic and mock evidence self-declares in provenance, so it can
     never masquerade as a real model's qualification."""
-    from aies import engine, model_review, rating, workspace
+    from aies import diagnostics, engine, model_review, rating, workspace
     _register(tmp_path, "cand")
     run = engine.start_qualification("cand", "research", "RT2", ["CA-05"], repeats=1)
     summary = model_review.run_model_review(run["run_id"], "cand")  # mock reviews itself
@@ -56,6 +65,10 @@ def test_mock_reviewer_is_judge_aware_and_emits_parseable_scores(ws, tmp_path):
     ratings = [workspace.read_json(p)
                for p in (workspace.run_dir(run["run_id"]) / "ratings").glob("*.json")]
     assert ratings and all(r["provenance"]["rater_kind"] == "model" for r in ratings)
+    assert all(r["grounding_diagnostics"]["grounding_assessed"] for r in ratings)
+    grounding = diagnostics.summarize(run["run_id"])
+    assert grounding["sources"]["automated"]["coverage_percent"] == 100.0
+    assert grounding["sources"]["automated"]["observed_grounding_reliability_percent"] == 100.0
 
 
 def test_batched_judge_reduces_calls_but_records_every_response(ws, tmp_path):
@@ -292,6 +305,8 @@ def test_resume_with_judge_is_one_command_score_aggregate_and_report(ws, tmp_pat
                  "deployment-guidance.md", "deployment-guidance.json",
                  "deployment-guidance.html", "executive-summary.md",
                  "executive-summary.json", "executive-summary.html",
+                 "grounding-diagnostics.md", "grounding-diagnostics.json",
+                 "grounding-diagnostics.html",
                  "report-bundle.json"):
         assert (rdir / name).exists(), name
 

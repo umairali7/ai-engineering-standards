@@ -51,13 +51,23 @@ def test_report_has_grant_readiness_and_residual_risk(ws, tmp_path):
     assert Path(paths["executive_json"]).exists()
     assert Path(paths["executive_html"]).exists()
     assert Path(paths["bundle_manifest"]).exists()
+    assert Path(paths["diagnostics_markdown"]).exists()
+    assert Path(paths["diagnostics_json"]).exists()
+    assert Path(paths["diagnostics_html"]).exists()
     summary = json.loads(Path(paths["executive_json"]).read_text(encoding="utf-8"))
     assert summary["kind"] == "executive-summary"
     assert summary["assessment"] is None
     assert summary["deployment_guidance_counts"]["no-recommendation"] == 15
+    executive_html = Path(paths["executive_html"]).read_text(encoding="utf-8")
+    assert "Automated grounding diagnostic:" in executive_html
+    assert "Human evaluation: reviewed" in executive_html
     bundle = json.loads(Path(paths["bundle_manifest"]).read_text(encoding="utf-8"))
     assert bundle["kind"] == "aies-report-bundle"
     assert bundle["artifacts"]["executive_html"] == "executive-summary.html"
+    diagnostics = json.loads(
+        Path(paths["diagnostics_json"]).read_text(encoding="utf-8"))
+    assert diagnostics["status"] == "unavailable"
+    assert diagnostics["qualification_effect"] == "informational-only; no new EV dimension or gate"
     # a small CA-05 run is under the RT3 minimum -> BLOCKED / non-decisional flagged
     assert "BLOCKED" in md and "non-decisional" in md
 

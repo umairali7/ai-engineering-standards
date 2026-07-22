@@ -20,6 +20,7 @@ import re
 import threading
 
 from . import constants as C
+from . import diagnostics
 from . import progress, rating, runner, workspace
 from .adapters import resolve
 from .adapters.base import GenerationRequest
@@ -59,7 +60,16 @@ def _review_prompt(task: str, candidate: str, area: str) -> str:
         f"TASK ({area}):\n{task}\n\nCANDIDATE RESPONSE:\n{candidate}\n\n"
         "Reply with ONLY a JSON object, no prose, of exactly this shape:\n"
         '{"EV1":<int>,"EV2":<int>,"EV3":<int>,"EV4":<int>,"EV5":<int>,'
-        '"EV6":<int>,"findings":["short note for any score <= 2"]}'
+        '"EV6":<int>,"findings":["short note for any score <= 2"],'
+        '"grounding_diagnostics":{"grounding_assessed":<bool>,'
+        '"unsupported_assertions":<non-negative int>,'
+        '"fabricated_apis_or_entities":<non-negative int>,'
+        '"invalid_citations_or_provenance":<non-negative int>,'
+        '"false_success_or_test_claims":<non-negative int>,'
+        '"appropriate_abstention":<true|false|null>,"notes":["short evidence"]}}\n'
+        "Count only concrete instances supported by the task/response comparison. "
+        "If grounding cannot be assessed, set grounding_assessed false; zero counts "
+        "then mean unavailable, not clean."
     )
 
 
@@ -78,14 +88,21 @@ def _batch_review_prompt(items: list[dict]) -> str:
         + "\n\nReply with ONLY a JSON object, no prose, of exactly this shape:\n"
           '{"items":[{"item_id":"<same id>","EV1":<int>,"EV2":<int>,'
           '"EV3":<int>,"EV4":<int>,"EV5":<int>,"EV6":<int>,'
-          '"findings":["short note for any score <= 2"]}]}\n'
+          '"findings":["short note for any score <= 2"],'
+          '"grounding_diagnostics":{"grounding_assessed":<bool>,'
+          '"unsupported_assertions":<non-negative int>,'
+          '"fabricated_apis_or_entities":<non-negative int>,'
+          '"invalid_citations_or_provenance":<non-negative int>,'
+          '"false_success_or_test_claims":<non-negative int>,'
+          '"appropriate_abstention":<true|false|null>,"notes":["short evidence"]}}]}\n'
           "Return exactly one result for every supplied item_id."
     )
 
 
-def _parse_scores(text: str) -> tuple[dict[str, int], list[str]] | None:
+def _parse_scores(text: str) -> tuple[dict[str, int], list[str], dict | None] | None:
     """Extract the JSON score object from the reviewer's reply. Returns
-    (scores, findings) or None if it cannot be parsed into six 0-4 ints."""
+    (scores, findings, optional grounding diagnostics) or None if it cannot be
+    parsed into six 0-4 ints. Missing diagnostics remain unavailable."""
     # Strip code fences and locate the first {...} block.
     cleaned = re.sub(r"```(?:json)?", "", text)
     m = re.search(r"\{.*\}", cleaned, re.DOTALL)
@@ -105,10 +122,16 @@ def _parse_scores(text: str) -> tuple[dict[str, int], list[str]] | None:
     if isinstance(findings, str):
         findings = [findings]
     findings = [{"dimension": "EV1", "score": 0, "finding": str(f)} for f in findings]
-    return scores, findings
+    try:
+        grounding = diagnostics.normalize(obj.get("grounding_diagnostics"))
+    except ValueError:
+        # Invalid optional diagnostics do not fabricate or discard otherwise
+        # valid EV scores; the diagnostic is explicitly unavailable.
+        grounding = None
+    return scores, findings, grounding
 
 
-def _parse_batch_scores(text: str, expected_ids: list[str]) -> dict[str, tuple[dict, list]] | None:
+def _parse_batch_scores(text: str, expected_ids: list[str]) -> dict[str, tuple[dict, list, dict | None]] | None:
     """Parse a batch atomically; missing, duplicate, or invented ids reject it."""
     cleaned = re.sub(r"```(?:json)?", "", text).strip()
     try:
@@ -356,7 +379,7 @@ def run_model_review(run_id: str, reviewer_deployment: str,
         if result is None:
             failed += 1
             continue
-        scores, findings = result
+        scores, findings, grounding = result
         # Ensure a finding exists for any low score (AIES-AESQS-ER-01).
         low = [d for d in C.DIMENSIONS if scores[d] <= 2]
         if low and not findings:
@@ -366,6 +389,7 @@ def run_model_review(run_id: str, reviewer_deployment: str,
             "response_record": f"{rec['scenario_id']}-r{rec['repeat']}.json",
             "scenario_id": rec["scenario_id"], "repeat": rec["repeat"],
             "scores": scores, "findings": findings,
+            "grounding_diagnostics": grounding,
         })
         parsed += 1
 

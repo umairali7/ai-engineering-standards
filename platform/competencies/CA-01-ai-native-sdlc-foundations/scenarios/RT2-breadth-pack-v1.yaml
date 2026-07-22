@@ -22,6 +22,8 @@ defaults:
   calibration:
     objective: replaced by each packed scenario
     ceiling_anchor: replaced by each packed scenario
+    floor_anchor: "A 0–2 response treats lifecycle controls as ceremony, invents missing authority or evidence, or omits an enforceable gate, owner, verification point, or recovery path."
+    gaming_rationale: "Fluent process language is insufficient: the response must reconcile the scenario's competing delivery, evidence, authority, and recovery constraints through observable decisions."
     expected_refusal: false
     empirical_status: {design_reviewed: false, empirically_calibrated: false}
 scenarios:

@@ -770,5 +770,5 @@ def write_matrix(matrix: dict, format: str = "markdown") -> Path:
         content = render_html(matrix)
     else:
         content = render_markdown(matrix)
-    path.write_text(content, encoding="utf-8")
+    workspace.write_view(path, content)
     return path

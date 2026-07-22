@@ -59,12 +59,30 @@ Every artifact carries a schema version; envelopes are field-append-only
 | ECM task-decision semantics *(review-stage)* | `task_decision_semantics_version` | `1.0` | ADR-0013 |
 | Deployment Guidance *(review-stage)* | `guidance_schema` | `2` | `guidance` |
 | Executive Summary | `executive_summary_schema` | `1` | complete report bundle |
+| Grounding Diagnostics | `diagnostic_schema` | `1` | complete report bundle; structured reviewer observations |
 | Report Bundle Index | `report_bundle_schema` | `1` | complete report bundle |
 
 The result's `metadata` records both `decision_engine_version` (which software)
 and `decision_semantics_version` (which policy), plus the `profile_version` and
 `evidence_schema` it decided over — a certification is always traceable to its
 exact inputs.
+
+### 2.1 Workspace storage classes
+
+The workspace distinguishes persistence semantics explicitly; “JSON file” does
+not imply one universal mutation rule.
+
+| Class | Examples | Mutation contract |
+|---|---|---|
+| Append-only record | responses, rating observations, resolutions, human-rater records, Qualification Records and lifecycle events, audit records | Created once; replacement is rejected. Corrections are new records or events. |
+| Derived canonical snapshot | `evidence-package.json`, `assessment-result.json`, `review-package.json` | Recomputed only when its recorded source evidence changes; the schema and source provenance remain explicit. |
+| Mutable working state | `manifest.json`, `scoresheet.json`, `progress.json`, latest fingerprint | May be replaced by its owning workflow while work progresses. |
+| Regenerable view | Markdown/JSON/HTML reports, ECM, Deployment Guidance, Executive Summary, Grounding Diagnostics, dashboard, bundle index | May be replaced at any time from canonical records; never treated as source evidence. |
+| Mutable configuration | deployment registry entries | Updated only through the registry workflow; identity changes trigger qualification verification. |
+
+`workspace.artifact_class`, `workspace.write_json`, and
+`workspace.write_view` enforce the append-only/view boundary. Renderer code
+cannot use the view writer to replace evidence records.
 
 ## 3. Commands
 

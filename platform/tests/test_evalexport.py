@@ -34,6 +34,12 @@ def _scored_run(tmp_path):
     sheet["rater"] = {"name": "Rater", "kind": "human"}
     for it in sheet["items"]:
         it["scores"] = {d: 3 for d in ("EV1", "EV2", "EV3", "EV4", "EV5", "EV6")}
+        it["grounding_diagnostics"] = {
+            "grounding_assessed": True, "unsupported_assertions": 0,
+            "fabricated_apis_or_entities": 0,
+            "invalid_citations_or_provenance": 0,
+            "false_success_or_test_claims": 0,
+            "appropriate_abstention": None, "notes": []}
     rating.ingest_scores(run, sheet)
     return run
 
@@ -47,7 +53,9 @@ def test_export_carries_prompt_response_and_scores(ws, tmp_path):
     it = data["items"][0]
     assert it["prompt"] and it["response"] and it["scores"]
     assert set(it["scores"]) == {"EV1", "EV2", "EV3", "EV4", "EV5", "EV6"}
+    assert it["grounding_diagnostics"]["grounding_assessed"] is True
     assert it["ratings"] and it["ratings"][0]["rater_kind"] == "human"
+    assert it["ratings"][0]["grounding_diagnostics"]["diagnostic_schema"] == 1
 
 
 def test_export_roundtrips_through_import(ws, tmp_path):

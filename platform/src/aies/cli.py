@@ -189,7 +189,11 @@ def cmd_qualify(args) -> int:
                                   f"batched judge calls (up to {batch} items each; "
                                   "context limits may split batches)")
                 print(f"sample plan: {plan['planned_items']} candidate calls{judge_hint}.", file=sys.stderr)
-                if plan["unassessed_tasks"]:
+                # Only an explicit all-area request implies an expectation of
+                # coverage across the entire Engineering Task Taxonomy. A
+                # named assessment intentionally selects a narrower purpose;
+                # tasks outside that composition are not a warning condition.
+                if plan["unassessed_tasks"] and getattr(args, "all_areas", False):
                     print("warning: no direct scenario mapping for task(s): "
                           + ", ".join(plan["unassessed_tasks"])
                           + ". An all-area run cannot make a capability claim for them.", file=sys.stderr)
@@ -690,6 +694,10 @@ def cmd_corpus(args) -> int:
         report = corpus.duplicates(root)
         _out(report, args.json, corpus.render_duplicates(report))
         return 0   # advisory — never a gate
+    if args.corpus_cmd == "review-pending":
+        report = corpus.pending_reviews(root)
+        _out(report, args.json, corpus.render_pending_reviews(report))
+        return 0   # preflight only — never records human approval
     if args.corpus_cmd == "review":
         try:
             report = corpus.review_scenario(args.scenario, reviewer=args.reviewer,
@@ -1783,7 +1791,9 @@ def build_parser() -> argparse.ArgumentParser:
                     ("coverage", "the coverage dimension only — RT distribution per area "
                      "and per-assessment tier depth"),
                     ("duplicates", "near-duplicate scenario pairs (prompt/ceiling overlap), "
-                     "twin-aware — flags redundancy candidates for human review")):
+                     "twin-aware — flags redundancy candidates for human review"),
+                    ("review-pending", "inventory pending scenario design reviews, run "
+                     "deterministic structural preflight, and expose human disposition fields")):
         sc = cpsub.add_parser(name, help=h)
         sc.add_argument("--root", default=None,
                         help="competencies directory (default: shipped suites)")

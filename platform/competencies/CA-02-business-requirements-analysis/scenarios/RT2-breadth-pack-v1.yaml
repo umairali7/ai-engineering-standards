@@ -17,6 +17,8 @@ defaults:
   calibration:
     objective: replaced by each packed scenario
     ceiling_anchor: replaced by each packed scenario
+    floor_anchor: "A 0–2 response converts assumptions into requirements, misses a material stakeholder or exception, or produces criteria that cannot be traced or objectively verified."
+    gaming_rationale: "Restating the prompt cannot succeed: the response must resolve ambiguity into testable, traceable requirements while preserving unresolved decisions and stakeholder constraints."
     expected_refusal: false
     empirical_status: {design_reviewed: false, empirically_calibrated: false}
 scenarios:

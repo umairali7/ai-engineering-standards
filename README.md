@@ -3,7 +3,7 @@
 > **Building the vendor-neutral standard for AI-native Software Engineering.**
 
 ![Status](https://img.shields.io/badge/Status-Active%20Development-blue)
-![License](https://img.shields.io/badge/License-CC--BY--SA--4.0%20(proposed)-lightgrey)
+![License](https://img.shields.io/badge/License-Open%20dual--license%20(proposed)-lightgrey)
 ![Contributions](https://img.shields.io/badge/Contributions-Welcome-brightgreen)
 
 **New here? Start with [GETTING_STARTED.md](GETTING_STARTED.md)** — role-based reading paths and a six-step adoption guide.
@@ -103,7 +103,7 @@ Enterprise engineering organizations, CTOs, engineering directors and managers, 
 .
 ├── README.md                 ← you are here
 ├── GETTING_STARTED.md        ← entry point: reading paths & adoption guide
-├── LICENSE.md                ← license status (pending selection)
+├── LICENSE.md                ← open dual-license proposal and current legal status
 ├── CHANGELOG.md              ← versioned change history
 ├── ROADMAP.md                ← phased delivery plan
 ├── GOVERNANCE.md             ← decision-making model
@@ -234,7 +234,12 @@ Individual documents carry a lifecycle status only (Draft → Review → Approve
 
 ## License
 
-License selection will be finalized before the v1.0 release. Creative Commons **CC-BY-SA-4.0** is the current proposal for standard documents — see [LICENSE.md](LICENSE.md) and [docs/FAQ.md](docs/FAQ.md).
+License selection will be finalized before the v1.0 release. Proposed
+[ADR-0014](adr/ADR-0014-Dual-License-Standards-and-Software.md) guarantees an
+openly licensed repository: **CC BY-SA 4.0** for standards and reusable
+assessment content, and **Apache 2.0** for executable software. Until that Class
+3 decision is ratified, no license is granted; see [LICENSE.md](LICENSE.md) and
+[docs/FAQ.md](docs/FAQ.md).
 
 ---
 

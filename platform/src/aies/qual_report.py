@@ -236,7 +236,7 @@ def generate(record_id: str, fmt: str = "markdown") -> str:
     qualification.get_record(record_id)  # validates existence
     content = _RENDER[fmt](record_id)
     path = reports_dir() / f"{record_id}.{_EXT[fmt]}"
-    path.write_text(content, encoding="utf-8")
+    workspace.write_view(path, content)
     return str(path)
 
 

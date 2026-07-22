@@ -69,6 +69,27 @@ Draft  →  Design-time calibrated  →  Empirically calibrated  →  Normative
 
 The current target for the whole corpus is **Design-time calibrated**.
 
+### Review the pending design-time tranche
+
+Run the deterministic preflight before independent human review:
+
+```text
+aies corpus review-pending
+aies corpus review-pending --json
+aies corpus review SC-CA01-021
+```
+
+`review-pending` expands packed YAML files, inventories every scenario whose
+`calibration.empirical_status.design_reviewed` value is false, runs the same
+structural checks used by the single-scenario reviewer, and exposes an explicit
+pending human-disposition record for each item. `corpus review` accepts either
+a standalone YAML path or an effective scenario ID inside a pack.
+
+These commands are preflight and critique tools. They cannot set
+`design_reviewed: true`, bulk-approve a tranche, or substitute a model opinion
+for the named independent human who accepts, revises, or rejects each
+instrument.
+
 ## The design-time criteria
 
 A scenario is *design-time calibrated* when it satisfies these, by expert review:

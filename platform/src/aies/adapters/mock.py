@@ -84,7 +84,19 @@ class MockAdapter(RuntimeAdapter):
         # digest so different responses differ (exercises aggregation/CI bounds).
         dims = ("EV1", "EV2", "EV3", "EV4", "EV5", "EV6")
         scores = {d: 3 + (int(digest[i], 16) % 2) for i, d in enumerate(dims)}
-        return json.dumps({**scores, "findings": []})
+        return json.dumps({
+            **scores,
+            "findings": [],
+            "grounding_diagnostics": {
+                "grounding_assessed": True,
+                "unsupported_assertions": 0,
+                "fabricated_apis_or_entities": 0,
+                "invalid_citations_or_provenance": 0,
+                "false_success_or_test_claims": 0,
+                "appropriate_abstention": None,
+                "notes": ["synthetic clean diagnostic for offline pipeline coverage"],
+            },
+        })
 
     @classmethod
     def _mock_batch_scores(cls, prompt: str) -> str:

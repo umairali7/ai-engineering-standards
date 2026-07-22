@@ -31,8 +31,9 @@ the full pipeline is runnable end to end:
 `doctor` (runtime-aware), `discover`, `registry`/`deployment` (incl. `update`,
 `remove`, `verify-artifact` for supply-chain provenance), `qualify` (with
 `--parallel`, `--judge` auto-scoring, `--journey`, `--all-areas`), `score`,
-`import` (external eval results), `report` (Markdown/JSON/HTML plus linked ECM
-companion artifacts), `transcript`,
+`import` (external eval results), `report` (complete linked Markdown/JSON/HTML
+bundle: qualification evidence, ECM, Grounding Diagnostics, bounded guidance,
+and Executive Summary), `transcript`,
 `capabilities` (per-area SDLC profile; `--ecm` writes an informational,
 task-mapped Engineering Capability Matrix), `judge` (available/list/history),
 `assessment` (declarative qualification composition — list/show/validate/result,
@@ -77,7 +78,7 @@ environment change invalidates the grant, per D7).
 
 ```
 cd platform
-pip install -e .          # installs the `aies` command (Python >= 3.10)
+pip install -e .          # installs `aies` (Python 3.10–3.14 tested in CI)
 pytest tests/             # conformance tests keyed to AESQS requirement IDs
 aies suites validate      # suites + shipped assessments (one gate; CI runs it)
 ```
@@ -153,6 +154,14 @@ evaluation: ☐ Not reviewed (optional)` until a named human evaluation is
 recorded, then display it as reviewed. This optional status never blocks the
 engineering evaluation. Formal qualification and grants remain a separate,
 human-governed protocol under ADR-0012.
+
+Structured reviewers also produce **Grounding Diagnostics** for unsupported
+assertions, fabricated APIs/entities, invalid citations/provenance, false
+success/test claims, and appropriate abstention. The report keeps automated
+and optional human observations separate. Its observed grounding reliability
+is descriptive only: unavailable coverage is never shown as zero
+hallucinations, and the diagnostic cannot change EV scores or qualification
+gates.
 
 **Qualify deployments, not bare models** (PLATFORM.md D11). A deployment
 is the named tuple of model × runtime × config × endpoint; `aies discover`

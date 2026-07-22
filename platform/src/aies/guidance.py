@@ -269,9 +269,9 @@ def write_artifacts(ref: str, *, qualification_id: str | None = None,
         "json": rdir / "deployment-guidance.json",
         "html": rdir / "deployment-guidance.html",
     }
-    paths["markdown"].write_text(render_markdown(run_id, **options), encoding="utf-8")
-    paths["json"].write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
-    paths["html"].write_text(render_html(run_id, **options), encoding="utf-8")
+    workspace.write_view(paths["markdown"], render_markdown(run_id, **options))
+    workspace.write_view(paths["json"], json.dumps(result, indent=2) + "\n")
+    workspace.write_view(paths["html"], render_html(run_id, **options))
     return {format: str(path) for format, path in paths.items()}
 
 

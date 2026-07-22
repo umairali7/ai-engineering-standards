@@ -73,14 +73,14 @@ and selection remain separate products.
 
 | Status | Work item | Acceptance signal |
 |---|---|---|
-| In progress | Human-review the new RT2 — Moderate tranche | All 484 scenarios have recorded independent design review; the 268 pending instruments are accepted, revised, or rejected individually |
+| In progress | Human-review the new RT2 — Moderate tranche | Automated preflight confirms all 268 pending instruments are structurally ready with behavioral floor and gaming-resistance anchors, no duplicate candidates, and reviewable packed-scenario IDs; a named independent human must still accept, revise, or reject each instrument individually before all 484 can claim design review |
 | Open | Empirically calibrate a preregistered real-subject panel | A versioned panel study reports difficulty, discrimination, repeatability, twin robustness, ceiling reach, and limitations; scenario promotion is a human decision |
 | Open | Establish versioned anchor-artifact libraries | Every competency area has human-consensus anchors across scores 0–4, including subtle AI-produced defects and refresh history |
 | Open | Protect held-out evidence | Public examples, behavioral twins, and genuinely protected held-out instruments are distinct; contamination checks and refresh policy are recorded |
 | Open | Grow no-repeat coverage beyond RT2 — Moderate | Each supported tier/area meets its distinct-instrument minimum with genuinely tier-appropriate decision types: current distribution RT1=24, RT2=387, RT3=52, RT4=21 |
 | Open | Validate Engineering Task mappings empirically | ET-01 through ET-15 mappings receive human review and demonstrate task discrimination; mapping counts alone cannot establish capability |
 | Open | Add task-specific uncertainty | ECM reports task-level effective sample, admitted evidence, interval, protocol, mapping version, and limitations without borrowing an area minimum as a task threshold |
-| Open | Add hallucination and fabrication diagnostics | Reports measure unsupported assertions, fabricated APIs/entities, invalid citations/provenance, false success/test claims, and appropriate abstention; diagnostics map to EV1 — Correctness, EV3 — Safety & Security, and EV6 — Traceability until governance approves otherwise |
+| Done | Add hallucination and fabrication diagnostics | Report bundles include source-separated structured observations for unsupported assertions, fabricated APIs/entities, invalid citations/provenance, false success/test claims, and appropriate abstention; the descriptive grounding-reliability view maps to EV1 — Correctness, EV3 — Safety & Security, and EV6 — Traceability and cannot alter qualification decisions |
 
 ### P1 — Subject-neutral assessment architecture
 
@@ -113,7 +113,7 @@ and selection remain separate products.
 | Open | Reconcile ECM with the five-module architecture | A governed update establishes ECM as a foundational standard and updates dependent documents without weakening vendor neutrality |
 | Open | Complete independent pilots | At least one local and one hosted assessment have independent human rating/review, reproducible artifacts, limitations, and published lessons learned |
 | Open | Complete public comment | Every normative module and ECM has a comment period, disposition log, and Approved decision under governance |
-| Deferred | Select repository licenses | Human governance selects compatible documentation and software licenses; metadata and notices match. Deferred by maintainer decision |
+| In progress | Ratify open repository licenses | Proposed ADR-0014 defines CC BY-SA 4.0 for standards/assessment content and Apache 2.0 for executable software. Complete affiliation disclosures, announce and finish the seven-day Class 3 comment window, resolve objections, record Maintainer acceptance, then install exact license texts, path notices, SPDX/package metadata, and CI verification |
 | Open | Publish a real release | Version story is consistent, a signed tag exists, release artifacts pass hygiene/conformance, and upgrade notes are published |
 | Open | Demonstrate external adoption | Published case studies, third-party conformance runs, and contributors/reviewers from independent organizations satisfy Charter success criteria |
 
@@ -136,9 +136,9 @@ and selection remain separate products.
 | Open | Split the CLI monolith | Parser construction and command handlers are separated by domain with unchanged tested command behavior |
 | Open | Consolidate duplicate commands | `registry`/`deployment`, `profile`/`profiles`, and `qualification`/`qualifications` have one canonical surface plus documented deprecation aliases |
 | Open | Consolidate report view models | Markdown, HTML, JSON, dashboard, and API consume shared factual view models; no renderer recomputes decisions |
-| Open | Clarify immutable artifacts and regenerable views | Storage policy explicitly identifies events, canonical evidence/results, mutable indexes, worksheets, and regenerable presentation files; code enforces it |
-| Open | Make record identifiers concurrency-safe | Concurrent qualification decisions cannot choose the same record ID |
-| Open | Improve local verification feedback | The full suite reports progress predictably and has a documented performance budget; the current measured 212-test Windows run (~335 seconds) is the baseline to profile and reduce |
+| Done | Clarify immutable artifacts and regenerable views | Storage policy classifies append-only records, derived canonical snapshots, mutable workflow state/configuration, and regenerable views; `workspace.write_json` rejects append-only replacement and `workspace.write_view` cannot target evidence paths |
+| Done | Make record identifiers concurrency-safe | Qualification Records atomically claim human-readable IDs through exclusive creation; a 12-decision concurrent regression proves unique issued records and lifecycle events |
+| Open | Improve local verification feedback | The full suite reports progress predictably and has a documented performance budget; the current measured 214-test Windows run (~375 seconds) is the baseline to profile and reduce |
 | Open | Remove local workspace archive debris safely | Workspace diagnostics identify `.DS_Store`, `__MACOSX`, caches, and stale generated bundles without deleting user evidence automatically |
 
 ### C2 — CI, security, and release hygiene
@@ -146,7 +146,7 @@ and selection remain separate products.
 | Status | Cleanup item | Acceptance signal |
 |---|---|---|
 | Done | Expand CI path coverage | Changes to Shared, AEBOK, AESQS, AEOS, AEAR, AECT, ECM, ADRs, governed docs, platform, and conformance trigger relevant checks |
-| Open | Test supported Python versions | CI covers supported production versions including 3.13/3.14, or package metadata narrows the declared range |
+| Done | Test supported Python versions | CI runs the complete platform gate on Python 3.10, 3.11, 3.12, 3.13, and 3.14; installation docs identify that tested range |
 | Open | Add documentation governance checks | CI detects duplicate document/requirement IDs, missing meaningful titles, broken links, invalid metadata/status transitions, and stale references |
 | Open | Add code-quality checks | Formatting, linting, type checking, and coverage thresholds run in CI |
 | Open | Add supply-chain controls | Dependency lock, dependency review, secret scanning/SAST, SBOM/AI-BOM, artifact provenance, and signing are implemented proportionately |
@@ -159,7 +159,7 @@ and selection remain separate products.
 
 Last verified on 2026-07-22:
 
-- `pytest platform/tests -q`: **212 passed in 335.24 seconds** on the current Windows workstation.
+- `pytest platform/tests -q`: **214 passed in 375.13 seconds** on the current Windows workstation.
 - `aies suites validate`: **484 scenarios, 12 areas, 0 warnings, 0 errors**.
 - Decision-engine conformance: **8/8 cases passed**, semantics 1.0.
 - Release hygiene: **PASS**.

@@ -13,6 +13,7 @@ import datetime
 from collections import defaultdict
 
 from . import constants as C
+from . import diagnostics
 from . import progress, workspace
 
 
@@ -39,6 +40,9 @@ def build_scoresheet(run_id: str) -> dict:
             "scores": {dim: None for dim in C.DIMENSIONS},
             "findings": [],
             "failure_conditions_observed": [],
+            # Optional and informational. A human may record structured
+            # grounding observations without creating a seventh EV dimension.
+            "grounding_diagnostics": None,
         })
     sheet = {
         "run_id": run_id,
@@ -47,7 +51,9 @@ def build_scoresheet(run_id: str) -> dict:
             "against the rubric anchors (AIES-AESQS-ER-01; no half points). "
             "Record a finding for every score <= 2. If a scenario "
             "failure_condition is observed, list it and score the mapped "
-            "dimension 0. Rater identity is required."
+            "dimension 0. Rater identity is required. The optional "
+            "grounding_diagnostics object records source-separated hallucination "
+            "and fabrication observations; it never changes EV scores or gates."
         ),
         "rater": {
             "id": None,
@@ -132,6 +138,8 @@ def ingest_scores(run_id: str, sheet: dict, progress_callback=None) -> list[str]
                 "scores": {d: int(scores[d]) for d in C.DIMENSIONS},
                 "findings": findings,
                 "failure_conditions_observed": item.get("failure_conditions_observed", []),
+                "grounding_diagnostics": diagnostics.normalize(
+                    item.get("grounding_diagnostics")),
                 "provenance": {
                     "rater": rater["name"],
                     "rater_id": rater.get("id"),

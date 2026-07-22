@@ -8,7 +8,7 @@ from __future__ import annotations
 import html
 import json
 
-from . import constants as C, evaluation, workspace
+from . import constants as C, diagnostics, evaluation, workspace
 
 
 def build(run_id: str, matrix: dict, deployment_guidance: dict,
@@ -41,6 +41,7 @@ def build(run_id: str, matrix: dict, deployment_guidance: dict,
             "outcome": assessment_result["outcome"],
         } if assessment_result else None),
         "engineering_evaluation": evaluation.summarize(run_id),
+        "grounding_diagnostics": diagnostics.summarize(run_id),
         "formal_qualification_readiness": "ready-for-human-review" if ready else "blocked",
         "task_status_counts": task_counts,
         "deployment_guidance_counts": guidance_counts,
@@ -58,6 +59,9 @@ def build(run_id: str, matrix: dict, deployment_guidance: dict,
             "deployment_guidance": {
                 "markdown": "deployment-guidance.md", "json": "deployment-guidance.json",
                 "html": "deployment-guidance.html"},
+            "grounding_diagnostics": {
+                "markdown": "grounding-diagnostics.md", "json": "grounding-diagnostics.json",
+                "html": "grounding-diagnostics.html"},
         },
         "limitations": [
             "This summary is informational and does not replace the underlying artifacts.",
@@ -71,6 +75,8 @@ def render_markdown(summary: dict) -> str:
     assessment = summary.get("assessment")
     evaluation_status = summary["engineering_evaluation"].get("status", "not-scored")
     human = (summary["engineering_evaluation"].get("human_evaluation") or {})
+    automated_grounding = summary["grounding_diagnostics"]["sources"]["automated"]
+    grounding_reliability = automated_grounding["observed_grounding_reliability_percent"]
     lines = [
         "# AIES Executive Summary", "",
         "> **INFORMATIONAL — NOT QUALIFICATION EVIDENCE, A GRANT, OR DEPLOYMENT AUTHORIZATION.**", "",
@@ -79,6 +85,8 @@ def render_markdown(summary: dict) -> str:
         f"{summary['scope']['profile']} profile  ",
         f"**Engineering evaluation:** {evaluation_status.upper()} · Human evaluation: "
         f"{'reviewed' if human.get('status') == 'reviewed' else 'not reviewed (optional)'}  ",
+        f"**Automated grounding diagnostic:** "
+        f"{'unavailable' if grounding_reliability is None else f'{grounding_reliability:.1f}% observed reliability'}  ",
         f"**Formal qualification readiness:** {summary['formal_qualification_readiness'].upper()}", "",
     ]
     if assessment:
@@ -104,6 +112,7 @@ def render_markdown(summary: dict) -> str:
         "- [Canonical Assessment Result](assessment-result.html) — authoritative assessment outcome."
         if assessment else "- Canonical Assessment Result — not available for this run.",
         "- [Engineering Capability Matrix](engineering-capability-matrix.html) — engineers.",
+        "- [Grounding Diagnostics](grounding-diagnostics.html) — source-separated hallucination and fabrication observations.",
         "- [Deployment Guidance](deployment-guidance.html) — operations and managers.",
         "", "## Limitations", "",
     ])
@@ -112,9 +121,16 @@ def render_markdown(summary: dict) -> str:
 
 
 def render_html(summary: dict) -> str:
+    evaluation_status = summary["engineering_evaluation"].get("status", "not-scored")
+    human = summary["engineering_evaluation"].get("human_evaluation") or {}
+    automated_grounding = summary["grounding_diagnostics"]["sources"]["automated"]
+    grounding_reliability = automated_grounding["observed_grounding_reliability_percent"]
+    grounding_text = ("unavailable" if grounding_reliability is None
+                      else f"{grounding_reliability:.1f}% observed reliability")
     markdown_links = [
         ("Qualification Evidence Package", "report.html"),
         ("Engineering Capability Matrix", "engineering-capability-matrix.html"),
+        ("Grounding Diagnostics", "grounding-diagnostics.html"),
         ("Deployment Guidance", "deployment-guidance.html"),
     ]
     if summary.get("assessment"):
@@ -136,6 +152,8 @@ def render_html(summary: dict) -> str:
 <h1>AIES Executive Summary</h1><p class='banner'><strong>INFORMATIONAL — NOT QUALIFICATION EVIDENCE, A GRANT, OR DEPLOYMENT AUTHORIZATION.</strong></p>
 <p><strong>Subject:</strong> <code>{html.escape(summary['subject'])}</code><br>
 <strong>Scope:</strong> {html.escape(C.risk_tier_label(summary['scope']['risk_tier']))} · {html.escape(summary['scope']['profile'])} profile<br>
+<strong>Engineering evaluation:</strong> {html.escape(evaluation_status.upper())} · Human evaluation: {"reviewed" if human.get("status") == "reviewed" else "not reviewed (optional)"}<br>
+<strong>Automated grounding diagnostic:</strong> {html.escape(grounding_text)}<br>
 <strong>Formal qualification readiness:</strong> {html.escape(summary['formal_qualification_readiness'].upper())}</p>
 <h2>Assessment outcome</h2><p><strong>{html.escape(assessment_text)}</strong></p>
 <h2>Engineering task evidence</h2><table><tr><th>Status</th><th>Tasks</th></tr>{task_rows}</table>

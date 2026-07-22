@@ -32,9 +32,13 @@ def export_run(run_id: str) -> dict:
             "response": rec.get("raw_response", ""),
             "scores": primary["scores"] if primary else None,   # import-compatible
             "findings": (primary.get("findings", []) if primary else []),
+            "grounding_diagnostics": (
+                primary.get("grounding_diagnostics") if primary else None),
             "ratings": [{"rater": r["provenance"]["rater"],
                          "rater_kind": r["provenance"]["rater_kind"],
-                         "scores": r["scores"]} for r in rlist],
+                         "scores": r["scores"],
+                         "grounding_diagnostics": r.get("grounding_diagnostics")}
+                        for r in rlist],
         })
     return {
         "source": f"aies:{run_id}",

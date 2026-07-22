@@ -16,6 +16,8 @@ defaults:
   calibration:
     objective: replaced by each packed scenario
     ceiling_anchor: replaced by each packed scenario
+    floor_anchor: "A 0–2 response adds generic dashboards or retries without a falsifiable signal model, bounded remediation, state-aware recovery, ownership, or protection against telemetry and automation failure."
+    gaming_rationale: "Observability buzzwords cannot succeed: the response must connect scenario-specific failure hypotheses to signals, decision thresholds, safe actions, and evidence of recovery."
     expected_refusal: false
     empirical_status: {design_reviewed: false, empirically_calibrated: false}
 scenarios:

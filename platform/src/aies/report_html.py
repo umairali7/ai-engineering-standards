@@ -242,10 +242,12 @@ def render_html(run_id: str) -> str:
         w("</table>")
         w("</details>")
 
-    from . import ecm
+    from . import diagnostics, ecm
+    w(diagnostics.render_report_section_html(diagnostics.summarize(run_id)))
     w(ecm.render_capability_summary_html(ecm.engineering_capability_matrix(run_id)))
     w("<p><a href='executive-summary.html'>Executive Summary</a> &middot; "
       "<a href='deployment-guidance.html'>Deployment Guidance</a> &middot; "
+      "<a href='grounding-diagnostics.html'>Grounding Diagnostics</a> &middot; "
       "<a href='engineering-capability-matrix.html'>Engineering Capability Matrix</a></p>")
 
     w("<footer>Raters: " + _esc(", ".join(pkg["raters"]))
@@ -259,5 +261,5 @@ def render_html(run_id: str) -> str:
 
 def write_html(run_id: str) -> str:
     path = workspace.run_dir(run_id) / "report.html"
-    path.write_text(render_html(run_id), encoding="utf-8")
+    workspace.write_view(path, render_html(run_id))
     return str(path)

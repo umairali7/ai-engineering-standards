@@ -83,6 +83,8 @@ def test_offline_end_to_end_demo(demo_ws):
                  "deployment-guidance.md", "deployment-guidance.json",
                  "deployment-guidance.html", "executive-summary.md",
                  "executive-summary.json", "executive-summary.html",
+                 "grounding-diagnostics.md", "grounding-diagnostics.json",
+                 "grounding-diagnostics.html",
                  "report-bundle.json"):
         assert (runs[-1] / name).exists(), name
     executive = json.loads(

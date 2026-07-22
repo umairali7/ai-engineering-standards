@@ -246,19 +246,33 @@ def health(root=None) -> dict:
 
 
 def _find_scenario(id_or_path):
-    """Resolve a scenario id (SC-CA##-###) or a file path to its YAML file."""
+    """Resolve a standalone or packed scenario to its source YAML file."""
+    found = _find_scenario_document(id_or_path)
+    return found[0] if found else None
+
+
+def _find_scenario_document(id_or_path):
+    """Resolve one effective scenario and its source, including pack entries."""
     from pathlib import Path
 
     from . import runner
 
     p = Path(id_or_path)
     if p.exists():
-        return p
+        documents = runner.load_scenario_documents(p)
+        if len(documents) != 1:
+            raise ValueError(
+                f"{p} is a scenario pack with {len(documents)} entries; "
+                "select one by scenario id")
+        return p, documents[0]
     m = re.match(r"^SC-CA(\d{2})-\d{3}$", str(id_or_path))
     if not m:
         return None
-    for f in runner.competencies_dir().glob(f"CA-{m.group(1)}-*/scenarios/{id_or_path}.yaml"):
-        return f
+    pattern = f"CA-{m.group(1)}-*/scenarios/*.yaml"
+    for source in sorted(runner.competencies_dir().glob(pattern)):
+        for scenario in runner.load_scenario_documents(source):
+            if scenario.get("id") == str(id_or_path):
+                return source, scenario
     return None
 
 
@@ -347,12 +361,10 @@ def review_scenario(id_or_path, reviewer: str | None = None,
     The SEMANTIC layer (only with `reviewer`, a deployment id) asks a model to
     CRITIQUE the scenario against the criteria — it never rewrites, approves, or
     scores. Advisory; a human reads the findings and decides. No single grade."""
-    import yaml as _y
-
-    f = _find_scenario(id_or_path)
-    if f is None:
+    found = _find_scenario_document(id_or_path)
+    if found is None:
         raise ValueError(f"scenario {id_or_path!r} not found")
-    sc = _y.safe_load(f.read_text(encoding="utf-8"))
+    f, sc = found
     area = sc.get("area", "")
     structural = _structural_review(sc, area)
     summary = {"ok": sum(c["status"] == "ok" for c in structural),
@@ -374,10 +386,85 @@ def review_scenario(id_or_path, reviewer: str | None = None,
                     "raw": None if concerns is not None else reply.text[:2000]}
 
     return {"kind": "calibration-review", "scenario": sc.get("id", f.stem),
+            "source": str(f),
             "methodology_version": METHODOLOGY_VERSION,
             "structural": structural, "structural_summary": summary,
             "semantic": semantic,
             "note": "advisory — critique only; never rewrites, approves, or scores"}
+
+
+def pending_reviews(root=None) -> dict:
+    """Build a deterministic preflight index for independent human review.
+
+    The package deliberately cannot approve instruments. It makes every
+    outstanding item and structural gap visible so a named human can review
+    scenarios individually rather than bulk-attesting an opaque count.
+    """
+    from . import runner, suites
+
+    base = root or runner.competencies_dir()
+    items = []
+    for area_dir in sorted(p for p in base.iterdir()
+                           if p.is_dir() and p.name.startswith("CA-")):
+        area = suites._area_code(area_dir.name)
+        if area is None:
+            continue
+        for source in sorted((area_dir / "scenarios").glob("*.yaml")):
+            for scenario in runner.load_scenario_documents(source):
+                status = ((scenario.get("calibration") or {})
+                          .get("empirical_status") or {})
+                if status.get("design_reviewed"):
+                    continue
+                checks = _structural_review(scenario, area)
+                gaps = [check for check in checks if check["status"] == "gap"]
+                items.append({
+                    "scenario": scenario.get("id"),
+                    "area": area,
+                    "area_label": C.competency_label(area),
+                    "risk_tier": scenario.get("risk_tier"),
+                    "risk_tier_label": C.risk_tier_label(scenario.get("risk_tier")),
+                    "family": scenario.get("family"),
+                    "source": str(source),
+                    "structural_gaps": gaps,
+                    "human_disposition": {
+                        "status": "pending",
+                        "reviewer": None,
+                        "reviewed_at": None,
+                        "rationale": None,
+                    },
+                })
+    return {
+        "kind": "calibration-design-review-preflight",
+        "review_package_schema": 1,
+        "methodology_version": METHODOLOGY_VERSION,
+        "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "status": "pending-independent-human-review" if items else "complete",
+        "pending": len(items),
+        "structurally_ready": sum(not item["structural_gaps"] for item in items),
+        "with_structural_gaps": sum(bool(item["structural_gaps"]) for item in items),
+        "items": items,
+        "authority_boundary": (
+            "This preflight is advisory. Only a named independent human may "
+            "accept, revise, or reject each instrument and record design_reviewed=true."),
+    }
+
+
+def render_pending_reviews(report: dict) -> str:
+    lines = [
+        "pending scenario design reviews",
+        f"  status             : {report['status']}",
+        f"  pending            : {report['pending']}",
+        f"  structurally ready : {report['structurally_ready']}",
+        f"  structural gaps    : {report['with_structural_gaps']}",
+        "  authority          : named independent human; no automated approval",
+        "",
+    ]
+    for item in report["items"]:
+        gaps = ", ".join(gap["criterion"] for gap in item["structural_gaps"]) or "ready"
+        lines.append(
+            f"  {item['scenario']}  {item['area_label']}  "
+            f"{item['risk_tier_label']}  {item['family']}  {gaps}")
+    return "\n".join(lines)
 
 
 def render_review(report: dict) -> str:
