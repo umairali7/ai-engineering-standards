@@ -76,6 +76,18 @@ def render_markdown(record_id: str) -> str:
         for c in r["conditions"]:
             a(f"- {c}")
         a("")
+    consideration = r.get("evidence_consideration") or {}
+    advisory = consideration.get("automated_advisory_review") or {}
+    human_evaluation = consideration.get("human_evaluation") or {}
+    a("## Human evidence consideration")
+    a("")
+    a("| Evidence source | Available | Human decision record |")
+    a("|---|---|---|")
+    a(f"| Automated advisory review | {'yes' if advisory.get('available') else 'no'} | "
+      f"{'considered by authority' if advisory.get('considered_by_authority') else 'not declared'} |")
+    a(f"| Human-scored evaluation | {'yes' if human_evaluation.get('available') else 'no'} | "
+      f"{human_evaluation.get('evaluator') or 'not declared'} |")
+    a("")
     a("## Accountable humans")
     a("")
     a(f"- Authority (ROLE-13): {hum.get('authority')}")
@@ -140,6 +152,16 @@ def render_html(record_id: str) -> str:
         for c in r["conditions"]:
             w(f"<li>{e(c)}</li>")
         w("</ul>")
+    consideration = r.get("evidence_consideration") or {}
+    advisory = consideration.get("automated_advisory_review") or {}
+    human_evaluation = consideration.get("human_evaluation") or {}
+    w("<h2>Human evidence consideration</h2><table>")
+    w("<tr><th>Evidence source</th><th>Available</th><th>Human decision record</th></tr>")
+    w(f"<tr><td>Automated advisory review</td><td>{'yes' if advisory.get('available') else 'no'}</td>"
+      f"<td>{'considered by authority' if advisory.get('considered_by_authority') else 'not declared'}</td></tr>")
+    w(f"<tr><td>Human-scored evaluation</td><td>{'yes' if human_evaluation.get('available') else 'no'}</td>"
+      f"<td>{e(human_evaluation.get('evaluator') or 'not declared')}</td></tr>")
+    w("</table>")
     w("<h2>Accountable humans</h2><ul>")
     w(f"<li>Authority (ROLE-13): {e(hum.get('authority'))}</li>")
     if hum.get("second"):

@@ -414,11 +414,16 @@ aies review <run> --model-reviewer local-gpt-oss --calibration anchors.json
 `--model-reviewer` sends each candidate response to that deployment, asks for
 structured EV1–EV6 scores, and ingests the parseable ones as `model`-kind
 ratings (a reviewer that won't follow the contract simply contributes fewer
-ratings — nothing is fabricated). The reviewer's scores only **count** if it is
-qualified for review-class tasks (`--reviewer-qualified`) or passes bootstrap
-calibration against human-scored anchors (`--calibration`); otherwise they are
-**advisory only**. Divergences of ≥ 2 points between the human and the model
-are surfaced for you to resolve — never averaged (§7).
+ratings — nothing is fabricated). It also immediately refreshes `report.md`,
+`report.html`, and the ECM. Those reports show **Automated review** and
+**Human review (optional)** separately for every EV dimension. An unqualified
+or uncalibrated reviewer is still visible as **advisory automated evidence**;
+it is not admitted as corroborating peer review and cannot justify a grant.
+`--reviewer-qualified` or bootstrap calibration against human-scored anchors
+(`--calibration`) admits it for that peer-review role. Divergences of ≥ 2
+points between the human and the model are surfaced for you to resolve — never
+averaged (§7). Re-running the same reviewer reuses already-recorded scores
+instead of making duplicate API/model calls.
 
 ### 5.5 Aggregate and report
 
@@ -436,6 +441,8 @@ recommended **RT × AL autonomy envelope** — never a global pass/fail.
 ```
 aies grant <run> --decision grant \
     --authority "Your Name (ROLE-13)" --second "Reviewer (ROLE-14)" \
+    --consider-advisory-review \
+    --human-evaluation "Reviewer (ROLE-14)" \
     --rationale "pilot qualification"
 aies qualifications list                 # the Qualification Record (QR-...)
 aies verify QR-<...>                      # re-checks the environment fingerprint

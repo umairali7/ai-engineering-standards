@@ -8,6 +8,7 @@ human-recorded grant renders as evidence-only (PLATFORM.md §9).
 from __future__ import annotations
 
 import json
+from statistics import mean
 
 from . import constants as C
 from . import workspace
@@ -48,6 +49,38 @@ def _residual_risks(pkg: dict) -> list[str]:
     return risks
 
 
+def _score_sources(run_id: str) -> dict[str, dict[str, dict[str, list[int]]]]:
+    """Return per-area, per-source EV observations for report transparency.
+
+    The evidence aggregate remains the canonical scored result. These source
+    columns make it clear whether that evidence came from an automated reviewer,
+    an optional human rater, or another imported automated source.
+    """
+    from . import rating
+
+    rdir = workspace.run_dir(run_id)
+    response_areas = {
+        p.name: workspace.read_json(p).get("area", "unknown")
+        for p in (rdir / "responses").glob("*.json")
+    }
+    out: dict[str, dict[str, dict[str, list[int]]]] = {}
+    for record in rating.collect_ratings(run_id):
+        kind = (record.get("provenance") or {}).get("rater_kind", "unknown")
+        source = "human" if kind == "human" else "automated"
+        area = response_areas.get(record.get("rates_response"), "unknown")
+        buckets = out.setdefault(area, {}).setdefault(
+            source, {dimension: [] for dimension in C.DIMENSIONS})
+        for dimension, score in (record.get("scores") or {}).items():
+            if dimension in buckets and isinstance(score, int):
+                buckets[dimension].append(score)
+    return out
+
+
+def _source_cell(sources: dict, source: str, dimension: str) -> str:
+    values = sources.get(source, {}).get(dimension, [])
+    return f"{round(mean(values), 3)} (n={len(values)})" if values else "—"
+
+
 def render_json(run_id: str) -> str:
     pkg = workspace.read_json(workspace.run_dir(run_id) / "evidence-package.json")
     return json.dumps(pkg, indent=2)
@@ -56,6 +89,7 @@ def render_json(run_id: str) -> str:
 def render_markdown(run_id: str) -> str:
     pkg = workspace.read_json(workspace.run_dir(run_id) / "evidence-package.json")
     fp = pkg["environment_fingerprint"]
+    source_scores = _score_sources(run_id)
     lines: list[str] = []
     a = lines.append
 
@@ -139,20 +173,28 @@ def render_markdown(run_id: str) -> str:
           f"scored items: {d['n_scored']} (minimum {d['min_sample']}) | "
           f"decisional: {'**yes**' if d['decisional'] else '**NO**'}")
         a("")
-        a("| Dimension | n | Mean | 90% CI | Decision value | Gate | Result |")
-        a("|---|---|---|---|---|---|---|")
+        a("| Dimension | Automated review | Human review (optional) | n | Mean | 90% CI | Decision value | Gate | Result |")
+        a("|---|---|---|---|---|---|---|---|---|")
         gates = {g["dimension"]: g for g in d["gates"]}
         for dim in C.DIMENSIONS:
             ds = d["dimensions"].get(dim)
             g = gates.get(dim, {})
+            automated = _source_cell(source_scores.get(area, {}), "automated", dim)
+            human = _source_cell(source_scores.get(area, {}), "human", dim)
             if ds:
-                a(f"| {dim} {C.DIMENSION_NAMES[dim]} | {ds['n']} | {ds['mean']} | "
+                a(f"| {dim} {C.DIMENSION_NAMES[dim]} | {automated} | {human} | "
+                  f"{ds['n']} | {ds['mean']} | "
                   f"[{ds['ci90_low']}, {ds['ci90_high']}] | **{ds['ci90_low']}** | "
                   f">= {g.get('threshold', '-')} | "
                   f"{'PASS' if g.get('passed') else '**FAIL**'} |")
             else:
-                a(f"| {dim} {C.DIMENSION_NAMES[dim]} | 0 | - | - | - | "
+                a(f"| {dim} {C.DIMENSION_NAMES[dim]} | {automated} | {human} | "
+                  "0 | - | - | - | "
                   f">= {g.get('threshold', '-')} | **FAIL** (no evidence) |")
+        a("")
+        a("Automated-review and human-review values are displayed separately. "
+          "A human score is optional for this evidence view; a named human "
+          "authority is still required for any grant.")
         a("")
         for g in d["gates"]:
             if not g["passed"] and g.get("reason"):

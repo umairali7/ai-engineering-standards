@@ -595,22 +595,30 @@ def cmd_runs(args) -> int:
 def cmd_review(args) -> int:
     from . import review, workspace
     try:
+        report_paths = None
+        scoring = None
         # Optionally drive a reviewer deployment to score the responses first.
         if getattr(args, "model_reviewer", None):
-            from . import config, model_review
+            from . import config, engine, model_review, report
             workers = getattr(args, "parallel", None) or config.default_parallel()
             if not args.json:
                 print(f"scoring responses with reviewer '{args.model_reviewer}' "
                       f"across {workers} worker(s)…", file=sys.stderr)
-            summary = model_review.run_model_review(
+            scoring = model_review.run_model_review(
                 args.run, args.model_reviewer,
                 runtime=getattr(args, "reviewer_runtime", None), workers=workers)
             if not (args.json):
-                print(f"reviewer model {summary['reviewer']}: scored "
-                      f"{summary['scored']}/{summary['responses']} responses "
-                      f"({summary['unparseable']} unparseable)")
+                print(f"reviewer model {scoring['reviewer']}: scored "
+                      f"{scoring['scored']}/{scoring['responses']} responses "
+                      f"({scoring['unparseable']} unparseable)")
             if not args.reviewer or args.reviewer == "reviewer-model":
                 args.reviewer = f"model:{args.model_reviewer}"
+            # Render immediately: automated reviewer scores are operational
+            # evidence, while any human scores remain an optional separate view.
+            engine.aggregate(args.run)
+            report_paths = report.write_reports(args.run)
+            from . import report_html
+            report_paths["html"] = report_html.write_html(args.run)
         calibration = None
         if args.calibration:
             cal = json.loads(Path(args.calibration).read_text(encoding="utf-8"))
@@ -622,7 +630,8 @@ def cmd_review(args) -> int:
         (workspace.run_dir(args.run) / "review-package.json").write_text(
             json.dumps(pkg, indent=2), encoding="utf-8")
         if args.json:
-            _out(pkg, True)
+            _out({**pkg, **({"scoring": scoring, "reports": report_paths}
+                            if report_paths else {})}, True)
         else:
             s = pkg["summary"]
             print(f"review package for {args.run}")
@@ -635,7 +644,11 @@ def cmd_review(args) -> int:
                 print(f"    {d['response']} {d['dimension']}: "
                       f"human {d['human']} vs model {d['model']} (Δ{d['delta']}){gc}")
             print(f"  {s['note']}")
-    except (ValueError, FileNotFoundError, KeyError, json.JSONDecodeError) as e:
+            if report_paths:
+                print("  evidence report updated from automated reviewer scores")
+                print("  human scores: optional; shown separately when supplied")
+                print(f"  report: {report_paths['markdown']}")
+    except Exception as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
     return 0
@@ -651,14 +664,18 @@ def cmd_grant(args) -> int:
         record = qualification.record_decision(
             args.run, args.decision, args.authority,
             second_human=args.second, conditions=args.condition,
-            review_package=review_package, rationale=args.rationale or "")
+            review_package=review_package, rationale=args.rationale or "",
+            consider_advisory_review=args.consider_advisory_review,
+            human_evaluation=args.human_evaluation)
         _out(record, args.json,
              f"recorded {record['decision']} -> {record['record_id']} "
              f"(status: {record['status']})\n"
              f"  authority: {record['humans']['authority']}"
              + (f", second: {record['humans']['second']}" if record['humans']['second'] else "")
              + f"\n  subject: {record['subject']['deployment']} "
-             f"@ RT{record['scope']['risk_tier'][-1]}")
+             f"@ RT{record['scope']['risk_tier'][-1]}"
+             + f"\n  advisory review: {'considered' if record['evidence_consideration']['automated_advisory_review']['considered_by_authority'] else 'not declared'}"
+             + f"\n  human evaluation: {record['evidence_consideration']['human_evaluation']['evaluator'] or 'not declared'}")
     except qualification.QualificationError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
@@ -1337,6 +1354,10 @@ def build_parser() -> argparse.ArgumentParser:
     gr.add_argument("--condition", action="append", default=None,
                     help="condition (repeatable; required for grant-with-conditions)")
     gr.add_argument("--rationale", default=None)
+    gr.add_argument("--consider-advisory-review", action="store_true",
+                    help="attest that the authority considered available advisory model-review scores")
+    gr.add_argument("--human-evaluation", default=None, metavar="NAME",
+                    help="named human evaluator whose completed scoresheet was considered")
     gr.set_defaults(func=cmd_grant)
 
     vf = common(sub.add_parser("verify", help="verify a grant against the current "

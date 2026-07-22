@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Human evidence-consideration record**: `aies grant` can now record whether the authority considered available advisory model-review evidence (`--consider-advisory-review`) and name the evaluator whose completed human scores were considered (`--human-evaluation NAME`). The durable Qualification Report renders both declarations as separate, human-accountable evidence sources; neither flag changes scores, gates, competency levels, or grant authority.
+
+- **Actionable model-review handoff**: `aies review <run> --model-reviewer <deployment>` now aggregates and refreshes Markdown, HTML, JSON, and ECM artifacts after scoring, rather than leaving recorded reviewer scores stranded behind a separate resume step. Evidence reports show **Automated review** beside **Human review (optional)** for each EV dimension. Uncalibrated reviewers remain visibly advisory for peer-review admission and can never record a grant; their structured scores are still retained as automated evidence. Re-running the same reviewer safely reuses already-recorded ratings instead of duplicating calls or violating append-only rating provenance.
+
 - **Subject-neutral evidence identity** ([ADR-0009](adr/ADR-0009-Engineering-Assessment-Platform-Identity.md)): new runs and Evidence Packages carry a canonical `subject` envelope (`id`, `kind`, display name, executor kind). Current `model` fields remain as compatibility evidence for the existing AI-deployment executor. This preserves existing qualification and comparison workflows while allowing future agents, MCP servers, RAG systems, pipelines, and platforms to use the same canonical evidence architecture.
 
 - **Evidence-package Capability Summary**: Markdown and HTML Qualification Evidence Packages now include a clear informational link to their Engineering Capability Matrix companion. Every `report.write_reports` invocation writes the companion Markdown, JSON, and HTML artifacts beside the run, preserving the audience boundary: evidence package for governance, ECM for engineering use.

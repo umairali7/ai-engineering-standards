@@ -185,6 +185,36 @@ def test_qualification_report_durable_and_self_contained(ws, tmp_path):
     assert any(i["record"] == rid for i in listing)
 
 
+def test_human_records_consideration_of_advisory_and_human_evidence(ws, tmp_path):
+    from aies import engine, qualification, qual_report
+    _register(tmp_path)
+    run = engine.start_qualification("demo", "research", "RT1", ["CA-05"], repeats=10)
+    _score(run["run_id"], "Human evaluator", "human", 3)
+    _score(run["run_id"], "model:reviewer", "model", 3)
+    engine.aggregate(run["run_id"])
+
+    rec = qualification.record_decision(
+        run["run_id"], "grant", "Alice (ROLE-13)", second_human="Bob (ROLE-14)",
+        consider_advisory_review=True, human_evaluation="Human evaluator")
+    consideration = rec["evidence_consideration"]
+    assert consideration["automated_advisory_review"]["considered_by_authority"] is True
+    assert consideration["human_evaluation"]["evaluator"] == "Human evaluator"
+    md = qual_report.render_markdown(rec["record_id"])
+    assert "Human evidence consideration" in md
+    assert "considered by authority" in md
+
+
+def test_human_evaluation_attestation_requires_human_scores(ws, tmp_path):
+    from aies import engine, qualification
+    _register(tmp_path)
+    run = engine.start_qualification("demo", "research", "RT1", ["CA-05"], repeats=10)
+    _score(run["run_id"], "model:reviewer", "model", 3)
+    engine.aggregate(run["run_id"])
+    with pytest.raises(qualification.QualificationError, match="human-scored ratings"):
+        qualification.record_decision(
+            run["run_id"], "deny", "Alice", human_evaluation="Alice")
+
+
 def test_dashboard_self_contained(ws, tmp_path):
     from aies import dashboard, engine, qualification
     _register(tmp_path)

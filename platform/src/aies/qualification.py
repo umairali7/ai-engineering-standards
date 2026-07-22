@@ -62,6 +62,8 @@ def record_decision(
     conditions: list[str] | None = None,
     review_package: dict | None = None,
     rationale: str = "",
+    consider_advisory_review: bool = False,
+    human_evaluation: str | None = None,
 ) -> dict:
     """Record a human qualification decision over an aggregated evidence
     package, producing a Qualification Record.
@@ -84,6 +86,16 @@ def record_decision(
         raise QualificationError(
             f"run {run_id!r} has no evidence package; aggregate it first")
     pkg = workspace.read_json(pkg_path)
+
+    rater_kinds = set(pkg.get("rater_kinds") or [])
+    if consider_advisory_review and "model" not in rater_kinds:
+        raise QualificationError(
+            "cannot record advisory-review consideration: this evidence package "
+            "contains no model-review ratings")
+    if human_evaluation and "human" not in rater_kinds:
+        raise QualificationError(
+            "cannot record a human evaluation without human-scored ratings; "
+            "ingest the completed scoresheet first")
 
     if decision in ("grant", "grant-with-conditions"):
         if not second_human or not second_human.strip():
@@ -137,6 +149,16 @@ def record_decision(
         "evidence": {"run_id": run_id,
                      "suite_versions": pkg["suite_versions"],
                      "environment_fingerprint": pkg["environment_fingerprint"]},
+        "evidence_consideration": {
+            "automated_advisory_review": {
+                "available": "model" in rater_kinds,
+                "considered_by_authority": consider_advisory_review,
+            },
+            "human_evaluation": {
+                "available": "human" in rater_kinds,
+                "evaluator": human_evaluation,
+            },
+        },
         "review_package": review_package.get("summary") if review_package else None,
         "recorded_at": _now(),
         "history": [{"status": status, "at": _now(), "by": authority}],

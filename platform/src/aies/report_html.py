@@ -54,6 +54,8 @@ footer { margin-top: 3rem; color: var(--muted); font-size: .8rem;
 def render_html(run_id: str) -> str:
     pkg = workspace.read_json(workspace.run_dir(run_id) / "evidence-package.json")
     fp = pkg["environment_fingerprint"]
+    from .report import _score_sources, _source_cell
+    source_scores = _score_sources(run_id)
     p: list[str] = []
     w = p.append
     subject = pkg.get("subject") or {}
@@ -110,25 +112,33 @@ def render_html(run_id: str) -> str:
         w(f"<p class=muted>Suite <code>{_esc(pkg['suite_versions'].get(area,'?'))}</code> "
           f"&middot; scored items: {d['n_scored']} (minimum {d['min_sample']}) "
           f"&middot; decisional: {'yes' if d['decisional'] else 'NO'}</p>")
-        w("<table><tr><th>Dimension</th><th>n</th><th>Mean</th><th>90% CI</th>"
+        w("<table><tr><th>Dimension</th><th>Automated review</th>"
+          "<th>Human review (optional)</th><th>n</th><th>Mean</th><th>90% CI</th>"
           "<th>Decision value</th><th>Gate</th><th>Result</th></tr>")
         gates = {g["dimension"]: g for g in d["gates"]}
         for dim in C.DIMENSIONS:
             ds = d["dimensions"].get(dim)
             g = gates.get(dim, {})
+            automated = _source_cell(source_scores.get(area, {}), "automated", dim)
+            human = _source_cell(source_scores.get(area, {}), "human", dim)
             cls = "pass" if g.get("passed") else "fail"
             res = "PASS" if g.get("passed") else "FAIL"
             if ds:
-                w(f"<tr><td>{dim} {C.DIMENSION_NAMES[dim]}</td><td>{ds['n']}</td>"
+                w(f"<tr><td>{dim} {C.DIMENSION_NAMES[dim]}</td>"
+                  f"<td>{_esc(automated)}</td><td>{_esc(human)}</td><td>{ds['n']}</td>"
                   f"<td>{ds['mean']}</td><td>[{ds['ci90_low']}, {ds['ci90_high']}]</td>"
                   f"<td><strong>{ds['ci90_low']}</strong></td>"
                   f"<td>&ge; {g.get('threshold','-')}</td>"
                   f"<td class={cls}>{res}</td></tr>")
             else:
-                w(f"<tr><td>{dim} {C.DIMENSION_NAMES[dim]}</td><td>0</td><td>-</td><td>-</td>"
+                w(f"<tr><td>{dim} {C.DIMENSION_NAMES[dim]}</td>"
+                  f"<td>{_esc(automated)}</td><td>{_esc(human)}</td><td>0</td><td>-</td><td>-</td>"
                   f"<td>-</td><td>&ge; {g.get('threshold','-')}</td>"
                   f"<td class=fail>FAIL</td></tr>")
         w("</table>")
+        w("<p class=muted>Automated-review and human-review values are displayed "
+          "separately. A human score is optional for this evidence view; a named "
+          "human authority is still required for any grant.</p>")
         if d["ev3_hard_fail"]:
             w("<p class=fail>EV3 hard gate failed — qualification must be denied at "
               "this tier regardless of the aggregate (AIES-AESQS-CS-01-R04).</p>")

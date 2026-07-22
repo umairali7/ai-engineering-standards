@@ -139,6 +139,61 @@ def test_auto_score_qualify_produces_evidence_without_manual_step(ws, tmp_path, 
     assert "JUDGE-PRODUCED" in md and "NO GRANT" in md.upper()
 
 
+def test_review_command_refreshes_reports_and_keeps_human_score_optional(ws, tmp_path, monkeypatch):
+    """A model review is an actionable evidence update, not a dead-end file.
+
+    The resulting report separates automated reviewer observations from an
+    optional human score, while retaining the no-grant boundary.
+    """
+    from argparse import Namespace
+    from aies import cli, engine, workspace
+    from aies.adapters import mock as mockmod
+    from aies.adapters.base import GenerationResponse
+
+    _register(tmp_path, "cand")
+    _register(tmp_path, "reviewer")
+
+    def judge_generate(self, request):
+        return GenerationResponse(
+            text='{"EV1":3,"EV2":3,"EV3":3,"EV4":3,"EV5":3,"EV6":3,"findings":[]}',
+            usage={}, raw={})
+    monkeypatch.setattr(mockmod.MockAdapter, "generate", judge_generate)
+
+    run = engine.start_qualification("cand", "coder", "RT2", ["CA-05"], repeats=1)
+    args = Namespace(run=run["run_id"], model_reviewer="reviewer",
+                     reviewer_runtime=None, parallel=1, json=False,
+                     reviewer="reviewer-model", reviewer_qualified=False,
+                     calibration=None)
+    assert cli.cmd_review(args) == 0
+    rdir = workspace.run_dir(run["run_id"])
+    text = (rdir / "report.md").read_text(encoding="utf-8")
+    assert "Automated review" in text
+    assert "Human review (optional)" in text
+    assert (rdir / "report.html").exists()
+
+
+def test_repeating_same_model_reviewer_reuses_append_only_ratings(ws, tmp_path, monkeypatch):
+    from aies import engine, model_review
+    from aies.adapters import mock as mockmod
+    from aies.adapters.base import GenerationResponse
+
+    _register(tmp_path, "cand")
+    _register(tmp_path, "reviewer")
+
+    def judge_generate(self, request):
+        return GenerationResponse(
+            text='{"EV1":3,"EV2":3,"EV3":3,"EV4":3,"EV5":3,"EV6":3,"findings":[]}',
+            usage={}, raw={})
+    monkeypatch.setattr(mockmod.MockAdapter, "generate", judge_generate)
+
+    run = engine.start_qualification("cand", "coder", "RT2", ["CA-05"], repeats=1)
+    first = model_review.run_model_review(run["run_id"], "reviewer")
+    second = model_review.run_model_review(run["run_id"], "reviewer")
+    assert first["ratings_written"] == first["responses"]
+    assert second["ratings_written"] == 0
+    assert second["reused_existing"] == second["responses"]
+
+
 def test_judge_scoring_runs_concurrently_and_preserves_order(ws, tmp_path, monkeypatch):
     """The judge scoring phase honours `workers`: concurrent calls overlap
     (wall-clock < serial) and ratings still land in canonical order."""

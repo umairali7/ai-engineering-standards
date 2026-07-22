@@ -143,8 +143,9 @@ def assemble_review_package(
             "n_divergences": len(all_divergences),
             "note": ("Model review assists; a human makes the decision "
                      "(PLATFORM.md D8, AIES-AESQS-PR-01-R09). "
-                     + ("Model scores are advisory only and excluded from the "
-                        "decision aggregate." if not admitted else
+                     + ("Model scores remain visible as advisory only automated "
+                        "evidence; they are not admitted as corroborating peer "
+                        "review." if not admitted else
                         "Model scores are admitted as corroborating evidence.")
                      + (" Divergences are listed for human resolution against "
                         "the anchors, never averaged." if all_divergences else "")),

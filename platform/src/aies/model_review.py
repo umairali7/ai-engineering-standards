@@ -103,7 +103,20 @@ def run_model_review(run_id: str, reviewer_deployment: str,
     adapter = resolve(entry["runtime"])()
     adapter.load(entry)
 
-    recs = [workspace.read_json(p) for p in responses]
+    all_recs = [workspace.read_json(p) for p in responses]
+    reviewer_label = f"model:{reviewer_deployment}"
+    # A review command is safe to re-run. Rating records are append-only, so
+    # never ask the reviewer to score a response that this same reviewer has
+    # already scored; this also lets `aies review` finish/report a run after an
+    # interrupted prior invocation without burning another set of calls.
+    existing = {
+        r["rates_response"]
+        for r in rating.collect_ratings(run_id)
+        if (r.get("provenance") or {}).get("rater") == reviewer_label
+        and (r.get("provenance") or {}).get("rater_kind") == "model"
+    }
+    recs = [r for r in all_recs
+            if f"{r['scenario_id']}-r{r['repeat']}.json" not in existing]
     prompts = _scenario_prompts({r["area"] for r in recs})
 
     def _score_one(rec: dict):
@@ -112,7 +125,7 @@ def run_model_review(run_id: str, reviewer_deployment: str,
             prompt=_review_prompt(task, rec["raw_response"], rec["area"])))
         return rec, _parse_scores(reply.text)
 
-    if workers and workers > 1:
+    if workers and workers > 1 and recs:
         from concurrent.futures import ThreadPoolExecutor
         with ThreadPoolExecutor(max_workers=workers) as pool:
             scored = list(pool.map(_score_one, recs))  # preserves recs order
@@ -137,14 +150,18 @@ def run_model_review(run_id: str, reviewer_deployment: str,
         })
         parsed += 1
 
-    if not items:
+    if not items and not existing:
         raise ModelReviewError(
             f"reviewer {reviewer_deployment!r} produced no parseable scores "
-            f"across {len(recs)} responses; its ratings cannot be recorded")
+            f"across {len(all_recs)} responses; its ratings cannot be recorded")
 
-    sheet = {"run_id": run_id,
-             "rater": {"name": f"model:{reviewer_deployment}", "kind": "model"},
-             "items": items}
-    written = rating.ingest_scores(run_id, sheet)
-    return {"reviewer": reviewer_deployment, "responses": len(recs),
-            "scored": parsed, "unparseable": failed, "ratings_written": len(written)}
+    written = []
+    if items:
+        sheet = {"run_id": run_id,
+                 "rater": {"name": reviewer_label, "kind": "model"},
+                 "items": items}
+        written = rating.ingest_scores(run_id, sheet)
+    return {"reviewer": reviewer_deployment, "responses": len(all_recs),
+            "scored": len(existing) + parsed, "newly_scored": parsed,
+            "reused_existing": len(existing), "unparseable": failed,
+            "ratings_written": len(written)}
