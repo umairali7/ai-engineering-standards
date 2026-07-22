@@ -17,6 +17,8 @@ from . import workspace
 def _area_verdict(d: dict) -> tuple[str, str]:
     """Grant-readiness verdict for one area (informs a human decision; the
     platform never grants)."""
+    if d.get("raw_ratings", 0) and not d.get("admitted_ratings", d["n_scored"]):
+        return "BLOCKED", "automated ratings are advisory; no admitted scored evidence"
     if not d["decisional"]:
         return "BLOCKED", f"non-decisional ({d['n_scored']}/{d['min_sample']} items)"
     if d.get("ev3_hard_fail"):
@@ -24,12 +26,12 @@ def _area_verdict(d: dict) -> tuple[str, str]:
     if not d.get("gates_passed", True):
         failed = [g["dimension"] for g in d["gates"] if not g["passed"]]
         return "BLOCKED", f"gate failure: {', '.join(failed)}"
-    return "READY", f"informs a grant up to {d.get('cl') or 'CL?'}"
+    return "THRESHOLD MET", f"admitted evidence informs a human grant review up to {d.get('cl') or 'CL?'}"
 
 
 def _residual_risks(pkg: dict) -> list[str]:
     risks: list[str] = []
-    if "model" in pkg.get("rater_kinds", []):
+    if (pkg.get("rating_admission") or {}).get("advisory_ratings", 0):
         risks.append("Scores are **judge-produced** — advisory until the judge is "
                      "calibrated against human anchors (AIES-AESQS-PR-01-R09).")
     for area, d in pkg["areas"].items():
@@ -117,7 +119,7 @@ def render_markdown(run_id: str) -> str:
     a(f"> **{pkg['grant_status'].upper()}**")
     a("")
 
-    if "model" in pkg.get("rater_kinds", []):
+    if (pkg.get("rating_admission") or {}).get("advisory_ratings", 0):
         a("> **SCORES ARE JUDGE-PRODUCED (automated).** A judge model rated these "
           "responses; scores reflect the judge's opinion, not ground truth. A "
           "grant still requires a human authority (PLATFORM.md D8), and judge "
@@ -194,10 +196,11 @@ def render_markdown(run_id: str) -> str:
         a(f"## {C.competency_label(area)} — {C.risk_tier_label(pkg['risk_tier'])}")
         a("")
         a(f"Suite version: `{pkg['suite_versions'].get(area, 'unknown')}` | "
-          f"scored items: {d['n_scored']} (minimum {d['min_sample']}) | "
+          f"admitted scored items: {d['n_scored']} (minimum {d['min_sample']}); "
+          f"advisory automated ratings: {d.get('advisory_ratings', 0)} | "
           f"decisional: {'**yes**' if d['decisional'] else '**NO**'}")
         a("")
-        a("| Dimension | Automated review | Human review (optional) | n | Mean | 90% CI | Decision value | Gate | Result |")
+        a("| Dimension | Automated review | Human review (optional) | Admitted n | Admitted mean | 90% CI | Decision value | Gate | Result |")
         a("|---|---|---|---|---|---|---|---|---|")
         gates = {g["dimension"]: g for g in d["gates"]}
         for dim in C.DIMENSIONS:

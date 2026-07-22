@@ -35,7 +35,7 @@ def test_report_has_grant_readiness_and_residual_risk(ws, tmp_path):
     _fill_and_aggregate(run["run_id"], score=3)
     md = report.render_markdown(run["run_id"])
     assert "## Grant Readiness" in md and "### Residual risk" in md
-    assert "## Engineering Capability Profile" in md
+    assert "## Engineering Capability Matrix (ECM)" in md
     assert "### Deployment Guidance" in md
     assert "engineering-capability-matrix.md" in md
     paths = report.write_reports(run["run_id"])

@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Admitted evidence and decisional planning**: Evidence Package schema v3 now records admitted versus advisory ratings. Uncalibrated automated reviewer ratings remain traceable but are excluded from qualification scoring, competency levels, grant readiness, and autonomy claims. `aies qualify --decisional` pre-plans sufficient uniform repeats for every selected area, while ordinary runs warn before collecting a known non-decisional sample. ECM now labels observation coverage rather than calling it confidence.
+
 - **Canonical human-readable identifier convention** ([ADR-0010](adr/ADR-0010-Human-Readable-Identifier-Convention.md)): all reader-facing taxonomy identifiers use `CODE — Title`; raw codes remain only where a machine contract, path, flag, or stable record ID requires them. The shared renderer now covers competency areas, levels, roles, phases, domains, artifacts, evaluation dimensions, risk tiers, and autonomy levels.
 
 - **Human-readable risk and autonomy labels**: reader-facing reports, CLI output, dashboards, corpus/calibration views, documentation, examples, and templates now render canonical codes alongside their meanings (for example, `RT2 — Moderate` and `AL3 — Delegated`). Configuration and JSON values retain the canonical codes required by the engine.

@@ -34,6 +34,16 @@ def test_all_area_codes_are_the_twelve():
     assert codes == [f"CA-{n:02d}" for n in range(1, 13)]
 
 
+def test_decisional_sample_plan_exposes_shortfalls_and_required_repeats():
+    from aies import engine, runner
+    areas = runner.all_area_codes()
+    plan = engine.plan_qualification("RT2", areas, subject_kind="ai")
+    assert len(plan["areas"]) == 12
+    assert any(not row["decisional_if_scored"] for row in plan["areas"])
+    assert plan["uniform_repeats_for_all_areas"] >= 1
+    assert "API Design" in plan["unassessed_tasks"]
+
+
 def test_capability_profile_lays_out_scored_areas(ws, tmp_path):
     from aies import engine, rating, workspace, capabilities
 

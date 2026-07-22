@@ -51,10 +51,11 @@ def engineering_capability_matrix(ref: str) -> dict:
     })
     task_grouped: dict[str, dict] = defaultdict(lambda: {
         "scenario_ids": set(), "response_records": set(), "scores": [],
-        "raters": set(), "rater_kinds": set(), "areas": set(),
+        "admitted_scores": [], "raters": set(), "rater_kinds": set(), "areas": set(),
     })
     mapping = task_mappings.load()
     task_names = task_mappings.task_names(mapping)
+    admitted_raters = set(pkg.get("admitted_raters") or [])
 
     for record in rating.collect_ratings(run_id):
         response_name = record.get("rates_response")
@@ -75,6 +76,8 @@ def engineering_capability_matrix(ref: str) -> dict:
         if scores:
             row["scores"].append(sum(scores.values()) / len(scores))
         provenance = record.get("provenance") or {}
+        record_admitted = (provenance.get("rater_kind") == "human"
+                            or provenance.get("rater") in admitted_raters)
         if provenance.get("rater"):
             row["raters"].add(provenance["rater"])
         if provenance.get("rater_kind"):
@@ -86,6 +89,8 @@ def engineering_capability_matrix(ref: str) -> dict:
             task["areas"].add(area)
             if scores:
                 task["scores"].append(sum(scores.values()) / len(scores))
+                if record_admitted:
+                    task["admitted_scores"].append(sum(scores.values()) / len(scores))
             if provenance.get("rater"):
                 task["raters"].add(provenance["rater"])
             if provenance.get("rater_kind"):
@@ -121,7 +126,7 @@ def engineering_capability_matrix(ref: str) -> dict:
             tasks.append({"task_id": task_id, "task": task_name, "scenario_ids": [],
                           "areas": [], "distinct_scenarios": 0, "distinct_responses": 0,
                           "rating_observations": 0, "minimum_observations": None,
-                          "observed_performance": None, "confidence_percent": 0,
+                          "admitted_rating_observations": 0, "observed_performance": None, "coverage_percent": 0,
                           "status": "not assessed", "raters": [], "rater_kinds": []})
             continue
         n = len(data["scores"])
@@ -129,13 +134,14 @@ def engineering_capability_matrix(ref: str) -> dict:
         areas_decisional = all(pkg["areas"][area]["decisional"] and pkg["areas"][area]["gates_passed"]
                               for area in data["areas"])
         performance = round(sum(data["scores"]) / n, 3) if n else None
-        confidence = round(min(1, n / minimum) * 100) if minimum else 0
+        coverage = round(min(1, n / minimum) * 100) if minimum else 0
         tasks.append({"task_id": task_id, "task": task_name,
                       "scenario_ids": sorted(data["scenario_ids"]), "areas": sorted(data["areas"]),
                       "distinct_scenarios": len(data["scenario_ids"]),
                       "distinct_responses": len(data["response_records"]),
                       "rating_observations": n, "minimum_observations": minimum,
-                      "observed_performance": performance, "confidence_percent": confidence,
+                      "admitted_rating_observations": len(data["admitted_scores"]),
+                      "observed_performance": performance, "coverage_percent": coverage,
                       "status": "demonstrated" if areas_decisional and n >= minimum else "observed",
                       "raters": sorted(data["raters"]), "rater_kinds": sorted(data["rater_kinds"])})
 
@@ -178,22 +184,23 @@ def render_markdown(matrix: dict) -> str:
         "",
         "## Task Capability Profile",
         "",
-        "| Task | Observed performance | Evidence confidence | Evidence | Status |",
+        "| Task | Mean reviewer score | Evidence coverage | Evidence | Status |",
         "|---|---|---|---:|---|",
     ]
     for task in matrix["tasks"]:
         performance = ("not assessed" if task["observed_performance"] is None
                        else _bar(task["observed_performance"] / 4 * 100)
                             + f" {task['observed_performance'] / 4 * 100:.0f}%")
-        confidence = _bar(task["confidence_percent"]) + f" {task['confidence_percent']}%"
-        evidence = ("0" if task["minimum_observations"] is None
-                    else f"{task['rating_observations']}/{task['minimum_observations']}")
-        lines.append(f"| {task['task_id']} {task['task']} | {performance} | {confidence} | {evidence} | {task['status']} |")
+        coverage = _bar(task["coverage_percent"]) + f" {task['coverage_percent']}%"
+        evidence = ("0" if task["minimum_observations"] is None else
+                    f"{task['rating_observations']}/{task['minimum_observations']}; "
+                    f"admitted {task['admitted_rating_observations']}")
+        lines.append(f"| {task['task_id']} {task['task']} | {performance} | {coverage} | {evidence} | {task['status']} |")
     lines.extend([
         "",
-        "Observed performance is the unweighted EV mean. Evidence confidence is the "
-        "scored-observation share of the applicable AESQS minimum. High observed "
-        "performance with low confidence is not a recommendation.",
+        "Mean reviewer score is an unweighted informational EV mean. Evidence coverage is the "
+        "raw observation share of the applicable AESQS minimum; it is not statistical confidence "
+        "and does not admit advisory ratings into qualification scoring.",
         "",
         "## Scenario-family evidence",
         "",
@@ -246,9 +253,9 @@ def render_html(matrix: dict) -> str:
         "<tr><td>" + html.escape(f"{task['task_id']} {task['task']}") + "</td><td>" +
         html.escape("not assessed" if task["observed_performance"] is None else
                     f"{_bar(task['observed_performance'] / 4 * 100)} {task['observed_performance'] / 4 * 100:.0f}%") +
-        "</td><td>" + html.escape(f"{_bar(task['confidence_percent'])} {task['confidence_percent']}%") +
+        "</td><td>" + html.escape(f"{_bar(task['coverage_percent'])} {task['coverage_percent']}%") +
         "</td><td>" + html.escape("0" if task["minimum_observations"] is None else
-                                   f"{task['rating_observations']}/{task['minimum_observations']}") +
+                                   f"{task['rating_observations']}/{task['minimum_observations']}; admitted {task['admitted_rating_observations']}") +
         f"</td><td>{html.escape(task['status'])}</td></tr>"
         for task in matrix["tasks"]
     )
@@ -257,8 +264,8 @@ def render_html(matrix: dict) -> str:
 <style>body{{font:16px system-ui;max-width:960px;margin:3rem auto;padding:0 1rem;color:#17202a}} table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #cbd5e1;padding:.5rem;text-align:left}}th{{background:#eaf2f8}}.notice{{padding:.75rem;background:#fff3cd;font-weight:600}}</style>
 <h1>Engineering Capability Matrix (ECM)</h1><p class='notice'>INFORMATIONAL — NOT A QUALIFICATION, GRANT, OR DEPLOYMENT AUTHORIZATION.</p>
 <p><b>Subject:</b> {html.escape(matrix['subject'])}<br><b>Run:</b> {html.escape(matrix['run_id'])}<br><b>Scope:</b> {html.escape(C.risk_tier_label(matrix['risk_tier']))} · {html.escape(matrix['profile'])}</p>
-<h2>Task Capability Profile</h2><table><thead><tr><th>Task</th><th>Observed performance</th><th>Evidence confidence</th><th>Evidence</th><th>Status</th></tr></thead><tbody>{task_rows}</tbody></table>
-<p>High observed performance with low evidence confidence is not a recommendation.</p>
+<h2>Task Capability Profile</h2><table><thead><tr><th>Task</th><th>Mean reviewer score</th><th>Evidence coverage</th><th>Evidence</th><th>Status</th></tr></thead><tbody>{task_rows}</tbody></table>
+<p>Coverage is not confidence and does not turn advisory ratings into qualification evidence.</p>
 <table><thead><tr><th>Evidence family</th><th>Mean EV score</th><th>Scenarios</th><th>Responses</th><th>Ratings</th><th>Adequacy</th></tr></thead><tbody>{rows}</tbody></table>
 <h2>Limitations</h2><ul>{limits}</ul></html>"""
 
@@ -308,7 +315,7 @@ def render_capability_summary_markdown(matrix: dict) -> str:
     """Render the full engineer-facing section embedded in an evidence report."""
     summary = capability_summary(matrix)
     lines = [
-        "## Engineering Capability Profile",
+        "## Engineering Capability Matrix (ECM)",
         "",
         "> **INFORMATIONAL — NOT A QUALIFICATION, GRANT, OR DEPLOYMENT AUTHORIZATION.**",
         "",
@@ -317,20 +324,21 @@ def render_capability_summary_markdown(matrix: dict) -> str:
         "",
         "### Task Capability Profile",
         "",
-        "| Task | Observed performance | Evidence confidence | Evidence | Status |",
+        "| Task | Mean reviewer score | Evidence coverage | Evidence | Status |",
         "|---|---|---|---:|---|",
     ]
     for task in matrix["tasks"]:
         performance = ("not assessed" if task["observed_performance"] is None
                        else _bar(task["observed_performance"] / 4 * 100)
                             + f" {task['observed_performance'] / 4 * 100:.0f}%")
-        confidence = _bar(task["confidence_percent"]) + f" {task['confidence_percent']}%"
-        evidence = ("0" if task["minimum_observations"] is None
-                    else f"{task['rating_observations']}/{task['minimum_observations']}")
-        lines.append(f"| {task['task_id']} {task['task']} | {performance} | {confidence} | {evidence} | {task['status']} |")
+        coverage = _bar(task["coverage_percent"]) + f" {task['coverage_percent']}%"
+        evidence = ("0" if task["minimum_observations"] is None else
+                    f"{task['rating_observations']}/{task['minimum_observations']}; "
+                    f"admitted {task['admitted_rating_observations']}")
+        lines.append(f"| {task['task_id']} {task['task']} | {performance} | {coverage} | {evidence} | {task['status']} |")
     lines.extend([
         "",
-        "A high observed-performance bar with low evidence confidence is not a recommendation.",
+        "Coverage is not confidence and does not turn advisory ratings into qualification evidence.",
         "",
         "### Evidence by scenario family",
         "",
@@ -357,7 +365,7 @@ def render_capability_summary_markdown(matrix: dict) -> str:
         for task in summary["task_observed"]:
             lines.append(f"- **Observed only:** `{task['task']}` — "
                          f"{task['observed_performance'] / 4 * 100:.0f}% observed performance, "
-                         f"{task['confidence_percent']}% evidence confidence. Do not treat this as a demonstrated capability.")
+                         f"{task['coverage_percent']}% evidence coverage. Do not treat this as a demonstrated capability.")
     if not summary["task_demonstrated"] and not summary["task_observed"]:
         lines.append("- No mapped engineering task has traceable scored evidence in this run.")
 
@@ -414,9 +422,9 @@ def render_capability_summary_html(matrix: dict) -> str:
         "<tr><td>" + html.escape(f"{task['task_id']} {task['task']}") + "</td><td>" +
         html.escape("not assessed" if task["observed_performance"] is None else
                     f"{_bar(task['observed_performance'] / 4 * 100)} {task['observed_performance'] / 4 * 100:.0f}%") +
-        "</td><td>" + html.escape(f"{_bar(task['confidence_percent'])} {task['confidence_percent']}%") +
+        "</td><td>" + html.escape(f"{_bar(task['coverage_percent'])} {task['coverage_percent']}%") +
         "</td><td>" + html.escape("0" if task["minimum_observations"] is None else
-                                   f"{task['rating_observations']}/{task['minimum_observations']}") +
+                                   f"{task['rating_observations']}/{task['minimum_observations']}; admitted {task['admitted_rating_observations']}") +
         f"</td><td>{html.escape(task['status'])}</td></tr>"
         for task in matrix["tasks"]
     )
@@ -436,16 +444,16 @@ def render_capability_summary_html(matrix: dict) -> str:
     review = "".join(f"<li><code>{html.escape(task['task'])}</code> — observed evidence only; verify every output.</li>"
                      for task in summary["task_observed"]) or "<li>None.</li>"
     return f"""
-<h2>Engineering Capability Profile</h2>
+<h2>Engineering Capability Matrix (ECM)</h2>
 <p class='banner nondec'>INFORMATIONAL — NOT A QUALIFICATION, GRANT, OR DEPLOYMENT AUTHORIZATION.</p>
 <p>Derived solely from the scored scenario evidence in this run. It does not infer capability for tasks that were not assessed.</p>
 <h3>Task Capability Profile</h3>
-<table><tr><th>Task</th><th>Observed performance</th><th>Evidence confidence</th><th>Evidence</th><th>Status</th></tr>{task_rows}</table>
-<p>High observed performance with low evidence confidence is not a recommendation.</p>
+<table><tr><th>Task</th><th>Mean reviewer score</th><th>Evidence coverage</th><th>Evidence</th><th>Status</th></tr>{task_rows}</table>
+<p>Coverage is not confidence and does not turn advisory ratings into qualification evidence.</p>
 <h3>Evidence by scenario family</h3>
 <table><tr><th>Scenario family</th><th>Evidence mean (0–4)</th><th>Distinct scenarios</th><th>Ratings</th><th>Adequacy</th></tr>{rows}</table>
 <h3>Strength patterns and evidence gaps</h3>
-<ul><li><strong>Observed, but not demonstrated:</strong> {html.escape(observed)}.</li><li><strong>Collect direct evidence before making a claim:</strong> {html.escape(not_assessed_tasks)}.</li><li><strong>Not assessed in this run:</strong> {html.escape(unassessed)}.</li></ul>
+<ul><li><strong>Observed, but not demonstrated:</strong> {html.escape(observed)}.</li><li><strong>Collect direct evidence before making a claim:</strong> {html.escape(not_assessed_tasks)}.</li><li><strong>Unassessed competency areas:</strong> {html.escape(unassessed)}.</li></ul>
 <h3>Deployment Guidance</h3>
 <p><strong>Recommended:</strong> None unless a task row is demonstrated and the qualification authority has approved the applicable autonomy envelope.</p>
 <p><strong>Use only with human review:</strong></p><ul>{review}</ul>

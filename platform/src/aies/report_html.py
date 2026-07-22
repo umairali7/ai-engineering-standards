@@ -78,6 +78,13 @@ def render_html(run_id: str) -> str:
       f"&middot; <strong>Subject class:</strong> {_esc(pkg['subject_kind'])}</p>")
 
     w(f"<div class='banner grant'>{_esc(pkg['grant_status'])}</div>")
+    admission = pkg.get("rating_admission") or {}
+    if admission.get("advisory_ratings", 0):
+        reason = admission.get("reviewer_reason") or "reviewer admission not recorded"
+        w("<div class='banner nondec'><strong>ADVISORY AUTOMATED REVIEW</strong> "
+          f"&mdash; {admission['advisory_ratings']} automated rating(s) are excluded from "
+          "qualification scoring until the reviewer is admitted through qualification or "
+          f"human-anchor calibration. {_esc(reason)}</div>")
     nondec = [a for a, d in pkg["areas"].items() if not d["decisional"]]
     if nondec:
         w(f"<div class='banner nondec'>NON-DECISIONAL — sample below the AESQS "
@@ -91,12 +98,17 @@ def render_html(run_id: str) -> str:
     for area, d in pkg["areas"].items():
         verdict, why = _area_verdict(d)
         gates = "PASS" if d.get("gates_passed") and not d.get("ev3_hard_fail") else "FAIL"
-        verdict_class = "pass" if verdict == "READY" else "fail"
+        verdict_class = "pass" if verdict == "THRESHOLD MET" else "fail"
         w(f"<tr><td>{_esc(C.competency_label(area))}</td>"
           f"<td>{'yes' if d['decisional'] else 'no'}</td><td>{gates}</td>"
-          f"<td>{_esc(d.get('cl') or '-')}</td>"
+          f"<td>{_esc(C.identifier_label(d['cl']) if d.get('cl') else '-')}</td>"
           f"<td class={verdict_class}><strong>{_esc(verdict)}</strong> — {_esc(why)}</td></tr>")
     w("</table>")
+    threshold_met = sum(1 for d in pkg["areas"].values()
+                        if d["decisional"] and d.get("gates_passed") and not d.get("ev3_hard_fail"))
+    w(f"<p><strong>Qualification coverage:</strong> {threshold_met}/{len(pkg['areas'])} "
+      "scoped areas meet the admitted-evidence threshold. This is not a grant; "
+      "a named human authority records any grant.</p>")
 
     if human_review:
         advisory = human_review.get("automated_advisory_review") or {}
@@ -123,10 +135,11 @@ def render_html(run_id: str) -> str:
     for area, d in pkg["areas"].items():
         w(f"<h2>{_esc(C.competency_label(area))} — {_esc(C.risk_tier_label(pkg['risk_tier']))}</h2>")
         w(f"<p class=muted>Suite <code>{_esc(pkg['suite_versions'].get(area,'?'))}</code> "
-          f"&middot; scored items: {d['n_scored']} (minimum {d['min_sample']}) "
+          f"&middot; admitted scored items: {d['n_scored']} (minimum {d['min_sample']}) "
+          f"&middot; advisory automated ratings: {d.get('advisory_ratings', 0)} "
           f"&middot; decisional: {'yes' if d['decisional'] else 'NO'}</p>")
         w("<table><tr><th>Dimension</th><th>Automated review</th>"
-          "<th>Human review (optional)</th><th>n</th><th>Mean</th><th>90% CI</th>"
+          "<th>Human review (optional)</th><th>Admitted n</th><th>Admitted mean</th><th>90% CI</th>"
           "<th>Decision value</th><th>Gate</th><th>Result</th></tr>")
         gates = {g["dimension"]: g for g in d["gates"]}
         for dim in C.DIMENSIONS:
@@ -159,6 +172,8 @@ def render_html(run_id: str) -> str:
         w(f"<p><strong>Aggregate A (decision values, profile-weighted):</strong> "
           f"{agg if agg is not None else '-'} &middot; "
           f"<strong>Score-bounded CL:</strong> {_esc(C.identifier_label(d['cl']) if d['cl'] else 'none')}</p>")
+        w("<p class=muted>Derived policy envelope only: this run directly assesses "
+          f"{_esc(C.risk_tier_label(pkg['risk_tier']))}; it does not establish evidence at other tiers.</p>")
         w("<table><tr><th>Risk tier</th><th>Recommended max AL</th></tr>")
         for tier, al in d["al_envelope"].items():
             w(f"<tr><td><strong>{_esc(C.risk_tier_label(tier))}</strong></td>"

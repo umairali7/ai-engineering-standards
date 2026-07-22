@@ -270,6 +270,12 @@ The candidate answers the scenarios; the judge model rates every answer 0–4 on
 EV1–EV6; the run aggregates and the report prints. Set `AIES_JUDGE` in your
 `.env` to make it the default for every run and every profile.
 
+> **Automated ratings are advisory by default.** They remain retained and visible,
+> but are excluded from qualification scoring until the reviewer is admitted by
+> a current review qualification or a recorded human-anchor calibration. Use
+> `aies review <run-id> --calibration <file>` to record that admission, or ingest
+> human scores for qualification evidence.
+
 `--parallel N` applies to **both** phases — collecting the candidate's answers
 *and* the judge's scoring — so a `--judge` run is concurrent end to end. The
 default is 1 (or `$AIES_PARALLEL`); the run prints how many workers each phase
@@ -462,6 +468,12 @@ them into one score would hide the risk context.
 demonstrate RT1 — Minimal, RT3 — Significant, or RT4 — Critical capability. A complete cross-tier picture requires
 separately scoped runs, which must remain visibly tier-labelled until a future
 all-tier orchestrator presents them together.
+
+Before collection, `qualify` warns when the selected scenario-repeat plan is
+below an area's AESQS minimum. Add `--decisional` to plan enough uniform repeats
+for every selected area (for example, `aies qualify local-qwen --all-areas --rt 2
+--decisional --judge <judge>`). This increases both candidate and judge calls;
+it guarantees the planned count only, not successful responses or admitted ratings.
 
 In an Engineering Capability Matrix, **not assessed** means no mapped scored
 scenario evidence was collected for that task. It is unknown, not a failure or

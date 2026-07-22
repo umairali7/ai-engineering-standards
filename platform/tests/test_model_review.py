@@ -133,6 +133,9 @@ def test_auto_score_qualify_produces_evidence_without_manual_step(ws, tmp_path, 
     pkg = engine.aggregate(run["run_id"])
     assert pkg["rater_kinds"] == ["model"]              # scored by the judge, not a human
     assert "CA-05" in pkg["areas"]
+    assert pkg["rating_admission"]["advisory_ratings"] == summary["scored"]
+    assert pkg["areas"]["CA-05"]["n_scored"] == 0
+    assert pkg["areas"]["CA-05"]["decisional"] is False
     # report carries the judge-produced banner and stays evidence-only (no grant)
     from aies import report
     md = report.render_markdown(run["run_id"])

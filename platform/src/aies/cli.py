@@ -105,14 +105,12 @@ def cmd_qualify(args) -> int:
                 scoring = model_review.run_model_review(
                     args.resume, jdep,
                     runtime=getattr(args, "reviewer_runtime", None), workers=workers)
-                if (getattr(args, "consider_advisory_review", False)
-                        or getattr(args, "human_evaluation", None)):
-                    review_pkg = review.assemble_review_package(
-                        args.resume, reviewer_label=f"model:{jdep}",
-                        consider_advisory_review=getattr(args, "consider_advisory_review", False),
-                        human_evaluation=getattr(args, "human_evaluation", None))
-                    (workspace.run_dir(args.resume) / "review-package.json").write_text(
-                        json.dumps(review_pkg, indent=2), encoding="utf-8")
+                review_pkg = review.assemble_review_package(
+                    args.resume, reviewer_label=f"model:{jdep}",
+                    consider_advisory_review=getattr(args, "consider_advisory_review", False),
+                    human_evaluation=getattr(args, "human_evaluation", None))
+                (workspace.run_dir(args.resume) / "review-package.json").write_text(
+                    json.dumps(review_pkg, indent=2), encoding="utf-8")
             package = engine.aggregate(args.resume)
             from . import report
             paths = report.write_reports(args.resume)
@@ -138,7 +136,24 @@ def cmd_qualify(args) -> int:
                 repeats=args.repeats, subject_kind="ai",
                 runtime=getattr(args, "runtime", None))
         else:
+            plan = engine.plan_qualification(f"RT{args.rt}", args.area,
+                                              subject_kind="ai", repeats=args.repeats)
             if not args.json:
+                if not plan["all_decisional_if_scored"]:
+                    blocked = ", ".join(
+                        f"{row['area']} ({row['planned_items']}/{row['minimum_items']})"
+                        for row in plan["areas"] if not row["decisional_if_scored"])
+                    print("warning: the selected sample is non-decisional if all responses are scored: "
+                          + blocked + ". Add --decisional to plan enough repeats.", file=sys.stderr)
+                elif getattr(args, "decisional", False):
+                    print("decisional sample plan confirmed for every selected area.", file=sys.stderr)
+                judge_hint = (" plus the same number of judge calls" if
+                              (getattr(args, "judge", None) or config.default_judge()) else "")
+                print(f"sample plan: {plan['planned_items']} candidate calls{judge_hint}.", file=sys.stderr)
+                if plan["unassessed_tasks"]:
+                    print("warning: no direct scenario mapping for task(s): "
+                          + ", ".join(plan["unassessed_tasks"])
+                          + ". An all-area run cannot make a capability claim for them.", file=sys.stderr)
                 print(f"collecting responses across {workers} worker(s)"
                       f"{' — pass --parallel N to raise' if workers == 1 else ''}…",
                       file=sys.stderr)
@@ -149,13 +164,14 @@ def cmd_qualify(args) -> int:
                 runtime=getattr(args, "runtime", None),
                 workers=workers,
                 assessment=getattr(args, "_assessment", None),
+                decisional=getattr(args, "decisional", False),
             )
         run_id = manifest["run_id"]
         # Automated scoring: if a judge is given (or AIES_JUDGE is set), score
         # the responses with it and output the report directly — no manual step.
         judge = getattr(args, "judge", None) or config.default_judge()
         if judge:
-            from . import engine as _engine, model_review, report as _report
+            from . import engine as _engine, model_review, report as _report, review as _review
             jdep = manifest["model"]["registry_id"] if judge == "self" else judge
             self_judged = jdep == manifest["model"]["registry_id"]
             n_resp = len(list((workspace.run_dir(run_id) / "responses").glob("*.json")))
@@ -171,15 +187,12 @@ def cmd_qualify(args) -> int:
                       f"collected; you can score manually — see the scoresheet in "
                       f"{workspace.run_dir(run_id)}.", file=sys.stderr)
                 return 2
-            if (getattr(args, "consider_advisory_review", False)
-                    or getattr(args, "human_evaluation", None)):
-                from . import review as _review
-                review_pkg = _review.assemble_review_package(
-                    run_id, reviewer_label=f"model:{jdep}",
-                    consider_advisory_review=getattr(args, "consider_advisory_review", False),
-                    human_evaluation=getattr(args, "human_evaluation", None))
-                (workspace.run_dir(run_id) / "review-package.json").write_text(
-                    json.dumps(review_pkg, indent=2), encoding="utf-8")
+            review_pkg = _review.assemble_review_package(
+                run_id, reviewer_label=f"model:{jdep}",
+                consider_advisory_review=getattr(args, "consider_advisory_review", False),
+                human_evaluation=getattr(args, "human_evaluation", None))
+            (workspace.run_dir(run_id) / "review-package.json").write_text(
+                json.dumps(review_pkg, indent=2), encoding="utf-8")
             pkg = _engine.aggregate(run_id)
             _report.write_reports(run_id)
             from . import report_html
@@ -1224,6 +1237,9 @@ def build_parser() -> argparse.ArgumentParser:
     q.add_argument("--all-areas", action="store_true",
                    help="qualify across ALL competency areas CA-01…CA-12 "
                         "(a full SDLC capability profile; see `aies capabilities`)")
+    q.add_argument("--decisional", action="store_true",
+                   help="plan enough uniform repeats for every selected area to meet "
+                        "the AESQS sample minimum when admitted ratings are available")
     q.add_argument("--journey", default=None, metavar="JOURNEY_ID",
                    help="run a multi-phase journey instead of area suites")
     q.add_argument("--judge", default=None, metavar="DEPLOYMENT",

@@ -8,6 +8,7 @@ risk-tier scope. Peer review (stage 6) arrives in M4; the decision
 from __future__ import annotations
 
 import datetime
+import math
 import uuid
 
 from . import config
@@ -18,6 +19,37 @@ from .adapters import resolve
 
 class EngineError(Exception):
     pass
+
+
+def plan_qualification(risk_tier: str, areas: list[str], *, subject_kind: str = "ai",
+                       repeats: int | None = None) -> dict:
+    """Pre-register the projected sample size before execution."""
+    from . import task_mappings
+
+    minimum = C.MIN_SAMPLE[subject_kind][risk_tier]
+    rows = []
+    required_uniform_repeats = 1
+    mapping = task_mappings.load()
+    covered_tasks: set[str] = set()
+    for area in areas:
+        _, scenarios, _ = runner.load_area(area)
+        selected = [s for s in scenarios if s["risk_tier"] == risk_tier] or scenarios
+        for scenario in selected:
+            covered_tasks.update(task_mappings.tasks_for_scenario(scenario, mapping))
+        planned = sum(repeats or int(s.get("repeats_min", 1)) for s in selected)
+        required = math.ceil(minimum / len(selected)) if selected else minimum
+        required_uniform_repeats = max(required_uniform_repeats, required)
+        rows.append({"area": area, "scenarios": len(selected), "planned_items": planned,
+                     "minimum_items": minimum, "decisional_if_scored": planned >= minimum,
+                     "uniform_repeats_for_minimum": required})
+    return {"risk_tier": risk_tier, "subject_kind": subject_kind,
+            "minimum_items": minimum, "areas": rows,
+            "planned_items": sum(row["planned_items"] for row in rows),
+            "covered_tasks": sorted(covered_tasks),
+            "unassessed_tasks": [name for task_id, name in task_mappings.task_names(mapping).items()
+                                  if task_id not in covered_tasks],
+            "all_decisional_if_scored": all(row["decisional_if_scored"] for row in rows),
+            "uniform_repeats_for_all_areas": required_uniform_repeats}
 
 
 def _new_run_id(model_id: str) -> str:
@@ -38,6 +70,7 @@ def start_qualification(
     runtime: str | None = None,
     workers: int | None = None,
     assessment: dict | None = None,
+    decisional: bool = False,
 ) -> dict:
     """Stages 2-4: discovery, environment, benchmark execution.
 
@@ -88,6 +121,17 @@ def start_qualification(
     # Stage 3 — environment validation.
     fp = doctor.fingerprint(adapter.fingerprint())
 
+    plan = plan_qualification(risk_tier, areas, subject_kind=subject_kind, repeats=repeats)
+    if decisional:
+        required = plan["uniform_repeats_for_all_areas"]
+        if repeats is not None and repeats < required:
+            raise EngineError(
+                f"--decisional needs at least {required} repeats for every selected area at "
+                f"{C.risk_tier_label(risk_tier)}; --repeats {repeats} is insufficient"
+            )
+        repeats = max(repeats or 0, required)
+        plan = plan_qualification(risk_tier, areas, subject_kind=subject_kind, repeats=repeats)
+
     run_id = _new_run_id(model_id)
     all_scenarios: list[tuple[dict, list[dict], str]] = []
     for area in areas:
@@ -127,6 +171,8 @@ def start_qualification(
         "risk_tier": risk_tier,
         "subject_kind": subject_kind,
         "repeats": repeats,          # override used, if any (for resume-collection)
+        "sample_plan": plan,
+        "decisional_target": decisional,
         "scoped_areas": list(areas),  # the CA codes as requested (for resume-collection)
         # The assessment this run was composed under (ADR-0005), if any — the
         # decision engine reads this to compute the assessment outcome. Recording
@@ -291,13 +337,32 @@ def aggregate(run_id: str) -> dict:
     adjustments = profile.get("dimension_weight_adjustments") or {}
     rt = manifest["risk_tier"]
 
-    by_area: dict[str, list[dict]] = {}
+    # Model and automated ratings are retained as auditable observations, but
+    # cannot enter the qualification aggregate unless their reviewer has been
+    # explicitly admitted by a recorded qualification or calibration review.
+    review_path = rdir / "review-package.json"
+    review_pkg = workspace.read_json(review_path) if review_path.exists() else {}
+    reviewer = review_pkg.get("reviewer") or {}
+    admitted_model_raters = ({reviewer.get("label")} if reviewer.get("admitted")
+                              and reviewer.get("label") else set())
+
+    def is_admitted(record: dict) -> bool:
+        provenance = record.get("provenance") or {}
+        return (provenance.get("rater_kind") == "human"
+                or provenance.get("rater") in admitted_model_raters)
+
+    by_area: dict[str, list[dict]] = {a["area"]: [] for a in manifest.get("areas", [])}
+    raw_by_area: dict[str, int] = {a["area"]: 0 for a in manifest.get("areas", [])}
+    admitted_by_area: dict[str, int] = {a["area"]: 0 for a in manifest.get("areas", [])}
     responses = {p.name: workspace.read_json(p)
                  for p in (rdir / "responses").glob("*.json")}
     for r in ratings:
         resp = responses.get(r["rates_response"])
         area = resp["area"] if resp else "unknown"
-        by_area.setdefault(area, []).append(r["scores"])
+        raw_by_area[area] = raw_by_area.get(area, 0) + 1
+        if is_admitted(r):
+            by_area.setdefault(area, []).append(r["scores"])
+            admitted_by_area[area] = admitted_by_area.get(area, 0) + 1
 
     areas = {}
     for area, item_scores in sorted(by_area.items()):
@@ -306,6 +371,9 @@ def aggregate(run_id: str) -> dict:
                                  weight_adjustments=adjustments)
         areas[area] = {
             "n_scored": res.n_scored,
+            "raw_ratings": raw_by_area.get(area, 0),
+            "admitted_ratings": admitted_by_area.get(area, 0),
+            "advisory_ratings": raw_by_area.get(area, 0) - admitted_by_area.get(area, 0),
             "min_sample": res.min_sample,
             "decisional": res.decisional,
             "dimensions": {
@@ -355,6 +423,14 @@ def aggregate(run_id: str) -> dict:
         "areas": areas,
         "raters": sorted({r["provenance"]["rater"] for r in ratings}),
         "rater_kinds": sorted({r["provenance"]["rater_kind"] for r in ratings}),
+        "admitted_raters": sorted({r["provenance"]["rater"] for r in ratings if is_admitted(r)}),
+        "admitted_rater_kinds": sorted({r["provenance"]["rater_kind"] for r in ratings if is_admitted(r)}),
+        "rating_admission": {
+            "admitted_ratings": sum(1 for r in ratings if is_admitted(r)),
+            "advisory_ratings": sum(1 for r in ratings if not is_admitted(r)),
+            "reviewer_admitted": bool(reviewer.get("admitted")),
+            "reviewer_reason": reviewer.get("reason"),
+        },
         "aggregated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     }
     workspace.write_json(rdir / "evidence-package.json", package, overwrite=True)

@@ -19,6 +19,7 @@ EVIDENCE_PACKAGE_KEYS = {
     "run_id", "kind", "evidence_schema", "grant_status", "subject", "model", "profile",
     "profile_version", "risk_tier", "subject_kind", "suite_versions",
     "environment_fingerprint", "areas", "raters", "rater_kinds", "aggregated_at",
+    "admitted_raters", "admitted_rater_kinds", "rating_admission",
 }
 
 RESULT_KEYS = {
@@ -84,7 +85,7 @@ def test_result_records_the_evidence_schema_it_decided_over():
 def test_evidence_package_envelope_shape(ws_run):
     from aies import workspace, constants
     pkg = workspace.read_json(workspace.run_dir(ws_run) / "evidence-package.json")
-    assert pkg["evidence_schema"] == constants.EVIDENCE_SCHEMA == 2
+    assert pkg["evidence_schema"] == constants.EVIDENCE_SCHEMA == 3
     assert set(pkg.keys()) == EVIDENCE_PACKAGE_KEYS, "evidence-package envelope drifted"
     assert pkg["profile_version"] == "1.0.0"     # captured at run time
     assert pkg["subject"]["id"] == "cand"
