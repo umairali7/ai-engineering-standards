@@ -44,6 +44,8 @@ code { background: var(--card); padding: .1rem .3rem; border-radius: 3px; font-s
 .fail { color: var(--fail); font-weight: 600; }
 .muted { color: var(--muted); }
 .env td:first-child { color: var(--muted); width: 12rem; }
+details { margin: .8rem 0; border: 1px solid var(--line); border-radius: 6px; padding: .45rem .7rem; }
+summary { cursor: pointer; font-weight: 650; }
 footer { margin-top: 3rem; color: var(--muted); font-size: .8rem;
   border-top: 1px solid var(--line); padding-top: .8rem; }
 @media print { body { padding: 0; max-width: none; } h2 { page-break-after: avoid; }
@@ -132,8 +134,12 @@ def render_html(run_id: str) -> str:
     w("<p class=muted>Evidence is bound to this fingerprint; a changed fingerprint "
       "is a re-qualification trigger (PLATFORM.md D7).</p>")
 
+    w("<h2>Detailed qualification evidence</h2>")
+    w("<p class=muted>Expand an area for its dimension-level scores, gates, and policy envelope. "
+      "The Grant Readiness table above remains the authoritative summary.</p>")
     for area, d in pkg["areas"].items():
-        w(f"<h2>{_esc(C.competency_label(area))} — {_esc(C.risk_tier_label(pkg['risk_tier']))}</h2>")
+        w(f"<details><summary>{_esc(C.competency_label(area))} — "
+          f"{_esc(C.risk_tier_label(pkg['risk_tier']))} detailed evidence</summary>")
         w(f"<p class=muted>Suite <code>{_esc(pkg['suite_versions'].get(area,'?'))}</code> "
           f"&middot; admitted scored items: {d['n_scored']} (minimum {d['min_sample']}) "
           f"&middot; advisory automated ratings: {d.get('advisory_ratings', 0)} "
@@ -179,6 +185,7 @@ def render_html(run_id: str) -> str:
             w(f"<tr><td><strong>{_esc(C.risk_tier_label(tier))}</strong></td>"
               f"<td><strong>{_esc(C.autonomy_level_label(al))}</strong></td></tr>")
         w("</table>")
+        w("</details>")
 
     from . import ecm
     w(ecm.render_capability_summary_html(ecm.engineering_capability_matrix(run_id)))

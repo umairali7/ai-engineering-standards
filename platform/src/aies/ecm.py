@@ -184,18 +184,15 @@ def render_markdown(matrix: dict) -> str:
         "",
         "## Task Capability Profile",
         "",
-        "| Task | Mean reviewer score | Evidence coverage | Evidence | Status |",
+        "| Task | Observed performance | Direct evidence sample | Qualification evidence | Status |",
         "|---|---|---|---:|---|",
     ]
     for task in matrix["tasks"]:
         performance = ("not assessed" if task["observed_performance"] is None
                        else _bar(task["observed_performance"] / 4 * 100)
                             + f" {task['observed_performance'] / 4 * 100:.0f}%")
-        coverage = _bar(task["coverage_percent"]) + f" {task['coverage_percent']}%"
-        evidence = ("0" if task["minimum_observations"] is None else
-                    f"{task['rating_observations']}/{task['minimum_observations']}; "
-                    f"admitted {task['admitted_rating_observations']}")
-        lines.append(f"| {task['task_id']} {task['task']} | {performance} | {coverage} | {evidence} | {task['status']} |")
+        lines.append(f"| {task['task_id']} {task['task']} | {performance} | {_task_sample(task)} | "
+                     f"{_task_evidence(task)} | {_task_status(task)} |")
     lines.extend([
         "",
         "Mean reviewer score is an unweighted informational EV mean. Evidence coverage is the "
@@ -237,8 +234,33 @@ def _bar(percent: float) -> str:
     return "█" * filled + "░" * (10 - filled)
 
 
+def _task_evidence(task: dict) -> str:
+    """Show raw observations and admitted evidence without conflating them."""
+    minimum = task["minimum_observations"]
+    if minimum is None:
+        return "no direct mapped evidence"
+    return (f"{task['admitted_rating_observations']} admitted "
+            f"(area reference: {minimum})")
+
+
+def _task_sample(task: dict) -> str:
+    """Describe direct task breadth without pretending it has its own gate."""
+    if task["minimum_observations"] is None:
+        return "no direct mapped evidence"
+    return (f"{task['distinct_scenarios']} scenarios; "
+            f"{task['rating_observations']} raw ratings")
+
+
+def _task_status(task: dict) -> str:
+    if task["status"] == "not assessed":
+        return "not assessed"
+    if task["admitted_rating_observations"] == 0:
+        return "advisory observation"
+    return task["status"]
+
+
 def render_html(matrix: dict) -> str:
-    """Render a compact, self-contained HTML ECM artifact."""
+    """Render a compact, self-contained engineer-facing ECM artifact."""
     rows = "".join(
         "<tr>" + "".join(f"<td>{html.escape(str(value))}</td>" for value in (
             row["label"],
@@ -253,20 +275,26 @@ def render_html(matrix: dict) -> str:
         "<tr><td>" + html.escape(f"{task['task_id']} {task['task']}") + "</td><td>" +
         html.escape("not assessed" if task["observed_performance"] is None else
                     f"{_bar(task['observed_performance'] / 4 * 100)} {task['observed_performance'] / 4 * 100:.0f}%") +
-        "</td><td>" + html.escape(f"{_bar(task['coverage_percent'])} {task['coverage_percent']}%") +
-        "</td><td>" + html.escape("0" if task["minimum_observations"] is None else
-                                   f"{task['rating_observations']}/{task['minimum_observations']}; admitted {task['admitted_rating_observations']}") +
-        f"</td><td>{html.escape(task['status'])}</td></tr>"
+        "</td><td>" + html.escape(_task_sample(task)) +
+        "</td><td>" + html.escape(_task_evidence(task)) +
+        f"</td><td>{html.escape(_task_status(task))}</td></tr>"
         for task in matrix["tasks"]
     )
+    summary = capability_summary(matrix)
+    observed = ", ".join(task["task"] for task in summary["task_observed"]) or "None"
+    unassessed = ", ".join(task["task"] for task in summary["task_not_assessed"]) or "None"
+    advisory = sum(task["rating_observations"] for task in matrix["tasks"]
+                   if task["admitted_rating_observations"] == 0)
     return f"""<!doctype html><html lang='en'><meta charset='utf-8'>
 <title>Engineering Capability Matrix — {html.escape(matrix['subject'])}</title>
-<style>body{{font:16px system-ui;max-width:960px;margin:3rem auto;padding:0 1rem;color:#17202a}} table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #cbd5e1;padding:.5rem;text-align:left}}th{{background:#eaf2f8}}.notice{{padding:.75rem;background:#fff3cd;font-weight:600}}</style>
+<style>body{{font:16px system-ui;max-width:1100px;margin:3rem auto;padding:0 1rem;color:#17202a}} table{{border-collapse:collapse;width:100%;margin:.75rem 0}}th,td{{border:1px solid #cbd5e1;padding:.5rem;text-align:left;vertical-align:top}}th{{background:#eaf2f8}}.notice{{padding:.75rem;background:#fff3cd;font-weight:600}}.summary{{padding:.8rem 1rem;background:#f8fafc;border-left:4px solid #64748b}}details{{margin:1.25rem 0}}summary{{cursor:pointer;font-weight:650}}</style>
 <h1>Engineering Capability Matrix (ECM)</h1><p class='notice'>INFORMATIONAL — NOT A QUALIFICATION, GRANT, OR DEPLOYMENT AUTHORIZATION.</p>
 <p><b>Subject:</b> {html.escape(matrix['subject'])}<br><b>Run:</b> {html.escape(matrix['run_id'])}<br><b>Scope:</b> {html.escape(C.risk_tier_label(matrix['risk_tier']))} · {html.escape(matrix['profile'])}</p>
-<h2>Task Capability Profile</h2><table><thead><tr><th>Task</th><th>Mean reviewer score</th><th>Evidence coverage</th><th>Evidence</th><th>Status</th></tr></thead><tbody>{task_rows}</tbody></table>
-<p>Coverage is not confidence and does not turn advisory ratings into qualification evidence.</p>
-<table><thead><tr><th>Evidence family</th><th>Mean EV score</th><th>Scenarios</th><th>Responses</th><th>Ratings</th><th>Adequacy</th></tr></thead><tbody>{rows}</tbody></table>
+<p class='summary'><strong>At a glance:</strong> {len(summary['task_demonstrated'])} demonstrated task(s), {len(summary['task_observed'])} observed task(s), and {len(summary['task_not_assessed'])} task(s) without direct evidence. {advisory} raw rating observation(s) are advisory until admitted.</p>
+<h2>Task Capability Profile</h2><table><thead><tr><th>Task</th><th>Observed performance</th><th>Direct evidence sample</th><th>Qualification evidence</th><th>Status</th></tr></thead><tbody>{task_rows}</tbody></table>
+<p>Observed performance is an unweighted EV mean. A task has no task-specific pass threshold yet: scenario breadth is shown directly. The area reference is not a task qualification score; advisory ratings never become qualification evidence until the reviewer is admitted.</p>
+<h2>Evidence Summary</h2><ul><li><strong>Observed patterns (verify with human review):</strong> {html.escape(observed)}.</li><li><strong>Direct evidence still needed:</strong> {html.escape(unassessed)}.</li></ul>
+<details><summary>Scenario-family evidence and traceability ({len(matrix['rows'])} rows)</summary><table><thead><tr><th>Evidence family</th><th>Mean EV score</th><th>Scenarios</th><th>Responses</th><th>Ratings</th><th>Adequacy</th></tr></thead><tbody>{rows}</tbody></table></details>
 <h2>Limitations</h2><ul>{limits}</ul></html>"""
 
 
@@ -324,21 +352,18 @@ def render_capability_summary_markdown(matrix: dict) -> str:
         "",
         "### Task Capability Profile",
         "",
-        "| Task | Mean reviewer score | Evidence coverage | Evidence | Status |",
+        "| Task | Observed performance | Direct evidence sample | Qualification evidence | Status |",
         "|---|---|---|---:|---|",
     ]
     for task in matrix["tasks"]:
         performance = ("not assessed" if task["observed_performance"] is None
                        else _bar(task["observed_performance"] / 4 * 100)
                             + f" {task['observed_performance'] / 4 * 100:.0f}%")
-        coverage = _bar(task["coverage_percent"]) + f" {task['coverage_percent']}%"
-        evidence = ("0" if task["minimum_observations"] is None else
-                    f"{task['rating_observations']}/{task['minimum_observations']}; "
-                    f"admitted {task['admitted_rating_observations']}")
-        lines.append(f"| {task['task_id']} {task['task']} | {performance} | {coverage} | {evidence} | {task['status']} |")
+        lines.append(f"| {task['task_id']} {task['task']} | {performance} | {_task_sample(task)} | "
+                     f"{_task_evidence(task)} | {_task_status(task)} |")
     lines.extend([
         "",
-        "Coverage is not confidence and does not turn advisory ratings into qualification evidence.",
+        "Observed performance is an unweighted EV mean. A task has no task-specific pass threshold yet: scenario breadth is shown directly. The area reference is not a task qualification score; advisory ratings never become qualification evidence until the reviewer is admitted.",
         "",
         "### Evidence by scenario family",
         "",
@@ -422,10 +447,9 @@ def render_capability_summary_html(matrix: dict) -> str:
         "<tr><td>" + html.escape(f"{task['task_id']} {task['task']}") + "</td><td>" +
         html.escape("not assessed" if task["observed_performance"] is None else
                     f"{_bar(task['observed_performance'] / 4 * 100)} {task['observed_performance'] / 4 * 100:.0f}%") +
-        "</td><td>" + html.escape(f"{_bar(task['coverage_percent'])} {task['coverage_percent']}%") +
-        "</td><td>" + html.escape("0" if task["minimum_observations"] is None else
-                                   f"{task['rating_observations']}/{task['minimum_observations']}; admitted {task['admitted_rating_observations']}") +
-        f"</td><td>{html.escape(task['status'])}</td></tr>"
+        "</td><td>" + html.escape(_task_sample(task)) +
+        "</td><td>" + html.escape(_task_evidence(task)) +
+        f"</td><td>{html.escape(_task_status(task))}</td></tr>"
         for task in matrix["tasks"]
     )
     rows = "".join(
@@ -448,10 +472,11 @@ def render_capability_summary_html(matrix: dict) -> str:
 <p class='banner nondec'>INFORMATIONAL — NOT A QUALIFICATION, GRANT, OR DEPLOYMENT AUTHORIZATION.</p>
 <p>Derived solely from the scored scenario evidence in this run. It does not infer capability for tasks that were not assessed.</p>
 <h3>Task Capability Profile</h3>
-<table><tr><th>Task</th><th>Mean reviewer score</th><th>Evidence coverage</th><th>Evidence</th><th>Status</th></tr>{task_rows}</table>
-<p>Coverage is not confidence and does not turn advisory ratings into qualification evidence.</p>
-<h3>Evidence by scenario family</h3>
+<table><tr><th>Task</th><th>Observed performance</th><th>Direct evidence sample</th><th>Qualification evidence</th><th>Status</th></tr>{task_rows}</table>
+<p>Observed performance is an unweighted EV mean. A task has no task-specific pass threshold yet: scenario breadth is shown directly. The area reference is not a task qualification score; advisory ratings never become qualification evidence until the reviewer is admitted.</p>
+<details><summary>Scenario-family evidence and traceability ({len(summary['observed'])} rows)</summary>
 <table><tr><th>Scenario family</th><th>Evidence mean (0–4)</th><th>Distinct scenarios</th><th>Ratings</th><th>Adequacy</th></tr>{rows}</table>
+</details>
 <h3>Strength patterns and evidence gaps</h3>
 <ul><li><strong>Observed, but not demonstrated:</strong> {html.escape(observed)}.</li><li><strong>Collect direct evidence before making a claim:</strong> {html.escape(not_assessed_tasks)}.</li><li><strong>Unassessed competency areas:</strong> {html.escape(unassessed)}.</li></ul>
 <h3>Deployment Guidance</h3>

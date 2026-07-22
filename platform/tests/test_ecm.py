@@ -66,6 +66,9 @@ def test_ecm_writer_emits_json_markdown_and_html(tmp_path, monkeypatch):
         path = ecm.write_matrix(matrix, format)
         assert path.exists()
         assert marker in path.read_text(encoding="utf-8")
+    html = ecm.render_html(matrix)
+    assert "Direct evidence sample" in html
+    assert "Scenario-family evidence and traceability" in html
     assert "Task Capability Profile" in ecm.render_capability_summary_html(matrix)
 
 
