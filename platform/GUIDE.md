@@ -300,10 +300,14 @@ one command:
 aies qualify --resume <run-id> --judge <judge-id> --parallel 8
 ```
 
-Every successful aggregation or resume writes the complete report bundle in
-the run directory: `report.md`, `report.json`, `report.html`, and
-`engineering-capability-matrix.{md,json,html}`. The command prints every path;
-if any artifact cannot be rendered, it fails rather than claiming completion.
+Every successful aggregation or resume writes the complete linked report bundle
+in the run directory: Qualification Evidence Package, Canonical Assessment
+Result when the run used a declarative assessment, Engineering Capability
+Matrix, qualification-bounded Deployment Guidance, and Executive Summary.
+Markdown, JSON, and HTML views are generated for each audience-facing product,
+with `report-bundle.json` as the machine-readable index. The command prints the
+primary paths; if any artifact cannot be rendered, it fails rather than claiming
+completion.
 
 **Bring external eval results in as evidence.** If you already scored the
 responses with another tool (a custom Inspect/DeepEval task, a second judge, an
@@ -537,10 +541,30 @@ collection intent only, not successful responses or admitted ratings.
 
 In an Engineering Capability Matrix, **not assessed** means no mapped scored
 scenario evidence was collected for that task. It is unknown, not a failure or
-a low score. **Observed** means descriptive evidence exists but does not carry
-a governed task decision. While AIES-ECM-01 is Draft and ADR-0013 is Proposed,
-no row is labelled **demonstrated**, numeric task-confidence percentages are
-suppressed, and Deployment Guidance emits no `Use` recommendation.
+a low score. ADR-0013 task decisions count one resolved admitted item per
+distinct mapped scenario, apply task-specific RT minimums, lower 90% confidence
+bounds, risk-tier gates, mapping review, parent-area outcomes, and the human
+rater protocol. **Demonstrated** means all controls pass. Deployment Guidance
+still emits no `Use` from ECM alone: supply an active matching human record with
+`aies guidance <run> --qualification <QUAL-id>` and optionally request role,
+phase, and autonomy scope.
+
+For example, this asks only whether the evidence and record support the stated
+role, phase, and autonomy—not whether the subject is globally suitable:
+
+```
+aies guidance <run> --qualification QUAL-2026-001 \
+  --role ROLE-06 --phase P09 --autonomy 3 --write
+```
+
+The result is `Use`, `Use with human review`, `No recommendation`, or `Avoid for
+this scoped use`. An expired, invalidated, revoked, mismatched, or absent record
+cannot produce `Use`. Observed evidence never gets promoted to `Use with human
+review` merely because a reviewer might supervise it. A live read-only
+fingerprint check also suppresses `Use` if the deployment no longer matches the
+qualified deployment. Every task row carries applicable qualification
+conditions, validity/role/phase/autonomy constraints, and residual instrument
+calibration or thin-gate risks.
 
 ### 5.5 Aggregate and report
 

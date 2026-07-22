@@ -92,6 +92,22 @@ qualification statistics consume the latter's resolved scores, never the
 former as independent samples. Readers MUST branch on `evidence_schema` and
 MUST NOT reinterpret a v4 package as if it had passed v5 resolution.
 
+### ECM v1 to v2 and Engineering Task Mapping v1 to v2
+
+ADR-0013 introduces governed task decisions. ECM v1 rows were informational
+coverage summaries and MUST NOT be reinterpreted as demonstrated capability.
+ECM v2 adds an explicit task-decision envelope, uncertainty, gates, rater
+protocol, mapping review, instrument maturity, parent-area controls, and a
+versioned task-decision semantic. Engineering Task Mapping schema 2 adds
+per-rule human review provenance; an unreviewed schema-1 mapping cannot support
+`demonstrated`. Deployment Guidance schema 2 requires both demonstrated task
+evidence and a matching current human Qualification Record before it can emit
+`Use` or `Use with human review`.
+
+These are review-stage experimental contracts. Readers MUST branch on
+`ecm_schema`, task-mapping `schema`, `task_decision_semantics_version`, and
+`guidance_schema`; they MUST NOT silently upgrade older artifacts.
+
 ## Related Documents
 
 - [STABILITY.md](STABILITY.md) — the frozen contracts (v1.0 freeze)

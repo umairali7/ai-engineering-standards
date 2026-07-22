@@ -67,7 +67,7 @@ and selection remain separate products.
 | Done | Make automated Engineering Evaluation self-contained | Complete automated scoring closes the engineering-evaluation workflow and generates all report/ECM artifacts; human evaluation is an optional, visible reviewed/not-reviewed field and never blocks the evaluation; formal qualification remains a separate ADR-0012 protocol |
 | Done | Enforce expiry and requalification | Expired or materially changed qualifications are treated as absent; renewal and targeted re-evaluation are supported |
 | Done | Correct endpoint deployment fingerprints | Remote qualifications bind to behaviorally relevant deployment/runtime/config identity, not irrelevant client-machine RAM/CPU changes |
-| In progress | Govern ECM task decision semantics in an ADR | Proposed ADR-0013 defines admitted distinct-task evidence, uncertainty, safety floors, task thresholds, valid `demonstrated` semantics, and qualification-bounded Deployment Guidance; until acceptance and conformance implementation, task rows remain observed/not assessed and `Use` is suppressed |
+| Done | Govern ECM task decision semantics in an ADR | Accepted ADR-0013 and ECM schema 2 compute one resolved item per distinct task scenario, task-specific RT breadth, 90% uncertainty, risk-tier gates/EV3 hard-fail, reviewed mapping admission, human-rater protocol, parent-area floors, valid `demonstrated` semantics, compatible comparison, and Qualification-Record-bounded Deployment Guidance |
 
 ### P1 — Measurement validity
 
@@ -99,12 +99,12 @@ and selection remain separate products.
 | Status | Work item | Acceptance signal |
 |---|---|---|
 | Open | Ratify AIES-ECM-01 — Engineering Capability Matrix | ECM is formally present in the Charter, Vision, architecture, Roadmap, governance, requirement IDs, and public review disposition |
-| Open | Deliver a compact report bundle | Qualification Result, ECM, Deployment Guidance, and Executive Summary are separate linked artifacts generated from one canonical evidence package |
-| Open | Mature Deployment Guidance | Use / Use with Review / Avoid incorporates evidence, qualification scope, autonomy, conditions, residual risks, and operational constraints; no guidance creates authority |
+| Done | Deliver a compact report bundle | Qualification Evidence Package, Canonical Assessment Result when applicable, ECM, Deployment Guidance, and Executive Summary are separate linked Markdown/JSON/HTML artifacts generated from one canonical evidence package and indexed by `report-bundle.json` |
+| Done | Mature Deployment Guidance | Use / Use with Review / Avoid incorporates task evidence, current matching qualification scope, live deployment-fingerprint continuity, role/phases, autonomy, conditions, validity, residual calibration/gate risks, and operational constraints; no guidance creates authority |
 | Done | Add protocol-compatible ECM comparison | Task deltas and winners appear only when risk, profile, suites, mappings, repeats, and rater protocol are compatible |
 | Open | Build AIES Select | A declared workload mix plus latency, cost, context, tool reliability, availability, and risk constraints produces an explained fit ranking over compatible evidence—never a global best-subject claim |
 | Open | Build organization decision products | Inventory shows approved subjects, demonstrated task fit, qualification scope, conditions, drift, expiry, incidents, and requalification status |
-| Open | Rebuild `demo-full` as the AIES killer demo | A concise, fully offline and CI-gated narrative demonstrates subject-neutral assessment, implicit live task/ETA progress, complete automated Engineering Evaluation, optional human-evaluation status, ECM strengths/gaps, compatible comparison, the formal qualification boundary, conformance, corpus health, and a browsable linked artifact bundle; every expected non-zero governance outcome is asserted rather than accidentally failing `pipefail`, and a real independently reviewed pilot can replace synthetic fixtures without rewriting the story |
+| Done | Rebuild `demo-full` as the AIES killer demo | The fully offline CI narrative demonstrates deployment/repository/standard subjects, implicit live task/ETA progress, complete automated Engineering Evaluation, optional human-evaluation status, ECM strengths/gaps, bounded guidance, protocol-compatible comparison without invented winners, the formal qualification boundary, conformance, corpus health, empirical-panel handoff, and the linked Executive Summary bundle; expected non-zero outcomes are explicitly contained under `pipefail` |
 
 ### P3 — Standards and adoption
 
@@ -138,7 +138,7 @@ and selection remain separate products.
 | Open | Consolidate report view models | Markdown, HTML, JSON, dashboard, and API consume shared factual view models; no renderer recomputes decisions |
 | Open | Clarify immutable artifacts and regenerable views | Storage policy explicitly identifies events, canonical evidence/results, mutable indexes, worksheets, and regenerable presentation files; code enforces it |
 | Open | Make record identifiers concurrency-safe | Concurrent qualification decisions cannot choose the same record ID |
-| Open | Improve local verification feedback | The full suite reports progress predictably and has a documented performance budget; the current measured 205-test Windows run (~367 seconds) is the baseline to profile and reduce |
+| Open | Improve local verification feedback | The full suite reports progress predictably and has a documented performance budget; the current measured 212-test Windows run (~335 seconds) is the baseline to profile and reduce |
 | Open | Remove local workspace archive debris safely | Workspace diagnostics identify `.DS_Store`, `__MACOSX`, caches, and stale generated bundles without deleting user evidence automatically |
 
 ### C2 — CI, security, and release hygiene
@@ -159,7 +159,7 @@ and selection remain separate products.
 
 Last verified on 2026-07-22:
 
-- `pytest platform/tests -q`: **205 passed in 357.09 seconds** on the current Windows workstation.
+- `pytest platform/tests -q`: **212 passed in 335.24 seconds** on the current Windows workstation.
 - `aies suites validate`: **484 scenarios, 12 areas, 0 warnings, 0 errors**.
 - Decision-engine conformance: **8/8 cases passed**, semantics 1.0.
 - Release hygiene: **PASS**.

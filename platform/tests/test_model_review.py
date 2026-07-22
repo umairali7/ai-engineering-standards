@@ -288,7 +288,11 @@ def test_resume_with_judge_is_one_command_score_aggregate_and_report(ws, tmp_pat
     for name in ("report.json", "report.html", "engineering-evaluation.json",
                  "engineering-capability-matrix.md",
                  "engineering-capability-matrix.json",
-                 "engineering-capability-matrix.html"):
+                 "engineering-capability-matrix.html",
+                 "deployment-guidance.md", "deployment-guidance.json",
+                 "deployment-guidance.html", "executive-summary.md",
+                 "executive-summary.json", "executive-summary.html",
+                 "report-bundle.json"):
         assert (rdir / name).exists(), name
 
 

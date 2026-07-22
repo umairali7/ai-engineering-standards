@@ -44,6 +44,20 @@ def test_report_has_grant_readiness_and_residual_risk(ws, tmp_path):
     assert Path(paths["ecm_markdown"]).exists()
     assert Path(paths["ecm_json"]).exists()
     assert Path(paths["ecm_html"]).exists()
+    assert Path(paths["guidance_markdown"]).exists()
+    assert Path(paths["guidance_json"]).exists()
+    assert Path(paths["guidance_html"]).exists()
+    assert Path(paths["executive_markdown"]).exists()
+    assert Path(paths["executive_json"]).exists()
+    assert Path(paths["executive_html"]).exists()
+    assert Path(paths["bundle_manifest"]).exists()
+    summary = json.loads(Path(paths["executive_json"]).read_text(encoding="utf-8"))
+    assert summary["kind"] == "executive-summary"
+    assert summary["assessment"] is None
+    assert summary["deployment_guidance_counts"]["no-recommendation"] == 15
+    bundle = json.loads(Path(paths["bundle_manifest"]).read_text(encoding="utf-8"))
+    assert bundle["kind"] == "aies-report-bundle"
+    assert bundle["artifacts"]["executive_html"] == "executive-summary.html"
     # a small CA-05 run is under the RT3 minimum -> BLOCKED / non-decisional flagged
     assert "BLOCKED" in md and "non-decisional" in md
 

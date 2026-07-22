@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 from pathlib import Path
 
 import yaml
@@ -29,6 +30,10 @@ def validate(data: dict) -> list[str]:
     problems: list[str] = []
     if not isinstance(data, dict):
         return ["registry must be a mapping"]
+    if data.get("schema") != 2:
+        problems.append("task mapping schema must be 2")
+    if data.get("status") not in ("draft", "review", "approved"):
+        problems.append("task mapping status must be draft | review | approved")
     tasks = data.get("tasks")
     rules = data.get("rules")
     if not isinstance(tasks, list) or not tasks:
@@ -57,6 +62,32 @@ def validate(data: dict) -> list[str]:
             problems.append(f"rule for {rule.get('area')} references unknown task")
         if not isinstance(rule.get("rationale"), str) or not rule["rationale"].strip():
             problems.append(f"rule for {rule.get('area')} requires rationale")
+        review = rule.get("review")
+        if not isinstance(review, dict) or review.get("status") not in (
+                "pending", "accepted", "rejected"):
+            problems.append(
+                f"rule for {rule.get('area')} requires review.status pending | accepted | rejected")
+        elif review.get("status") == "accepted":
+            missing = [field for field in ("reviewer_id", "reviewer_name", "reviewed_at")
+                       if not isinstance(review.get(field), str) or not review[field].strip()]
+            if missing:
+                problems.append(
+                    f"accepted rule for {rule.get('area')} lacks review fields: {', '.join(missing)}")
+            else:
+                reviewer_id = review["reviewer_id"]
+                if not all(character.isalnum() or character in "-_"
+                           for character in reviewer_id):
+                    problems.append(
+                        f"accepted rule for {rule.get('area')} has invalid reviewer_id")
+                try:
+                    reviewed_at = datetime.datetime.fromisoformat(
+                        review["reviewed_at"].replace("Z", "+00:00"))
+                    if reviewed_at.tzinfo is None:
+                        raise ValueError("timezone required")
+                except ValueError:
+                    problems.append(
+                        f"accepted rule for {rule.get('area')} requires a timezone-aware "
+                        "ISO-8601 reviewed_at")
     if problems:
         return problems
     for area in runner.all_area_codes():
@@ -67,11 +98,21 @@ def validate(data: dict) -> list[str]:
     return problems
 
 
-def tasks_for_scenario(scenario: dict, registry: dict | None = None) -> list[str]:
+def mapping_rules_for_scenario(scenario: dict, registry: dict | None = None) -> list[dict]:
+    """Return the exact mapping rules that govern one scenario.
+
+    Family-specific rules replace an area's default rule. Returning the rule
+    records (rather than only task ids) preserves review provenance for ECM
+    task admission under ADR-0013.
+    """
     registry = registry or load()
     matching = [rule for rule in registry["rules"] if rule["area"] == scenario.get("area")]
     exact = [rule for rule in matching if rule.get("family") == scenario.get("family")]
-    selected = exact or [rule for rule in matching if "family" not in rule]
+    return exact or [rule for rule in matching if "family" not in rule]
+
+
+def tasks_for_scenario(scenario: dict, registry: dict | None = None) -> list[str]:
+    selected = mapping_rules_for_scenario(scenario, registry)
     return sorted({task for rule in selected for task in rule["tasks"]})
 
 

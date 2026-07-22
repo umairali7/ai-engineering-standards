@@ -66,6 +66,13 @@ extension is permitted (see COMPATIBILITY.md). A breaking change requires an ADR
 | **Decision semantics** | Standard (AESQS) | `1.0` | `decision.DECISION_SEMANTICS_VERSION` |
 | **Report Renderer contract** (view-only) | Platform | `v1.0` | `decision.render_*`, `report_html` |
 
+The Engineering Capability Matrix (`ecm_schema: 2`), Engineering Task Mapping
+(`schema: 2`), task-decision semantics (`1.0`), and Deployment Guidance
+(`guidance_schema: 2`) are **review-stage experimental contracts**, not part of
+the frozen v1.0 contract set. [ADR-0013](adr/ADR-0013-ECM-Task-Decision-Semantics-and-Deployment-Guidance.md)
+governs their current meaning. Consumers must check their explicit version
+fields; acceptance of ADR-0013 does not by itself ratify AIES-ECM-01.
+
 Two version fields are deliberately distinct on every result:
 `decision_engine_version` (*which software decided*) and
 `decision_semantics_version` (*which normative policy was applied*). A bugfix

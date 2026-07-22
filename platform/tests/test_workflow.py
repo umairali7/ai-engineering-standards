@@ -207,6 +207,8 @@ def test_full_cycle_to_grant_and_env_invalidation(ws, tmp_path):
     assert record["scope"]["phases"] == ["P09", "P10"]
     assert record["scope"]["max_risk_tier"] == "RT2"
     assert record["scope"]["framework_version"].startswith("AIES-AESQS-CF-01")
+    assert record["scope"]["engineering_task_mapping"] == {
+        "id": "aies-engineering-tasks-v1", "version": "2.0.0", "schema": 2}
     assert record["scope"]["sponsor"] == "Test Sponsor"
     assert record["scope"]["validity"]["until"].startswith("2027-06")
     assert record["humans"]["protocol"]["satisfied"] is True

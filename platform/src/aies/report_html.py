@@ -244,6 +244,9 @@ def render_html(run_id: str) -> str:
 
     from . import ecm
     w(ecm.render_capability_summary_html(ecm.engineering_capability_matrix(run_id)))
+    w("<p><a href='executive-summary.html'>Executive Summary</a> &middot; "
+      "<a href='deployment-guidance.html'>Deployment Guidance</a> &middot; "
+      "<a href='engineering-capability-matrix.html'>Engineering Capability Matrix</a></p>")
 
     w("<footer>Raters: " + _esc(", ".join(pkg["raters"]))
       + f" &middot; Aggregated {_esc(pkg['aggregated_at'])}"

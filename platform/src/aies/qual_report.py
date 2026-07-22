@@ -62,12 +62,16 @@ def render_markdown(record_id: str) -> str:
     if scope.get("role"):
         validity = scope.get("validity") or {}
         agent = scope.get("agent_definition") or {}
+        mapping = scope.get("engineering_task_mapping") or {}
         a("| Scope field | Declared value |")
         a("|---|---|")
         a(f"| Role | {C.identifier_label(scope['role'])} |")
         a(f"| SDLC phases | {', '.join(C.identifier_label(phase) for phase in scope.get('phases', []))} |")
         a(f"| Maximum risk tier | {C.risk_tier_label(scope.get('max_risk_tier'))} |")
         a(f"| Competency framework | {scope.get('framework_version')} |")
+        mapping = scope.get("engineering_task_mapping") or {}
+        a(f"| Engineering task mapping | {mapping.get('id', 'not recorded')} "
+          f"v{mapping.get('version', 'not recorded')} (schema {mapping.get('schema', '—')}) |")
         a(f"| Agent definition | {agent.get('version') if agent.get('applicable') else 'not applicable'} |")
         a(f"| Sponsor | {scope.get('sponsor')} |")
         a(f"| Validity window | {validity.get('from')} through {validity.get('until')} |")
@@ -164,12 +168,15 @@ def render_html(record_id: str) -> str:
     if scope.get("role"):
         validity = scope.get("validity") or {}
         agent = scope.get("agent_definition") or {}
+        mapping = scope.get("engineering_task_mapping") or {}
         w("<table class=env>")
         for key, value in (
             ("Role", C.identifier_label(scope["role"])),
             ("SDLC phases", ", ".join(C.identifier_label(phase) for phase in scope.get("phases", []))),
             ("Maximum risk tier", C.risk_tier_label(scope.get("max_risk_tier"))),
             ("Competency framework", scope.get("framework_version")),
+            ("Engineering task mapping",
+             f"{mapping.get('id', 'not recorded')} v{mapping.get('version', 'not recorded')}"),
             ("Agent definition", agent.get("version") if agent.get("applicable") else "not applicable"),
             ("Sponsor", scope.get("sponsor")),
             ("Validity window", f"{validity.get('from')} through {validity.get('until')}"),

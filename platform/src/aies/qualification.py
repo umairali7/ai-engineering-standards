@@ -307,6 +307,8 @@ def record_decision(
                "aggregate_A": d["aggregate_A"]}
         for area, d in pkg["areas"].items()
     }
+    from . import task_mappings
+    mapping = task_mappings.load()
     status = {"grant": "active", "grant-with-conditions": "conditional",
               "deny": "denied"}[decision]
     # Enrich the subject with runtime + model from the deployment manifest,
@@ -337,6 +339,11 @@ def record_decision(
             "max_risk_tier": pkg["risk_tier"],
             "competency_claims": scope_areas,
             "framework_version": framework_version,
+            "engineering_task_mapping": {
+                "id": mapping["id"],
+                "version": mapping["version"],
+                "schema": mapping["schema"],
+            },
             "agent_definition": {
                 "applicable": bool(agent_definition_version),
                 "version": agent_definition_version,
@@ -409,6 +416,27 @@ def _current_deployment_fingerprint(record: dict) -> dict:
         # Deployment gone or unreachable: cannot reproduce the environment,
         # so it is not the environment it was granted on.
         return doctor.fingerprint({"id": "unavailable", "version": "n/a"})
+
+
+def check_current(record_id: str) -> dict:
+    """Read-only current-state check for bounded decision products.
+
+    Unlike :func:`verify`, this function never appends a lifecycle event. It is
+    suitable for guidance rendering, where a failed live check must suppress a
+    Use recommendation without silently mutating the qualification registry.
+    """
+    record = get_record(record_id)
+    fp = _current_deployment_fingerprint(record)
+    earned = record["evidence"]["environment_fingerprint"].get("fingerprint_hash")
+    current = fp.get("fingerprint_hash")
+    return {
+        "record_id": record_id,
+        "status": record["status"],
+        "environment_unchanged": earned == current,
+        "earned_fingerprint": earned,
+        "current_fingerprint": current,
+        "checked_at": _now(),
+    }
 
 
 def verify(record_id: str, current_fingerprint: dict | None = None) -> dict:

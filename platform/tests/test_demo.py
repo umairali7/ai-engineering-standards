@@ -79,6 +79,15 @@ def test_offline_end_to_end_demo(demo_ws):
     assert evaluation["human_evaluation"]["status"] == "not-reviewed"
     assert evaluation["human_evaluation"]["optional"] is True
     assert result["outcome"] == "INSUFFICIENT EVIDENCE"
+    for name in ("assessment-result.md", "assessment-result.html",
+                 "deployment-guidance.md", "deployment-guidance.json",
+                 "deployment-guidance.html", "executive-summary.md",
+                 "executive-summary.json", "executive-summary.html",
+                 "report-bundle.json"):
+        assert (runs[-1] / name).exists(), name
+    executive = json.loads(
+        (runs[-1] / "executive-summary.json").read_text(encoding="utf-8"))
+    assert executive["assessment"]["outcome"] == result["outcome"]
 
     # Automated-only formal fields are intentionally empty; the human-readable
     # legacy profile must render that state rather than formatting None as a

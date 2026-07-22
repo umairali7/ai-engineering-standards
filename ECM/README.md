@@ -19,12 +19,12 @@ limits, or human accountability.
 
 Each ECM is scoped to the risk tier recorded in its source run. A task marked
 `not assessed` has no mapped scored evidence in that scope; it does not mean
-the subject failed the task. A task marked `observed` has descriptive mapped
-evidence but no governed task decision. While this standard remains Draft and
-[ADR-0013](../adr/ADR-0013-ECM-Task-Decision-Semantics-and-Deployment-Guidance.md)
-remains Proposed, no row may be labelled `demonstrated` and Deployment Guidance
-may not emit `Use`. An all-area run covers all areas at one tier, not all four
-risk tiers.
+the subject failed the task. `observed` is descriptive evidence whose mapping
+or qualification admission is incomplete. `insufficient` has admitted evidence
+but lacks task breadth or rater-protocol assurance. `gate-failed` and
+`performance-below-threshold` are explicit negative task decisions.
+`demonstrated` satisfies [ADR-0013](../adr/ADR-0013-ECM-Task-Decision-Semantics-and-Deployment-Guidance.md).
+An all-area run covers all areas at one tier, not all four risk tiers.
 
 ## 2. Architecture
 
@@ -67,26 +67,29 @@ render as **not assessed**.
 ## 4. ECM task row requirements
 
 Every task row MUST include task ID and versioned mapping, subject, scenario
-IDs, risk tier, distinct scenarios, repeats, rating observations, uncertainty,
-rater provenance, evidence confidence, qualification constraints, and a clear
-status: demonstrated, observed, insufficient, or not assessed.
+IDs, risk tier, distinct scenarios, repeats, rating observations, resolved
+admitted items, 90% uncertainty, risk-tier gates, rater protocol, mapping-review
+provenance, instrument maturity, parent competency outcomes, evidence adequacy,
+qualification constraints, and its exact status/reasons.
 
 Observed performance and evidence confidence are separate. A high observed
 score with low evidence confidence is never a recommendation.
 
 ## 5. Decision Products
 
-Deployment Guidance MAY render **Use**, **Use with Review**, and **Avoid** only
-from ECM evidence plus qualification/autonomy constraints. Comparison MAY show
+Deployment Guidance MAY render **Use** only from a demonstrated task plus an
+active matching human Qualification Record. **Use with Review** is only for a
+demonstrated task whose qualification conditions or autonomy envelope require
+review; it is never a fallback for weak evidence. Comparison MAY show
 task deltas only when suite, mapping version, risk tier, profile, repeat
 structure, rater protocol, and adequacy are compatible. AIES Select MUST use a
 declared workload and operating constraints; it MUST NOT emit a global best
 subject claim.
 
-Until the task-decision rules are accepted and their conformance fixtures pass,
-the reference implementation renders mapped scores as observations only and
-uses **No recommendation / collect evidence** rather than any operational use
-claim.
+Pending mapping reviews, unverified rater evidence, inadequate distinct-task
+breadth, uncertainty/gate failures, expired or invalid qualifications, and
+scope/autonomy mismatches render **No recommendation / collect evidence** or
+**Avoid for this scoped use**, never an operational use claim.
 
 ## Related Documents
 

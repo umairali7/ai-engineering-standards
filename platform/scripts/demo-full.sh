@@ -34,8 +34,12 @@ aies assessment list
 
 hr "4. Assess a deployment: compose -> collect -> automated Engineering Evaluation"
 echo "Running the 'coder' assessment once per distinct instrument, auto-scored by a different mock judge..."
-RUN=$(aies qualify "$CANDIDATE" --assessment coder --judge "$JUDGE" --json \
-        | py 'print(json.load(sys.stdin)["run_id"])')
+# Keep stdout as a reviewable transcript while stderr shows the originating
+# command's live tasks, dynamic worker activity, elapsed time, throughput, and
+# ETA. The durable run directory is the source of identity, not parsed prose.
+aies qualify "$CANDIDATE" --assessment coder --judge "$JUDGE" \
+    > "$WS/qualification-transcript.md"
+RUN=$(basename "$(ls -d "$WS"/runs/run-* | sort | tail -n1)")
 echo "run: $RUN"
 
 # The mock judge is deliberately not trusted by default.  This fixture is
@@ -63,10 +67,46 @@ fi
 sed -n '1,26p' "$WS/assessment-result.md"
 echo "formal result exit $RESULT_EXIT is expected and contained by the demo"
 
-hr "6. Per-area capability profile (planner / coder / security ... side by side)"
+hr "6. Engineering Capability Matrix — what was observed, and what is still unknown"
+cat "$WS/runs/$RUN/engineering-capability-matrix.json" | py '
+d=json.load(sys.stdin)
+print("  mapping:", d["mapping"]["kind"], "v"+d["mapping"]["version"], "("+d["mapping"]["status"]+")")
+for t in d["tasks"]:
+    perf="not assessed" if t["observed_performance"] is None else "{:.0f}% observed".format(t["observed_performance"]/4*100)
+    print("  {} {:<28} {:<16} {}".format(t["task_id"], t["task"], perf, t["status"]))
+'
+echo "Pending mapping review remains visible; the demo never upgrades observed evidence into demonstrated capability."
+
+hr "7. Per-area qualification profile (formal evidence, kept separate from ECM)"
 aies capabilities "$RUN"
 
-hr "7. Presentation-grade renders (views of the SAME result — no re-deciding)"
+hr "8. Qualification-bounded Deployment Guidance"
+cat "$WS/runs/$RUN/deployment-guidance.json" | py '
+d=json.load(sys.stdin); counts={}
+for t in d["tasks"]: counts[t["guidance"]]=counts.get(t["guidance"],0)+1
+print("  qualification record:", d["qualification_record"] or "not supplied")
+[print(" ", k, v) for k,v in sorted(counts.items())]
+'
+echo "No human Qualification Record was supplied, so guidance correctly emits no Use recommendation."
+
+hr "9. Protocol-compatible ECM comparison (same evidence fixture, no invented winner)"
+aies compare "$RUN" "$RUN" --ecm --json | py '
+d=json.load(sys.stdin)
+print("  global protocol compatible:", d["compatible"])
+print("  comparable demonstrated task rows:", sum(1 for t in d["tasks"] if t["comparable"]))
+print("  winners emitted:", sum(1 for t in d["tasks"] if t["winner"]))
+'
+
+hr "10. Linked audience-specific decision products"
+cat "$WS/runs/$RUN/report-bundle.json" | py '
+d=json.load(sys.stdin)
+print("  bundle schema:", d["report_bundle_schema"])
+[print("  {:<24} {}".format(name,file)) for name,file in d["artifacts"].items() if name.endswith("_html") or name=="html"]
+'
+echo
+sed -n '1,34p' "$WS/runs/$RUN/executive-summary.md"
+
+hr "11. Presentation-grade renders (views of the SAME evidence — no hidden inference)"
 HTML_EXIT=0
 aies assessment result "$RUN" --format html --out "$WS/assessment.html" || HTML_EXIT=$?
 if { [ "$HTML_EXIT" -eq 0 ] || [ "$HTML_EXIT" -eq 1 ]; } && [ -s "$WS/assessment.html" ]; then
@@ -75,9 +115,9 @@ else
   echo "assessment HTML render failed with exit $HTML_EXIT" >&2
   exit "${HTML_EXIT:-2}"
 fi
-aies report "$RUN" --format html --write > /dev/null && echo "wrote evidence report (HTML)"
+aies report "$RUN" --format html --write > /dev/null && echo "refreshed the complete linked report bundle"
 
-hr "8. Formal grant boundary (expected refusal on automated-only evidence)"
+hr "12. Formal grant boundary (expected refusal on automated-only evidence)"
 if aies grant "$RUN" --decision grant \
     --authority "A. Architect (ROLE-13)" --second "P. Peer (ROLE-14)" \
     > "$WS/unexpected-grant.txt" 2> "$WS/grant-refusal.txt"; then
@@ -93,14 +133,14 @@ else
   grep -m1 "cannot grant on NON-DECISIONAL evidence" "$WS/grant-refusal.txt"
 fi
 
-hr "9. Decision-engine CONFORMANCE (the standard as a subject)"
+hr "13. Decision-engine CONFORMANCE (the standard as a subject)"
 echo "Does the reference engine reproduce AESQS decision semantics on the golden corpus?"
-aies conform engine || true
+aies conform engine
 echo
 echo "-- and a FOREIGN engine (package-free reimplementation) self-verifies on the same corpus --"
-aies conform engine --engine "python ../conformance/example_engine.py" 2>/dev/null | sed -n '1,4p' || echo "(foreign-engine step skipped)"
+aies conform engine --engine "python ../conformance/example_engine.py" | sed -n '1,4p'
 
-hr "10. Empirical calibration harness (Phase 2 — ready for a real-model panel)"
+hr "14. Empirical calibration harness (ready for a real-subject panel)"
 echo "Design-time calibration is done; EMPIRICAL calibration needs a model panel."
 echo "Demonstrating the harness on a SYNTHETIC 3-ability panel (not real evidence):"
 cat > "$WS/panel.json" <<JSON
@@ -111,17 +151,18 @@ cat > "$WS/panel.json" <<JSON
 JSON
 aies suites empirical "$WS/panel.json"
 
-hr "11. Repository conformance AUDIT (a different subject: the engineering practice)"
-aies audit .. 2>/dev/null | sed -n '1,10p' || echo "(audit step skipped)"
+hr "15. Repository conformance AUDIT (a different subject: the engineering practice)"
+aies audit .. | sed -n '1,10p'
 
-hr "12. The platform reviews its OWN corpus (continuous QA — advisory, no single grade)"
-aies corpus health 2>/dev/null | sed -n '1,18p' || echo "(corpus step skipped)"
+hr "16. The platform reviews its OWN corpus (continuous QA — advisory, no single grade)"
+aies corpus health | sed -n '1,18p'
 echo
 echo "-- and reviews a single scenario as a measurement instrument (structural + model critique) --"
-aies corpus review SC-CA07-015 --reviewer "$JUDGE" 2>/dev/null | sed -n '1,14p' || echo "(review skipped)"
+aies corpus review SC-CA07-015 --reviewer "$JUDGE" | sed -n '1,14p'
 
 hr "DEMO COMPLETE"
 echo "Subjects assessed:  a model deployment (qualify)  +  a repository (audit)  +  the standard (conform engine)"
-echo "Also shown:  calibrated instruments, the qualification boundary, and the Phase-2 empirical harness."
+echo "Also shown:  live task/ETA progress, ECM strengths/gaps, bounded guidance, compatible comparison,"
+echo "             the linked Executive Summary bundle, qualification boundary, and empirical harness."
 echo "The same canonical result is served read-only over JSON:  aies serve --port 8722"
 echo "workspace: $WS"

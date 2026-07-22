@@ -150,7 +150,10 @@ def cmd_qualify(args) -> int:
                  f"  evaluation (JSON): {paths['engineering_evaluation']}\n"
                  f"  ECM (Markdown)   : {paths['ecm_markdown']}\n"
                  f"  ECM (JSON)       : {paths['ecm_json']}\n"
-                 f"  ECM (HTML)       : {paths['ecm_html']}"
+                 f"  ECM (HTML)       : {paths['ecm_html']}\n"
+                 f"  Guidance (HTML)  : {paths['guidance_html']}\n"
+                 f"  Executive (HTML) : {paths['executive_html']}\n"
+                 f"  Bundle manifest  : {paths['bundle_manifest']}"
                  + (f"\n\nAssessment '{outcome['assessment']['id']}' "
                     f"v{outcome['assessment']['version']}: **{outcome['outcome']}**"
                     if outcome else ""))
@@ -242,7 +245,7 @@ def cmd_qualify(args) -> int:
                              callback=live_progress)
             _progress.update(run_id, "report-generation", 0, 1,
                              callback=live_progress)
-            _report.write_reports(run_id)
+            report_paths = _report.write_reports(run_id)
             _progress.update(run_id, "report-generation", 1, 1,
                              status="completed", callback=live_progress)
             outcome = _assessment_result(run_id)
@@ -250,6 +253,7 @@ def cmd_qualify(args) -> int:
                 _out({"run_id": run_id, "judge": jdep, "self_judged": self_judged,
                       "scoring": summary, "engineering_evaluation":
                       _evaluation.summarize(run_id), "evidence_package": pkg,
+                      "reports": report_paths,
                       **({"assessment_result": outcome} if outcome else {})}, True)
             else:
                 print(_report.render_markdown(run_id))
@@ -504,8 +508,9 @@ def cmd_report(args) -> int:
         elif args.format == "html":
             from . import report_html
             if args.write:
-                path = report_html.write_html(args.run)
-                _out({"html": path}, args.json, f"wrote {path}\n"
+                paths = report.write_reports(args.run)
+                _out({"html": paths["html"], "reports": paths}, args.json,
+                     f"wrote complete report bundle; HTML evidence report: {paths['html']}\n"
                      "(open in a browser; use the browser's Save as PDF for the "
                      "PDF deliverable — no PDF dependency is bundled)")
             else:
@@ -609,15 +614,24 @@ def cmd_capabilities(args) -> int:
 
 def cmd_guidance(args) -> int:
     """Render bounded deployment guidance from an aggregated run."""
-    from . import compare, guidance
+    from . import compare, guidance, qualification
     try:
+        options = {
+            "qualification_id": args.qualification,
+            "requested_role": args.role,
+            "requested_phases": args.phase,
+            "requested_autonomy": f"AL{args.autonomy}" if args.autonomy is not None else None,
+        }
         if args.write:
-            path = guidance.write(args.ref)
-            _out({"deployment_guidance": str(path)}, args.json, f"wrote {path}")
+            paths = guidance.write_artifacts(args.ref, **options)
+            _out({"deployment_guidance": paths}, args.json,
+                 "wrote Deployment Guidance:\n" +
+                 "\n".join(f"  {format}: {path}" for format, path in paths.items()))
         else:
-            _out({"deployment_guidance": guidance.render_markdown(args.ref)}, args.json,
-                 guidance.render_markdown(args.ref))
-    except compare.CompareError as e:
+            result = guidance.decide(args.ref, **options)
+            _out(result, args.json, guidance.render_markdown(args.ref, **options))
+    except (compare.CompareError, guidance.GuidanceError,
+            qualification.QualificationError) as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
     return 0
@@ -1574,7 +1588,15 @@ def build_parser() -> argparse.ArgumentParser:
 
     gd = common(sub.add_parser("guidance", help="render bounded deployment guidance from ECM evidence"))
     gd.add_argument("ref", help="aggregated run id, or deployment id")
-    gd.add_argument("--write", action="store_true", help="write deployment-guidance.md beside the run")
+    gd.add_argument("--qualification", metavar="QUAL-ID",
+                    help="active human Qualification Record that bounds any Use recommendation")
+    gd.add_argument("--role", choices=tuple(C.ROLE_NAMES),
+                    help="requested engineering role; must match the qualification scope")
+    gd.add_argument("--phase", action="append", choices=tuple(C.PHASE_NAMES),
+                    help="requested SDLC phase; repeat for additional phases")
+    gd.add_argument("--autonomy", type=int, choices=(0, 1, 2, 3, 4),
+                    help="requested autonomy level number (for example 2 for AL2 — Collaborative)")
+    gd.add_argument("--write", action="store_true", help="write Deployment Guidance Markdown, JSON, and HTML beside the run")
     gd.set_defaults(func=cmd_guidance)
 
     au = common(sub.add_parser("audit", help="audit a repository's conformance to "

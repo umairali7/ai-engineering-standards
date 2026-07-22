@@ -3,8 +3,8 @@
 | | |
 |---|---|
 | **ADR** | ADR-0013 |
-| **Status** | Proposed |
-| **Deciders** | Repository owner; ECM Module Editor; AESQS Module Editor; Platform Module Editor |
+| **Status** | Accepted |
+| **Deciders** | Umair Ali (repository owner); ECM Module Editor; AESQS Module Editor; Platform Module Editor |
 | **Supersedes / Superseded by** | Extends ADR-0008; supersedes no accepted decision |
 
 ## Context
@@ -22,8 +22,9 @@ floor. The renderer also has enough information to place such a row under
 Deployment Guidance `Use`, which turns an ungoverned inspection statistic into
 an operational recommendation.
 
-Until this decision is accepted and implemented, the platform conservatively
-labels mapped task evidence `observed` and emits no `Use` recommendation.
+During migration, the platform conservatively labels mapped task evidence
+`observed` and emits no `Use` recommendation until each required mapping review
+and task-decision control is present.
 
 ## Decision Drivers
 
@@ -128,9 +129,9 @@ Adopt Option C with these rules:
     a delta/winner claim requires compatible mapping version, risk tier,
     profile/weights, suites, task protocol, rater protocol, instrument maturity,
     and demonstrated status on both sides.
-11. **Honesty during migration.** Until this ADR is Accepted and its conformance
-    cases pass, all task rows remain `observed`/`not assessed`, numeric
-    task-confidence percentages are suppressed, and Deployment Guidance emits
+11. **Honesty during migration.** Until this ADR's conformance cases pass for a
+    task and its mappings are reviewed, that task remains `observed`, numeric
+    decision confidence is marked unavailable, and Deployment Guidance emits
     no `Use` recommendation.
 
 ## Consequences

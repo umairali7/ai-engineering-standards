@@ -193,6 +193,10 @@ def compare_ecm(ref_a: str, ref_b: str) -> dict:
         "risk_tier": a["risk_tier"] == b["risk_tier"],
         "profile": a["profile"] == b["profile"],
         "mapping_version": a["mapping"]["version"] == b["mapping"]["version"],
+        "mapping_schema": a["mapping"]["schema"] == b["mapping"]["schema"],
+        "task_decision_semantics": (
+            a["task_decision_semantics_version"]
+            == b["task_decision_semantics_version"]),
         "rater_protocol": a["rater_kinds"] == b["rater_kinds"],
         "suite_versions": pa["suite_versions"] == pb["suite_versions"],
         "repeat_structure": ma.get("repeats") == mb.get("repeats"),
@@ -200,11 +204,24 @@ def compare_ecm(ref_a: str, ref_b: str) -> dict:
     compatible = all(checks.values())
     rows = []
     for left, right in zip(a["tasks"], b["tasks"]):
-        comparable = compatible and left["status"] == right["status"] == "demonstrated"
+        left_decision = left.get("task_decision") or {}
+        right_decision = right.get("task_decision") or {}
+        task_checks = {
+            "same_scenarios": left.get("scenario_ids") == right.get("scenario_ids"),
+            "demonstrated": left["status"] == right["status"] == "demonstrated",
+            "rater_protocol": (
+                (left_decision.get("rater_protocol") or {}).get("satisfied") is True
+                and (right_decision.get("rater_protocol") or {}).get("satisfied") is True),
+            "instrument_maturity": (
+                left_decision.get("instrument_maturity")
+                == right_decision.get("instrument_maturity")),
+        }
+        comparable = compatible and all(task_checks.values())
         winner = None if not comparable or left["observed_performance"] == right["observed_performance"] else (
             "A" if left["observed_performance"] > right["observed_performance"] else "B")
         rows.append({"task": left["task"], "a": left["observed_performance"],
-                     "b": right["observed_performance"], "comparable": comparable, "winner": winner})
+                     "b": right["observed_performance"], "comparable": comparable,
+                     "checks": task_checks, "winner": winner})
     return {"kind": "ecm-comparison", "compatible": compatible, "checks": checks,
             "a": a, "b": b, "tasks": rows}
 

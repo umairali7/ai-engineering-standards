@@ -8,6 +8,7 @@ human-recorded grant renders as evidence-only (PLATFORM.md §9).
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from statistics import mean
 
 from . import constants as C
@@ -333,6 +334,9 @@ def render_markdown(run_id: str) -> str:
     a("For the standalone, engineer-facing artifact, see the "
       "[Engineering Capability Matrix](engineering-capability-matrix.md).")
     a("")
+    a("Related decision products: [Executive Summary](executive-summary.md) · "
+      "[Deployment Guidance](deployment-guidance.md).")
+    a("")
 
     a("---")
     a(f"Raters: {', '.join(pkg['raters'])} | Aggregated: {pkg['aggregated_at']} | "
@@ -349,7 +353,8 @@ def write_reports(run_id: str) -> dict[str, str]:
     part of the evidence-package presentation bundle alongside the Markdown,
     JSON, and standalone Engineering Capability Matrix (ECM) views.
     """
-    from . import ecm, evaluation, report_html
+    from . import (decision, ecm, evaluation, executive_summary, guidance,
+                   report_html)
 
     rdir = workspace.run_dir(run_id)
     md = render_markdown(run_id)
@@ -373,6 +378,64 @@ def write_reports(run_id: str) -> dict[str, str]:
         ecm_paths[f"ecm_{format}"] = str(path)
     html_path = rdir / "report.html"
     html_path.write_text(report_html.render_html(run_id), encoding="utf-8")
-    return {"markdown": str(rdir / "report.md"), "json": str(rdir / "report.json"),
-            "html": str(html_path), "engineering_evaluation": str(evaluation_path),
-            **ecm_paths}
+
+    # A declarative assessment produces its canonical outcome and three views.
+    # Runs without an assessment still receive the other audience-specific
+    # products; the bundle manifest records the absence explicitly.
+    assessment_paths: dict[str, str] = {}
+    assessment_result = None
+    manifest = workspace.read_json(rdir / "manifest.json")
+    if manifest.get("assessment"):
+        assessment_result = decision.assess_run(run_id)
+        assessment_md = rdir / "assessment-result.md"
+        assessment_html = rdir / "assessment-result.html"
+        assessment_md.write_text(decision.render_markdown(assessment_result), encoding="utf-8")
+        assessment_html.write_text(decision.render_html(assessment_result), encoding="utf-8")
+        assessment_paths = {
+            "assessment_markdown": str(assessment_md),
+            "assessment_json": str(rdir / "assessment-result.json"),
+            "assessment_html": str(assessment_html),
+        }
+
+    # The default bundle has no Qualification Record and therefore cannot emit
+    # a Use recommendation. A later scoped `aies guidance --qualification ...
+    # --write` refreshes only the guidance artifacts with human authority.
+    guidance_paths = guidance.write_artifacts(run_id)
+    guidance_result = workspace.read_json(rdir / "deployment-guidance.json")
+    summary = executive_summary.build(
+        run_id, matrix, guidance_result, assessment_result=assessment_result)
+    executive_paths = {
+        "executive_markdown": rdir / "executive-summary.md",
+        "executive_json": rdir / "executive-summary.json",
+        "executive_html": rdir / "executive-summary.html",
+    }
+    executive_paths["executive_markdown"].write_text(
+        executive_summary.render_markdown(summary), encoding="utf-8")
+    executive_paths["executive_json"].write_text(
+        executive_summary.render_json(summary), encoding="utf-8")
+    executive_paths["executive_html"].write_text(
+        executive_summary.render_html(summary), encoding="utf-8")
+
+    paths = {
+        "markdown": str(rdir / "report.md"), "json": str(rdir / "report.json"),
+        "html": str(html_path), "engineering_evaluation": str(evaluation_path),
+        **ecm_paths, **assessment_paths,
+        **{f"guidance_{format}": path for format, path in guidance_paths.items()},
+        **{key: str(path) for key, path in executive_paths.items()},
+    }
+    bundle = {
+        "kind": "aies-report-bundle", "report_bundle_schema": 1,
+        "run_id": run_id, "status": "informational-index",
+        "artifacts": {key: Path(path).name for key, path in paths.items()},
+        "audience_boundaries": {
+            "qualification_evidence": "governance and auditors",
+            "assessment_result": "authoritative assessment outcome when available",
+            "engineering_capability_matrix": "engineers",
+            "deployment_guidance": "operations and managers; requires human qualification for Use",
+            "executive_summary": "leadership",
+        },
+    }
+    bundle_path = rdir / "report-bundle.json"
+    bundle_path.write_text(json.dumps(bundle, indent=2) + "\n", encoding="utf-8")
+    paths["bundle_manifest"] = str(bundle_path)
+    return paths

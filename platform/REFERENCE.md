@@ -54,6 +54,12 @@ Every artifact carries a schema version; envelopes are field-append-only
 | Engineering Evaluation Summary | `evaluation_schema` | `1` | every complete report bundle (`engineering-evaluation.json`) |
 | Canonical Assessment Result | `result_schema` | `1` | the decision engine |
 | Decision semantics | `decision_semantics_version` | `1.0` (AESQS CS-01 §8) | the standard |
+| Engineering Task Mapping *(review-stage)* | `schema` | `2` | authored (`task_mappings/*.yaml`) |
+| Engineering Capability Matrix *(review-stage)* | `ecm_schema` | `2` | `capabilities --ecm` / report bundle |
+| ECM task-decision semantics *(review-stage)* | `task_decision_semantics_version` | `1.0` | ADR-0013 |
+| Deployment Guidance *(review-stage)* | `guidance_schema` | `2` | `guidance` |
+| Executive Summary | `executive_summary_schema` | `1` | complete report bundle |
+| Report Bundle Index | `report_bundle_schema` | `1` | complete report bundle |
 
 The result's `metadata` records both `decision_engine_version` (which software)
 and `decision_semantics_version` (which policy), plus the `profile_version` and
@@ -84,10 +90,11 @@ append-only records. Grouped as in `aies --help`.
 | `rater` | Register/list/show durable human identity, competency/risk scope, qualification, and calibration | `aies rater register --id alice --name "Alice" --area CA-05 --rt 2 ...` |
 | `resolve` | Append a named, reasoned human disposition for a materially divergent evidence item | `aies resolve run-2031 SC-CA05-001-r1.json --scores 4 4 3 4 3 4 ...` |
 | `import` / `export` | Bring external eval results in as EV evidence / round-trip out | `aies import run-2031 eval.json` |
-| `capabilities` | Per-area CL + autonomy + gate + decisional status; `--ecm` renders a traceable, informational scenario-family matrix | `aies capabilities run-2031 --ecm --format html --write` |
+| `capabilities` | Per-area CL + autonomy + gate + decisional status; `--ecm` renders a traceable task matrix whose `demonstrated` state requires ADR-0013 controls | `aies capabilities run-2031 --ecm --format html --write` |
 | `assessment` | `list` / `show` / `validate` / `result <run>` (Markdown/JSON/`--format html`) | `aies assessment result run-2031` |
 | `review` | Automated review, optional human-evaluation record, implicit live progress, and refreshed report bundle | `aies review run-2031 --model-reviewer rev` |
-| `compare` | Deltas across runs on identical suite versions | `aies compare a b --profile coder` |
+| `compare` | Task deltas only when evidence and decision protocols are compatible; incompatible rows emit no winner | `aies compare a b --profile coder` |
+| `guidance` | Qualification-bounded informational Deployment Guidance; optional role, phase, and autonomy flags narrow the requested scope | `aies guidance run-2031 --qualification QUAL-2026-001 --role ROLE-06 --phase P09 --autonomy 3 --write` |
 | `runs list` / `runs progress` / `transcript` | List runs, optionally observe another command's durable progress from a second terminal, or render a whole run. The originating command already shows stage and total timing, ETA, plus the current human-readable task and task ordinal. | `aies runs progress run-2031` |
 
 ### Judging
