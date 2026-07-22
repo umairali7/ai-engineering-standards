@@ -1,7 +1,7 @@
 # AIES Engineering Assessment Platform — developer entry points.
 # The demo is executable documentation: `make demo` runs the entire workflow
 # offline; the same golden path is CI-gated as tests/test_demo.py.
-.PHONY: install test validate audit release-hygiene demo integration-demo all
+.PHONY: install test validate audit release-hygiene demo demo-full demo-empirical integration-demo all
 
 install:            ## editable install + test deps
 	pip install -e . && pip install pytest
@@ -22,7 +22,7 @@ demo:              ## core workflow, fully offline (mock runtime + mock judge)
 	bash scripts/demo.sh
 
 demo-full:         ## comprehensive tour of the whole platform, fully offline
-	bash scripts/demo-full.sh
+	python scripts/demo_full.py
 
 demo-empirical:    ## Phase-2 empirical harness on a SYNTHETIC panel (see discrimination output)
 	python scripts/demo_empirical.py

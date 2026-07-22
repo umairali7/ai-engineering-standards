@@ -94,8 +94,6 @@ competencies:
   - area: CA-09                # Operations — informational only
     requirement: { type: advisory }
     weight: 15
-sampling:
-  repeats: 3
 ```
 
 - **`requirement`** is an object (`{ type: mandatory | advisory }`), leaving room
@@ -103,8 +101,13 @@ sampling:
   ones are scored and reported but never fail an assessment.
 - **`weight`** governs composition, execution priority, and reporting emphasis —
   it **never** compensates for a failed gate or mandatory requirement.
-- Everything under `sampling`/gates/minimums is bounded by the engine: an
-  assessment can only *raise* effective volume, never lower a gate or minimum.
+- Shipped assessments execute every selected scenario once. Exact repeats are
+  requested explicitly with `--repeats N` only for a separately identified
+  stability study; they never increase distinct-scenario breadth or repair a
+  qualification sample minimum (ADR-0011).
+- The optional legacy-compatible `sampling.repeats` field can only raise raw
+  observation volume. New general-purpose assessments SHOULD omit it; a
+  specialized stability assessment MUST say so in its identity and description.
 
 Validate before committing:
 

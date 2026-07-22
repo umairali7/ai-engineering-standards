@@ -106,6 +106,14 @@ def test_every_shipped_assessment_is_valid():
         assert problems == [], f"{path.name}: {problems}"
 
 
+def test_shipped_assessments_never_schedule_implicit_repeats():
+    """ADR-0011: exact repeats are an explicit stability-study operation."""
+    from aies import assessments
+    for row in assessments.list_assessments():
+        resolved = assessments.resolve(assessments.load(row["id"]))
+        assert resolved["repeats"] is None, row["id"]
+
+
 def test_suites_validate_gate_catches_a_broken_assessment(tmp_path, monkeypatch):
     """`aies suites validate` (the gate CI runs) must fail if an assessment file
     is invalid, so a bad assessment cannot pass CI silently."""

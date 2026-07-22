@@ -20,5 +20,3 @@ competencies:
   - area: CA-02                # Business & Requirements Analysis (advisory)
     requirement: { type: advisory }
     weight: 15
-sampling:
-  repeats: 3

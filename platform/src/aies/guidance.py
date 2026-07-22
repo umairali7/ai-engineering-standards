@@ -70,9 +70,10 @@ def _scope_check(matrix: dict, task: dict, record: dict,
 def decide(ref: str, *, qualification_id: str | None = None,
            requested_role: str | None = None,
            requested_phases: list[str] | None = None,
-           requested_autonomy: str | None = None) -> dict:
+           requested_autonomy: str | None = None,
+           matrix: dict | None = None) -> dict:
     """Return guidance decisions without creating deployment authority."""
-    matrix = ecm.engineering_capability_matrix(ref)
+    matrix = matrix or ecm.engineering_capability_matrix(ref)
     record = qualification.get_record(qualification_id) if qualification_id else None
     current_check = (
         qualification.check_current(qualification_id)
@@ -164,8 +165,9 @@ def decide(ref: str, *, qualification_id: str | None = None,
 def render_markdown(ref: str, *, qualification_id: str | None = None,
                     requested_role: str | None = None,
                     requested_phases: list[str] | None = None,
-                    requested_autonomy: str | None = None) -> str:
-    result = decide(
+                    requested_autonomy: str | None = None,
+                    result: dict | None = None) -> str:
+    result = result or decide(
         ref, qualification_id=qualification_id, requested_role=requested_role,
         requested_phases=requested_phases,
         requested_autonomy=requested_autonomy)
@@ -211,8 +213,9 @@ def render_markdown(ref: str, *, qualification_id: str | None = None,
 def render_html(ref: str, *, qualification_id: str | None = None,
                 requested_role: str | None = None,
                 requested_phases: list[str] | None = None,
-                requested_autonomy: str | None = None) -> str:
-    result = decide(
+                requested_autonomy: str | None = None,
+                result: dict | None = None) -> str:
+    result = result or decide(
         ref, qualification_id=qualification_id, requested_role=requested_role,
         requested_phases=requested_phases,
         requested_autonomy=requested_autonomy)
@@ -253,8 +256,9 @@ def render_html(ref: str, *, qualification_id: str | None = None,
 def write_artifacts(ref: str, *, qualification_id: str | None = None,
                     requested_role: str | None = None,
                     requested_phases: list[str] | None = None,
-                    requested_autonomy: str | None = None) -> dict[str, str]:
-    matrix = ecm.engineering_capability_matrix(ref)
+                    requested_autonomy: str | None = None,
+                    matrix: dict | None = None) -> dict[str, str]:
+    matrix = matrix or ecm.engineering_capability_matrix(ref)
     run_id = matrix["run_id"]
     options = {
         "qualification_id": qualification_id,
@@ -262,16 +266,16 @@ def write_artifacts(ref: str, *, qualification_id: str | None = None,
         "requested_phases": requested_phases,
         "requested_autonomy": requested_autonomy,
     }
-    result = decide(run_id, **options)
+    result = decide(run_id, matrix=matrix, **options)
     rdir = workspace.run_dir(run_id)
     paths = {
         "markdown": rdir / "deployment-guidance.md",
         "json": rdir / "deployment-guidance.json",
         "html": rdir / "deployment-guidance.html",
     }
-    workspace.write_view(paths["markdown"], render_markdown(run_id, **options))
+    workspace.write_view(paths["markdown"], render_markdown(run_id, result=result, **options))
     workspace.write_view(paths["json"], json.dumps(result, indent=2) + "\n")
-    workspace.write_view(paths["html"], render_html(run_id, **options))
+    workspace.write_view(paths["html"], render_html(run_id, result=result, **options))
     return {format: str(path) for format, path in paths.items()}
 
 

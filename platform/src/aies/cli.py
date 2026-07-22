@@ -260,7 +260,10 @@ def cmd_qualify(args) -> int:
                       "reports": report_paths,
                       **({"assessment_result": outcome} if outcome else {})}, True)
             else:
-                print(_report.render_markdown(run_id))
+                # The complete bundle already rendered the report from the
+                # shared ECM view model. Print that artifact rather than
+                # recomputing the corpus-backed matrix for terminal output.
+                print(Path(report_paths["markdown"]).read_text(encoding="utf-8"))
                 if outcome:
                     from . import decision as _decision
                     print("\n" + _decision.render_markdown(outcome))

@@ -36,8 +36,20 @@ def demo_ws(tmp_path, monkeypatch):
     return tmp_path / "ws"
 
 
-def test_offline_end_to_end_demo(demo_ws):
-    from aies import decision, workspace, constants
+def test_offline_end_to_end_demo(demo_ws, monkeypatch):
+    from aies import decision, workspace, constants, ecm
+
+    # A report bundle must share one factual ECM view across all renderers.
+    # Recomputing it reparses the entire scenario corpus and made the demo
+    # needlessly slow even though the mock inference itself is instant.
+    original_matrix = ecm.engineering_capability_matrix
+    matrix_calls = []
+
+    def counted_matrix(ref):
+        matrix_calls.append(ref)
+        return original_matrix(ref)
+
+    monkeypatch.setattr(ecm, "engineering_capability_matrix", counted_matrix)
 
     # 1. discovery (mock runtime is always present)
     assert _cli("discover") == 0
@@ -46,8 +58,9 @@ def test_offline_end_to_end_demo(demo_ws):
     # 2. compose + collect + auto-score — the whole evaluation pipeline,
     #    offline.  A DIFFERENT deployment judges (never self-judge), and each
     #    distinct instrument runs once: repeats must never substitute for breadth.
-    assert _cli("qualify", "mock-mock-small", "--assessment", "coder",
-                "--judge", "mock-mock-large") == 0
+    assert _cli("qualify", "mock-mock-small", "--assessment", "coder", "--rt", "1",
+                "--judge", "mock-mock-large", "--parallel", "8") == 0
+    assert len(matrix_calls) == 1
 
     # find the run the pipeline just produced
     runs = sorted((demo_ws / "runs").glob("run-*"))
@@ -65,6 +78,7 @@ def test_offline_end_to_end_demo(demo_ws):
     }), encoding="utf-8")
     assert _cli("review", run_id, "--reviewer", "model:mock-mock-large",
                 "--calibration", str(calibration)) == 0
+    assert len(matrix_calls) == 2
 
     # 3. the Canonical Assessment Result exists and is well-formed
     result = json.loads((runs[-1] / "assessment-result.json").read_text(encoding="utf-8"))

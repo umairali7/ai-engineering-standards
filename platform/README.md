@@ -79,9 +79,16 @@ environment change invalidates the grant, per D7).
 ```
 cd platform
 pip install -e .          # installs `aies` (Python 3.10–3.14 tested in CI)
-pytest tests/             # conformance tests keyed to AESQS requirement IDs
+pytest tests/ -q --durations=15  # conformance + ranked performance feedback
 aies suites validate      # suites + shipped assessments (one gate; CI runs it)
 ```
+
+The warm-cache full-suite performance budget on the recorded Windows reference
+workstation is **180 seconds**. The current 219-test baseline is **155.38
+seconds**. A run above budget or a greater-than-25% regression should be
+profiled before merge; use the ranked durations rather than guessing. Scenario
+YAML and suite digests are cached by path, modification time, and size, return
+isolated values, and invalidate automatically when an instrument changes.
 
 Artifacts are written to `./aies-workspace` (override with the
 `AIES_WORKSPACE` environment variable). Everything persisted is plain
@@ -91,7 +98,7 @@ YAML/JSON: diffable, reviewable, tool-independent.
 
 ```
 make demo        # core workflow (or: bash scripts/demo.sh)
-make demo-full   # comprehensive tour of the whole platform
+make demo-full   # comprehensive one-process tour of the whole platform
 ```
 
 `make demo` runs the **core workflow** against the mock runtime — discover a
@@ -100,7 +107,8 @@ judge's scores as automated evaluation observations, and render the Canonical
 Assessment Result as Markdown + HTML. Synthetic mock-judge scores do not become
 qualification evidence.
 
-`make demo-full` is the **comprehensive tour**: the three subjects AIES can
+`make demo-full` is the optimized **one-process comprehensive tour** (about 16
+seconds on the recorded Windows baseline): the three subjects AIES can
 assess (a model deployment via `qualify`, a repository via `audit`, and the
 standard itself via `conform engine`), the calibrated measurement instruments,
 a completed automated Engineering Evaluation with optional human-evaluation

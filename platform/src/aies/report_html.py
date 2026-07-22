@@ -53,7 +53,7 @@ footer { margin-top: 3rem; color: var(--muted); font-size: .8rem;
 """
 
 
-def render_html(run_id: str) -> str:
+def render_html(run_id: str, *, matrix: dict | None = None) -> str:
     from . import evaluation as evaluation_view
 
     pkg = workspace.read_json(workspace.run_dir(run_id) / "evidence-package.json")
@@ -244,7 +244,8 @@ def render_html(run_id: str) -> str:
 
     from . import diagnostics, ecm
     w(diagnostics.render_report_section_html(diagnostics.summarize(run_id)))
-    w(ecm.render_capability_summary_html(ecm.engineering_capability_matrix(run_id)))
+    matrix = matrix or ecm.engineering_capability_matrix(run_id)
+    w(ecm.render_capability_summary_html(matrix))
     w("<p><a href='executive-summary.html'>Executive Summary</a> &middot; "
       "<a href='deployment-guidance.html'>Deployment Guidance</a> &middot; "
       "<a href='grounding-diagnostics.html'>Grounding Diagnostics</a> &middot; "

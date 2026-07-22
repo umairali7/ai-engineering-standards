@@ -20,6 +20,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   authoritative path boundary. The existing no-license grant remains in force
   until affiliation disclosure, the announced seven-day Class 3 comment
   window, objection disposition, and Maintainer acceptance are recorded.
+- **Fast no-repeat assessment demo**: removed stale `repeats: 3` defaults from
+  all shipped assessments to conform to ADR-0011. General assessments now run
+  each distinct instrument once; exact repeats require an explicit stability
+  study. The comprehensive offline demo uses a clearly disclosed RT1 — Minimal
+  smoke scope and eight mock workers, preserving the complete product narrative
+  without multiplying calls or implying decisional breadth.
+- **Single-pass report view models**: complete bundle generation computes the
+  Engineering Capability Matrix once and passes that factual view into the
+  evidence, HTML, guidance, and executive renderers. Deployment Guidance is
+  likewise decided once for its three formats. This removes six full corpus
+  reparses per bundle; a profiled eight-response demo bundle fell from about
+  30.9 seconds to 1.9 seconds on the Windows development host. The one-process
+  16-stage demo now completes in about 16 seconds (previously 87.9 seconds), and the
+  full 219-test suite completes in 155.38 seconds (previous measurement 491.51
+  seconds). Signature-aware YAML and suite-version caches return deep-isolated
+  values and invalidate when an instrument changes. The demo verifies generated
+  artifacts instead of rendering again.
 
 - **Source-separated grounding diagnostics**: model review, optional human scoresheets, and external eval imports can record structured observations for unsupported assertions, fabricated APIs/entities, invalid citations/provenance, false success/test claims, and appropriate abstention. Every report bundle now emits linked Markdown/JSON/HTML Grounding Diagnostics with coverage and descriptive observed grounding reliability. Unavailable checks never render as zero hallucinations, automated and human observations are not blended, and the diagnostic cannot alter EV scores, qualification gates, competency levels, or grants.
 - **Concurrency-safe Qualification Records and explicit workspace mutation policy**: Qualification Records atomically claim their human-readable IDs using exclusive file creation, with concurrent regression coverage. Workspace artifacts are classified as append-only records, derived canonical snapshots, mutable workflow state/configuration, or regenerable views; guarded writers prevent presentation renderers from replacing evidence. CI now tests the documented Python 3.10–3.14 range.

@@ -104,7 +104,7 @@ and selection remain separate products.
 | Done | Add protocol-compatible ECM comparison | Task deltas and winners appear only when risk, profile, suites, mappings, repeats, and rater protocol are compatible |
 | Open | Build AIES Select | A declared workload mix plus latency, cost, context, tool reliability, availability, and risk constraints produces an explained fit ranking over compatible evidence—never a global best-subject claim |
 | Open | Build organization decision products | Inventory shows approved subjects, demonstrated task fit, qualification scope, conditions, drift, expiry, incidents, and requalification status |
-| Done | Rebuild `demo-full` as the AIES killer demo | The fully offline CI narrative demonstrates deployment/repository/standard subjects, implicit live task/ETA progress, complete automated Engineering Evaluation, optional human-evaluation status, ECM strengths/gaps, bounded guidance, protocol-compatible comparison without invented winners, the formal qualification boundary, conformance, corpus health, empirical-panel handoff, and the linked Executive Summary bundle; expected non-zero outcomes are explicitly contained under `pipefail` |
+| Done | Rebuild `demo-full` as the AIES killer demo | The fully offline one-process CI narrative demonstrates deployment/repository/standard subjects, implicit live task/ETA progress, complete automated Engineering Evaluation, optional human-evaluation status, ECM strengths/gaps, bounded guidance, protocol-compatible comparison without invented winners, the formal qualification boundary, conformance, corpus health, empirical-panel handoff, and the linked Executive Summary bundle; expected non-zero outcomes are explicitly contained, and the measured Windows run completes in about 16 seconds without repeated inference, report computation, or production-timeout probes |
 
 ### P3 — Standards and adoption
 
@@ -138,7 +138,7 @@ and selection remain separate products.
 | Open | Consolidate report view models | Markdown, HTML, JSON, dashboard, and API consume shared factual view models; no renderer recomputes decisions |
 | Done | Clarify immutable artifacts and regenerable views | Storage policy classifies append-only records, derived canonical snapshots, mutable workflow state/configuration, and regenerable views; `workspace.write_json` rejects append-only replacement and `workspace.write_view` cannot target evidence paths |
 | Done | Make record identifiers concurrency-safe | Qualification Records atomically claim human-readable IDs through exclusive creation; a 12-decision concurrent regression proves unique issued records and lifecycle events |
-| Open | Improve local verification feedback | The full suite reports progress predictably and has a documented performance budget; the current measured 214-test Windows run (~375 seconds) is the baseline to profile and reduce |
+| Done | Improve local verification feedback | The documented command reports ranked durations and uses a 180-second warm-cache Windows budget with a 25% regression trigger. Single-pass report views plus signature-invalidated isolated YAML/suite caches reduce the measured complete run from 216 tests in 491.51 seconds to 219 tests in 155.38 seconds; cache mutation/invalidation behavior has regression coverage |
 | Open | Remove local workspace archive debris safely | Workspace diagnostics identify `.DS_Store`, `__MACOSX`, caches, and stale generated bundles without deleting user evidence automatically |
 
 ### C2 — CI, security, and release hygiene
@@ -159,7 +159,9 @@ and selection remain separate products.
 
 Last verified on 2026-07-22:
 
-- `pytest platform/tests -q`: **214 passed in 375.13 seconds** on the current Windows workstation.
+- `pytest platform/tests -q --durations=15`: **219 passed in 155.38 seconds** on
+  the current Windows workstation (down from the preceding 216-test measurement
+  of 491.51 seconds and below the documented 180-second warm-cache budget).
 - `aies suites validate`: **484 scenarios, 12 areas, 0 warnings, 0 errors**.
 - Decision-engine conformance: **8/8 cases passed**, semantics 1.0.
 - Release hygiene: **PASS**.
@@ -167,7 +169,11 @@ Last verified on 2026-07-22:
   8 gaps; the prior order-dependent CI-test false negative is covered by a
   regression test.
 - Scenario review maturity: **216/484 human design-reviewed**, **0/484
-  empirically calibrated**.
+  empirically calibrated**. Deterministic preflight: **268/268 pending
+  instruments structurally ready**, with zero structural gaps; independent
+  human dispositions remain outstanding.
+- `python platform/scripts/demo_full.py`: the complete 16-stage offline demo
+  passed in **16.0 seconds** on the current Windows workstation.
 
 ## Related Documents
 

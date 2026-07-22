@@ -136,10 +136,16 @@ used for verified HTTPS connections.
 ```
 cd platform
 pip install -e .            # installs the `aies` command
-pytest tests/               # conformance tests, keyed to AESQS requirement IDs
+pytest tests/ -q --durations=15  # conformance + ranked performance feedback
 aies                        # or `aies help` — the command map + typical workflow
 aies doctor                 # environment fingerprint + detected runtimes
 ```
+
+For local verification, the recorded warm-cache Windows budget is 180 seconds
+for the complete suite; the 2026-07-23 baseline is 219 tests in 155.38 seconds.
+Treat a budget breach or greater-than-25% regression as a profiling trigger.
+This is a feedback budget, not a reason to skip correctness gates on slower CI
+hardware.
 
 `aies` (with no arguments) or `aies help` prints all commands grouped by stage,
 the end-to-end workflow, **and a full command tree** — every command *and*

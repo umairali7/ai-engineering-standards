@@ -27,5 +27,3 @@ competencies:
   - area: CA-05                # AI-Assisted Implementation (advisory)
     requirement: { type: advisory }
     weight: 10
-sampling:
-  repeats: 3

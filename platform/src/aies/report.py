@@ -133,7 +133,7 @@ def render_json(run_id: str) -> str:
     return json.dumps(pkg, indent=2)
 
 
-def render_markdown(run_id: str) -> str:
+def render_markdown(run_id: str, *, matrix: dict | None = None) -> str:
     from . import diagnostics, evaluation as evaluation_view
 
     pkg = workspace.read_json(workspace.run_dir(run_id) / "evidence-package.json")
@@ -332,7 +332,8 @@ def render_markdown(run_id: str) -> str:
         a("")
 
     from . import ecm
-    a(ecm.render_capability_summary_markdown(ecm.engineering_capability_matrix(run_id)).rstrip())
+    matrix = matrix or ecm.engineering_capability_matrix(run_id)
+    a(ecm.render_capability_summary_markdown(matrix).rstrip())
     a("")
     a("For the standalone, engineer-facing artifact, see the "
       "[Engineering Capability Matrix](engineering-capability-matrix.md).")
@@ -360,14 +361,14 @@ def write_reports(run_id: str) -> dict[str, str]:
                    report_html)
 
     rdir = workspace.run_dir(run_id)
-    md = render_markdown(run_id)
+    matrix = ecm.engineering_capability_matrix(run_id)
+    md = render_markdown(run_id, matrix=matrix)
     workspace.write_view(rdir / "report.md", md)
     js = render_json(run_id)
     workspace.write_view(rdir / "report.json", js)
     evaluation_path = rdir / "engineering-evaluation.json"
     workspace.write_view(
         evaluation_path, json.dumps(evaluation.summarize(run_id), indent=2) + "\n")
-    matrix = ecm.engineering_capability_matrix(run_id)
     ecm_contents = {
         "markdown": ecm.render_markdown(matrix),
         "json": json.dumps(matrix, indent=2) + "\n",
@@ -380,7 +381,7 @@ def write_reports(run_id: str) -> dict[str, str]:
         workspace.write_view(path, content)
         ecm_paths[f"ecm_{format}"] = str(path)
     html_path = rdir / "report.html"
-    workspace.write_view(html_path, report_html.render_html(run_id))
+    workspace.write_view(html_path, report_html.render_html(run_id, matrix=matrix))
 
     # A declarative assessment produces its canonical outcome and three views.
     # Runs without an assessment still receive the other audience-specific
@@ -403,7 +404,7 @@ def write_reports(run_id: str) -> dict[str, str]:
     # The default bundle has no Qualification Record and therefore cannot emit
     # a Use recommendation. A later scoped `aies guidance --qualification ...
     # --write` refreshes only the guidance artifacts with human authority.
-    guidance_paths = guidance.write_artifacts(run_id)
+    guidance_paths = guidance.write_artifacts(run_id, matrix=matrix)
     guidance_result = workspace.read_json(rdir / "deployment-guidance.json")
     summary = executive_summary.build(
         run_id, matrix, guidance_result, assessment_result=assessment_result)

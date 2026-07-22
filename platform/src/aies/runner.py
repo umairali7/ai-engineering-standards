@@ -9,6 +9,7 @@ from __future__ import annotations
 import datetime
 import hashlib
 import copy
+from functools import lru_cache
 from pathlib import Path
 
 import yaml
@@ -48,15 +49,28 @@ def all_area_codes() -> list[str]:
     return sorted(codes)
 
 
+def _signature(path: Path) -> tuple[str, int, int]:
+    stat = path.stat()
+    return str(path.resolve()), stat.st_mtime_ns, stat.st_size
+
+
+@lru_cache(maxsize=128)
+def _suite_version_cached(signatures: tuple[tuple[str, int, int], ...]) -> str:
+    h = hashlib.sha256()
+    for path_text, _mtime_ns, _size in signatures:
+        path = Path(path_text)
+        h.update(path.name.encode())
+        h.update(path.read_bytes())
+    return "suite-sha256:" + h.hexdigest()[:16]
+
+
 def _suite_version(area_dir: Path) -> str:
     """Suite version = digest of all scenario content, so any content
     change yields a new version and results are only comparable on
     identical suite versions (PLATFORM.md §9)."""
-    h = hashlib.sha256()
-    for p in sorted((area_dir / "scenarios").glob("*.yaml")):
-        h.update(p.name.encode())
-        h.update(p.read_bytes())
-    return "suite-sha256:" + h.hexdigest()[:16]
+    signatures = tuple(_signature(path) for path in sorted(
+        (area_dir / "scenarios").glob("*.yaml")))
+    return _suite_version_cached(signatures)
 
 
 def _deep_merge(base: dict, override: dict) -> dict:
@@ -70,9 +84,19 @@ def _deep_merge(base: dict, override: dict) -> dict:
     return out
 
 
+@lru_cache(maxsize=1024)
+def _load_yaml_cached(path_text: str, _mtime_ns: int, _size: int):
+    return yaml.safe_load(Path(path_text).read_text(encoding="utf-8"))
+
+
+def _load_yaml(path: Path):
+    """Load YAML once per stable file signature and isolate every caller."""
+    return copy.deepcopy(_load_yaml_cached(*_signature(path)))
+
+
 def load_scenario_documents(path: Path) -> list[dict]:
     """Load one scenario or expand a declarative scenario pack."""
-    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data = _load_yaml(path)
     if isinstance(data, dict) and data.get("kind") == "aies-scenario-pack-v1":
         defaults = data.get("defaults")
         entries = data.get("scenarios")
@@ -101,7 +125,7 @@ def load_area(area: str) -> tuple[dict, list[dict], str]:
             f"(available: {', '.join(sorted(d.name for d in base.iterdir() if d.is_dir()))})"
         )
     area_dir = matches[0]
-    definition = yaml.safe_load((area_dir / "definition.yaml").read_text(encoding="utf-8"))
+    definition = _load_yaml(area_dir / "definition.yaml")
     scenarios = []
     for p in sorted((area_dir / "scenarios").glob("*.yaml")):
         for sc in load_scenario_documents(p):

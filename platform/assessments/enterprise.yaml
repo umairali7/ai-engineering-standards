@@ -27,5 +27,3 @@ competencies:
   - area: CA-09                # Operations, Observability & Reliability (advisory)
     requirement: { type: advisory }
     weight: 10
-sampling:
-  repeats: 3

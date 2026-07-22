@@ -19,5 +19,3 @@ competencies:
   - area: CA-04                # Architecture & Solution Design (advisory)
     requirement: { type: advisory }
     weight: 10
-sampling:
-  repeats: 3
