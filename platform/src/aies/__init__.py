@@ -1,4 +1,4 @@
-"""AIES Model Qualification Platform.
+"""AIES Engineering Assessment Platform.
 
 Executable reference implementation of the AESQS qualification
 methodology. Specification: docs/PLATFORM.md (AIES-DOC-06).

@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 # The frozen top-level keys of each artifact. Adding a key is a deliberate,
 # reviewed change: update this set AND bump the schema constant.
 EVIDENCE_PACKAGE_KEYS = {
-    "run_id", "kind", "evidence_schema", "grant_status", "model", "profile",
+    "run_id", "kind", "evidence_schema", "grant_status", "subject", "model", "profile",
     "profile_version", "risk_tier", "subject_kind", "suite_versions",
     "environment_fingerprint", "areas", "raters", "rater_kinds", "aggregated_at",
 }
@@ -40,6 +40,8 @@ def _result(evidence_schema=1, profile_version="1.0.0"):
     pkg = {"run_id": "r", "kind": "evidence-package", "evidence_schema": evidence_schema,
            "grant_status": "no grant", "profile": "coder", "profile_version": profile_version,
            "risk_tier": "RT2", "subject_kind": "ai", "suite_versions": {},
+           "subject": {"id": "m", "kind": "ai_deployment", "display_name": "m",
+                       "executor_kind": "deployment"},
            "model": {"registry_id": "m", "checksum": "sha256:x"},
            "environment_fingerprint": {"runtime": {"id": "mock"}, "fingerprint_hash": "sha256:fp"},
            "raters": [], "rater_kinds": [], "aggregated_at": "2026-07-18T00:00:00Z",
@@ -82,9 +84,11 @@ def test_result_records_the_evidence_schema_it_decided_over():
 def test_evidence_package_envelope_shape(ws_run):
     from aies import workspace, constants
     pkg = workspace.read_json(workspace.run_dir(ws_run) / "evidence-package.json")
-    assert pkg["evidence_schema"] == constants.EVIDENCE_SCHEMA == 1
+    assert pkg["evidence_schema"] == constants.EVIDENCE_SCHEMA == 2
     assert set(pkg.keys()) == EVIDENCE_PACKAGE_KEYS, "evidence-package envelope drifted"
     assert pkg["profile_version"] == "1.0.0"     # captured at run time
+    assert pkg["subject"]["id"] == "cand"
+    assert pkg["subject"]["kind"] == "ai_deployment"
 
 
 import pytest  # noqa: E402

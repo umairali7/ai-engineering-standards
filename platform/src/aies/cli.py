@@ -1,4 +1,4 @@
-"""aies — the AIES Model Qualification Platform CLI.
+"""aies — the AIES Engineering Assessment Platform CLI.
 
 Verb dispatch and output rendering only; no qualification logic lives
 here (PLATFORM.md §4). Every verb supports --json.
@@ -1115,7 +1115,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="aies",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description=("AIES Model Qualification Platform — executable reference "
+        description=("AIES Engineering Assessment Platform — executable reference "
                      "implementation of AESQS (docs/PLATFORM.md, AIES-DOC-06). "
                      "Prepares evidence; never grants: humans hold qualification "
                      "authority."),
@@ -1135,7 +1135,7 @@ def build_parser() -> argparse.ArgumentParser:
     common(sub.add_parser("discover", help="scan runtimes and register the "
                           "deployments they serve")).set_defaults(func=cmd_discover)
 
-    reg = common(sub.add_parser("registry", help="manage candidate model entries"))
+    reg = common(sub.add_parser("registry", help="manage candidate deployment entries"))
     regsub = reg.add_subparsers(dest="registry_cmd", required=True)
     radd = regsub.add_parser("add"); radd.add_argument("file")
     rlist = regsub.add_parser("list"); rlist.add_argument("--all", action="store_true")
@@ -1145,7 +1145,7 @@ def build_parser() -> argparse.ArgumentParser:
         x.add_argument("--json", action="store_true")
     reg.set_defaults(func=cmd_registry)
 
-    q = common(sub.add_parser("qualify", help="run the pipeline for one model"))
+    q = common(sub.add_parser("qualify", help="run qualification evidence collection for one deployment"))
     q.add_argument("model", nargs="?", help="deployment id, or model name")
     q.add_argument("--runtime", default=None,
                    help="disambiguate when a model has several deployments")
@@ -1296,7 +1296,7 @@ def build_parser() -> argparse.ArgumentParser:
            ).set_defaults(func=cmd_plugins)
 
     cp = common(sub.add_parser(
-        "compare", help="compare two runs/models on identical suite versions"))
+        "compare", help="compare two runs/deployments on identical suite versions"))
     cp.add_argument("a", help="run id or model registry id (latest aggregated run)")
     cp.add_argument("b", help="run id or model registry id (latest aggregated run)")
     cp.add_argument("--format", choices=("markdown", "json"), default="markdown")
@@ -1310,7 +1310,7 @@ def build_parser() -> argparse.ArgumentParser:
     rl.add_argument("--json", action="store_true")
     rn.set_defaults(func=cmd_runs)
 
-    rv = common(sub.add_parser("review", help="assemble a multi-model peer-review package"))
+    rv = common(sub.add_parser("review", help="assemble a multi-deployment peer-review package"))
     rv.add_argument("run")
     rv.add_argument("--reviewer", default="reviewer-model",
                     help="label for the reviewer model")
@@ -1454,7 +1454,7 @@ def build_parser() -> argparse.ArgumentParser:
     st.set_defaults(func=cmd_suites)
 
     dep = common(sub.add_parser("deployment", help="manage deployments "
-                                "(model × runtime × config × endpoint)"))
+                                "(AI deployment × runtime × config × endpoint)"))
     depsub = dep.add_subparsers(dest="dep_cmd", required=True)
     dl = depsub.add_parser("list"); dl.add_argument("--all", action="store_true")
     di = depsub.add_parser("inspect"); di.add_argument("name")

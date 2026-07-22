@@ -1,4 +1,4 @@
-# AIES Model Qualification Platform
+# AIES Engineering Assessment Platform
 
 | | |
 |---|---|
@@ -8,8 +8,13 @@
 
 The `aies` command-line tool: the executable reference implementation of the
 [AESQS](../AESQS/README.md) qualification methodology. Specification:
-[docs/PLATFORM.md (AIES-DOC-06)](../docs/PLATFORM.md). Decision record:
-[ADR-0002](../adr/ADR-0002-Qualification-Platform.md).
+[docs/PLATFORM.md (AIES-DOC-06)](../docs/PLATFORM.md). Platform-identity
+proposal: [ADR-0009](../adr/ADR-0009-Engineering-Assessment-Platform-Identity.md).
+
+The current executable subject adapters assess AI deployments and repositories.
+Canonical evidence, ECM, and decision-product boundaries are subject-neutral so
+future adapters can assess agents, MCP servers, RAG systems, pipelines, and
+platforms without redefining the product.
 
 **The platform prepares evidence; it never grants.** A human qualification
 authority records every grant (PLATFORM.md D8). Output is always scoped —
@@ -183,7 +188,7 @@ labels under-sampled runs NON-DECISIONAL automatically.
 ## Related Documents
 
 - [Platform Specification (AIES-DOC-06)](../docs/PLATFORM.md)
-- [ADR-0002 — Qualification Platform](../adr/ADR-0002-Qualification-Platform.md)
+- [ADR-0009 — Engineering Assessment Platform Identity](../adr/ADR-0009-Engineering-Assessment-Platform-Identity.md)
 - [AIES-AESQS-CS-01 — Capability Scoring](../AESQS/capability-scoring.md)
 - [AIES-AESQS-ER-01 — Evaluation Rubrics](../AESQS/evaluation-rubrics.md)
 - [AIES-AESQS-QP-01 — Qualification Process](../AESQS/qualification-process.md)

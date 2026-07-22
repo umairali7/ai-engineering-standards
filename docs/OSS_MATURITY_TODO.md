@@ -15,7 +15,7 @@ foundation to a genuinely reusable public OSS standard and platform.
 |------|--------------------|--------------|
 | Draft standard | Strong but pre-ratification | Approved v1.0 with public comment disposition and stable citations |
 | OSS readiness | Useful but license-blocked | Clear license, clean releases, contributor path, public pilots |
-| Evaluation platform | Runnable, extensible reference implementation — model qualification, repository conformance audit (`aies audit`), and supply-chain verification | Validated, extensible, pilot-proven qualification + audit engine |
+| Evaluation platform | Runnable, extensible Engineering Assessment Platform — AI-deployment qualification, repository conformance audit (`aies audit`), ECM decision products, and supply-chain verification | Validated, extensible, pilot-proven assessment + audit engine across supported subject kinds |
 
 ## 2. Priority Backlog
 

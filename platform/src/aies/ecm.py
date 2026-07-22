@@ -148,7 +148,7 @@ def engineering_capability_matrix(ref: str) -> dict:
             "scope": "versioned scenario-to-Engineering-Task registry",
         },
         "run_id": run_id,
-        "subject": pkg["model"]["registry_id"],
+        "subject": (pkg.get("subject") or {}).get("id", pkg["model"]["registry_id"]),
         "subject_kind": pkg.get("subject_kind", "ai"),
         "risk_tier": pkg["risk_tier"],
         "profile": pkg["profile"],

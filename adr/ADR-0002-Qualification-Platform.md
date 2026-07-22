@@ -3,9 +3,9 @@
 | | |
 |---|---|
 | **ADR** | ADR-0002 |
-| **Status** | Accepted |
+| **Status** | Superseded |
 | **Deciders** | Project Maintainers; Module Editor, AESQS; Module Editor, Platform (newly designated) |
-| **Supersedes / Superseded by** | — |
+| **Supersedes / Superseded by** | Superseded by [ADR-0009](ADR-0009-Engineering-Assessment-Platform-Identity.md) |
 
 ## Context
 

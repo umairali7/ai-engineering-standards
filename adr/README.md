@@ -66,13 +66,14 @@ Accepted ADRs are never edited to change the decision. If circumstances change, 
 | ADR | Title | Status |
 |-----|-------|--------|
 | [ADR-0001](ADR-0001-Repository-Foundation.md) | Repository Foundation | Accepted |
-| [ADR-0002](ADR-0002-Qualification-Platform.md) | Qualification Platform — an Executable Reference Implementation of AESQS | Accepted |
+| [ADR-0002](ADR-0002-Qualification-Platform.md) | Qualification Platform — an Executable Reference Implementation of AESQS | Superseded by ADR-0009 |
 | [ADR-0003](ADR-0003-Competency-Area-Knowledge-Mapping.md) | Competency areas map to knowledge areas by coverage, not bijection | Accepted |
 | [ADR-0004](ADR-0004-Repository-Conformance-Audit.md) | `aies audit` — executable repository conformance assessment (maturity scoring, three-state evidence) | Accepted |
 | [ADR-0005](ADR-0005-Assessment-as-Code.md) | Assessment-as-Code — declarative competency composition above profiles (gate-first, no blended score) | Accepted |
 | [ADR-0006](ADR-0006-Engineering-Capability-Matrix-Boundary.md) | Engineering Capability Matrix boundary and task-mapping governance | Superseded by ADR-0008 |
 | [ADR-0007](ADR-0007-Scenario-Rubric-Applicability-Metadata.md) | Scenario rubric applicability metadata | Accepted |
 | [ADR-0008](ADR-0008-Engineering-Capability-Matrix-Standard-and-Task-Taxonomy.md) | Establish an Engineering Capability Matrix standard and task taxonomy | Accepted |
+| [ADR-0009](ADR-0009-Engineering-Assessment-Platform-Identity.md) | Establish the Engineering Assessment Platform identity | Accepted |
 
 ## Related Documents
 

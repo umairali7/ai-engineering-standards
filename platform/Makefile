@@ -1,4 +1,4 @@
-# AIES Qualification Platform — developer entry points.
+# AIES Engineering Assessment Platform — developer entry points.
 # The demo is executable documentation: `make demo` runs the entire workflow
 # offline; the same golden path is CI-gated as tests/test_demo.py.
 .PHONY: install test validate audit release-hygiene demo integration-demo all

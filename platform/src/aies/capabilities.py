@@ -41,7 +41,7 @@ def capability_profile(ref: str) -> dict:
             "al_at_rt": (a.get("al_envelope") or {}).get(rt),
         })
     return {
-        "subject": pkg["model"]["registry_id"],
+        "subject": (pkg.get("subject") or {}).get("id", pkg["model"]["registry_id"]),
         "profile": pkg["profile"],
         "risk_tier": rt,
         "rater_kinds": pkg.get("rater_kinds", []),

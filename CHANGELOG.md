@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Subject-neutral evidence identity** ([ADR-0009](adr/ADR-0009-Engineering-Assessment-Platform-Identity.md)): new runs and Evidence Packages carry a canonical `subject` envelope (`id`, `kind`, display name, executor kind). Current `model` fields remain as compatibility evidence for the existing AI-deployment executor. This preserves existing qualification and comparison workflows while allowing future agents, MCP servers, RAG systems, pipelines, and platforms to use the same canonical evidence architecture.
+
 - **Evidence-package Capability Summary**: Markdown and HTML Qualification Evidence Packages now include a clear informational link to their Engineering Capability Matrix companion. Every `report.write_reports` invocation writes the companion Markdown, JSON, and HTML artifacts beside the run, preserving the audience boundary: evidence package for governance, ECM for engineering use.
 
 - **Reviewed rubric-applicability validation** ([ADR-0007](adr/ADR-0007-Scenario-Rubric-Applicability-Metadata.md), [SCENARIOS.md](platform/SCENARIOS.md)): an uncovered EV dimension may now be declared `not_applicable` only with a task-specific rationale. `aies suites validate` rejects malformed, empty, unknown, or contradictory declarations; it separately reports valid declarations and continues to warn on every undeclared omission. No scenario has been bulk-classified: the existing 124 warnings remain a human-review migration queue.

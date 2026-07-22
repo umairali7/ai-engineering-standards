@@ -23,7 +23,7 @@ The phased delivery plan for the AI Engineering Standards. Phases follow the pro
 | 5 | AEAR — Architecture Reference | 🔍 In Review (v0.4.0) |
 | 6 | AECT — Certification & Training | 🔍 In Review (v0.4.0) |
 | 7 | Reference Implementations | ⏳ Planned (consumes Phase 8 platform) |
-| 8 | Qualification Platform | 🚧 In progress (pulled forward — ADR-0002) |
+| 8 | Engineering Assessment Platform | 🚧 In progress (pulled forward — ADR-0009) |
 | 9 | v1.0 Public Release | ⏳ Planned |
 
 ---
@@ -109,7 +109,7 @@ Entry criteria: AEBOK and AESQS content-complete (curriculum derives from both).
 
 ## Phase 7 — Reference Implementations
 
-**Status: ⏳ Planned — reframed to consume the Qualification Platform (Phase 8)**
+**Status: ⏳ Planned — reframed to consume the Engineering Assessment Platform (Phase 8)**
 
 Phase 7 no longer builds evaluation tooling of its own: it produces reference *artifacts* by running the Phase 8 platform, plus reference implementations of the surrounding operating model.
 
@@ -121,11 +121,11 @@ Deliverables:
 
 Entry criteria: platform milestone M1 shipped ([PLATFORM.md §10](docs/PLATFORM.md)); relevant AEOS/AEAR documents at Review status or later. Exit criteria: at least one complete worked qualification run published and reproducible by a third party; implementations demonstrate the normative requirements they claim; each carries its own security policy and CI.
 
-## Phase 8 — Qualification Platform
+## Phase 8 — Engineering Assessment Platform
 
-**Status: 🚧 In progress — M1–M4 landed; independent pilot outstanding (per [ADR-0002](adr/ADR-0002-Qualification-Platform.md))**
+**Status: 🚧 In progress — M1–M4 landed; independent pilot outstanding (per [ADR-0009](adr/ADR-0009-Engineering-Assessment-Platform-Identity.md))**
 
-The `aies` command-line platform: an executable reference implementation of AESQS that runs the qualification pipeline against locally- or remotely-hosted AI models, specified in [PLATFORM.md (AIES-DOC-06)](docs/PLATFORM.md). Originally gated behind Phase 7, it is pulled forward so that executing the standard hardens AESQS before v1.0; Phase 7 now consumes it.
+The `aies` command-line platform: an executable reference implementation of AESQS that currently runs qualification evidence collection against locally- or remotely-hosted AI deployments and audits repositories. Its canonical evidence architecture is subject-neutral, so future executors can assess agents, MCP servers, RAG systems, pipelines, and platforms without a second identity change. It is specified in [PLATFORM.md (AIES-DOC-06)](docs/PLATFORM.md). Originally gated behind Phase 7, it is pulled forward so that executing the standard hardens AESQS before v1.0; Phase 7 now consumes it.
 
 Deliverables (milestones per [PLATFORM.md §10](docs/PLATFORM.md)):
 

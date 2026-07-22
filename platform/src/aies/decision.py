@@ -111,7 +111,8 @@ def decide(package: dict, assessment: dict) -> dict:
         "outcome": overall,
         "assessment": {"id": assessment.get("id"), "version": assessment.get("version"),
                        "schema": assessment.get("schema"), "profile": assessment.get("profile")},
-        "subject": package.get("model", {}).get("registry_id"),
+        "subject": (package.get("subject") or {}).get(
+            "id", package.get("model", {}).get("registry_id")),
         "risk_tier": package.get("risk_tier"),
         "metadata": _metadata(package, assessment),
         "evidence": {area: {"decisional": d.get("decisional"), "n_scored": d.get("n_scored"),

@@ -191,13 +191,15 @@ AIES defines **engineering standards** that remain applicable regardless of the 
 | 5 | AEAR — Architecture Reference | 🔍 In Review (v0.4.0) |
 | 6 | AECT — Certification & Training | 🔍 In Review (v0.4.0) |
 | 7 | Reference Implementations | ⏳ Planned (consumes Phase 8) |
-| 8 | Qualification Platform (`aies` CLI) | 🚧 In Progress ([ADR-0002](adr/ADR-0002-Qualification-Platform.md)) |
+| 8 | Engineering Assessment Platform (`aies` CLI) | 🚧 In Progress ([ADR-0009](adr/ADR-0009-Engineering-Assessment-Platform-Identity.md)) |
 | 9 | Public Release (v1.0) | ⏳ Planned |
 
 Details in [ROADMAP.md](ROADMAP.md).
 
-The **[qualification platform](platform/README.md)** (`aies` CLI) is the executable
-reference implementation. Beyond assessing AI systems, it applies the same
+The **[Engineering Assessment Platform](platform/README.md)** (`aies` CLI) is the executable
+reference implementation. Its current executors assess AI deployments and repositories;
+its subject-neutral evidence architecture is designed to extend to agents, MCP servers,
+RAG systems, pipelines, and platforms. It applies the same
 evidence-plus-verdict-plus-human-decision discipline to *itself*: `aies audit`
 reviews a repository's engineering practice, and `aies corpus` continuously
 reviews the platform's **own** assessment corpus for calibration, coverage,
@@ -222,7 +224,7 @@ Individual documents carry a lifecycle status only (Draft → Review → Approve
 
 ## Current Status
 
-- **Phase:** Internal review cycle complete for all module documents; Qualification Platform ([ADR-0002](adr/ADR-0002-Qualification-Platform.md)) in progress
+- **Phase:** Internal review cycle complete for all module documents; Engineering Assessment Platform ([ADR-0009](adr/ADR-0009-Engineering-Assessment-Platform-Identity.md)) in progress
 - **Status:** Active Development
 
 ## License

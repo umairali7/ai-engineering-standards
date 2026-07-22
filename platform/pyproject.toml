@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "aies-platform"
 version = "0.1.0"
-description = "AIES Model Qualification Platform - executable reference implementation of AESQS (see docs/PLATFORM.md, AIES-DOC-06)"
+description = "AIES Engineering Assessment Platform - executable reference implementation of AESQS (see docs/PLATFORM.md, AIES-DOC-06)"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "License pending selection - see repository LICENSE.md" }

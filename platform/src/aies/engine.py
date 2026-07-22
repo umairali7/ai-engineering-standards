@@ -105,8 +105,19 @@ def start_qualification(
         _model_block["signature"] = _prov["signature"]
     if _prov.get("ai_bom"):
         _model_block["ai_bom"] = _prov["ai_bom"]
+    # `model` remains a compatibility envelope for the current deployment
+    # executor. `subject` is the canonical, subject-neutral identity used by
+    # new decision products. Future executors can populate it without
+    # redefining the evidence architecture.
+    _subject_block = {
+        "id": entry["id"],
+        "kind": "ai_deployment",
+        "display_name": entry.get("model") or entry.get("family") or entry["id"],
+        "executor_kind": "deployment",
+    }
     manifest = {
         "run_id": run_id,
+        "subject": _subject_block,
         "model": _model_block,
         "profile": profile["name"],
         # Capture the profile VERSION as used at run time (immutable). A later
@@ -238,6 +249,9 @@ def start_journey(
                                "phase": s.get("phase", "")} for s in journey["steps"]]},
         "model": {"registry_id": entry["id"],
                   "checksum": (entry.get("provenance") or {}).get("checksum", "unknown")},
+        "subject": {"id": entry["id"], "kind": "ai_deployment",
+                    "display_name": entry.get("model") or entry.get("family") or entry["id"],
+                    "executor_kind": "deployment"},
         "profile": profile["name"],
         "profile_version": profiles.profile_version(profile),
         "risk_tier": rt,
@@ -324,6 +338,13 @@ def aggregate(run_id: str) -> dict:
         "evidence_schema": C.EVIDENCE_SCHEMA,
         "grant_status": "no grant — evidence only; a human qualification "
                         "authority records any grant (PLATFORM.md D8)",
+        "subject": manifest.get("subject") or {
+            "id": manifest["model"]["registry_id"],
+            "kind": "ai_deployment",
+            "display_name": manifest["model"]["registry_id"],
+            "executor_kind": "deployment",
+        },
+        # Legacy deployment/model envelope retained for existing consumers.
         "model": manifest["model"],
         "profile": manifest["profile"],
         "profile_version": manifest.get("profile_version", profiles.UNVERSIONED),

@@ -1,4 +1,4 @@
-# Qualification Platform Specification
+# Engineering Assessment Platform Specification
 
 | | |
 |---|---|
@@ -8,7 +8,7 @@
 
 The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", and "MAY" in this document are to be interpreted as described in RFC 2119 and RFC 8174 when, and only when, they appear in all capitals.
 
-This document specifies the **AIES Model Qualification Platform**: the `aies` command-line tool and Python package (under `platform/`) that executes the [AESQS](../AESQS/README.md) qualification methodology against locally- or remotely-hosted AI models. It is the authoritative design document for the platform; the decision to build it is recorded in [ADR-0002](../adr/ADR-0002-Qualification-Platform.md).
+This document specifies the **AIES Engineering Assessment Platform**: the `aies` command-line tool and Python package (under `platform/`) that prepares canonical evidence, qualification evidence, conformance evidence, and engineering decision products. The current executable adapters assess AI deployments and repositories; its subject-neutral evidence and ECM architecture is designed to extend to agents, MCP servers, RAG systems, pipelines, and platforms without rebranding the product. The original model-only platform decision is superseded by [ADR-0009](../adr/ADR-0009-Engineering-Assessment-Platform-Identity.md).
 
 ---
 
@@ -340,7 +340,7 @@ These ten decisions bind the implementation to the standard. Deviating from any 
 
 ## Related Documents
 
-- [ADR-0002 — Qualification Platform](../adr/ADR-0002-Qualification-Platform.md)
+- [ADR-0009 — Engineering Assessment Platform Identity](../adr/ADR-0009-Engineering-Assessment-Platform-Identity.md)
 - [AIES-AESQS-00 — AESQS Module Overview](../AESQS/README.md)
 - [AIES-AESQS-QP-01 — Qualification Process](../AESQS/qualification-process.md)
 - [AIES-AESQS-ER-01 — Evaluation Rubrics](../AESQS/evaluation-rubrics.md)
