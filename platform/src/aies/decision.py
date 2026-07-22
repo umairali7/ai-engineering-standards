@@ -56,6 +56,13 @@ def _competency_outcome(area: str, comp: dict, areas_pkg: dict):
         return "INCONCLUSIVE", {"kind": "assessment-error",
                                 "detail": f"{area} was not scored in this run"}
     if not d.get("decisional"):
+        protocol = d.get("rater_protocol") or {}
+        if protocol and not protocol.get("satisfied"):
+            return "INSUFFICIENT EVIDENCE", {
+                "kind": "insufficient-rater-protocol",
+                "detail": "; ".join(protocol.get("reasons") or
+                                     ["verified human-rater protocol incomplete"]),
+            }
         return "INSUFFICIENT EVIDENCE", {"kind": "insufficient-evidence",
                 "detail": (f"{(d.get('n_distinct_scenarios', d.get('n_scored')) if d.get('sample_adequacy_basis') == 'distinct_scenarios' else d.get('n_scored'))}/"
                            f"{d.get('min_sample')} "

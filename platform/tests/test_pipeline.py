@@ -123,3 +123,71 @@ def test_low_scores_require_findings(ws, tmp_path):
         item["findings"] = []  # missing findings for the 1
     with pytest.raises(rating.RatingError):
         rating.ingest_scores(run_id, sheet)
+
+
+def test_multiple_ratings_resolve_to_one_statistical_evidence_item(ws, tmp_path):
+    """A second human rates the same responses; it must not double n or
+    artificially narrow the confidence interval (ADR-0012)."""
+    from aies import engine, rating, workspace
+    _register(tmp_path)
+    manifest = engine.start_qualification(
+        "demo-model-q4", "coder", "RT2", ["CA-05"], repeats=1)
+    run_id = manifest["run_id"]
+    original = json.loads((workspace.run_dir(run_id) / "scoresheet.json")
+                          .read_text(encoding="utf-8"))
+    for name, score in (("Rater One", 3), ("Rater Two", 4)):
+        sheet = json.loads(json.dumps(original))
+        sheet["rater"] = {"name": name, "kind": "human"}
+        for item in sheet["items"]:
+            item["scores"] = {dimension: score for dimension in
+                              ("EV1", "EV2", "EV3", "EV4", "EV5", "EV6")}
+        rating.ingest_scores(run_id, sheet)
+
+    package = engine.aggregate(run_id)
+    area = package["areas"]["CA-05"]
+    expected_items = len(original["items"])
+    assert area["raw_ratings"] == expected_items * 2
+    assert area["resolved_evidence_items"] == expected_items
+    assert area["n_scored"] == expected_items
+    assert all(dimension["n"] == expected_items
+               for dimension in area["dimensions"].values())
+    assert area["dimensions"]["EV1"]["mean"] == 3.0
+    assert package["evidence_items"]["items"][0]["resolution_method"] == (
+        "conservative-adjacent-human-consensus")
+
+
+def test_major_divergence_requires_immutable_human_disposition(ws, tmp_path):
+    from aies import engine, rating, workspace
+    _register(tmp_path)
+    manifest = engine.start_qualification(
+        "demo-model-q4", "coder", "RT2", ["CA-05"], repeats=1)
+    run_id = manifest["run_id"]
+    original = json.loads((workspace.run_dir(run_id) / "scoresheet.json")
+                          .read_text(encoding="utf-8"))
+    for name, score in (("Rater One", 4), ("Rater Two", 1)):
+        sheet = json.loads(json.dumps(original))
+        sheet["rater"] = {"name": name, "kind": "human"}
+        for item in sheet["items"]:
+            item["scores"] = {dimension: score for dimension in
+                              ("EV1", "EV2", "EV3", "EV4", "EV5", "EV6")}
+            if score <= 2:
+                item["findings"] = [{"dimension": "EV1", "score": score,
+                                     "finding": "material divergence fixture"}]
+        rating.ingest_scores(run_id, sheet)
+
+    package = engine.aggregate(run_id)
+    assert package["evidence_items"]["resolved"] == 0
+    assert package["evidence_items"]["unresolved"] == len(original["items"])
+    assert package["areas"]["CA-05"]["n_scored"] == 0
+
+    first = original["items"][0]["response_record"]
+    scores = {dimension: 3 for dimension in
+              ("EV1", "EV2", "EV3", "EV4", "EV5", "EV6")}
+    rating.resolve_item(run_id, first, scores, resolver="Lead Assessor",
+                        rationale="resolved against the scenario anchors")
+    with pytest.raises(FileExistsError):
+        rating.resolve_item(run_id, first, scores, resolver="Lead Assessor",
+                            rationale="attempted overwrite")
+    replay = engine.aggregate(run_id)
+    assert replay["evidence_items"]["resolved"] == 1
+    assert replay["areas"]["CA-05"]["n_scored"] == 1

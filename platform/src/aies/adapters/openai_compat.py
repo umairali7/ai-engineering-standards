@@ -22,6 +22,7 @@ import ssl
 import time
 import urllib.error
 import urllib.request
+import urllib.parse
 
 from .base import GenerationRequest, GenerationResponse, RuntimeAdapter
 
@@ -65,6 +66,7 @@ class OpenAICompatAdapter(RuntimeAdapter):
         self._base_url: str = ""
         self._model: str = ""
         self._api_key: str | None = None
+        self._fingerprint_settings: dict = {}
 
     def load(self, registry_entry: dict) -> None:
         from .. import config
@@ -76,6 +78,15 @@ class OpenAICompatAdapter(RuntimeAdapter):
             or ""
         ).rstrip("/")
         self._model = str(cfg.get("model", registry_entry.get("id", "")))
+        self._fingerprint_settings = {
+            key: value for key, value in cfg.items()
+            if key not in ("base_url", "model", "api_key_env", "api_key")
+        }
+        self._deployment_revision = (
+            cfg.get("deployment_revision") or cfg.get("revision")
+            or registry_entry.get("deployment_revision") or "undeclared")
+        self._served_checksum = ((registry_entry.get("provenance") or {}).get("checksum")
+                                 or "undeclared")
         if not self._base_url:
             raise ValueError(
                 f"no endpoint for the {self.adapter_id} adapter: set "
@@ -171,12 +182,21 @@ class OpenAICompatAdapter(RuntimeAdapter):
         }
 
     def fingerprint(self) -> dict:
+        parsed = urllib.parse.urlsplit(self._base_url)
+        host = (parsed.hostname or "").lower()
+        local_hosts = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
+        endpoint_identity = urllib.parse.urlunsplit((
+            parsed.scheme.lower(), parsed.netloc.split("@")[-1].lower(),
+            parsed.path.rstrip("/"), "", ""))
         return {
             "id": self.adapter_id,
             "version": self.adapter_version,
-            "endpoint": self._base_url,
+            "execution_scope": "local" if host in local_hosts else "remote",
+            "endpoint": endpoint_identity,
             "server_model": self._model,
-            "settings": {},
+            "deployment_revision": self._deployment_revision,
+            "served_model_checksum": self._served_checksum,
+            "settings": self._fingerprint_settings,
         }
 
     # Probing/discovery target the endpoint named by AIES_OPENAI_BASE_URL

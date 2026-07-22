@@ -19,7 +19,7 @@ for _stream in (sys.stdout, sys.stderr):
     except Exception:
         pass
 
-from . import __version__
+from . import __version__, constants as C
 
 
 def _out(data, as_json: bool, human: str | None = None) -> None:
@@ -374,6 +374,67 @@ def cmd_score(args) -> int:
              f"next: aies qualify --resume {args.run}")
     except (rating.RatingError, FileNotFoundError, json.JSONDecodeError) as e:
         print(f"error: {e}", file=sys.stderr)
+        return 2
+    return 0
+
+
+def cmd_rater(args) -> int:
+    """Manage durable human-rater qualification and calibration records."""
+    from . import raters
+    try:
+        if args.rater_cmd == "register":
+            record = raters.register(
+                args.id, args.name, competency_areas=args.area,
+                risk_tiers=[f"RT{tier}" for tier in args.rt],
+                qualified_until=args.qualified_until,
+                calibration_valid_until=args.calibration_valid_until,
+                anchor_library_version=args.anchor_version,
+                calibration_method=args.calibration_method,
+                registered_by=args.registered_by)
+            _out(record, args.json,
+                 f"registered human rater {record['rater_id']} — {record['name']}\n"
+                 f"  competencies: {', '.join(record['qualification']['competency_areas'])}\n"
+                 f"  risk tiers: {', '.join(C.risk_tier_label(rt) for rt in record['qualification']['risk_tiers'])}\n"
+                 f"  calibration valid until: {record['calibration']['valid_until']}")
+        elif args.rater_cmd == "list":
+            records = raters.list_records()
+            _out(records, args.json, "\n".join(
+                f"{record['rater_id']:24} {record['name']:28} "
+                f"{record['status']:8} calibration→{record['calibration']['valid_until']}"
+                for record in records) or "(no registered human raters)")
+        elif args.rater_cmd == "show":
+            _out(raters.get(args.id), args.json)
+    except (raters.RaterError, FileExistsError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    return 0
+
+
+def cmd_resolve(args) -> int:
+    """Record an immutable human evidence-item disposition and refresh views."""
+    from . import engine, rating, report, workspace
+    try:
+        manifest = workspace.read_json(workspace.run_dir(args.run) / "manifest.json")
+        subject_id = ((manifest.get("subject") or {}).get("id")
+                      or manifest["model"]["registry_id"])
+        dimensions = {dimension: value for dimension, value in
+                      zip(C.DIMENSIONS, args.scores)}
+        resolution = rating.resolve_item(
+            args.run, args.response, dimensions, resolver=args.resolver,
+            resolver_id=args.resolver_id, rationale=args.rationale,
+            conflict_declaration={
+                "declared": bool(args.conflict_free),
+                "has_conflict": False if args.conflict_free else None,
+                "subject_id": subject_id,
+            })
+        package = engine.aggregate(args.run)
+        paths = report.write_reports(args.run)
+        _assessment_result(args.run)
+        _out({"resolution": resolution, "evidence_package": package,
+              "reports": paths}, args.json,
+             f"resolved {args.response}; refreshed {paths['markdown']}")
+    except (rating.RatingError, FileExistsError, FileNotFoundError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
         return 2
     return 0
 
@@ -808,7 +869,9 @@ def cmd_review(args) -> int:
             for d in pkg["divergences_for_resolution"]:
                 gc = " [gate-changing]" if d["gate_changing"] else ""
                 print(f"    {d['response']} {d['dimension']}: "
-                      f"human {d['human']} vs model {d['model']} (Δ{d['delta']}){gc}")
+                      f"{d.get('left_rater', 'human')} {d['human']} vs "
+                      f"{d.get('right_rater', 'reviewer')} {d['model']} "
+                      f"(Δ{d['delta']}){gc}")
             print(f"  {s['note']}")
             if scoring:
                 print("  engineering evaluation: COMPLETE when every response has an "
@@ -840,6 +903,15 @@ def cmd_grant(args) -> int:
         record = qualification.record_decision(
             args.run, args.decision, args.authority,
             second_human=args.second, conditions=args.condition,
+            assessor=args.assessor, assessor_id=args.assessor_id,
+            peer_reviewer=args.peer_reviewer,
+            peer_reviewer_id=args.peer_reviewer_id,
+            assessor_conflict_free=args.assessor_conflict_free,
+            peer_conflict_free=args.peer_conflict_free,
+            role=args.role, phases=args.phase, sponsor=args.sponsor,
+            framework_version=args.framework_version,
+            agent_definition_version=args.agent_definition_version,
+            valid_from=args.valid_from, valid_until=args.valid_until,
             review_package=review_package, rationale=args.rationale or "",
             consider_advisory_review=args.consider_advisory_review,
             human_evaluation=args.human_evaluation)
@@ -887,6 +959,18 @@ def cmd_qualifications(args) -> int:
         elif args.q_cmd == "revoke":
             rec = qualification.revoke(args.record, args.authority, args.reason)
             _out(rec, args.json, f"revoked {rec['record_id']}")
+        elif args.q_cmd == "event":
+            rec = qualification.record_lifecycle_event(
+                args.record, args.event, args.authority, args.reason,
+                conditions=args.condition, valid_until=args.valid_until,
+                superseded_by=args.superseded_by,
+                evidence_run_id=args.evidence_run,
+                peer_reviewer=args.peer_reviewer,
+                peer_reviewer_id=args.peer_reviewer_id,
+                peer_conflict_free=args.peer_conflict_free)
+            _out(rec, args.json,
+                 f"recorded immutable {args.event} event for {rec['record_id']} "
+                 f"-> {rec['status']}")
     except qualification.QualificationError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
@@ -1404,6 +1488,46 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--file", help="scoresheet path (default: the run's scoresheet.json)")
     s.set_defaults(func=cmd_score)
 
+    rr = common(sub.add_parser(
+        "rater", help="manage durable human-rater qualification/calibration records"))
+    rrsub = rr.add_subparsers(dest="rater_cmd", required=True)
+    rreg = rrsub.add_parser("register", help="register one qualified human rater")
+    rreg.add_argument("--id", required=True)
+    rreg.add_argument("--name", required=True)
+    rreg.add_argument("--area", action="append", required=True, metavar="CA-NN")
+    rreg.add_argument("--rt", action="append", required=True, type=int,
+                      choices=(1, 2, 3, 4))
+    rreg.add_argument("--qualified-until", required=True, metavar="ISO-8601")
+    rreg.add_argument("--calibration-valid-until", required=True, metavar="ISO-8601")
+    rreg.add_argument("--anchor-version", required=True)
+    rreg.add_argument("--calibration-method",
+                      default="human-consensus-anchor-session")
+    rreg.add_argument("--registered-by", required=True,
+                      help="named human registry authority")
+    rreg.add_argument("--json", action="store_true")
+    rreg.set_defaults(func=cmd_rater)
+    rlist = rrsub.add_parser("list", help="list registered human raters")
+    rlist.add_argument("--json", action="store_true")
+    rlist.set_defaults(func=cmd_rater)
+    rshow = rrsub.add_parser("show", help="show one human-rater record")
+    rshow.add_argument("id")
+    rshow.add_argument("--json", action="store_true")
+    rshow.set_defaults(func=cmd_rater)
+
+    rs = common(sub.add_parser(
+        "resolve", help="record an immutable human disposition for a divergent item"))
+    rs.add_argument("run")
+    rs.add_argument("response", help="response record filename, for example SC-CA05-001-r1.json")
+    rs.add_argument("--scores", required=True, nargs=6, type=int,
+                    choices=(0, 1, 2, 3, 4), metavar=("EV1", "EV2", "EV3", "EV4", "EV5", "EV6"))
+    rs.add_argument("--resolver", required=True, help="named human resolver")
+    rs.add_argument("--resolver-id", required=True,
+                    help="durable id from `aies rater register`")
+    rs.add_argument("--rationale", required=True)
+    rs.add_argument("--conflict-free", action="store_true", required=True,
+                    help="declare independence from the assessed subject")
+    rs.set_defaults(func=cmd_resolve)
+
     im = common(sub.add_parser("import", help="import external eval results "
                                "(EV1–EV6 JSON) into a run as automated ratings"))
     im.add_argument("run")
@@ -1548,7 +1672,31 @@ def build_parser() -> argparse.ArgumentParser:
     gr.add_argument("--decision", choices=("grant", "grant-with-conditions", "deny"),
                     required=True)
     gr.add_argument("--authority", required=True, help="named human authority (ROLE-13)")
-    gr.add_argument("--second", default=None, help="second named human (required to grant)")
+    gr.add_argument("--assessor", default=None,
+                    help="named human assessor (defaults to authority)")
+    gr.add_argument("--assessor-id", default=None,
+                    help="durable assessor id from `aies rater register`")
+    gr.add_argument("--peer-reviewer", default=None,
+                    help="named independent human peer reviewer")
+    gr.add_argument("--peer-reviewer-id", default=None,
+                    help="durable peer id from `aies rater register`")
+    gr.add_argument("--assessor-conflict-free", action="store_true",
+                    help="assessor declares no conflict with the subject")
+    gr.add_argument("--peer-conflict-free", action="store_true",
+                    help="peer reviewer declares no conflict with the subject")
+    gr.add_argument("--role", choices=tuple(C.ROLE_NAMES),
+                    help="qualified engineering role, for example ROLE-06")
+    gr.add_argument("--phase", action="append", choices=tuple(C.PHASE_NAMES),
+                    help="SDLC phase in scope; repeat for additional phases")
+    gr.add_argument("--sponsor", help="named accountable qualification sponsor")
+    gr.add_argument("--framework-version",
+                    help="applied AIES-AESQS-CF-01 competency-framework version")
+    gr.add_argument("--agent-definition-version",
+                    help="applicable ART-14 agent-definition version")
+    gr.add_argument("--valid-from", metavar="ISO-8601")
+    gr.add_argument("--valid-until", metavar="ISO-8601")
+    gr.add_argument("--second", default=None,
+                    help="deprecated peer-reviewer name alias for legacy v4 records")
     gr.add_argument("--condition", action="append", default=None,
                     help="condition (repeatable; required for grant-with-conditions)")
     gr.add_argument("--rationale", default=None)
@@ -1563,13 +1711,34 @@ def build_parser() -> argparse.ArgumentParser:
     vf.add_argument("record")
     vf.set_defaults(func=cmd_verify)
 
-    qz = common(sub.add_parser("qualifications", help="list/show/revoke qualification records"))
+    qz = common(sub.add_parser(
+        "qualifications",
+        help="list/show qualification records or append governed lifecycle events"))
     qzsub = qz.add_subparsers(dest="q_cmd", required=True)
     qzsub.add_parser("list").add_argument("--json", action="store_true")
     qzs = qzsub.add_parser("show"); qzs.add_argument("record"); qzs.add_argument("--json", action="store_true")
     qzr = qzsub.add_parser("revoke"); qzr.add_argument("record")
     qzr.add_argument("--authority", required=True); qzr.add_argument("--reason", required=True)
     qzr.add_argument("--json", action="store_true")
+    qze = qzsub.add_parser("event", help="append an immutable lifecycle event")
+    qze.add_argument("record")
+    qze.add_argument("--event", required=True,
+                     choices=("condition-changed", "renewed", "suspended",
+                              "invalidated", "revoked", "superseded"))
+    qze.add_argument("--authority", required=True)
+    qze.add_argument("--reason", required=True)
+    qze.add_argument("--condition", action="append", default=None)
+    qze.add_argument("--valid-until", default=None, metavar="ISO-8601")
+    qze.add_argument("--superseded-by", default=None)
+    qze.add_argument("--evidence-run", default=None,
+                     help="decisional, gate-passing re-evaluation run for renewal")
+    qze.add_argument("--peer-reviewer", default=None,
+                     help="named independent human peer reviewer for renewal")
+    qze.add_argument("--peer-reviewer-id", default=None,
+                     help="durable peer id from `aies rater register`")
+    qze.add_argument("--peer-conflict-free", action="store_true",
+                     help="peer reviewer declares no conflict with the subject")
+    qze.add_argument("--json", action="store_true")
     qz.set_defaults(func=cmd_qualifications)
 
     db = common(sub.add_parser("dashboard", help="render an HTML dashboard over runs and grants"))

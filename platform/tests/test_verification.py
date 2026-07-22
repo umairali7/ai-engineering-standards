@@ -102,7 +102,7 @@ def test_ed25519_signature_verifies_end_to_end(ws, tmp_path):
     assert res["checksum"]["match"] is True and res["ok"] is True
 
     # a tampered signature must fail, not pass
-    sigf.write_bytes(b"\x00" + sig[1:])
+    sigf.write_bytes(bytes([sig[0] ^ 0x01]) + sig[1:])
     res2 = verification.verify_artifact("art", str(art),
                                         pubkey_path=str(pub), sig_path=str(sigf))
     assert res2["signature"]["status"] == "failed" and res2["ok"] is False

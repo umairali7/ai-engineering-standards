@@ -28,19 +28,39 @@ def _register(tmp_path, model_id="demo"):
 
 
 def _grant(tmp_path):
-    from aies import engine, qualification, rating, workspace
+    from aies import engine, qualification, rating, raters, workspace
     import json
     _register(tmp_path)
     run = engine.start_journey("demo", "research", "JOURNEY-01", repeats=1) \
         if False else engine.start_qualification("demo", "research", "RT2", ["CA-05"], repeats=1)
-    sheet = json.loads((workspace.run_dir(run["run_id"]) / "scoresheet.json").read_text())
-    sheet["rater"] = {"name": "Alice (ROLE-13)", "kind": "human"}
-    for it in sheet["items"]:
-        it["scores"] = {d: 3 for d in ("EV1", "EV2", "EV3", "EV4", "EV5", "EV6")}
-    rating.ingest_scores(run["run_id"], sheet)
+    original = json.loads((workspace.run_dir(run["run_id"]) / "scoresheet.json").read_text())
+    for rater_id, name in (("alice", "Alice (ROLE-13)"), ("bob", "Bob (ROLE-14)")):
+        raters.register(
+            rater_id, name, competency_areas=["CA-05"], risk_tiers=["RT2"],
+            qualified_until="2099-01-01T00:00:00+00:00",
+            calibration_valid_until="2099-01-01T00:00:00+00:00",
+            anchor_library_version="test-anchors-v1",
+            registered_by="Test Registry Authority")
+        sheet = json.loads(json.dumps(original))
+        sheet["rater"] = {
+            "id": rater_id, "name": name, "kind": "human",
+            "conflict_declaration": {
+                "declared": True, "has_conflict": False, "subject_id": "demo"}}
+        for it in sheet["items"]:
+            it["scores"] = {d: 3 for d in ("EV1", "EV2", "EV3", "EV4", "EV5", "EV6")}
+        rating.ingest_scores(run["run_id"], sheet)
     engine.aggregate(run["run_id"])
     return qualification.record_decision(run["run_id"], "grant", "Alice (ROLE-13)",
-                                         second_human="Bob (ROLE-14)")
+                                         second_human="Bob (ROLE-14)",
+                                         assessor="Alice (ROLE-13)", assessor_id="alice",
+                                         peer_reviewer="Bob (ROLE-14)", peer_reviewer_id="bob",
+                                         assessor_conflict_free=True,
+                                         peer_conflict_free=True,
+                                         role="ROLE-06", phases=["P09", "P10"],
+                                         sponsor="Test Sponsor",
+                                         framework_version="AIES-AESQS-CF-01@review-2026-07-22",
+                                         valid_from="2026-07-01T00:00:00+00:00",
+                                         valid_until="2027-06-30T00:00:00+00:00")
 
 
 def test_template_and_requirements():

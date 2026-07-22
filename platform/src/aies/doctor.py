@@ -67,6 +67,8 @@ def fingerprint(runtime_component: dict | None = None) -> dict:
     runtime_component: the adapter's fingerprint() contribution, merged
     under "runtime" when a runtime is in play.
     """
+    runtime = runtime_component or {"id": "none", "version": "n/a"}
+    execution_scope = runtime.get("execution_scope", "local")
     fp = {
         "machine": _platform.node() or "unknown",
         "cpu": _platform.processor() or _platform.machine() or "unknown",
@@ -74,14 +76,26 @@ def fingerprint(runtime_component: dict | None = None) -> dict:
         "ram_gb": _ram_gb(),
         "os": f"{_platform.system()} {_platform.release()}",
         "python": _platform.python_version(),
-        "runtime": runtime_component or {"id": "none", "version": "n/a"},
+        "runtime": runtime,
         # Power/thermal state is platform-specific; recorded when the
         # runtime adapter can report it, "unknown" otherwise.
         "power_state": (runtime_component or {}).get("power_state", "unknown"),
         "thermal_state": (runtime_component or {}).get("thermal_state", "unknown"),
         "platform_version": __version__,
+        "binding_scope": ("remote-deployment" if execution_scope == "remote"
+                          else "local-execution-environment"),
     }
-    canonical = json.dumps(fp, sort_keys=True)
+    # A hosted deployment's behavior is bound to endpoint/model/revision/config,
+    # not to the laptop used to call it. Keep client facts visible as provenance
+    # while excluding them from the remote qualification trigger. Local
+    # runtimes remain bound to hardware/OS/runtime because they execute there.
+    if execution_scope == "remote":
+        binding = {"runtime": runtime, "platform_version": __version__}
+    else:
+        binding = {key: value for key, value in fp.items()
+                   if key not in ("binding_scope",)}
+    fp["binding_components"] = sorted(binding)
+    canonical = json.dumps(binding, sort_keys=True)
     fp["fingerprint_hash"] = "sha256:" + hashlib.sha256(canonical.encode()).hexdigest()
     return fp
 

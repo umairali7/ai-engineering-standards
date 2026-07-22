@@ -112,24 +112,42 @@ def assemble_review_package(
     manifest = workspace.read_json(workspace.run_dir(run_id) / "manifest.json")
     risk_tier = manifest["risk_tier"]
     ratings = rating.collect_ratings(run_id)
-    by_resp: dict[str, dict] = {}
+    by_resp: dict[str, dict[str, list[dict]]] = {}
     for r in ratings:
-        by_resp.setdefault(r["rates_response"], {})[r["provenance"]["rater_kind"]] = r
+        kind = r["provenance"]["rater_kind"]
+        by_resp.setdefault(r["rates_response"], {}).setdefault(kind, []).append(r)
 
     admitted, admit_reason = reviewer_admitted(
         qualified_for_review=reviewer_qualified_for_review, calibration=calibration)
 
     items, all_divergences = [], []
     for resp, kinds in sorted(by_resp.items()):
-        human = kinds.get("human")
-        model = kinds.get("model")
+        humans = kinds.get("human", [])
+        models = kinds.get("model", [])
         entry = {"response": resp,
-                 "has_human": human is not None,
-                 "has_model": model is not None}
-        if human and model:
-            divs = _divergences(human["scores"], model["scores"], risk_tier)
-            entry["divergences"] = divs
-            all_divergences.extend({"response": resp, **d} for d in divs)
+                 "has_human": bool(humans),
+                 "has_model": bool(models),
+                 "human_raters": [h["provenance"]["rater"] for h in humans],
+                 "model_raters": [m["provenance"]["rater"] for m in models]}
+        item_divergences = []
+        pairs = []
+        for left_index, left in enumerate(humans):
+            for right in humans[left_index + 1:]:
+                pairs.append(("human-human", left, right))
+            for right in models:
+                pairs.append(("human-model", left, right))
+        for pair_kind, left, right in pairs:
+            for divergence in _divergences(left["scores"], right["scores"], risk_tier):
+                detail = {
+                    "pair_kind": pair_kind,
+                    "left_rater": left["provenance"]["rater"],
+                    "right_rater": right["provenance"]["rater"],
+                    **divergence,
+                }
+                item_divergences.append(detail)
+                all_divergences.append({"response": resp, **detail})
+        if item_divergences:
+            entry["divergences"] = item_divergences
         items.append(entry)
 
     return {

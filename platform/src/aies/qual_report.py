@@ -59,6 +59,19 @@ def render_markdown(record_id: str) -> str:
     a(f"Profile **{scope['profile']}** · scoped risk tier **{C.risk_tier_label(scope['risk_tier'])}** · "
       f"subject kind **{scope['subject_kind']}**")
     a("")
+    if scope.get("role"):
+        validity = scope.get("validity") or {}
+        agent = scope.get("agent_definition") or {}
+        a("| Scope field | Declared value |")
+        a("|---|---|")
+        a(f"| Role | {C.identifier_label(scope['role'])} |")
+        a(f"| SDLC phases | {', '.join(C.identifier_label(phase) for phase in scope.get('phases', []))} |")
+        a(f"| Maximum risk tier | {C.risk_tier_label(scope.get('max_risk_tier'))} |")
+        a(f"| Competency framework | {scope.get('framework_version')} |")
+        a(f"| Agent definition | {agent.get('version') if agent.get('applicable') else 'not applicable'} |")
+        a(f"| Sponsor | {scope.get('sponsor')} |")
+        a(f"| Validity window | {validity.get('from')} through {validity.get('until')} |")
+        a("")
     a("| Competency area | Level | RT1 — Minimal | RT2 — Moderate | RT3 — Significant | RT4 — Critical |")
     a("|---|---|---|---|---|---|")
     for area, d in scope["areas"].items():
@@ -91,8 +104,17 @@ def render_markdown(record_id: str) -> str:
     a("## Accountable humans")
     a("")
     a(f"- Authority ({C.identifier_label('ROLE-13')}): {hum.get('authority')}")
-    if hum.get("second"):
+    assessor = hum.get("assessor") or {}
+    peer = hum.get("peer_reviewer") or {}
+    if assessor:
+        a(f"- Assessor: {assessor.get('name')} (`{assessor.get('id')}`)")
+    if peer:
+        a(f"- Independent peer reviewer: {peer.get('name')} (`{peer.get('id')}`)")
+    elif hum.get("second"):
         a(f"- Second ({C.identifier_label('ROLE-14')}): {hum['second']}")
+    protocol = hum.get("protocol") or {}
+    if protocol:
+        a(f"- Two-human protocol: **{'satisfied' if protocol.get('satisfied') else 'incomplete'}**")
     a("")
     a("## Evidence & history")
     a("")
@@ -139,6 +161,21 @@ def render_html(record_id: str) -> str:
     w("</table>")
     w(f"<h2>Scope of the grant</h2><p>Profile <strong>{e(scope['profile'])}</strong> "
       f"&middot; risk tier <strong>{e(C.risk_tier_label(scope['risk_tier']))}</strong></p>")
+    if scope.get("role"):
+        validity = scope.get("validity") or {}
+        agent = scope.get("agent_definition") or {}
+        w("<table class=env>")
+        for key, value in (
+            ("Role", C.identifier_label(scope["role"])),
+            ("SDLC phases", ", ".join(C.identifier_label(phase) for phase in scope.get("phases", []))),
+            ("Maximum risk tier", C.risk_tier_label(scope.get("max_risk_tier"))),
+            ("Competency framework", scope.get("framework_version")),
+            ("Agent definition", agent.get("version") if agent.get("applicable") else "not applicable"),
+            ("Sponsor", scope.get("sponsor")),
+            ("Validity window", f"{validity.get('from')} through {validity.get('until')}"),
+        ):
+            w(f"<tr><td>{e(key)}</td><td>{e(str(value))}</td></tr>")
+        w("</table>")
     w("<table><tr><th>Competency area</th><th>Level</th>"
       "<th>RT1 — Minimal</th><th>RT2 — Moderate</th><th>RT3 — Significant</th><th>RT4 — Critical</th></tr>")
     for area, d in scope["areas"].items():
@@ -164,7 +201,13 @@ def render_html(record_id: str) -> str:
     w("</table>")
     w("<h2>Accountable humans</h2><ul>")
     w(f"<li>Authority ({e(C.identifier_label('ROLE-13'))}): {e(hum.get('authority'))}</li>")
-    if hum.get("second"):
+    assessor = hum.get("assessor") or {}
+    peer = hum.get("peer_reviewer") or {}
+    if assessor:
+        w(f"<li>Assessor: {e(str(assessor.get('name')))} (<code>{e(str(assessor.get('id')))}</code>)</li>")
+    if peer:
+        w(f"<li>Independent peer reviewer: {e(str(peer.get('name')))} (<code>{e(str(peer.get('id')))}</code>)</li>")
+    elif hum.get("second"):
         w(f"<li>Second ({e(C.identifier_label('ROLE-14'))}): {e(hum['second'])}</li>")
     w("</ul>")
     w(f"<h2>Evidence</h2><p>Run <code>{e(r['evidence']['run_id'])}</code>. "

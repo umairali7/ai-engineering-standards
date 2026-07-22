@@ -79,7 +79,10 @@ def engineering_capability_matrix(ref: str) -> dict:
         # Legacy packages may list a calibrated model as admitted. ADR-0012
         # narrows qualification-score admission to human-resolved evidence;
         # automated observations still feed the informational ECM `scores`.
-        record_admitted = provenance.get("rater_kind") == "human"
+        record_admitted = (
+            provenance.get("rater_kind") == "human"
+            and (provenance.get("qualification_admitted") is True
+                 or pkg.get("evidence_schema", 0) < 5))
         if provenance.get("rater"):
             row["raters"].add(provenance["rater"])
         if provenance.get("rater_kind"):
@@ -128,23 +131,27 @@ def engineering_capability_matrix(ref: str) -> dict:
             tasks.append({"task_id": task_id, "task": task_name, "scenario_ids": [],
                           "areas": [], "distinct_scenarios": 0, "distinct_responses": 0,
                           "rating_observations": 0, "minimum_observations": None,
-                          "admitted_rating_observations": 0, "observed_performance": None, "coverage_percent": 0,
-                          "status": "not assessed", "raters": [], "rater_kinds": []})
+                          "admitted_rating_observations": 0, "observed_performance": None,
+                          "coverage_percent": None, "status": "not assessed",
+                          "decision_semantics": "not-applicable-no-evidence",
+                          "raters": [], "rater_kinds": []})
             continue
         n = len(data["scores"])
         minimum = max((pkg["areas"][area]["min_sample"] for area in data["areas"]), default=0)
-        areas_decisional = all(pkg["areas"][area]["decisional"] and pkg["areas"][area]["gates_passed"]
-                              for area in data["areas"])
         performance = round(sum(data["scores"]) / n, 3) if n else None
-        coverage = round(min(1, n / minimum) * 100) if minimum else 0
         tasks.append({"task_id": task_id, "task": task_name,
                       "scenario_ids": sorted(data["scenario_ids"]), "areas": sorted(data["areas"]),
                       "distinct_scenarios": len(data["scenario_ids"]),
                       "distinct_responses": len(data["response_records"]),
                       "rating_observations": n, "minimum_observations": minimum,
                       "admitted_rating_observations": len(data["admitted_scores"]),
-                      "observed_performance": performance, "coverage_percent": coverage,
-                      "status": "demonstrated" if areas_decisional and n >= minimum else "observed",
+                      "observed_performance": performance, "coverage_percent": None,
+                      # A competency-area sample minimum is not a task-level
+                      # decision threshold. Until ECM task semantics are
+                      # governed, mapped evidence can be observed but cannot
+                      # be labelled demonstrated or emitted under Use.
+                      "status": "observed",
+                      "decision_semantics": "ungoverned-task-threshold",
                       "raters": sorted(data["raters"]), "rater_kinds": sorted(data["rater_kinds"])})
 
     return {
@@ -168,6 +175,7 @@ def engineering_capability_matrix(ref: str) -> dict:
             "Informational only; this matrix is not qualification evidence, a grant, or deployment authorization.",
             "Task rows are derived from the versioned scenario-to-task mapping registry; scenario-family rows remain the traceable source evidence.",
             "Evidence mean is an unweighted inspection statistic, not a competency level or recommendation.",
+            "Task decision semantics are not yet governed; no task row may be labelled demonstrated or emitted as a Use recommendation.",
             "A non-decisional row requires more independently scored evidence; repeats do not establish task breadth.",
             "Automated ratings can complete the engineering evaluation; optional human evaluation adds assurance but is not required to generate this ECM.",
         ],
@@ -403,8 +411,9 @@ def render_capability_summary_markdown(matrix: dict) -> str:
     if summary["task_observed"]:
         for task in summary["task_observed"]:
             lines.append(f"- **Observed only:** `{task['task']}` — "
-                         f"{task['observed_performance'] / 4 * 100:.0f}% observed performance, "
-                         f"{task['coverage_percent']}% evidence coverage. Do not treat this as a demonstrated capability.")
+                         f"{task['observed_performance'] / 4 * 100:.0f}% observed performance across "
+                         f"{task['distinct_scenarios']} distinct mapped scenarios. Task-level "
+                         "adequacy is not yet governed; do not treat this as a demonstrated capability.")
     if not summary["task_demonstrated"] and not summary["task_observed"]:
         lines.append("- No mapped engineering task has traceable scored evidence in this run.")
 

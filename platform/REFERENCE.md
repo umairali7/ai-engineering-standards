@@ -47,7 +47,10 @@ Every artifact carries a schema version; envelopes are field-append-only
 |---|---|---|---|
 | Assessment | `schema` | `1` | authored (`assessments/*.yaml`) |
 | Profile | `version` | semver | authored (`profiles/*.yaml`) |
-| Evidence Package | `evidence_schema` | `4` | `qualify --resume` / `aggregate` |
+| Evidence Package | `evidence_schema` | `5` | `qualify --resume` / `aggregate` |
+| Human Rater Record | `rater_schema` | `1` | `rater register` |
+| Qualification Record | `qualification_schema` | `2` | `grant` (human authority) |
+| Qualification Lifecycle Event | `event_schema` | `1` | `qualifications event` / `verify` |
 | Engineering Evaluation Summary | `evaluation_schema` | `1` | every complete report bundle (`engineering-evaluation.json`) |
 | Canonical Assessment Result | `result_schema` | `1` | the decision engine |
 | Decision semantics | `decision_semantics_version` | `1.0` (AESQS CS-01 §8) | the standard |
@@ -78,6 +81,8 @@ append-only records. Grouped as in `aies --help`.
 | `qualify` | Full pipeline for a deployment → engineering evaluation and evidence package. Live progress is implicit; an automated judge can complete the evaluation without human review. `--assessment`, `--judge`, `--all-areas`, `--journey`, `--parallel`, `--repeats`, `--resume`, `--resume-collection` | `aies qualify local-qwen --assessment enterprise --judge gpt-oss` |
 | `benchmark` | Execute scenario suites only (stage 4) | `aies benchmark acme-7b --area CA-05 --repeats 5` |
 | `score` | Ingest a filled scoresheet (human/model rater) | `aies score run-2031` |
+| `rater` | Register/list/show durable human identity, competency/risk scope, qualification, and calibration | `aies rater register --id alice --name "Alice" --area CA-05 --rt 2 ...` |
+| `resolve` | Append a named, reasoned human disposition for a materially divergent evidence item | `aies resolve run-2031 SC-CA05-001-r1.json --scores 4 4 3 4 3 4 ...` |
 | `import` / `export` | Bring external eval results in as EV evidence / round-trip out | `aies import run-2031 eval.json` |
 | `capabilities` | Per-area CL + autonomy + gate + decisional status; `--ecm` renders a traceable, informational scenario-family matrix | `aies capabilities run-2031 --ecm --format html --write` |
 | `assessment` | `list` / `show` / `validate` / `result <run>` (Markdown/JSON/`--format html`) | `aies assessment result run-2031` |
@@ -97,9 +102,9 @@ append-only records. Grouped as in `aies --help`.
 | Command | Contract | Example |
 |---|---|---|
 | `report` | Render an evidence package / record as Markdown, JSON, or HTML | `aies report run-2031 --format html --write` |
-| `grant` | Record a formal, revocable human qualification decision | `aies grant run-2031 --decision grant --authority "…" --second "…"` |
-| `qualification` | List/show/revoke Qualification Records | `aies qualification list` |
-| `verify` | Re-check the environment fingerprint (D7); non-zero if invalidated | `aies verify QUAL-2026-001` |
+| `grant` | Record a formal, scoped two-human qualification decision; v5 requires durable assessor/peer ids, conflict declarations, role/phases/sponsor/framework, and validity | `aies grant run-2031 --decision grant --authority "Authority" --assessor-id alice --peer-reviewer-id bob ...` |
+| `qualifications` | List/show/revoke records or append governed condition/renewal/suspension/invalidation/revocation/supersession events | `aies qualifications event QUAL-2026-001 --event suspended --authority "Authority" --reason "incident"` |
+| `verify` | Re-check expiry and the deployment fingerprint (D7); non-zero if expired or invalidated | `aies verify QUAL-2026-001` |
 | `audit` | Audit a *repository's* AIES engineering practice (maturity ML0–ML4) | `aies audit . --gate --rt 2` |
 | `conform check` | Check a conformance *statement* against CONFORMANCE.md | `aies conform check statement.yaml` |
 | `conform engine` | Verify a *decision engine* against the golden corpus — the reference engine, or a **foreign** one via `--engine "<cmd>"` (reads evidence+assessment JSON on stdin, prints the result) so independent implementations self-check | `aies conform engine --engine "python conformance/example_engine.py"` |

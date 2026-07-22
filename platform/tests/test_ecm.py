@@ -38,6 +38,8 @@ def test_ecm_groups_existing_families_and_labels_small_samples(tmp_path, monkeyp
     assert matrix["mapping"]["kind"] == "aies-engineering-tasks-v1"
     code_generation = next(task for task in matrix["tasks"] if task["task_id"] == "ET-04")
     assert code_generation["status"] == "observed"
+    assert code_generation["decision_semantics"] == "ungoverned-task-threshold"
+    assert code_generation["coverage_percent"] is None
     assert any(task["status"] == "not assessed" for task in matrix["tasks"])
     assert matrix["rows"]
     assert all(row["area"] == "CA-05" for row in matrix["rows"])
@@ -85,6 +87,7 @@ def test_deployment_guidance_is_bounded_to_ecm_evidence(tmp_path, monkeypatch):
     rating.ingest_scores(run["run_id"], sheet)
     engine.aggregate(run["run_id"])
     rendered = guidance.render_markdown(run["run_id"])
-    assert "Use with human review" in rendered
+    assert "No recommendation — human review and more evidence required" in rendered
     assert "Code Generation" in rendered
     assert "not assessed" in rendered
+    assert "cannot authorize a Use recommendation" in rendered

@@ -83,6 +83,15 @@ Adding an optional field to an artifact means: add it, **and** add it to the
 golden shape test and bump the schema constant — in the same change. If the two
 diverge, CI fails. That is the policy being executable rather than aspirational.
 
+### Evidence Package v4 to v5
+
+ADR-0012 authorizes the breaking v5 change in statistical unit. Version 4
+packages expose flat admitted rating observations and retain their historical
+meaning. Version 5 adds explicit `rating_observations` and `evidence_items`;
+qualification statistics consume the latter's resolved scores, never the
+former as independent samples. Readers MUST branch on `evidence_schema` and
+MUST NOT reinterpret a v4 package as if it had passed v5 resolution.
+
 ## Related Documents
 
 - [STABILITY.md](STABILITY.md) — the frozen contracts (v1.0 freeze)

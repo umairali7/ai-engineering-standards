@@ -105,7 +105,8 @@ stage 4 benchmark       ┘        (writes responses + a scoresheet)
 stage 5 scoring         →  aies qualify --resume <run>      (gated aggregation)
         report          →  aies report <run> --format markdown|json|html
 stage 6 peer review     →  (assembled by aies review, above)
-stage 7 decision        →  aies grant <run> --decision grant --authority NAME --second NAME
+stage 7 decision        →  aies grant <run> --decision grant --authority NAME \
+                              --assessor-id ID --peer-reviewer NAME --peer-reviewer-id ID ...
 stage 8 role envelope   →  (in the evidence package & Qualification Record)
         re-check        →  aies verify <QR-id>       (invalidates on env change, D7)
         overview        →  aies dashboard --write
@@ -417,11 +418,46 @@ answers* when deciding whether the scores look right.
 
 Without `--judge`, `qualify` writes a `scoresheet.json` and stops. Open it and,
 for each response, set an integer **0–4** on each EV1–EV6 dimension against the
-rubric anchors, add your rater name, and write a finding for any score ≤ 2:
+rubric anchors, add the human's durable rater `id` and matching `name`, declare
+the run subject conflict-free, and write a finding for any score ≤ 2. Register
+each human once with their current competency/risk scope and calibration:
 
 ```
+aies rater register --id alice --name "Alice Example" \
+  --area CA-05 --rt 2 \
+  --qualified-until 2027-06-30T00:00:00Z \
+  --calibration-valid-until 2027-06-30T00:00:00Z \
+  --anchor-version anchors-2026-07 --registered-by "Registry Authority"
+
 aies score <run-id>              # ingest the scores you wrote
 aies qualify --resume <run-id>   # aggregate -> report
+```
+
+An unregistered human may still contribute optional engineering feedback, but
+that observation is explicitly **not admitted** to formal qualification. For
+RT1 — Minimal and RT2 — Moderate, independently double-rate at least 20% of
+distinct evidence items. For RT3 — Significant and RT4 — Critical,
+independently double-rate every item. The admitted adjacent-agreement rate must
+be at least 80%. A repeated score from the same durable identity is not an
+independent rating.
+
+Evidence Package v5 retains this submission as a **rating observation** linked
+to the response evidence item. Qualification statistics consume at most one
+resolved score per response, so adding another rater never increases the
+effective item count. Independent human scores that differ by at most one
+anchor resolve conservatively to the lower demonstrated anchor. A difference
+of two or more on any EV dimension remains explicitly unresolved and excluded
+from qualification statistics until a named human records a reasoned
+disposition; it is never silently averaged (ADR-0012,
+AIES-AESQS-ER-01-R07 — Material disagreement requires resolution).
+
+Resolve a material divergence only after human review, recording the complete
+EV1–EV6 disposition and rationale as an immutable event:
+
+```
+aies resolve <run-id> SC-CA05-001-r1.json \
+  --scores 4 4 3 4 3 4 --resolver "Alice Example" --resolver-id alice \
+  --rationale "Reconciled against anchor artifact A-17" --conflict-free
 ```
 
 ### 5.4 (Optional) Add a model reviewer
@@ -501,9 +537,10 @@ collection intent only, not successful responses or admitted ratings.
 
 In an Engineering Capability Matrix, **not assessed** means no mapped scored
 scenario evidence was collected for that task. It is unknown, not a failure or
-a low score. **Observed** means evidence exists but has not reached the stated
-task-confidence threshold. Only **demonstrated** rows have sufficient evidence
-for their recorded tier and protocol.
+a low score. **Observed** means descriptive evidence exists but does not carry
+a governed task decision. While AIES-ECM-01 is Draft and ADR-0013 is Proposed,
+no row is labelled **demonstrated**, numeric task-confidence percentages are
+suppressed, and Deployment Guidance emits no `Use` recommendation.
 
 ### 5.5 Aggregate and report
 
@@ -520,12 +557,18 @@ recommended **RT × AL autonomy envelope** — never a global pass/fail.
 
 ```
 aies grant <run> --decision grant \
-    --authority "Your Name (ROLE-13)" --second "Reviewer (ROLE-14)" \
+    --authority "Qualification Authority" \
+    --assessor "Alice Example" --assessor-id alice --assessor-conflict-free \
+    --peer-reviewer "Bob Example" --peer-reviewer-id bob --peer-conflict-free \
+    --role ROLE-06 --phase P09 --phase P10 \
+    --sponsor "Engineering VP" \
+    --framework-version "AIES-AESQS-CF-01@review-2026-07-22" \
+    --valid-from 2026-07-22T00:00:00Z --valid-until 2027-07-21T00:00:00Z \
     --consider-advisory-review \
-    --human-evaluation "Reviewer (ROLE-14)" \
+    --human-evaluation "Bob Example" \
     --rationale "pilot qualification"
-aies qualifications list                 # the Qualification Record (QR-...)
-aies verify QR-<...>                      # re-checks the environment fingerprint
+aies qualifications list                 # the Qualification Record (QUAL-...)
+aies verify QUAL-<...>                    # re-checks the deployment fingerprint
 aies dashboard --write                    # HTML overview of everything
 ```
 
@@ -541,12 +584,31 @@ aies report QUAL-2026-001 --format html --write   # writes reports/QUAL-2026-001
 aies report list                                   # generated report artifacts
 ```
 
-`grant` refuses non-decisional or gate-failing evidence and requires two named
-humans — the platform never grants on its own. `verify` recomputes the
-environment fingerprint through the deployment's adapter; if the model,
-quantization, runtime, or host changed, the grant is **invalidated** and
-re-qualification is required (D7), and `verify` exits non-zero so CI can gate
-on it.
+`grant` refuses non-decisional or gate-failing evidence and requires two
+distinct, registered, currently qualified and calibrated humans with
+subject-bound conflict declarations. The record contains the complete scope:
+subject, role, phases, maximum risk tier, competency × CL claims, framework and
+agent-definition versions where applicable, sponsor, and validity. The platform
+never grants on its own.
+
+Qualification records are immutable. Conditions, renewal, suspension,
+invalidation, revocation, and supersession append separate lifecycle events:
+
+```
+aies qualifications event QUAL-2026-001 --event renewed \
+  --authority "Qualification Authority" --reason "annual re-evaluation" \
+  --evidence-run <new-decisional-run> --valid-until 2028-07-20T00:00:00Z \
+  --peer-reviewer "Bob Example" --peer-reviewer-id bob --peer-conflict-free
+```
+
+Renewal is never automatic: the new run must match the subject, profile, risk
+tier, and full competency scope; remain decisional and gate-passing; receive
+verified independent peer review; extend (not shorten) validity; and remain
+within the tier maximum. Expired or materially changed qualifications are
+treated as absent and require requalification. `verify` binds hosted endpoints
+to endpoint/model/revision/runtime/config identity while local deployments also
+remain host-bound; irrelevant calling-laptop CPU/RAM changes do not invalidate
+a hosted qualification.
 
 ### 5.7 Worked example — a complete run against Ollama, start to finish
 
@@ -575,8 +637,9 @@ aies qualify ollama-llama3.1-8b --profile coder --rt 2 --area CA-05 \
 
 # 4. score the responses (you, the human rater)
 #    open scoresheet.json; for each item set EV1..EV6 to an integer 0-4
-#    against the rubric, add "rater": {"name": "...", "kind": "human"},
-#    and a finding for any score <= 2. then:
+#    against the rubric, add the registered rater id + matching name and a
+#    subject-bound conflict-free declaration, plus a finding for score <= 2.
+#    Formal qualification also needs the tier's independent double-rating.
 aies score <run>
 
 # 5. aggregate and read the evidence
@@ -587,12 +650,17 @@ aies report <run> --format markdown         # or: --format html --write
 #    aies score <run> --file reviewer-scoresheet.json   # rater.kind = "model"
 aies review <run> --reviewer some-reviewer-model
 
-# 7. the human decision -> a Qualification Record
-aies grant <run> --decision grant \
-      --authority "Your Name (ROLE-13)" --second "Colleague (ROLE-14)" \
+# 7. the two-human decision -> a scoped Qualification Record
+#    Use the complete command in §5.6 after both raters are registered.
+aies grant <run> --decision grant --authority "Qualification Authority" \
+      --assessor "Alice Example" --assessor-id alice --assessor-conflict-free \
+      --peer-reviewer "Bob Example" --peer-reviewer-id bob --peer-conflict-free \
+      --role ROLE-06 --phase P09 --phase P10 --sponsor "Engineering VP" \
+      --framework-version "AIES-AESQS-CF-01@review-2026-07-22" \
+      --valid-from 2026-07-22T00:00:00Z --valid-until 2027-07-21T00:00:00Z \
       --rationale "engineering pilot"
 aies qualifications list
-aies verify QR-<...>                # re-checks the environment fingerprint
+aies verify QUAL-<...>              # re-checks the deployment fingerprint
 aies dashboard --write              # HTML overview
 ```
 

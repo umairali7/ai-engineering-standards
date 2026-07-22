@@ -19,10 +19,12 @@ limits, or human accountability.
 
 Each ECM is scoped to the risk tier recorded in its source run. A task marked
 `not assessed` has no mapped scored evidence in that scope; it does not mean
-the subject failed the task. A task marked `observed` has evidence below the
-matrix confidence threshold, while `demonstrated` meets that threshold for its
-recorded tier and protocol. An all-area run covers all areas at one tier, not
-all four risk tiers.
+the subject failed the task. A task marked `observed` has descriptive mapped
+evidence but no governed task decision. While this standard remains Draft and
+[ADR-0013](../adr/ADR-0013-ECM-Task-Decision-Semantics-and-Deployment-Guidance.md)
+remains Proposed, no row may be labelled `demonstrated` and Deployment Guidance
+may not emit `Use`. An all-area run covers all areas at one tier, not all four
+risk tiers.
 
 ## 2. Architecture
 
@@ -80,6 +82,11 @@ task deltas only when suite, mapping version, risk tier, profile, repeat
 structure, rater protocol, and adequacy are compatible. AIES Select MUST use a
 declared workload and operating constraints; it MUST NOT emit a global best
 subject claim.
+
+Until the task-decision rules are accepted and their conformance fixtures pass,
+the reference implementation renders mapped scores as observations only and
+uses **No recommendation / collect evidence** rather than any operational use
+claim.
 
 ## Related Documents
 

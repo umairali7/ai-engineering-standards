@@ -459,22 +459,17 @@ def aggregate(run_id: str) -> dict:
     adjustments = profile.get("dimension_weight_adjustments") or {}
     rt = manifest["risk_tier"]
 
-    # Model and automated ratings are retained as auditable evaluation
-    # observations. ADR-0012 makes their reviewer-admission status relevant to
-    # corroborating peer review, but never sufficient to admit those scores
-    # directly into qualification statistics. Until the resolved-evidence-item
-    # protocol lands, only human rating observations enter this legacy v4
-    # aggregate; automated-only runs remain engineering evaluations.
+    # Rating records are observations, not independent statistical samples.
+    # ADR-0012 requires aggregation to consume at most one resolved score per
+    # response evidence item. Automated observations remain first-class and
+    # useful to Engineering Evaluation, but cannot resolve qualification items.
     review_path = rdir / "review-package.json"
     review_pkg = workspace.read_json(review_path) if review_path.exists() else {}
     reviewer = review_pkg.get("reviewer") or {}
-    def is_admitted(record: dict) -> bool:
-        provenance = record.get("provenance") or {}
-        return provenance.get("rater_kind") == "human"
-
     by_area: dict[str, list[dict]] = {a["area"]: [] for a in manifest.get("areas", [])}
     raw_by_area: dict[str, int] = {a["area"]: 0 for a in manifest.get("areas", [])}
     admitted_by_area: dict[str, int] = {a["area"]: 0 for a in manifest.get("areas", [])}
+    unresolved_by_area: dict[str, int] = {a["area"]: 0 for a in manifest.get("areas", [])}
     admitted_scenarios_by_area: dict[str, set[str]] = {
         a["area"]: set() for a in manifest.get("areas", [])}
     responses = {p.name: workspace.read_json(p)
@@ -483,12 +478,29 @@ def aggregate(run_id: str) -> dict:
         resp = responses.get(r["rates_response"])
         area = resp["area"] if resp else "unknown"
         raw_by_area[area] = raw_by_area.get(area, 0) + 1
-        if is_admitted(r):
-            by_area.setdefault(area, []).append(r["scores"])
+    evidence_items = rating.resolve_evidence_items(run_id, ratings)
+    resolved_responses = {
+        item["response_record"] for item in evidence_items if item["resolved"]}
+    qualification_responses = {
+        item["response_record"] for item in evidence_items
+        if item["resolved"] and item.get("qualification_eligible")}
+
+    def is_admitted_observation(record: dict) -> bool:
+        provenance = record.get("provenance") or {}
+        return (provenance.get("rater_kind") == "human"
+                and provenance.get("qualification_admitted") is True
+                and record.get("rates_response") in qualification_responses)
+
+    for item in evidence_items:
+        area = item.get("area") or "unknown"
+        if item["resolved"]:
+            by_area.setdefault(area, []).append(item["scores"])
             admitted_by_area[area] = admitted_by_area.get(area, 0) + 1
-            scenario_id = r.get("scenario_id") or (resp or {}).get("scenario_id")
+            scenario_id = item.get("scenario_id")
             if scenario_id:
                 admitted_scenarios_by_area.setdefault(area, set()).add(scenario_id)
+        else:
+            unresolved_by_area[area] = unresolved_by_area.get(area, 0) + 1
 
     areas = {}
     for area, item_scores in sorted(by_area.items()):
@@ -499,8 +511,38 @@ def aggregate(run_id: str) -> dict:
         # ADR-0011: repeat observations and multiple raters do not establish
         # breadth. They remain in the score distribution and raw provenance,
         # but the adequacy decision counts unique instruments only.
+        breadth_satisfied = res.decisional
         if manifest.get("sample_adequacy_policy") == "distinct-scenarios-v1":
-            res.decisional = distinct_scenarios >= res.min_sample
+            breadth_satisfied = distinct_scenarios >= res.min_sample
+        area_items = [item for item in evidence_items if item.get("area") == area]
+        qualification_items = [
+            item for item in area_items
+            if item["resolved"] and item.get("qualification_eligible")]
+        double_rated = [
+            item for item in qualification_items
+            if item.get("qualified_human_observation_count", 0) >= 2]
+        required_fraction = 1.0 if rt in ("RT3", "RT4") else 0.2
+        double_fraction = len(double_rated) / len(area_items) if area_items else 0.0
+        agreement_fraction = (
+            sum(1 for item in double_rated if item.get("max_dimension_delta", 4) <= 1)
+            / len(double_rated) if double_rated else 0.0)
+        protocol_reasons = []
+        if len(qualification_items) != len(area_items):
+            protocol_reasons.append(
+                f"{len(qualification_items)}/{len(area_items)} items have verified human-rater resolution")
+        if double_fraction + 1e-12 < required_fraction:
+            protocol_reasons.append(
+                f"double-rating coverage {double_fraction:.1%} below required {required_fraction:.0%}")
+        if double_rated and agreement_fraction < 0.8:
+            protocol_reasons.append(
+                f"adjacent agreement {agreement_fraction:.1%} below declared 80% criterion")
+        unresolved_major = sum(
+            1 for item in area_items if item["status"] == "unresolved-major-divergence")
+        if unresolved_major:
+            protocol_reasons.append(
+                f"{unresolved_major} item(s) have unresolved major divergence")
+        protocol_satisfied = not protocol_reasons
+        res.decisional = breadth_satisfied and protocol_satisfied
         areas[area] = {
             "n_scored": res.n_scored,
             "n_distinct_scenarios": distinct_scenarios,
@@ -509,8 +551,29 @@ def aggregate(run_id: str) -> dict:
                 if manifest.get("sample_adequacy_policy") == "distinct-scenarios-v1"
                 else "legacy_scored_items"),
             "raw_ratings": raw_by_area.get(area, 0),
-            "admitted_ratings": admitted_by_area.get(area, 0),
-            "advisory_ratings": raw_by_area.get(area, 0) - admitted_by_area.get(area, 0),
+            "admitted_ratings": sum(
+                1 for observation in ratings
+                if is_admitted_observation(observation)
+                and (responses.get(observation["rates_response"]) or {}).get("area") == area),
+            "advisory_ratings": sum(
+                1 for observation in ratings
+                if not is_admitted_observation(observation)
+                and (responses.get(observation["rates_response"]) or {}).get("area") == area),
+            "resolved_evidence_items": admitted_by_area.get(area, 0),
+            "unresolved_evidence_items": unresolved_by_area.get(area, 0),
+            "rater_protocol": {
+                "satisfied": protocol_satisfied,
+                "qualification_eligible_items": len(qualification_items),
+                "total_items": len(area_items),
+                "double_rated_items": len(double_rated),
+                "double_rating_fraction": round(double_fraction, 3),
+                "required_double_rating_fraction": required_fraction,
+                "agreement_method": "adjacent-agreement-rate-v1",
+                "agreement_fraction": round(agreement_fraction, 3),
+                "agreement_threshold": 0.8,
+                "unresolved_major_divergences": unresolved_major,
+                "reasons": protocol_reasons,
+            },
             "min_sample": res.min_sample,
             "decisional": res.decisional,
             "dimensions": {
@@ -561,15 +624,35 @@ def aggregate(run_id: str) -> dict:
         "areas": areas,
         "raters": sorted({r["provenance"]["rater"] for r in ratings}),
         "rater_kinds": sorted({r["provenance"]["rater_kind"] for r in ratings}),
-        "admitted_raters": sorted({r["provenance"]["rater"] for r in ratings if is_admitted(r)}),
-        "admitted_rater_kinds": sorted({r["provenance"]["rater_kind"] for r in ratings if is_admitted(r)}),
+        "admitted_raters": sorted({
+            r["provenance"]["rater"] for r in ratings
+            if is_admitted_observation(r)}),
+        "admitted_rater_kinds": sorted({
+            r["provenance"]["rater_kind"] for r in ratings
+            if is_admitted_observation(r)}),
+        "rating_observations": {
+            "total": len(ratings),
+            "human": sum(1 for r in ratings
+                         if (r.get("provenance") or {}).get("rater_kind") == "human"),
+            "automated": sum(1 for r in ratings
+                             if (r.get("provenance") or {}).get("rater_kind") != "human"),
+            "admitted_to_resolved_items": sum(
+                1 for r in ratings if is_admitted_observation(r)),
+        },
+        "evidence_items": {
+            "total": len(evidence_items),
+            "resolved": sum(1 for item in evidence_items if item["resolved"]),
+            "unresolved": sum(1 for item in evidence_items if not item["resolved"]),
+            "resolution_policy": "one-resolved-score-per-response-v1",
+            "items": evidence_items,
+        },
         "rating_admission": {
-            "admitted_ratings": sum(1 for r in ratings if is_admitted(r)),
-            "advisory_ratings": sum(1 for r in ratings if not is_admitted(r)),
+            "admitted_ratings": sum(1 for r in ratings if is_admitted_observation(r)),
+            "advisory_ratings": sum(1 for r in ratings if not is_admitted_observation(r)),
             "reviewer_admitted": bool(reviewer.get("admitted")),
             "reviewer_reason": reviewer.get("reason"),
             "automated_review_role": "corroborating-review-only",
-            "qualification_score_policy": "human-observations-only-pending-v5-resolution",
+            "qualification_score_policy": "resolved-evidence-items-v1",
         },
         "aggregated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     }

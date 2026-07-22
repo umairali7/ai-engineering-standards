@@ -57,17 +57,17 @@ and selection remain separate products.
 | Done | Correct Grant Readiness rendering | A fully decisional, gate-passing package renders `Overall: READY`; missing admitted evidence renders gates as not evaluated rather than failed; Markdown and HTML tests cover both paths |
 | Done | Report corpus maturity honestly | Corpus health distinguishes calibration metadata, human design review, and empirical calibration; 268 pending human reviews cannot render as fully design-time calibrated |
 | Done | Make repository-audit detection deterministic | CI checks are found regardless of filesystem/YAML ordering; the AIES repository no longer reports its existing pytest CI gate as absent |
-| In progress | Align rating admission with AIES-AESQS-ER-01 — Evaluation Rubrics | Accepted ADR-0012 defines the required evidence-item/rater separation; human raters have verified identity, scope, qualification, and current calibration, and automated raters cannot be the sole decisional scoring basis |
-| In progress | Model evidence items separately from rater observations | Accepted ADR-0012 governs implementation; repeats and multiple ratings never inflate statistical sample size or confidence and per-item consensus/reconciliation is explicit |
-| Open | Enforce double-rating and agreement rules | RT1 — Minimal / RT2 — Moderate double-rate at least 20%; RT3 — Significant / RT4 — Critical double-rate every item; required agreement and divergence resolution are machine-checked |
-| Open | Enforce the two-human qualification process | Every grant, conditional grant, and denial records an assessor and independent peer reviewer with qualification and conflict declarations |
-| Open | Complete the qualification scope tuple | Records include subject, role, phases, maximum risk tier, competency × CL claims, framework version, applicable agent-definition version, sponsor, and validity window |
-| In progress | Make qualification lifecycle events immutable | Accepted ADR-0012 governs implementation; grant, condition change, renewal, suspension, invalidation, revocation, and supersession append separate ART-15 — Audit Trail Record events and prior records are never overwritten |
+| Done | Align rating admission with AIES-AESQS-ER-01 — Evaluation Rubrics | Accepted ADR-0012 defines the required evidence-item/rater separation; human raters have verified identity, scope, qualification, and current calibration, and automated raters cannot be the sole decisional scoring basis |
+| Done | Model evidence items separately from rater observations | Evidence Package v5 retains every rating observation but sends at most one resolved score per response evidence item into statistics; adjacent human ratings resolve conservatively, major divergences require an immutable named-human disposition, and tests prove a second rating cannot inflate sample size or confidence |
+| Done | Enforce double-rating and agreement rules | RT1 — Minimal / RT2 — Moderate double-rate at least 20%; RT3 — Significant / RT4 — Critical double-rate every item; required agreement and divergence resolution are machine-checked |
+| Done | Enforce the two-human qualification process | Every grant, conditional grant, and denial records an assessor and independent peer reviewer with qualification and conflict declarations |
+| Done | Complete the qualification scope tuple | Records include subject, role, phases, maximum risk tier, competency × CL claims, framework version, applicable agent-definition version, sponsor, and validity window |
+| Done | Make qualification lifecycle events immutable | Accepted ADR-0012 governs implementation; grant, condition change, renewal, suspension, invalidation, revocation, and supersession append separate ART-15 — Audit Trail Record events and prior records are never overwritten |
 | Done | Show detailed live progress for every run | `qualify`, resume, `review`, and `score` display progress implicitly with completed/total, percentage, current-stage elapsed time, total run elapsed time, throughput, ETA, the current human-readable scenario family/task objective and ordinal, failures, and resumability; parallel runs expose the dynamic active task set and effective worker capacity for any `--parallel N`; the same state persists in `progress.json`, while `aies runs progress <run-id>` is an optional second-terminal observer |
 | Done | Make automated Engineering Evaluation self-contained | Complete automated scoring closes the engineering-evaluation workflow and generates all report/ECM artifacts; human evaluation is an optional, visible reviewed/not-reviewed field and never blocks the evaluation; formal qualification remains a separate ADR-0012 protocol |
-| Open | Enforce expiry and requalification | Expired or materially changed qualifications are treated as absent; renewal and targeted re-evaluation are supported |
-| Open | Correct endpoint deployment fingerprints | Remote qualifications bind to behaviorally relevant deployment/runtime/config identity, not irrelevant client-machine RAM/CPU changes |
-| Open | Govern ECM task decision semantics in an ADR | Define admitted distinct-task evidence, uncertainty, safety floors, task thresholds, and valid `demonstrated` semantics before Deployment Guidance can emit `Use` |
+| Done | Enforce expiry and requalification | Expired or materially changed qualifications are treated as absent; renewal and targeted re-evaluation are supported |
+| Done | Correct endpoint deployment fingerprints | Remote qualifications bind to behaviorally relevant deployment/runtime/config identity, not irrelevant client-machine RAM/CPU changes |
+| In progress | Govern ECM task decision semantics in an ADR | Proposed ADR-0013 defines admitted distinct-task evidence, uncertainty, safety floors, task thresholds, valid `demonstrated` semantics, and qualification-bounded Deployment Guidance; until acceptance and conformance implementation, task rows remain observed/not assessed and `Use` is suppressed |
 
 ### P1 — Measurement validity
 
@@ -138,7 +138,7 @@ and selection remain separate products.
 | Open | Consolidate report view models | Markdown, HTML, JSON, dashboard, and API consume shared factual view models; no renderer recomputes decisions |
 | Open | Clarify immutable artifacts and regenerable views | Storage policy explicitly identifies events, canonical evidence/results, mutable indexes, worksheets, and regenerable presentation files; code enforces it |
 | Open | Make record identifiers concurrency-safe | Concurrent qualification decisions cannot choose the same record ID |
-| Open | Improve local verification feedback | The full suite reports progress predictably; current 177-test Windows run (~126 seconds) remains within a documented performance budget |
+| Open | Improve local verification feedback | The full suite reports progress predictably and has a documented performance budget; the current measured 205-test Windows run (~367 seconds) is the baseline to profile and reduce |
 | Open | Remove local workspace archive debris safely | Workspace diagnostics identify `.DS_Store`, `__MACOSX`, caches, and stale generated bundles without deleting user evidence automatically |
 
 ### C2 — CI, security, and release hygiene
@@ -159,7 +159,7 @@ and selection remain separate products.
 
 Last verified on 2026-07-22:
 
-- `pytest platform/tests -q`: **191 passed**.
+- `pytest platform/tests -q`: **205 passed in 357.09 seconds** on the current Windows workstation.
 - `aies suites validate`: **484 scenarios, 12 areas, 0 warnings, 0 errors**.
 - Decision-engine conformance: **8/8 cases passed**, semantics 1.0.
 - Release hygiene: **PASS**.

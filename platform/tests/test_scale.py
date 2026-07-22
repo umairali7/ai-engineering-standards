@@ -81,13 +81,33 @@ def test_ready_report_renders_consistently_in_markdown_and_html(ws, tmp_path):
 
 
 def _fill_and_aggregate(run_id, score=3):
-    from aies import engine, rating, workspace
-    sheet = json.loads((workspace.run_dir(run_id) / "scoresheet.json")
-                       .read_text(encoding="utf-8"))
-    sheet["rater"] = {"name": "Rater", "kind": "human"}
-    for item in sheet["items"]:
-        item["scores"] = {d: score for d in ("EV1", "EV2", "EV3", "EV4", "EV5", "EV6")}
-    rating.ingest_scores(run_id, sheet)
+    from aies import engine, rating, raters, workspace
+    original = json.loads((workspace.run_dir(run_id) / "scoresheet.json")
+                          .read_text(encoding="utf-8"))
+    manifest = workspace.read_json(workspace.run_dir(run_id) / "manifest.json")
+    areas = [area["area"] for area in manifest["areas"]]
+    subject_id = (manifest.get("subject") or {}).get("id") or manifest["model"]["registry_id"]
+    for rater_id, name in (("scale-primary", "Scale Primary"),
+                           ("scale-peer", "Scale Peer")):
+        try:
+            raters.register(
+                rater_id, name, competency_areas=areas,
+                risk_tiers=[manifest["risk_tier"]],
+                qualified_until="2099-01-01T00:00:00+00:00",
+                calibration_valid_until="2099-01-01T00:00:00+00:00",
+                anchor_library_version="test-anchors-v1",
+                registered_by="Test Registry Authority")
+        except FileExistsError:
+            pass
+        sheet = json.loads(json.dumps(original))
+        sheet["rater"] = {
+            "id": rater_id, "name": name, "kind": "human",
+            "conflict_declaration": {
+                "declared": True, "has_conflict": False,
+                "subject_id": subject_id}}
+        for item in sheet["items"]:
+            item["scores"] = {d: score for d in ("EV1", "EV2", "EV3", "EV4", "EV5", "EV6")}
+        rating.ingest_scores(run_id, sheet)
     return engine.aggregate(run_id)
 
 

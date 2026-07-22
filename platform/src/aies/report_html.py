@@ -180,14 +180,27 @@ def render_html(run_id: str) -> str:
     for area, d in pkg["areas"].items():
         w(f"<details><summary>{_esc(C.competency_label(area))} — "
           f"{_esc(C.risk_tier_label(pkg['risk_tier']))} detailed evidence</summary>")
+        protocol = d.get("rater_protocol") or {}
         w(f"<p class=muted>Suite <code>{_esc(pkg['suite_versions'].get(area,'?'))}</code> "
-          f"&middot; admitted ratings: {d['n_scored']} &middot; distinct scored scenarios: "
+          f"&middot; resolved evidence items: {d['n_scored']} "
+          f"&middot; verified admitted observations: {d.get('admitted_ratings', 0)} "
+          f"&middot; distinct scored scenarios: "
           f"{d.get('n_distinct_scenarios', d['n_scored'])} (adequacy minimum {d['min_sample']} by "
           f"{'distinct scenarios' if d.get('sample_adequacy_basis') == 'distinct_scenarios' else 'legacy scored items'}) "
           f"&middot; advisory automated ratings: {d.get('advisory_ratings', 0)} "
           f"&middot; decisional: {'yes' if d['decisional'] else 'NO'}</p>")
+        if protocol:
+            status = "SATISFIED" if protocol.get("satisfied") else "INCOMPLETE"
+            w(f"<p><strong>Rater protocol: {_esc(status)}</strong> &middot; verified items "
+              f"{protocol.get('qualification_eligible_items', 0)}/{protocol.get('total_items', 0)} "
+              f"&middot; double-rating {protocol.get('double_rating_fraction', 0):.1%} "
+              f"(required {protocol.get('required_double_rating_fraction', 0):.0%}) "
+              f"&middot; adjacent agreement {protocol.get('agreement_fraction', 0):.1%} "
+              f"(required {protocol.get('agreement_threshold', 0):.0%})</p>")
+            if protocol.get("reasons"):
+                w("<ul>" + "".join(f"<li>{_esc(reason)}</li>" for reason in protocol["reasons"]) + "</ul>")
         w("<table><tr><th>Dimension</th><th>Automated review</th>"
-          "<th>Human eval (optional)</th><th>Admitted n</th><th>Admitted mean</th><th>90% CI</th>"
+          "<th>Human eval (optional)</th><th>Resolved item n</th><th>Resolved item mean</th><th>90% CI</th>"
           "<th>Decision value</th><th>Gate</th><th>Result</th></tr>")
         gates = {g["dimension"]: g for g in d["gates"]}
         for dim in C.DIMENSIONS:

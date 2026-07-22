@@ -17,8 +17,10 @@ from . import workspace
 def _area_verdict(d: dict) -> tuple[str, str]:
     """Grant-readiness verdict for one area (informs a human decision; the
     platform never grants)."""
-    if d.get("raw_ratings", 0) and not d.get("admitted_ratings", d["n_scored"]):
-        return "BLOCKED", "automated ratings are advisory; no admitted scored evidence"
+    protocol = d.get("rater_protocol") or {}
+    if protocol and not protocol.get("satisfied"):
+        reasons = protocol.get("reasons") or ["verified human-rater protocol incomplete"]
+        return "BLOCKED", "rater protocol incomplete: " + "; ".join(reasons)
     if not d["decisional"]:
         distinct = d.get("sample_adequacy_basis") == "distinct_scenarios"
         n = d.get("n_distinct_scenarios", d["n_scored"]) if distinct else d["n_scored"]
@@ -36,6 +38,8 @@ def _gate_status(d: dict) -> str:
     """Render gate state without turning missing evidence into a failure."""
     if not d.get("n_scored") or not d.get("dimensions"):
         return "NOT EVALUATED"
+    if (d.get("rater_protocol") or {}).get("satisfied") is False:
+        return "NOT ADMITTED"
     return ("PASS" if d.get("gates_passed") and not d.get("ev3_hard_fail")
             else "FAIL")
 
@@ -55,10 +59,14 @@ def _residual_risks(pkg: dict) -> list[str]:
     for area, d in pkg["areas"].items():
         area = C.competency_label(area)
         if not d["decisional"]:
-            basis = d.get("sample_adequacy_basis")
-            remedy = ("collect more distinct scenarios; exact repeats do not repair breadth"
-                      if basis == "distinct_scenarios"
-                      else "collect more independently admissible evidence")
+            protocol = d.get("rater_protocol") or {}
+            if protocol and not protocol.get("satisfied"):
+                remedy = "complete verified human-rater admission, independence, agreement, and double-rating coverage"
+            else:
+                basis = d.get("sample_adequacy_basis")
+                remedy = ("collect more distinct scenarios; exact repeats do not repair breadth"
+                          if basis == "distinct_scenarios"
+                          else "collect more independently admissible evidence")
             risks.append(f"**{area}**: non-decisional — {remedy}.")
         for g in d["gates"]:
             dv, th = g.get("decision_value"), g.get("threshold")
@@ -251,15 +259,28 @@ def render_markdown(run_id: str) -> str:
     for area, d in pkg["areas"].items():
         a(f"## {C.competency_label(area)} — {C.risk_tier_label(pkg['risk_tier'])}")
         a("")
+        protocol = d.get("rater_protocol") or {}
         a(f"Suite version: `{pkg['suite_versions'].get(area, 'unknown')}` | "
-          f"admitted ratings: {d['n_scored']}; distinct scored scenarios: "
+          f"resolved evidence items: {d['n_scored']}; verified admitted observations: "
+          f"{d.get('admitted_ratings', 0)}; distinct scored scenarios: "
           f"{d.get('n_distinct_scenarios', d['n_scored'])} "
           f"(adequacy minimum {d['min_sample']} by "
           f"{'distinct scenarios' if d.get('sample_adequacy_basis') == 'distinct_scenarios' else 'legacy scored items'}); "
           f"advisory automated ratings: {d.get('advisory_ratings', 0)} | "
           f"decisional: {'**yes**' if d['decisional'] else '**NO**'}")
         a("")
-        a("| Dimension | Automated review | Human eval (optional) | Admitted n | Admitted mean | 90% CI | Decision value | Gate | Result |")
+        if protocol:
+            a(f"Rater protocol: **{'SATISFIED' if protocol.get('satisfied') else 'INCOMPLETE'}** | "
+              f"verified item coverage {protocol.get('qualification_eligible_items', 0)}/"
+              f"{protocol.get('total_items', 0)} | independent double-rating "
+              f"{protocol.get('double_rating_fraction', 0):.1%} "
+              f"(required {protocol.get('required_double_rating_fraction', 0):.0%}) | "
+              f"adjacent agreement {protocol.get('agreement_fraction', 0):.1%} "
+              f"(required {protocol.get('agreement_threshold', 0):.0%}).")
+            for reason in protocol.get("reasons") or []:
+                a(f"- Protocol gap: {reason}")
+            a("")
+        a("| Dimension | Automated review | Human eval (optional) | Resolved item n | Resolved item mean | 90% CI | Decision value | Gate | Result |")
         a("|---|---|---|---|---|---|---|---|---|")
         gates = {g["dimension"]: g for g in d["gates"]}
         for dim in C.DIMENSIONS:

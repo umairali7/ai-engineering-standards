@@ -18,9 +18,10 @@ def render_markdown(ref: str) -> str:
         lines += [f"- `{x['task']}` — only within its assessed scope and approved autonomy envelope."
                   for x in summary["task_demonstrated"]]
     else:
-        lines += ["- None. No task has decisional evidence in this run."]
-    lines += ["", "## Use with human review", ""]
-    lines += ([f"- `{x['task']}` — observed evidence only; review every output."
+        lines += ["- None. Task-level decision semantics are not yet governed; "
+                  "mapped evidence cannot authorize a Use recommendation."]
+    lines += ["", "## No recommendation — human review and more evidence required", ""]
+    lines += ([f"- `{x['task']}` — observed evidence only; this is not a use recommendation."
                for x in summary["task_observed"]] or ["- None."])
     lines += ["", "## Avoid / collect evidence first", ""]
     lines += ([f"- `{x['task']}` — not assessed in this run." for x in summary["task_not_assessed"]]
