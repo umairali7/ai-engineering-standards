@@ -92,7 +92,7 @@ def cmd_qualify(args) -> int:
         if args.resume:
             # A resumed run can be fully automatic too: score already-collected
             # responses with --judge, then aggregate and render in this one call.
-            from . import config, model_review, report_html, review, workspace
+            from . import config, model_review, review, workspace
             judge = getattr(args, "judge", None) or config.default_judge()
             scoring = None
             if judge:
@@ -114,13 +114,17 @@ def cmd_qualify(args) -> int:
             package = engine.aggregate(args.resume)
             from . import report
             paths = report.write_reports(args.resume)
-            paths["html"] = report_html.write_html(args.resume)
             outcome = _assessment_result(args.resume)
             _out({"package": package, "reports": paths,
                   **({"scoring": scoring} if scoring else {}),
                   **({"assessment_result": outcome} if outcome else {})}, args.json,
-                 f"aggregated {args.resume}\n"
-                 f"  markdown: {paths['markdown']}\n  json    : {paths['json']}"
+                 f"complete report bundle generated for {args.resume}\n"
+                 f"  report (Markdown): {paths['markdown']}\n"
+                 f"  report (JSON)    : {paths['json']}\n"
+                 f"  report (HTML)    : {paths['html']}\n"
+                 f"  ECM (Markdown)   : {paths['ecm_markdown']}\n"
+                 f"  ECM (JSON)       : {paths['ecm_json']}\n"
+                 f"  ECM (HTML)       : {paths['ecm_html']}"
                  + (f"\n\nAssessment '{outcome['assessment']['id']}' "
                     f"v{outcome['assessment']['version']}: **{outcome['outcome']}**"
                     if outcome else ""))
@@ -195,8 +199,6 @@ def cmd_qualify(args) -> int:
                 json.dumps(review_pkg, indent=2), encoding="utf-8")
             pkg = _engine.aggregate(run_id)
             _report.write_reports(run_id)
-            from . import report_html
-            report_html.write_html(run_id)
             outcome = _assessment_result(run_id)
             if args.json:
                 _out({"run_id": run_id, "judge": jdep, "self_judged": self_judged,
@@ -643,7 +645,7 @@ def cmd_runs(args) -> int:
 
 
 def cmd_review(args) -> int:
-    from . import review, workspace
+    from . import rating, review, workspace
     try:
         report_paths = None
         scoring = None
@@ -675,16 +677,23 @@ def cmd_review(args) -> int:
             human_evaluation=getattr(args, "human_evaluation", None))
         (workspace.run_dir(args.run) / "review-package.json").write_text(
             json.dumps(pkg, indent=2), encoding="utf-8")
-        if getattr(args, "model_reviewer", None):
-            # Render after persisting the human-review declaration, so the
-            # evidence report and review package tell the same complete story.
-            from . import engine, report, report_html
+        # A review package changes which rating observations are admitted.  It
+        # must therefore refresh canonical evidence and every presentation
+        # artifact even when the ratings were collected in an earlier command.
+        # Without this, a passed calibration leaves a stale non-decisional
+        # evidence package behind.  An empty review remains useful as planning
+        # metadata, but cannot manufacture an evidence package.
+        assessment_result = None
+        if rating.collect_ratings(args.run):
+            from . import engine, report
             engine.aggregate(args.run)
             report_paths = report.write_reports(args.run)
-            report_paths["html"] = report_html.write_html(args.run)
+            assessment_result = _assessment_result(args.run)
         if args.json:
-            _out({**pkg, **({"scoring": scoring, "reports": report_paths}
-                            if report_paths else {})}, True)
+            _out({**pkg, **({"reports": report_paths} if report_paths else {}),
+                  **({"scoring": scoring} if scoring else {}),
+                  **({"assessment_result": assessment_result}
+                     if assessment_result else {})}, True)
         else:
             s = pkg["summary"]
             print(f"review package for {args.run}")
@@ -703,9 +712,11 @@ def cmd_review(args) -> int:
             print(f"  advisory scores: {'considered by human' if advisory['considered'] else 'not declared'}")
             print(f"  human evaluation: {evaluator or 'not declared'}")
             if report_paths:
-                print("  evidence report updated from automated reviewer scores")
+                print("  complete evidence report bundle refreshed")
                 print("  human scores: optional; shown separately when supplied")
                 print(f"  report: {report_paths['markdown']}")
+            else:
+                print("  no ratings yet; review package saved but no report was generated")
     except Exception as e:
         print(f"error: {e}", file=sys.stderr)
         return 2

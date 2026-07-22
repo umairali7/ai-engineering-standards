@@ -224,6 +224,12 @@ def test_resume_with_judge_is_one_command_score_aggregate_and_report(ws, tmp_pat
     assert (rdir / "evidence-package.json").exists()
     text = (rdir / "report.md").read_text(encoding="utf-8")
     assert "Human Review Record" in text and "Alice" in text
+    # A resume is a complete delivery, not a Markdown/JSON-only refresh.
+    for name in ("report.json", "report.html",
+                 "engineering-capability-matrix.md",
+                 "engineering-capability-matrix.json",
+                 "engineering-capability-matrix.html"):
+        assert (rdir / name).exists(), name
 
 
 def test_judge_scoring_runs_concurrently_and_preserves_order(ws, tmp_path, monkeypatch):

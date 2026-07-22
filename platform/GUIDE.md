@@ -284,12 +284,17 @@ per-key concurrency limit.
 
 **If the judge step fails (e.g. a TLS or auth error), you do not re-collect.**
 Responses are written as they are collected, so they survive a later failure.
-Fix the judge issue, then score the *already-collected* run and aggregate:
+Fix the judge issue, then score the *already-collected* run and aggregate in
+one command:
 
 ```
-aies review <run-id> --model-reviewer <judge-id> --parallel 8
-aies qualify --resume <run-id>
+aies qualify --resume <run-id> --judge <judge-id> --parallel 8
 ```
+
+Every successful aggregation or resume writes the complete report bundle in
+the run directory: `report.md`, `report.json`, `report.html`, and
+`engineering-capability-matrix.{md,json,html}`. The command prints every path;
+if any artifact cannot be rendered, it fails rather than claiming completion.
 
 **Bring external eval results in as evidence.** If you already scored the
 responses with another tool (a custom Inspect/DeepEval task, a second judge, an

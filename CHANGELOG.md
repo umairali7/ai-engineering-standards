@@ -18,6 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - **One-command resumed automated evaluation**: `aies qualify --resume <run> --judge <deployment>` now scores (or safely reuses a prior score from) already-collected responses, aggregates, and writes Markdown, HTML, JSON, and ECM artifacts in one invocation. Optional human review declarations can travel in the same command; no separate `review` or `resume` handoff is required for routine evaluation.
 
+- **Complete report bundle enforcement**: the canonical report writer now owns all six generated views (`report.{md,json,html}` and `engineering-capability-matrix.{md,json,html}`), so resume, automated qualification, review refresh, and `report --write` cannot silently omit HTML or ECM artifacts. CLI completion output lists each generated path.
+
 - **Human review without a grant**: `aies review` now accepts `--consider-advisory-review` and `--human-evaluation NAME`, persists that declaration in the review package, and renders it in the evidence report. This lets a human record consideration of automated advisory evidence and a qualitative or scored human evaluation on non-decisional runs; it deliberately does not bypass grant readiness.
 
 - **Human evidence-consideration record**: `aies grant` can now record whether the authority considered available advisory model-review evidence (`--consider-advisory-review`) and name the evaluator whose qualitative or scored human review was considered (`--human-evaluation NAME`). The durable Qualification Report renders both declarations as separate, human-accountable evidence sources; neither flag changes scores, gates, competency levels, or grant authority.

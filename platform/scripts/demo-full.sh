@@ -37,6 +37,17 @@ RUN=$(aies qualify "$CANDIDATE" --assessment coder --judge "$JUDGE" --repeats 5 
         | py 'print(json.load(sys.stdin)["run_id"])')
 echo "run: $RUN"
 
+# The mock judge is deliberately not trusted by default.  This fixture is
+# synthetic and exists only to exercise the bootstrap-calibration admission
+# path in offline CI; no real-model evidence or grant is implied.
+cat > "$WS/mock-judge-calibration.json" <<'JSON'
+{"model":[{"EV1":4,"EV2":4,"EV3":4,"EV4":4,"EV5":4,"EV6":4}],
+ "human_anchor":[{"EV1":4,"EV2":4,"EV3":4,"EV4":4,"EV5":4,"EV6":4}]}
+JSON
+aies review "$RUN" --reviewer "model:$JUDGE" \
+    --calibration "$WS/mock-judge-calibration.json" > /dev/null
+echo "mock judge admitted through a synthetic bootstrap-calibration fixture (offline CI only)"
+
 hr "5. The Canonical Assessment Result (authoritative outcome + 3 layers)"
 aies assessment result "$RUN" | sed -n '1,26p'
 

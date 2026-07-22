@@ -262,7 +262,14 @@ def render_markdown(run_id: str) -> str:
 
 
 def write_reports(run_id: str) -> dict[str, str]:
-    from . import ecm
+    """Write the complete, self-contained report bundle for an evidence run.
+
+    Every caller that aggregates evidence receives the same artifact set.  In
+    particular, HTML is not an optional follow-up owned by one CLI path: it is
+    part of the evidence-package presentation bundle alongside the Markdown,
+    JSON, and standalone Engineering Capability Matrix (ECM) views.
+    """
+    from . import ecm, report_html
 
     rdir = workspace.run_dir(run_id)
     md = render_markdown(run_id)
@@ -270,9 +277,18 @@ def write_reports(run_id: str) -> dict[str, str]:
     js = render_json(run_id)
     (rdir / "report.json").write_text(js, encoding="utf-8")
     matrix = ecm.engineering_capability_matrix(run_id)
-    ecm_paths = {
-        f"ecm_{format}": str(ecm.write_matrix(matrix, format))
-        for format in ("markdown", "json", "html")
+    ecm_contents = {
+        "markdown": ecm.render_markdown(matrix),
+        "json": json.dumps(matrix, indent=2) + "\n",
+        "html": ecm.render_html(matrix),
     }
+    ecm_paths: dict[str, str] = {}
+    suffixes = {"markdown": "md", "json": "json", "html": "html"}
+    for format, content in ecm_contents.items():
+        path = rdir / f"engineering-capability-matrix.{suffixes[format]}"
+        path.write_text(content, encoding="utf-8")
+        ecm_paths[f"ecm_{format}"] = str(path)
+    html_path = rdir / "report.html"
+    html_path.write_text(report_html.render_html(run_id), encoding="utf-8")
     return {"markdown": str(rdir / "report.md"), "json": str(rdir / "report.json"),
-            **ecm_paths}
+            "html": str(html_path), **ecm_paths}

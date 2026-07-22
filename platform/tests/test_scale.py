@@ -39,6 +39,7 @@ def test_report_has_grant_readiness_and_residual_risk(ws, tmp_path):
     assert "### Deployment Guidance" in md
     assert "engineering-capability-matrix.md" in md
     paths = report.write_reports(run["run_id"])
+    assert Path(paths["html"]).exists()
     assert Path(paths["ecm_markdown"]).exists()
     assert Path(paths["ecm_json"]).exists()
     assert Path(paths["ecm_html"]).exists()

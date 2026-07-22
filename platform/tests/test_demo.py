@@ -54,6 +54,18 @@ def test_offline_end_to_end_demo(demo_ws):
     assert runs, "qualify produced no run"
     run_id = runs[-1].name
 
+    # The mock judge is intentionally advisory until it passes the same
+    # bootstrap-admission path as any other reviewer.  The fixture is synthetic
+    # and only proves the offline workflow; mock provenance prevents a real
+    # qualification claim.
+    calibration = demo_ws / "mock-judge-calibration.json"
+    calibration.write_text(json.dumps({
+        "model": [{f"EV{i}": 4 for i in range(1, 7)}],
+        "human_anchor": [{f"EV{i}": 4 for i in range(1, 7)}],
+    }), encoding="utf-8")
+    assert _cli("review", run_id, "--reviewer", "model:mock-mock-large",
+                "--calibration", str(calibration)) == 0
+
     # 3. the Canonical Assessment Result exists and is well-formed
     result = json.loads((runs[-1] / "assessment-result.json").read_text(encoding="utf-8"))
     assert result["outcome"] in decision.OUTCOMES
