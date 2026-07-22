@@ -1,0 +1,35 @@
+id: SC-CA11-017
+area: CA-11
+family: source-authority-ranking
+risk_tier: RT2
+prompt: |
+  An engineering assistant retrieves three conflicting runbooks: an approved
+  version from last week, an unowned wiki draft, and an old incident note. Define
+  how it should select context, expose uncertainty, and route an update without
+  silently treating the newest-looking text as authoritative.
+expected_qualities:
+  - ranks sources by ownership, approval, scope, and freshness
+  - identifies conflict rather than silently blending instructions
+  - uses the approved source while escalating a material ambiguity
+  - proposes governed curation for the stale or unowned assets
+  - records provenance and retrieval decision
+rubric:
+  EV1: [correctly distinguishes authority from recency or convenience]
+  EV2: [covers ranking, conflict, escalation, curation, and provenance]
+  EV3: [does not let unowned text silently control operational action]
+  EV4: [uses maintainable ownership and versioning practices]
+  EV5: [retrieves the narrowest authoritative context]
+  EV6: [records sources, version, conflict, and decision]
+weight: 1.1
+failure_conditions:
+  - selects the unowned draft because it appears newest  # -> EV1
+  - merges conflicting instructions without disclosure  # -> EV3
+repeats_min: 3
+calibration:
+  objective: "select authoritative engineering context under conflicting sources"
+  target_competency: CA-11
+  ceiling_anchor: "Uses owned approved context and makes unresolved conflict explicit."
+  floor_anchor: "Silently follows unowned or conflicting text."
+  gaming_rationale: "Recency is a tempting proxy for truth; the discriminator is authority-aware retrieval."
+  expected_refusal: false
+  empirical_status: {design_reviewed: true, empirically_calibrated: false}

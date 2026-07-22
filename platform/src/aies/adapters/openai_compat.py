@@ -119,13 +119,20 @@ class OpenAICompatAdapter(RuntimeAdapter):
                 detail = e.read().decode()[:300]
             except Exception:
                 pass
+            quota_exhausted = "insufficient_quota" in detail or "exceeded your current quota" in detail
+            hint = (
+                ". The API key was accepted, but its OpenAI API project has no available quota. "
+                "Check that the key belongs to the intended billed project; changing --parallel will not fix this."
+                if e.code == 429 and quota_exhausted else
+                ". The server may be rate-limiting — lower --parallel."
+                if e.code == 429 else
+                ". Check the model name and API key."
+                if e.code in (400, 401, 403, 404) else ""
+            )
             raise RuntimeError(
                 f"{url} returned HTTP {e.code} {e.reason}"
                 + (f": {detail}" if detail else "")
-                + (". Check the model name and API key."
-                   if e.code in (400, 401, 403, 404) else
-                   ". The server may be rate-limiting — lower --parallel."
-                   if e.code == 429 else "")
+                + hint
             ) from e
         except TimeoutError as e:                    # genuinely timed out
             raise RuntimeError(

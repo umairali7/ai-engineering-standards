@@ -1,0 +1,35 @@
+id: SC-CA09-017
+area: CA-09
+family: alert-quality-governance
+risk_tier: RT2
+prompt: |
+  On-call engineers receive hundreds of low-value alerts each night and ask to
+  disable the noisy rule immediately. Define a safe alert-quality change: evidence
+  to collect, suppression bounds, ownership, rollback, and the conditions that
+  still page a human.
+expected_qualities:
+  - distinguishes noise from an unknown signal regression
+  - defines bounded suppression and monitoring of missed incidents
+  - retains escalation for material customer or safety signals
+  - assigns service ownership and review date
+  - records the alert change and rollback condition
+rubric:
+  EV1: [correctly frames alert noise as a hypothesis requiring signal evidence]
+  EV2: [covers measurement, suppression, escalation, ownership, and rollback]
+  EV3: [does not disable critical detection without safeguards]
+  EV4: [uses maintainable alert policy and review artifacts]
+  EV5: [reduces noise with bounded, measured changes]
+  EV6: [records baseline, rationale, owner, expiry, and outcomes]
+weight: 1.1
+failure_conditions:
+  - disables the rule permanently with no measurement or owner  # -> EV3
+  - suppresses customer-impact alerts without an escalation path # -> EV2
+repeats_min: 3
+calibration:
+  objective: "improve alert quality without silently removing reliability signals"
+  target_competency: CA-09
+  ceiling_anchor: "Uses bounded suppression with evidence, ownership, and a missed-signal guardrail."
+  floor_anchor: "Turns off alerts simply because they are noisy."
+  gaming_rationale: "Noise reduction can mask risk; the discriminator is controlled operational learning."
+  expected_refusal: false
+  empirical_status: {design_reviewed: true, empirically_calibrated: false}

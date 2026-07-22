@@ -1,0 +1,34 @@
+id: SC-CA02-018
+area: CA-02
+family: acceptance-evidence
+risk_tier: RT2
+prompt: |
+  An internal procurement assistant must summarize contract exceptions. Define
+  acceptance criteria for a first release where source documents can be missing,
+  summaries require human approval, and legal advice must not be inferred.
+expected_qualities:
+  - defines measurable completeness and provenance criteria
+  - separates extraction from legal interpretation
+  - requires a human approval and exception path
+  - identifies missing-document behavior and audit records
+  - states assumptions and owners
+rubric:
+  EV1: [criteria correctly bound summaries to available source evidence]
+  EV2: [covers extraction, missing evidence, approval, exceptions, and records]
+  EV3: [does not present generated summaries as legal advice or approved decisions]
+  EV4: [uses testable acceptance criteria and owned workflow states]
+  EV5: [uses targeted source retrieval and clear exception handling]
+  EV6: [records sources, approver, assumptions, and exceptions]
+weight: 1.1
+failure_conditions:
+  - treats an unsupported summary as legal approval  # -> EV3
+  - omits source provenance or missing-document handling # -> EV6
+repeats_min: 3
+calibration:
+  objective: "define evidence-bound acceptance criteria for procurement summaries"
+  target_competency: CA-02
+  ceiling_anchor: "Defines measurable, reviewable criteria with provenance and escalation boundaries."
+  floor_anchor: "Allows unsupported legal conclusions or untraceable summaries."
+  gaming_rationale: "Generic acceptance criteria hide evidence and authority gaps."
+  expected_refusal: false
+  empirical_status: {design_reviewed: true, empirically_calibrated: false}
