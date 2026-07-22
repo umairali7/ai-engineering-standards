@@ -128,5 +128,5 @@ coverage honestly.
 
 - [ADR-0002 — Qualification Platform](ADR-0002-Qualification-Platform.md)
 - [ADR-0005 — Assessment-as-Code](ADR-0005-Assessment-as-Code.md)
-- [Project Evaluation (AIES-DOC-11)](../docs/PROJECT_EVALUATION.md)
+- [Project Evaluation (AIES-DOC-15)](../docs/PROJECT_EVALUATION.md)
 - [OSS Maturity TODO (AIES-DOC-10)](../docs/OSS_MATURITY_TODO.md)

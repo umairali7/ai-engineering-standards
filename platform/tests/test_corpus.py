@@ -52,12 +52,19 @@ def test_it_is_advisory_and_versioned():
     assert r["dimensions"]["empirical"]["empirically_calibrated"] == 0
 
 
-def test_coverage_flags_a_thin_assessment_tier_but_calibration_is_complete():
+def test_coverage_flags_a_thin_assessment_tier_and_reports_review_debt_honestly():
     from aies import corpus
     r = corpus.health()
-    # the whole corpus is design-time calibrated
+    # Calibration metadata is complete, but the new tranche must not be
+    # misrepresented as independently human design-reviewed.
     cal = r["dimensions"]["calibration"]
     assert cal["calibrated"] == cal["total"] and not cal["evidence"]["uncalibrated_areas"]
+    assert cal["metadata_complete"] == cal["total"]
+    assert cal["design_reviewed"] == 216 < cal["total"]
+    assert cal["evidence"]["pending_design_review_areas"]
+    rendered = corpus.render(r)
+    assert "metadata complete" in rendered and "human design-reviewed" in rendered
+    assert "design-time calibrated" not in rendered
     # security (RT3) has at least one mandatory area below the depth target
     sec = next(a for a in r["dimensions"]["coverage"]["assessments"] if a["id"] == "security")
     assert sec["declared_tier"] == "RT3"

@@ -32,6 +32,21 @@ def _area_verdict(d: dict) -> tuple[str, str]:
     return "THRESHOLD MET", f"admitted evidence informs a human grant review up to {d.get('cl') or 'CL?'}"
 
 
+def _gate_status(d: dict) -> str:
+    """Render gate state without turning missing evidence into a failure."""
+    if not d.get("n_scored") or not d.get("dimensions"):
+        return "NOT EVALUATED"
+    return ("PASS" if d.get("gates_passed") and not d.get("ev3_hard_fail")
+            else "FAIL")
+
+
+def _overall_readiness(verdicts: dict[str, str]) -> tuple[str, list[str]]:
+    """Summarize the factual per-area verdicts using their actual vocabulary."""
+    blocked = [area for area, verdict in verdicts.items()
+               if verdict != "THRESHOLD MET"]
+    return ("READY" if not blocked else "BLOCKED", blocked)
+
+
 def _residual_risks(pkg: dict) -> list[str]:
     risks: list[str] = []
     if (pkg.get("rating_admission") or {}).get("advisory_ratings", 0):
@@ -40,8 +55,11 @@ def _residual_risks(pkg: dict) -> list[str]:
     for area, d in pkg["areas"].items():
         area = C.competency_label(area)
         if not d["decisional"]:
-            risks.append(f"**{area}**: non-decisional — grow the sample "
-                         "(more `--repeats` or distinct scenarios) or combine runs.")
+            basis = d.get("sample_adequacy_basis")
+            remedy = ("collect more distinct scenarios; exact repeats do not repair breadth"
+                      if basis == "distinct_scenarios"
+                      else "collect more independently admissible evidence")
+            risks.append(f"**{area}**: non-decisional — {remedy}.")
         for g in d["gates"]:
             dv, th = g.get("decision_value"), g.get("threshold")
             if g.get("passed") and dv is not None and th is not None and (dv - th) < 0.5:
@@ -146,17 +164,16 @@ def render_markdown(run_id: str) -> str:
     for area, d in pkg["areas"].items():
         v, why = _area_verdict(d)
         verdicts[area] = v
-        gates = ("PASS" if d.get("gates_passed") and not d.get("ev3_hard_fail")
-                 else "FAIL")
+        gates = _gate_status(d)
         a(f"| {C.competency_label(area)} | {'yes' if d['decisional'] else '**no**'} | {gates} | "
           f"{d.get('cl') or '-'} | **{v}** — {why} |")
     a("")
-    if all(v == "READY" for v in verdicts.values()):
+    readiness, blocked = _overall_readiness(verdicts)
+    if readiness == "READY":
         a("**Overall: READY** — every scoped area is decisional and passes its "
           "gates. A named human authority may record a grant "
           "(`aies grant <run> …`); the platform does not grant (D8).")
     else:
-        blocked = [ar for ar, v in verdicts.items() if v != "READY"]
         a(f"**Overall: BLOCKED** — not grant-ready for {', '.join(C.competency_label(area) for area in blocked)}. "
           "Resolve the blockers above before a grant.")
     a("")

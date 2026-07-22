@@ -93,19 +93,30 @@ def render_html(run_id: str) -> str:
           f"minimum for {_esc(', '.join(C.competency_label(area) for area in nondec))} (AIES-AESQS-CS-01 §6). "
           "These results must not be presented as qualification evidence.</div>")
 
-    from .report import _area_verdict
+    from .report import _area_verdict, _gate_status, _overall_readiness
     w("<h2>Grant Readiness</h2>")
     w("<table><tr><th>Area</th><th>Decisional</th><th>Gates</th><th>CL</th>"
       "<th>Verdict — informs a human grant</th></tr>")
+    verdicts = {}
     for area, d in pkg["areas"].items():
         verdict, why = _area_verdict(d)
-        gates = "PASS" if d.get("gates_passed") and not d.get("ev3_hard_fail") else "FAIL"
+        verdicts[area] = verdict
+        gates = _gate_status(d)
         verdict_class = "pass" if verdict == "THRESHOLD MET" else "fail"
         w(f"<tr><td>{_esc(C.competency_label(area))}</td>"
           f"<td>{'yes' if d['decisional'] else 'no'}</td><td>{gates}</td>"
           f"<td>{_esc(C.identifier_label(d['cl']) if d.get('cl') else '-')}</td>"
           f"<td class={verdict_class}><strong>{_esc(verdict)}</strong> — {_esc(why)}</td></tr>")
     w("</table>")
+    readiness, blocked = _overall_readiness(verdicts)
+    if readiness == "READY":
+        w("<p class='pass'><strong>Overall: READY</strong> — every scoped area "
+          "is decisional and passes its gates. This is not a grant; a named "
+          "human authority records any grant.</p>")
+    else:
+        labels = ", ".join(C.competency_label(area) for area in blocked)
+        w(f"<p class='fail'><strong>Overall: BLOCKED</strong> — not grant-ready "
+          f"for {_esc(labels)}.</p>")
     threshold_met = sum(1 for d in pkg["areas"].values()
                         if d["decisional"] and d.get("gates_passed") and not d.get("ev3_hard_fail"))
     w(f"<p><strong>Qualification coverage:</strong> {threshold_met}/{len(pkg['areas'])} "

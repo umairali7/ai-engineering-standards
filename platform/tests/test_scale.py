@@ -48,6 +48,38 @@ def test_report_has_grant_readiness_and_residual_risk(ws, tmp_path):
     assert "BLOCKED" in md and "non-decisional" in md
 
 
+def test_grant_readiness_uses_threshold_met_vocabulary_and_missing_is_not_failure():
+    from aies.report import _gate_status, _overall_readiness
+
+    readiness, blocked = _overall_readiness({
+        "CA-05": "THRESHOLD MET", "CA-06": "THRESHOLD MET",
+    })
+    assert readiness == "READY" and blocked == []
+
+    readiness, blocked = _overall_readiness({
+        "CA-05": "THRESHOLD MET", "CA-06": "BLOCKED",
+    })
+    assert readiness == "BLOCKED" and blocked == ["CA-06"]
+    assert _gate_status({"n_scored": 0, "dimensions": {},
+                         "gates_passed": False}) == "NOT EVALUATED"
+    assert _gate_status({"n_scored": 30, "dimensions": {"EV1": {}},
+                         "gates_passed": True,
+                         "ev3_hard_fail": False}) == "PASS"
+
+
+def test_ready_report_renders_consistently_in_markdown_and_html(ws, tmp_path):
+    from aies import engine, report, report_html
+
+    _register(tmp_path)
+    run = engine.start_qualification("demo", "enterprise", "RT2", ["CA-04"])
+    _fill_and_aggregate(run["run_id"], score=4)
+    markdown = report.render_markdown(run["run_id"])
+    html = report_html.render_html(run["run_id"])
+    assert "**Overall: READY**" in markdown
+    assert "Overall: READY" in html
+    assert "THRESHOLD MET" in markdown and "THRESHOLD MET" in html
+
+
 def _fill_and_aggregate(run_id, score=3):
     from aies import engine, rating, workspace
     sheet = json.loads((workspace.run_dir(run_id) / "scoresheet.json")

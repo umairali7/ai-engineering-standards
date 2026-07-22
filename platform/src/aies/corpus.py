@@ -133,17 +133,34 @@ def health(root=None) -> dict:
     recs: list[dict] = []
 
     # --- dimension: calibration -------------------------------------------
-    uncal = [a["area"] for a in cal["areas"] if a["calibrated"] < a["scenarios"]]
+    missing_metadata = [a["area"] for a in cal["areas"]
+                        if a["calibrated"] < a["scenarios"]]
+    pending_design_review = [a["area"] for a in cal["areas"]
+                             if a["design_reviewed"] < a["scenarios"]]
     calibration = {
+        # ``calibrated`` is retained as a compatibility alias for calibration
+        # metadata completeness. It does not mean human-reviewed or empirical.
         "calibrated": tot.get("calibrated", 0), "total": tot.get("scenarios", 0),
+        "metadata_complete": tot.get("calibrated", 0),
+        "design_reviewed": tot.get("design_reviewed", 0),
         "ceiling_anchors": tot.get("ceiling_anchor", 0),
         "floor_traps": tot.get("floor_trap", 0),
-        "evidence": {"uncalibrated_areas": uncal},
+        "evidence": {"uncalibrated_areas": missing_metadata,
+                     "missing_metadata_areas": missing_metadata,
+                     "pending_design_review_areas": pending_design_review},
     }
-    for area in uncal:
+    for area in missing_metadata:
         recs.append({"priority": 0, "dimension": "calibration",
-                     "action": f"calibrate the remaining scenarios in {area}",
-                     "evidence": f"{rows[area]['calibrated']}/{rows[area]['scenarios']} calibrated"})
+                     "action": f"complete calibration metadata in {area}",
+                     "evidence": f"{rows[area]['calibrated']}/{rows[area]['scenarios']} metadata-complete"})
+    if pending_design_review:
+        recs.append({
+            "priority": 0,
+            "dimension": "calibration",
+            "action": "complete independent human design review of pending instruments",
+            "evidence": (f"{tot.get('design_reviewed', 0)}/{tot.get('scenarios', 0)} "
+                         "human design-reviewed"),
+        })
 
     # --- dimension: coverage (RT distribution + per-assessment tier depth) --
     rt_totals = {k: sum(r["rt"][k] for r in cal["areas"]) for k in _TIER_ORDER}
@@ -422,9 +439,11 @@ def render(report: dict, coverage_only: bool = False) -> str:
 
     cal = d["calibration"]
     L += ["calibration",
-          f"  design-time calibrated : {cal['calibrated']}/{cal['total']}  "
+          f"  metadata complete      : {cal['metadata_complete']}/{cal['total']}  "
           f"(ceiling anchors {cal['ceiling_anchors']}, floor traps {cal['floor_traps']})",
-          f"  uncalibrated areas     : {cal['evidence']['uncalibrated_areas'] or 'none'}",
+          f"  human design-reviewed  : {cal['design_reviewed']}/{cal['total']}",
+          f"  missing-metadata areas : {cal['evidence']['missing_metadata_areas'] or 'none'}",
+          f"  review-pending areas   : {cal['evidence']['pending_design_review_areas'] or 'none'}",
           ""]
     rtt = cov["rt_distribution_total"]
     L += ["coverage",

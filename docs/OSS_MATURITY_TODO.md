@@ -1,140 +1,175 @@
-# OSS Maturity Todo List
+# AIES Vision Execution Backlog
 
 | | |
 |---|---|
-| **Document ID** | AIES-DOC-10 |
+| **Document ID** | AIES-DOC-14 |
 | **Status** | Draft |
 | **Audience** | Contributors & maintainers |
 
-This backlog tracks the concrete work needed to move AIES from a strong draft
-foundation to a genuinely reusable public OSS standard and platform.
+This is the single authoritative implementation backlog for taking AIES from a
+strong draft foundation to a validated, reusable standard and Engineering
+Assessment Platform. [ROADMAP.md](../ROADMAP.md) contains public milestones;
+it MUST link here rather than repeat implementation status.
 
-## 1. Target Ratings
+The backlog has two lanes:
 
-| Area | Current assessment | 10/10 target |
-|------|--------------------|--------------|
-| Draft standard | Strong but pre-ratification | Approved v1.0 with public comment disposition and stable citations |
-| OSS readiness | Useful but license-blocked | Clear license, clean releases, contributor path, public pilots |
-| Evaluation platform | Runnable, extensible Engineering Assessment Platform — AI-deployment qualification, repository conformance audit (`aies audit`), ECM decision products, and supply-chain verification | Validated, extensible, pilot-proven assessment + audit engine across supported subject kinds |
+1. **Vision delivery** — standards, evidence integrity, assessment capability,
+   decision products, and adoption.
+2. **Cleanup and debt** — consistency, maintainability, release engineering,
+   and repository hygiene.
 
-## 2. Priority Backlog
+Status values are **Open**, **In progress**, **Blocked**, **Deferred**, and
+**Done**. Done requires the acceptance signal to be verified.
 
-| Status | Priority | Todo | Acceptance signal |
-|--------|----------|------|-------------------|
-| Open | P0 | Finalize license | `LICENSE.md` grants reuse; platform package metadata matches |
-| Done | P0 | Clean release artifacts | `make release-hygiene` and CI reject tracked `.env`, `.DS_Store`, `__pycache__`, `.pytest_cache`, egg-info, bytecode, or `aies-workspace`; the tracked release tree passes |
-| Open | P0 | Publish independent pilot | Two full real-model runs, one hosted and one local, with reports and lessons learned |
-| Done | P1 | Add suite validator | `aies suites validate` checks schemas, IDs, dimensions, risk tiers, repeats, and suite counts; CI runs it |
-| In progress | P1 | Grow scenario suites | Current: 484 scenarios across 12 areas, with at least 30 distinct RT2 — Moderate instruments per area and high-tier behavioral diversity met; remaining target: human review and empirical calibration, full distinct RT3 — Significant / RT4 — Critical sizes, and protected held-out sets |
-| Open | P1 | Empirically calibrate the real-model panel | Score independently rated real-model runs, run `aies suites empirical`, publish the pre-registered panel/study, and have a human record any scenario promotion; design-time calibration alone remains insufficient |
-| Done | P1 | Widen high-tier behavioral diversity | Added distinct RT3 — Significant through RT4 — Critical decision kinds in CA-02, CA-03, CA-04, CA-05, CA-06, CA-08, and CA-10; `aies corpus health` now meets its diversity target without repeated refusal/escalation padding |
-| Done | P1 | Fill justified RT4 — Critical coverage gaps | Added genuinely RT4 — Critical-appropriate scenarios for CA-08 regulated release authorization, CA-10 critical override governance, and CA-11 legal-hold context isolation |
-| Done | P1 | Separate deliberate partial rubrics from coverage defects | ADR-0007 is accepted; all 124 legacy omissions were reviewed and resolved with explicit, task-family-specific anchors. The migration ledger records every disposition, while future undeclared omissions remain validator warnings |
-| Done | P1 | Make RT2 — Moderate runs diversity-ready without repeats | Every area has at least 30 distinct RT2 — Moderate instruments; the default all-area plan is 387 unique candidate calls, `--decisional` cannot pad breadth with repeats, and explicit repeats remain separate stability evidence under ADR-0011. The 268 new instruments are structurally validated and transparently marked human-design-review pending |
-| Done | P1 | Add scenario authoring guide | [AIES-PLAT-07 — Authoring Competency Scenarios](../platform/SCENARIOS.md) — schema, quality bar, risk-tier and rubric guidance, validation |
-| Done | P1 | Add ecosystem bridge | `aies import` ingests external EV1–EV6 eval results (Inspect/DeepEval/other) as automated ratings; `aies export` writes a generic eval-log JSON that round-trips through import |
-| Done | P1 | Executable repository conformance audit | `aies audit <repo>` — maturity per competency area, three-state evidence (verified/asserted/gap), `--gate --rt N` for CI ([ADR-0004](../adr/ADR-0004-Repository-Conformance-Audit.md)) |
-| Done | P1 | Supply-chain provenance | Deployment manifests may declare `provenance.signature` / `ai_bom`; `aies deployment verify-artifact` recomputes the SHA-256 and verifies a detached signature |
-| Done | P1 | External-standards crosswalk refresh (2026) | ISO/IEC 42119/25059/5338/42005, NIST GenAI Profile, OWASP/ATLAS, EU AI Act timeline, agentic autonomy; new AI impact-assessment requirement (AEOS GOV-01-R27) |
-| Done | P2 | Harden failed-run recovery | Responses are written as collected (a mid-run failure loses nothing); `aies qualify --resume-collection <run>` fills only the missing responses and rebuilds the scoresheet; a run can also be re-scored via `aies review`/`--resume` without re-collecting |
-| Done | P2 | Reliable HTTPS + actionable endpoint errors | TLS verified via `certifi`; timeout/TLS/HTTP errors name the endpoint and next step; fail-fast liveness probe |
-| Done | P2 | Improve evidence reports | The report now opens with a **Grant Readiness** summary (per-area verdict + overall ready/blocked) and a **Residual risk** section (judge-produced, non-decisional, thin-margin gates), on top of NON-DECISIONAL readiness, per-area gates, and the `aies capabilities` profile |
-| Done | P1 | Define Engineering Capability Matrix (ECM) standard boundary | Accepted ADR-0008 and draft `AIES-ECM-01` establish the subject-neutral engineering artifact, task taxonomy, and separation from Qualification and Deployment Guidance |
-| Done | P1 | Deliver an evidence-derived ECM companion artifact | `aies capabilities <run-or-deployment> --ecm` writes task-mapped Markdown/JSON/HTML from canonical records; it retains source scenario-family evidence, labels evidence confidence and `not assessed` gaps, and cannot alter qualification or grant outcomes |
-| Done | P1 | Define ECM confidence and evidence-coverage rules | Every task result exposes rating observations, distinct scenarios/responses, rater protocol, mapping version, deterministic evidence confidence, and status; sparse or non-decisional evidence renders “collect more evidence”, not a strength claim |
-| Done | P2 | Establish a governed Engineering Task Mapping registry | The versioned, schema-validated `engineering-tasks-v1.yaml` maps every shipped scenario to ET-01 through ET-15 with rationale; validation and tests prevent unmapped or unknown task claims |
-| In progress | P2 | Refine task mappings beyond scenario families | Structural coverage is complete: every ET-01 through ET-15 task has at least 30 directly mapped RT2 — Moderate instruments, including dedicated API, performance, database, migration, infrastructure, refactoring, and operational-debugging evidence. Human mapping review and empirical task discrimination remain before external demonstrated-capability claims |
-| Done | P2 | Add bounded Deployment Guidance | ECM and the embedded report render deterministic Recommended / Use only with human review / Not recommended sections from task evidence and qualification constraints; no guidance can create a grant |
-| Open | P2 | Add matched-run ECM comparison and workload-based selection guidance | Comparison only renders task-level deltas when suite/profile/risk tier/repeats/rater protocol are compatible. A later selection view accepts a declared workload mix and operational constraints (for example latency, cost, context window, tool reliability, availability), explains evidence and constraints, and never creates a global “best model” or bypasses risk/autonomy gates |
-| In progress | P2 | Publish security contact | GitHub Private Vulnerability Reporting is live; a dedicated security email and encryption key remain to be published |
-| Open | P3 | Add governance labels/templates | Issues/PRs route cleanly by module, decision class, and newcomer suitability |
-| Done | P3 | Add conformance examples | [examples/conformance/](../platform/examples/conformance/README.md) — adopter and implementation statements checkable with `aies conform` |
-
-## 3. Scenario Suite Status
-
-The platform now ships 484 scenarios across 12 competency areas. The
-`SC-CAxx-011`…`016` scenarios are complex, distinct cases (multi-constraint,
-adversarial, cross-cutting, and RT3 — Significant through RT4 — Critical refuse-or-escalate) intended to exercise
-judgment rather than single-concept recall, and to reduce run repetition by
-giving decisional samples more distinct prompts.
-
-RT2 — Moderate now has enough distinct public instruments for its 30-scenario
-per-area breadth minimum without repeats. Qualification-grade operation still
-requires human design review of the new tranche, independently admitted
-ratings, empirical calibration, and protected held-out suites. Higher tiers
-still require distinct expansion before no-repeat decisional use.
-
-Completed scenario tranche:
-
-| Done | Update |
-|------|--------|
-| yes | Added one complex integration scenario per competency area (`SC-CA01-011` through `SC-CA12-011`) |
-| yes | Added agentic tool-security coverage to CA-07 via `SC-CA07-011` |
-| yes | Added external-framework governance response coverage to CA-12 via `SC-CA12-011` |
-| yes | Added 12 distinct high-tier scenarios for the identified behavioral-diversity and RT4 — Critical coverage gaps; `aies corpus health` reports no high-tier diversity gaps |
-| yes | Added 268 complex RT2 — Moderate instruments: every competency now has at least 30 distinct RT2 scenarios and every ET task has at least 30 direct mappings; packed storage does not change per-scenario validation or evidence identity |
-| yes | Added a [AIES-PLAT-07 — Authoring Competency Scenarios](../platform/SCENARIOS.md) so contributors can grow suites consistently |
-
-Next implementation item: human-review and empirically calibrate the new RT2
-tranche, then grow RT1 — Minimal, RT3 — Significant, and RT4 — Critical to full
-**decisional-distinct** sizes and add protected **held-out** suites.
-
-## 4. Implementation Sequence
-
-1. **Measurement integrity:** preserve raw evidence, obtain independently rated
-   real-model runs, and complete the empirical-calibration study. Do not use
-   preliminary heuristic ratings as qualification or calibration evidence.
-2. **Scenario structure:** decide the additive metadata boundary in an ADR,
-   then distinguish intentional non-applicable EV dimensions from accidental
-   rubric omissions and make the validator signal actionable.
-3. **Coverage depth:** expand high-tier behavioral diversity and justified RT4 — Critical
-   coverage; split public, held-out, and twin scenarios so repeats do not create
-   a false appearance of independent evidence.
-4. **Engineering Capability Matrix:** render existing scenario families from
-   canonical evidence first, with explicit confidence and evidence coverage.
-   Add the governed task-mapping registry only after its standard boundary and
-   review rules are accepted.
-5. **Decision products:** add traceable deployment guidance before selection;
-   compare only protocol-matched runs, then accept a declared workload and
-   operational constraints. Neither view overrides qualification gates,
-   statistical minimums, or autonomy limits.
-
-## 5. ECM V2 Product Architecture
-
-The initial family-level renderer has been superseded by the task-mapped ECM
-baseline. The target architecture is:
+## 1. Target Architecture
 
 ```text
-Assessment → Canonical Evidence → Competency Analysis →
-Engineering Task Mapping → Engineering Capability Matrix → Decision Products
+AEBOK / AESQS / AEOS / AEAR / AECT / ECM
+                    │
+                    ▼
+             Assessment Plan
+                    │
+                    ▼
+             Canonical Evidence
+                    │
+          ┌─────────┼─────────┐
+          ▼         ▼         ▼
+   Qualification   ECM   Conformance
+          │         │
+          ▼         ▼
+   Human authority  Deployment Guidance
+                    │
+                    ▼
+           Compare / AIES Select
 ```
 
-The products are separate by design:
+The platform is not a model leaderboard. It prepares trustworthy, scoped
+evidence about any supported subject and presents that evidence for different
+human decisions. Qualification, engineering capability, deployment guidance,
+and selection remain separate products.
 
-| Layer | Product | Audience | Decision it supports |
-|---|---|---|---|
-| 1 | Qualification | Governance | Whether evidence supports a scoped human qualification decision |
-| 2 | Engineering Capability Matrix | Engineers | Which standardized engineering tasks have demonstrated evidence, performance, and confidence |
-| 3 | Deployment Guidance | Operations and management | Use / use with review / avoid, within qualification and autonomy constraints |
-| 4 | Comparison and Selection | Engineering leadership | Which compatible deployment best fits a declared workload and operating constraints |
+## 2. Vision Delivery Backlog
 
-### ECM V2 implementation backlog
+### P0 — Correctness and qualification integrity
 
-| Status | Priority | Todo | Acceptance signal |
-|---|---|---|---|
-| Done | P1 | Establish `AIES-ECM-01` as a foundational standard | Accepted ADR-0008 and draft `AIES-ECM-01` define the subject-neutral boundary, taxonomy, versioning, confidence semantics, and additive relationship to AESQS |
-| Done | P1 | Establish the AIES Engineering Task Taxonomy | Versioned `ET-01` through `ET-15` identifiers cover requirements, architecture, API design, generation, refactoring, debugging, testing, documentation, optimization, security, database, migration, infrastructure, observability, and production operations |
-| Done | P1 | Add a governed task-mapping registry | Every shipped scenario maps through the validated `engineering-tasks-v1.yaml` registry to one or more task IDs, with rationale; scenarios remain traceable through canonical evidence |
-| Done | P1 | Replace family-only ECM output with task rows | Each task row renders observed performance bars, evidence confidence, distinct scenarios/responses, rating observations, rater provenance, task status, and `not assessed`; raw scenario-family evidence remains available |
-| Done | P1 | Restore the complete engineer report | ECM renders task profile bars, observed/demonstrated patterns, improvement and evidence gaps, deployment guidance, and traceability. Qualification reports embed the engineer summary but remain auditor-facing |
-| Done | P2 | Deliver Deployment Guidance as its own artifact | `aies guidance <run-or-deployment> --write` renders a standalone, deterministic Use / Use with human review / Avoid evidence view; it cannot create a grant |
-| Done | P2 | Add compatible ECM comparison | `aies compare A B --ecm` checks risk tier, profile, mapping version, rater protocol, suite versions, and repeat structure. It emits a winner only for protocol-compatible, demonstrated task rows; all other cells stay explicitly incomparable |
-| Open | P3 | Add AIES Select | A declared workload mix and operational constraints (latency, cost, context, tool reliability, availability) produce an explained fit ranking across only compatible evidence; no global best-model claim |
-| Open | P3 | Add organization decision products | Approved-subject inventory, task fit, qualification scope, operational constraints, drift/requalification status, and deployment conditions are available to management without exposing a misleading leaderboard |
+| Status | Work item | Acceptance signal |
+|---|---|---|
+| Done | Correct Grant Readiness rendering | A fully decisional, gate-passing package renders `Overall: READY`; missing admitted evidence renders gates as not evaluated rather than failed; Markdown and HTML tests cover both paths |
+| Done | Report corpus maturity honestly | Corpus health distinguishes calibration metadata, human design review, and empirical calibration; 268 pending human reviews cannot render as fully design-time calibrated |
+| Done | Make repository-audit detection deterministic | CI checks are found regardless of filesystem/YAML ordering; the AIES repository no longer reports its existing pytest CI gate as absent |
+| Open | Align rating admission with AIES-AESQS-ER-01 — Evaluation Rubrics | Human raters have verified identity, scope, qualification, and current calibration; automated raters cannot be the sole decisional scoring basis |
+| Open | Model evidence items separately from rater observations | Repeats and multiple ratings never inflate statistical sample size or confidence; per-item consensus/reconciliation is explicit |
+| Open | Enforce double-rating and agreement rules | RT1 — Minimal / RT2 — Moderate double-rate at least 20%; RT3 — Significant / RT4 — Critical double-rate every item; required agreement and divergence resolution are machine-checked |
+| Open | Enforce the two-human qualification process | Every grant, conditional grant, and denial records an assessor and independent peer reviewer with qualification and conflict declarations |
+| Open | Complete the qualification scope tuple | Records include subject, role, phases, maximum risk tier, competency × CL claims, framework version, applicable agent-definition version, sponsor, and validity window |
+| Open | Make qualification lifecycle events immutable | Grant, condition change, renewal, suspension, invalidation, revocation, and supersession append separate ART-15 — Audit Trail Record events; prior records are never overwritten |
+| Open | Enforce expiry and requalification | Expired or materially changed qualifications are treated as absent; renewal and targeted re-evaluation are supported |
+| Open | Correct endpoint deployment fingerprints | Remote qualifications bind to behaviorally relevant deployment/runtime/config identity, not irrelevant client-machine RAM/CPU changes |
+| Open | Govern ECM task decision semantics in an ADR | Define admitted distinct-task evidence, uncertainty, safety floors, task thresholds, and valid `demonstrated` semantics before Deployment Guidance can emit `Use` |
+
+### P1 — Measurement validity
+
+| Status | Work item | Acceptance signal |
+|---|---|---|
+| In progress | Human-review the new RT2 — Moderate tranche | All 484 scenarios have recorded independent design review; the 268 pending instruments are accepted, revised, or rejected individually |
+| Open | Empirically calibrate a preregistered real-subject panel | A versioned panel study reports difficulty, discrimination, repeatability, twin robustness, ceiling reach, and limitations; scenario promotion is a human decision |
+| Open | Establish versioned anchor-artifact libraries | Every competency area has human-consensus anchors across scores 0–4, including subtle AI-produced defects and refresh history |
+| Open | Protect held-out evidence | Public examples, behavioral twins, and genuinely protected held-out instruments are distinct; contamination checks and refresh policy are recorded |
+| Open | Grow no-repeat coverage beyond RT2 — Moderate | Each supported tier/area meets its distinct-instrument minimum with genuinely tier-appropriate decision types: current distribution RT1=24, RT2=387, RT3=52, RT4=21 |
+| Open | Validate Engineering Task mappings empirically | ET-01 through ET-15 mappings receive human review and demonstrate task discrimination; mapping counts alone cannot establish capability |
+| Open | Add task-specific uncertainty | ECM reports task-level effective sample, admitted evidence, interval, protocol, mapping version, and limitations without borrowing an area minimum as a task threshold |
+| Open | Add hallucination and fabrication diagnostics | Reports measure unsupported assertions, fabricated APIs/entities, invalid citations/provenance, false success/test claims, and appropriate abstention; diagnostics map to EV1 — Correctness, EV3 — Safety & Security, and EV6 — Traceability until governance approves otherwise |
+
+### P1 — Subject-neutral assessment architecture
+
+| Status | Work item | Acceptance signal |
+|---|---|---|
+| Open | Define a governed Subject Descriptor | Canonical identity supports human, team, repository, AI deployment, agent, MCP server, RAG system, pipeline, and platform without a mandatory legacy model block |
+| Open | Separate Subject Executor from Runtime Adapter | Runtime generation remains one executor implementation; evidence collection is not coupled to text-generation APIs |
+| Open | Define typed canonical evidence events | Provenance, subject, instrument, observation, rating, reviewer, environment, and lifecycle events are versioned and replayable across subject types |
+| Open | Implement agent-session assessment | Tool calls, memory, context, approvals, failures, and escalation traces enter canonical evidence |
+| Open | Implement MCP-server assessment | Protocol behavior, tool contracts, authorization, isolation, failure behavior, and security evidence enter the same decision-product pipeline |
+| Open | Implement RAG-system assessment | Retrieval quality, grounding, source integrity, privacy, injection resistance, and abstention are directly assessed |
+| Open | Unify repository audit decision products | Repository maturity remains semantically distinct from AESQS rubric scoring but shares subject identity, evidence provenance, reporting, and portfolio views |
+
+### P2 — ECM and decision products
+
+| Status | Work item | Acceptance signal |
+|---|---|---|
+| Open | Ratify AIES-ECM-01 — Engineering Capability Matrix | ECM is formally present in the Charter, Vision, architecture, Roadmap, governance, requirement IDs, and public review disposition |
+| Open | Deliver a compact report bundle | Qualification Result, ECM, Deployment Guidance, and Executive Summary are separate linked artifacts generated from one canonical evidence package |
+| Open | Mature Deployment Guidance | Use / Use with Review / Avoid incorporates evidence, qualification scope, autonomy, conditions, residual risks, and operational constraints; no guidance creates authority |
+| Done | Add protocol-compatible ECM comparison | Task deltas and winners appear only when risk, profile, suites, mappings, repeats, and rater protocol are compatible |
+| Open | Build AIES Select | A declared workload mix plus latency, cost, context, tool reliability, availability, and risk constraints produces an explained fit ranking over compatible evidence—never a global best-subject claim |
+| Open | Build organization decision products | Inventory shows approved subjects, demonstrated task fit, qualification scope, conditions, drift, expiry, incidents, and requalification status |
+
+### P3 — Standards and adoption
+
+| Status | Work item | Acceptance signal |
+|---|---|---|
+| Open | Reconcile ECM with the five-module architecture | A governed update establishes ECM as a foundational standard and updates dependent documents without weakening vendor neutrality |
+| Open | Complete independent pilots | At least one local and one hosted assessment have independent human rating/review, reproducible artifacts, limitations, and published lessons learned |
+| Open | Complete public comment | Every normative module and ECM has a comment period, disposition log, and Approved decision under governance |
+| Deferred | Select repository licenses | Human governance selects compatible documentation and software licenses; metadata and notices match. Deferred by maintainer decision |
+| Open | Publish a real release | Version story is consistent, a signed tag exists, release artifacts pass hygiene/conformance, and upgrade notes are published |
+| Open | Demonstrate external adoption | Published case studies, third-party conformance runs, and contributors/reviewers from independent organizations satisfy Charter success criteria |
+
+## 3. Cleanup and Debt Backlog
+
+### C0 — Correctness-adjacent cleanup
+
+| Status | Cleanup item | Acceptance signal |
+|---|---|---|
+| Done | Resolve duplicate document IDs | This backlog is AIES-DOC-14 and the dated Project Evaluation is AIES-DOC-15; every governed document ID is unique and the affected citation is updated |
+| Open | Replace generic requirement labels | References show code plus meaningful obligation title, not `requirement NN`; a machine-readable registry and CI check cover all governed IDs |
+| Open | Remove stale model-only identity language | Current docs use subject/deployment terminology; historical superseded ADR text remains immutable and clearly historical |
+| Open | Reconcile backlog and Roadmap | ROADMAP contains milestones only and links here; no completed implementation remains listed as Open and no Draft artifact is described as ratified |
+| Open | Clarify frozen versus experimental contracts | Draft/Review contracts are not presented as ratified v1; experimental stability and Approved standard stability are labeled separately |
+
+### C1 — Platform maintainability
+
+| Status | Cleanup item | Acceptance signal |
+|---|---|---|
+| Open | Split the CLI monolith | Parser construction and command handlers are separated by domain with unchanged tested command behavior |
+| Open | Consolidate duplicate commands | `registry`/`deployment`, `profile`/`profiles`, and `qualification`/`qualifications` have one canonical surface plus documented deprecation aliases |
+| Open | Consolidate report view models | Markdown, HTML, JSON, dashboard, and API consume shared factual view models; no renderer recomputes decisions |
+| Open | Clarify immutable artifacts and regenerable views | Storage policy explicitly identifies events, canonical evidence/results, mutable indexes, worksheets, and regenerable presentation files; code enforces it |
+| Open | Make record identifiers concurrency-safe | Concurrent qualification decisions cannot choose the same record ID |
+| Open | Improve local verification feedback | The full suite reports progress predictably; current 177-test Windows run (~126 seconds) remains within a documented performance budget |
+| Open | Remove local workspace archive debris safely | Workspace diagnostics identify `.DS_Store`, `__MACOSX`, caches, and stale generated bundles without deleting user evidence automatically |
+
+### C2 — CI, security, and release hygiene
+
+| Status | Cleanup item | Acceptance signal |
+|---|---|---|
+| Open | Expand CI path coverage | Changes to Shared, AEBOK, AESQS, AEOS, AEAR, AECT, ECM, ADRs, governed docs, platform, and conformance trigger relevant checks |
+| Open | Test supported Python versions | CI covers supported production versions including 3.13/3.14, or package metadata narrows the declared range |
+| Open | Add documentation governance checks | CI detects duplicate document/requirement IDs, missing meaningful titles, broken links, invalid metadata/status transitions, and stale references |
+| Open | Add code-quality checks | Formatting, linting, type checking, and coverage thresholds run in CI |
+| Open | Add supply-chain controls | Dependency lock, dependency review, secret scanning/SAST, SBOM/AI-BOM, artifact provenance, and signing are implemented proportionately |
+| Open | Publish a real security contact | Dedicated email and optional encryption key replace the placeholder fallback; private vulnerability reporting remains preferred |
+| Open | Add ownership and protected-branch evidence | CODEOWNERS and externally attested branch-protection/human-review gates satisfy the repository’s own audit |
+| Open | Align versions | Package version, standards milestone, artifact versions, changelog, tags, and release names answer different versioning questions explicitly and consistently |
+| Open | Correct current CI identity wording | Workflow and active docs say Engineering Assessment Platform rather than Qualification Platform |
+
+## 4. Current Verified Baseline
+
+Last verified on 2026-07-22:
+
+- `pytest platform/tests -q`: **180 passed**.
+- `aies suites validate`: **484 scenarios, 12 areas, 0 warnings, 0 errors**.
+- Decision-engine conformance: **8/8 cases passed**, semantics 1.0.
+- Release hygiene: **PASS**.
+- Repository audit at RT2 — Moderate: **PASS**, with 18 verified controls and
+  8 gaps; the prior order-dependent CI-test false negative is covered by a
+  regression test.
+- Scenario review maturity: **216/484 human design-reviewed**, **0/484
+  empirically calibrated**.
 
 ## Related Documents
 
 - [Roadmap](../ROADMAP.md)
-- [Platform](../platform/README.md)
-- [Platform Specification](PLATFORM.md)
-- [2026 External Framework Refresh](../research/RES-01-2026-external-framework-refresh.md)
+- [Vision](VISION.md)
+- [Project Charter](PROJECT_CHARTER.md)
+- [Engineering Assessment Platform Specification](PLATFORM.md)
+- [AIES-ECM-01 — Engineering Capability Matrix](../ECM/README.md)

@@ -93,6 +93,20 @@ def test_maturity_enforcement_band(ws, tmp_path):
     assert ca06["maturity"] >= 3
 
 
+def test_ci_detection_is_not_hidden_by_a_large_yaml_corpus(ws, tmp_path):
+    """A workflow remains evidence even when hundreds of YAML files exist."""
+    from aies import audit
+
+    repo = _good_repo(tmp_path)
+    for number in range(100):
+        _write(repo, f"platform/competencies/scenario-{number:03d}.yaml",
+               "prompt: no CI command here\n")
+    res = audit.run_audit(repo)
+    checks = {check["id"]: check
+              for area in res["areas"].values() for check in area["checks"]}
+    assert checks["ca06-ci-test-gate"]["state"] == "verified"
+
+
 def test_every_check_maps_to_an_area_and_is_stable(ws, tmp_path):
     from aies import audit, audit_checks
     ids = [c.id for c in audit_checks.CHECKS]

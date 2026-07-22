@@ -97,7 +97,9 @@ class RepoContext:
                 continue
             if p.is_file():
                 self.files.append(p.relative_to(self.root).as_posix())
+        self.files.sort()
         self._lower = [f.lower() for f in self.files]
+        self._read_cache: dict[str, str] = {}
         self.commit_bodies, self.is_git = self._git_log()
         self.tracked = self._git_tracked()   # set of repo-relative tracked paths
 
@@ -152,23 +154,31 @@ class RepoContext:
                 if any(s in low for s in subs)]
 
     def read(self, relpath: str) -> str:
+        if relpath in self._read_cache:
+            return self._read_cache[relpath]
         try:
-            return (self.root / relpath).read_text(encoding="utf-8", errors="replace")
+            text = (self.root / relpath).read_text(encoding="utf-8", errors="replace")
         except Exception:
-            return ""
+            text = ""
+        self._read_cache[relpath] = text
+        return text
 
-    def grep(self, needle: str, *globs: str, max_files: int = 60) -> bool:
+    def grep(self, needle: str, *globs: str, max_files: int | None = None) -> bool:
         """True if `needle` (case-insensitive) appears in any file matching globs
-        (or any text file if no globs). Bounded for speed."""
+        (or any text file if no globs).
+
+        Detection is exhaustive and deterministic. The previous first-60-files
+        bound produced false negatives in repositories with large YAML corpora:
+        a real CI workflow could be skipped merely because scenario files were
+        visited first. File contents are cached, so exhaustive checks remain
+        inexpensive for this repository-scale scanner. ``max_files`` remains an
+        accepted compatibility argument but no longer changes evidence truth.
+        """
         from fnmatch import fnmatch
         needle_l = needle.lower()
-        checked = 0
         for f in self.files:
             if globs and not any(fnmatch(f.lower(), g) for g in globs):
                 continue
-            checked += 1
-            if checked > max_files:
-                break
             if needle_l in self.read(f).lower():
                 return True
         return False
