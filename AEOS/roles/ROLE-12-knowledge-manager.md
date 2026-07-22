@@ -37,8 +37,8 @@ The Knowledge Manager curates what the organization — and its AI performers �
 
 ## Autonomy Constraints
 
-- [AIES-AEOS-ROLE-12-R01] Changes to context assets consumed by agents operating at AL3+ MUST receive per-item human review before activation — a corrupted context asset can systematically degrade every agent that consumes it.
-- [AIES-AEOS-ROLE-12-R02] Context assets MUST be versioned, and every agent action MUST be traceable to the context asset versions it consumed ([AIES-AEOS-OM-01-R17](../operating-model.md#6-artifact-and-provenance-requirements)); an AI-staffed Knowledge Manager MUST NOT alter historical versions.
+- [AIES-AEOS-ROLE-12-R01] Changes to context assets consumed by agents operating at AL3 — Delegated+ MUST receive per-item human review before activation — a corrupted context asset can systematically degrade every agent that consumes it.
+- [AIES-AEOS-ROLE-12-R02] Context assets MUST be versioned, and every agent action MUST be traceable to the context asset versions it consumed ([AIES-AEOS-OM-01-R17 — Operating Model, requirement 17](../operating-model.md#6-artifact-and-provenance-requirements)); an AI-staffed Knowledge Manager MUST NOT alter historical versions.
 - [AIES-AEOS-ROLE-12-R03] Context assets MUST NOT contain secrets or regulated personal data unless explicitly authorized by ROLE-08 and ROLE-14 with recorded justification.
 
 ## Escalation Duties
@@ -61,21 +61,21 @@ When ROLE-12 is staffed by an AI agent:
 
 | Risk tier of consuming scope | Max autonomy for knowledge tasks |
 |------------------------------|----------------------------------|
-| RT1 (assets for RT1-only tasks) | AL4 |
-| RT2 (general engineering assets) | AL3 |
-| RT3 (assets consumed by AL3+ agents or RT3 work) | AL2 |
-| RT4 (assets grounding RT4 work) | AL1 |
+| RT1 — Minimal (assets for RT1 — Minimal-only tasks) | AL4 — Autonomous |
+| RT2 — Moderate (general engineering assets) | AL3 — Delegated |
+| RT3 — Significant (assets consumed by AL3 — Delegated+ agents or RT3 — Significant work) | AL2 — Collaborative |
+| RT4 — Critical (assets grounding RT4 — Critical work) | AL1 — Assisted |
 
-- **Mandatory gates:** per-item human review before activating assets consumed at AL3+ (see R01); automated secret/PII scanning on every asset change (see R03); sampling audit of asset accuracy.
+- **Mandatory gates:** per-item human review before activating assets consumed at AL3 — Delegated+ (see R01); automated secret/PII scanning on every asset change (see R03); sampling audit of asset accuracy.
 - **Telemetry:** asset consumption rates, correlation between asset versions and downstream quality metrics, staleness age distribution, logged to ART-15.
-- The risk tier of a knowledge task derives from its *consumers*: an asset feeding an AL4 agent on RT1 work is higher-stakes than its content suggests, because errors replicate across every consuming action.
+- The risk tier of a knowledge task derives from its *consumers*: an asset feeding an AL4 — Autonomous agent on RT1 — Minimal work is higher-stakes than its content suggests, because errors replicate across every consuming action.
 
 ## Related Documents
 
-- [Role Catalog (AIES-AEOS-ROLE-00)](README.md) — shared role-specification requirements and staffing model
-- [Operating Model (AIES-AEOS-OM-01)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
-- [Workflows (AIES-AEOS-WF-01)](../workflows.md) — the collaboration workflows this role participates in
-- [Human Oversight (AIES-AEOS-HO-01)](../human-oversight.md) — the gates that apply to this role's work
+- [Role Catalog (AIES-AEOS-ROLE-00 — Role Model)](README.md) — shared role-specification requirements and staffing model
+- [Operating Model (AIES-AEOS-OM-01 — Operating Model)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
+- [Workflows (AIES-AEOS-WF-01 — Workflows)](../workflows.md) — the collaboration workflows this role participates in
+- [Human Oversight (AIES-AEOS-HO-01 — Human Oversight)](../human-oversight.md) — the gates that apply to this role's work
 
 ## References
 

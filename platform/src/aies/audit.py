@@ -26,7 +26,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
-from . import workspace
+from . import constants as C, workspace
 
 # --- Maturity model (ML0–ML4) --------------------------------------------------
 MATURITY = {
@@ -317,7 +317,7 @@ def render_markdown(result: dict) -> str:
                f"**{t['gap']} gaps**")
     if result.get("gate"):
         g = result["gate"]
-        out.append(f"- Gate ({g['risk_tier']}): **{'PASS' if g['passed'] else 'FAIL'}**"
+        out.append(f"- Gate ({C.risk_tier_label(g['risk_tier'])}): **{'PASS' if g['passed'] else 'FAIL'}**"
                    + (f" — missing: {', '.join(f['id'] for f in g['failures'])}"
                       if g["failures"] else ""))
     out += ["", "## Maturity by competency area", "",

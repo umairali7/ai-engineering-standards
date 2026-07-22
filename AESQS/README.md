@@ -21,7 +21,7 @@ Organizations adopting AI-native software engineering face the same problem twic
 - **For humans:** how do we know an engineer is competent to work in an AI-native SDLC — to direct, review, and take accountability for AI-produced work?
 - **For AI systems:** how do we know an agent is capable enough to be trusted with a given class of work — and how much [autonomy](../Shared/Glossary/README.md) that capability justifies?
 
-AESQS defines a single qualification standard that applies to **both humans and AI systems**. The evaluation dimensions ([EV1–EV6](../Shared/Taxonomy/README.md#8-evaluation-dimensions-ev1ev6)), competency levels ([CL1–CL4](../Shared/Taxonomy/README.md#6-competency-levels-cl1cl4)), and process are shared; the evidence types and assessment methods differ where the nature of the subject demands it.
+AESQS defines a single qualification standard that applies to **both humans and AI systems**. The evaluation dimensions ([EV1 — Correctness through EV6 — Traceability](../Shared/Taxonomy/README.md#8-evaluation-dimensions-ev1ev6)), competency levels ([CL1 — Foundation through CL4 — Expert](../Shared/Taxonomy/README.md#6-competency-levels-cl1cl4)), and process are shared; the evidence types and assessment methods differ where the nature of the subject demands it.
 
 ## 2. The Qualification Model at a Glance
 
@@ -71,10 +71,10 @@ The loop is continuous: ongoing verification feeds back into evaluation, and rev
 
 ## 3. Normative Anchors
 
-- [AIES-AESQS-00-R01] Every qualification granted under AESQS MUST be scoped to a role ([ROLE-01…ROLE-14](../Shared/Taxonomy/README.md#5-ai-engineering-roles)), a set of SDLC phases ([P01–P16](../Shared/Taxonomy/README.md#1-sdlc-phases-p01p16)), and a maximum risk tier ([RT1–RT4](../Shared/Taxonomy/README.md#4-risk-tiers-rt1rt4)).
-- [AIES-AESQS-00-R02] Qualification decisions MUST be based on evidence evaluated against the rubrics in [AIES-AESQS-ER-01](evaluation-rubrics.md) and scored per [AIES-AESQS-CS-01](capability-scoring.md).
-- [AIES-AESQS-00-R03] For AI systems, an [autonomy level](../Shared/Taxonomy/README.md#3-autonomy-levels-al0al4) above AL1 MUST NOT be granted for any task type without a current, in-scope AESQS qualification.
-- [AIES-AESQS-00-R04] Every qualification MUST be revocable, and every grant, revision, suspension, and revocation MUST produce an audit trail record (ART-15).
+- [AIES-AESQS-00-R01 — Qualification Standard, requirement 01] Every qualification granted under AESQS MUST be scoped to a role ([ROLE-01 — Planner through ROLE-14 — Governance Officer](../Shared/Taxonomy/README.md#5-ai-engineering-roles)), a set of SDLC phases ([P01 — Business Strategy through P16 — Continuous Improvement](../Shared/Taxonomy/README.md#1-sdlc-phases-p01p16)), and a maximum risk tier ([RT1 — Minimal through RT4 — Critical](../Shared/Taxonomy/README.md#4-risk-tiers-rt1rt4)).
+- [AIES-AESQS-00-R02 — Qualification Standard, requirement 02] Qualification decisions MUST be based on evidence evaluated against the rubrics in [AIES-AESQS-ER-01 — Evaluation Rubrics](evaluation-rubrics.md) and scored per [AIES-AESQS-CS-01 — Capability Scoring](capability-scoring.md).
+- [AIES-AESQS-00-R03 — Qualification Standard, requirement 03] For AI systems, an [autonomy level](../Shared/Taxonomy/README.md#3-autonomy-levels-al0al4) above AL1 — Assisted MUST NOT be granted for any task type without a current, in-scope AESQS qualification.
+- [AIES-AESQS-00-R04 — Qualification Standard, requirement 04] Every qualification MUST be revocable, and every grant, revision, suspension, and revocation MUST produce an audit trail record (ART-15).
 
 ## 4. Document Map
 
@@ -124,11 +124,11 @@ The loop is continuous: ongoing verification feeds back into evaluation, and rev
 - [AIES-AESQS-QP-01 — Qualification Process](qualification-process.md)
 - [AIES-AESQS-ER-01 — Evaluation Rubrics](evaluation-rubrics.md)
 - [AIES-AESQS-CS-01 — Capability Scoring](capability-scoring.md)
-- [AIES-AESQS-PR-01 — Peer Review](peer-review.md)
+- [AIES-AESQS-PR-01 — Peer Review Standard](peer-review.md)
 - [AIES-AESQS-RR-01 — Revision & Revocation](revision-and-revocation.md)
-- [AIES-AEBOK-00 — AEBOK Module Overview](../AEBOK/README.md) · [AIES-AEOS-00 — AEOS Module Overview](../AEOS/README.md) · [AIES-AECT-00 — AECT Module Overview](../AECT/README.md)
-- [Taxonomy (AIES-SHARED-02)](../Shared/Taxonomy/README.md) · [Glossary (AIES-SHARED-01)](../Shared/Glossary/README.md)
-- **External alignment:** ISO/IEC TS 42119-2 (testing of AI) and ISO/IEC 25059 (AI quality model) — AESQS is an executable, risk-tiered instantiation of the former, and EV1–EV6 map to the latter; see [Standards Crosswalk §3a (AIES-DOC-07)](../docs/CROSSWALK.md)
+- [AIES-AEBOK-00 — AEBOK — AI Engineering Body of Knowledge](../AEBOK/README.md) · [AIES-AEOS-00 — AEOS — AI Engineering Operating System](../AEOS/README.md) · [AIES-AECT-00 — AECT — AI Engineering Certification & Training](../AECT/README.md)
+- [Taxonomy (AIES-SHARED-02 — Taxonomy)](../Shared/Taxonomy/README.md) · [Glossary (AIES-SHARED-01 — Glossary)](../Shared/Glossary/README.md)
+- **External alignment:** ISO/IEC TS 42119-2 (testing of AI) and ISO/IEC 25059 (AI quality model) — AESQS is an executable, risk-tiered instantiation of the former, and EV1–EV6 map to the latter; see [AIES-DOC-07 — Standards Crosswalk — How AIES Maps to Adjacent Frameworks](../docs/CROSSWALK.md)
 
 ## References
 

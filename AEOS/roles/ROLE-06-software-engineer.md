@@ -22,7 +22,7 @@ The Software Engineer builds the system: turning work items (ART-05) into source
 ## Responsibilities
 
 1. Implement work items as source changes with tests (P09), conforming to ADRs (ART-04) and coding standards (ART-13 context assets).
-2. Keep changes small, reviewable, and traceable to their work item ([AIES-AEOS-OM-01-R06](../operating-model.md#2-work-intake-and-flow)).
+2. Keep changes small, reviewable, and traceable to their work item ([AIES-AEOS-OM-01-R06 — Operating Model, requirement 06](../operating-model.md#2-work-intake-and-flow)).
 3. Write and maintain unit tests as part of every change; coordinate with ROLE-07 on broader test coverage.
 4. Review source changes produced by other performers when assigned as reviewer.
 5. Refactor within envelope to preserve maintainability (P16).
@@ -37,8 +37,8 @@ The Software Engineer builds the system: turning work items (ART-05) into source
 
 ## Autonomy Constraints
 
-- [AIES-AEOS-ROLE-06-R01] Every AI-produced source change MUST be attributable at commit granularity ([AIES-AEOS-OM-01-R18](../operating-model.md#6-artifact-and-provenance-requirements)) and MUST pass automated quality gates before any human review it requires.
-- [AIES-AEOS-ROLE-06-R02] An AI-staffed Software Engineer MUST NOT modify production configuration, schema, or auth-adjacent code (RT3 examples per Taxonomy §4) above AL2, nor merge its own changes at any level where a review gate applies.
+- [AIES-AEOS-ROLE-06-R01] Every AI-produced source change MUST be attributable at commit granularity ([AIES-AEOS-OM-01-R18 — Operating Model, requirement 18](../operating-model.md#6-artifact-and-provenance-requirements)) and MUST pass automated quality gates before any human review it requires.
+- [AIES-AEOS-ROLE-06-R02] An AI-staffed Software Engineer MUST NOT modify production configuration, schema, or auth-adjacent code (RT3 — Significant examples per Taxonomy §4) above AL2 — Collaborative, nor merge its own changes at any level where a review gate applies.
 - [AIES-AEOS-ROLE-06-R03] Changes outside the files/components enumerated in the work item's envelope are envelope breaches and MUST be escalated, not committed.
 
 ## Escalation Duties
@@ -61,21 +61,21 @@ When ROLE-06 is staffed by an AI agent:
 
 | Risk tier of the change | Max autonomy for engineering tasks |
 |-------------------------|-------------------------------------|
-| RT1 (formatting, scaffolding, prototypes) | AL4 |
-| RT2 (feature code behind review, internal tooling) | AL3 |
-| RT3 (production config, schema, auth-adjacent) | AL2 |
-| RT4 (safety-critical, financial, regulated, irreversible) | AL1 |
+| RT1 — Minimal (formatting, scaffolding, prototypes) | AL4 — Autonomous |
+| RT2 — Moderate (feature code behind review, internal tooling) | AL3 — Delegated |
+| RT3 — Significant (production config, schema, auth-adjacent) | AL2 — Collaborative |
+| RT4 — Critical (safety-critical, financial, regulated, irreversible) | AL1 — Assisted |
 
-- **Mandatory gates:** automated quality gates (tests, static analysis, security scan) on every change; per-item human review at AL2; checkpoint review plus sampling audit at AL3; sampling and post-hoc audits at AL4 per [AIES-AEOS-HO-01](../human-oversight.md).
+- **Mandatory gates:** automated quality gates (tests, static analysis, security scan) on every change; per-item human review at AL2 — Collaborative; checkpoint review plus sampling audit at AL3 — Delegated; sampling and post-hoc audits at AL4 — Autonomous per [AIES-AEOS-HO-01 — Human Oversight](../human-oversight.md).
 - **Telemetry:** gate pass rate, defect escape rate, review-rejection rate, envelope-breach escalations, token/compute cost per change (EV5) — all logged to ART-15 and consumed by AESQS re-qualification.
 - Agent definitions (ART-14) for this role MUST enumerate writable paths, prohibited operations (e.g., dependency addition without review, secret handling), and the test-execution obligations that precede any handoff.
 
 ## Related Documents
 
-- [Role Catalog (AIES-AEOS-ROLE-00)](README.md) — shared role-specification requirements and staffing model
-- [Operating Model (AIES-AEOS-OM-01)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
-- [Workflows (AIES-AEOS-WF-01)](../workflows.md) — the collaboration workflows this role participates in
-- [Human Oversight (AIES-AEOS-HO-01)](../human-oversight.md) — the gates that apply to this role's work
+- [Role Catalog (AIES-AEOS-ROLE-00 — Role Model)](README.md) — shared role-specification requirements and staffing model
+- [Operating Model (AIES-AEOS-OM-01 — Operating Model)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
+- [Workflows (AIES-AEOS-WF-01 — Workflows)](../workflows.md) — the collaboration workflows this role participates in
+- [Human Oversight (AIES-AEOS-HO-01 — Human Oversight)](../human-oversight.md) — the gates that apply to this role's work
 
 ## References
 

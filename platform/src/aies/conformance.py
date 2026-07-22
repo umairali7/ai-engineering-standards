@@ -35,7 +35,7 @@ ENFORCED_REQUIREMENTS = {
     "AIES-AESQS-ER-01-R04": "scoring.score_dimension — integer 0–4 rubric anchors, no half points",
     "AIES-AESQS-CS-01-R02/R11": "scoring.confidence_interval — decision value = lower 90% CI bound",
     "AIES-AESQS-CS-01-R03": "scoring.effective_weights — profile adjustment bound and EV3+EV6 floor",
-    "AIES-AESQS-CS-01-R04": "scoring.apply_gates — EV3 hard gate; single-zero fail at RT3–RT4",
+    "AIES-AESQS-CS-01-R04": "scoring.apply_gates — EV3 hard gate; single-zero fail at RT3 — Significant through RT4 — Critical",
     "AIES-AESQS-CS-01-R07": "scoring.derive_cl — AI systems capped at CL3",
     "AIES-AESQS-CS-01-R08/R09": "scoring.al_envelope — min(RT cap, CL cap); AL4 never at initial grant",
     "AIES-AESQS-CS-01-§6": "scoring.score_area — per-tier decisional sample minimums (20/30/50/100)",
@@ -62,7 +62,7 @@ def template(cls: str = "adopter") -> dict:
             "reviewer": "<required only for independently-reviewed>",
             "date": "<YYYY-MM-DD>",
             "claims": [
-                {"statement": "Deployment <id> is qualified for CA-05 at RT2 (AL2).",
+                {"statement": "Deployment <id> is qualified for CA-05 at RT2 — Moderate (AL2 — Collaborative).",
                  "evidence": {"qualification_record": "QUAL-2026-001"}},
                 {"statement": "Human approval gates operate per AIES-AEOS-HO-01.",
                  "evidence": {}},

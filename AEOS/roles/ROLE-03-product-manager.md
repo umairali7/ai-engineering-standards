@@ -38,12 +38,12 @@ The Product Manager decides *what to build, in what order*: owning the product d
 ## Autonomy Constraints
 
 - [AIES-AEOS-ROLE-03-R01] Product acceptance decisions (accepting delivered scope for release) MUST be made by a human, whatever the staffing mode; an AI-staffed Product Manager prepares acceptance recommendations only.
-- [AIES-AEOS-ROLE-03-R02] AI-staffed prioritization MUST cite the evidence (ART-12 or equivalent) supporting each ranking; unevidenced re-prioritization above AL1 is prohibited.
+- [AIES-AEOS-ROLE-03-R02] AI-staffed prioritization MUST cite the evidence (ART-12 or equivalent) supporting each ranking; unevidenced re-prioritization above AL1 — Assisted is prohibited.
 
 ## Escalation Duties
 
 - Escalate strategy conflicts (P01 misalignment) to business leadership outside the operating model.
-- Escalate discovered scope with RT4 characteristics to the Governance Officer (ROLE-14) before commitment.
+- Escalate discovered scope with RT4 — Critical characteristics to the Governance Officer (ROLE-14) before commitment.
 - Escalate acceptance disputes to the accountable human of the work item.
 
 ## Required Qualifications (per AESQS)
@@ -60,10 +60,10 @@ When ROLE-03 is staffed by an AI agent:
 
 | Risk tier of affected scope | Max autonomy for product tasks |
 |-----------------------------|-------------------------------|
-| RT1 | AL4 |
-| RT2 | AL3 |
-| RT3 | AL2 |
-| RT4 | AL1 |
+| RT1 — Minimal | AL4 — Autonomous |
+| RT2 — Moderate | AL3 — Delegated |
+| RT3 — Significant | AL2 — Collaborative |
+| RT4 — Critical | AL1 — Assisted |
 
 - **Mandatory gates:** human acceptance decision at every release gate (see R01); per-item review of roadmap changes affecting committed scope; checkpoint review of backlog re-ordering.
 - **Telemetry:** prioritization override rate, delivered-value metrics per accepted feature, and recommendation rationale completeness logged to ART-15.
@@ -71,10 +71,10 @@ When ROLE-03 is staffed by an AI agent:
 
 ## Related Documents
 
-- [Role Catalog (AIES-AEOS-ROLE-00)](README.md) — shared role-specification requirements and staffing model
-- [Operating Model (AIES-AEOS-OM-01)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
-- [Workflows (AIES-AEOS-WF-01)](../workflows.md) — the collaboration workflows this role participates in
-- [Human Oversight (AIES-AEOS-HO-01)](../human-oversight.md) — the gates that apply to this role's work
+- [Role Catalog (AIES-AEOS-ROLE-00 — Role Model)](README.md) — shared role-specification requirements and staffing model
+- [Operating Model (AIES-AEOS-OM-01 — Operating Model)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
+- [Workflows (AIES-AEOS-WF-01 — Workflows)](../workflows.md) — the collaboration workflows this role participates in
+- [Human Oversight (AIES-AEOS-HO-01 — Human Oversight)](../human-oversight.md) — the gates that apply to this role's work
 
 ## References
 

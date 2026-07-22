@@ -46,10 +46,10 @@ AI participation also changes the risk profile:
 
 ### 2.4 The Autonomy/Risk Model in Practice
 
-The [Taxonomy](../../Shared/Taxonomy/README.md) defines autonomy levels AL0–AL4 and risk tiers RT1–RT4, and requires that maximum autonomy be derived from risk tier (RT1→AL4 … RT4→AL1 by default). In practice this model operates as a three-step discipline applied *per task type*:
+The [Taxonomy](../../Shared/Taxonomy/README.md) defines autonomy levels AL0 — Manual through AL4 — Autonomous and risk tiers RT1 — Minimal through RT4 — Critical, and requires that maximum autonomy be derived from risk tier (RT1 — Minimal→AL4 — Autonomous … RT4 — Critical→AL1 — Assisted by default). In practice this model operates as a three-step discipline applied *per task type*:
 
 ```
-1. CLASSIFY the task's blast radius            → risk tier (RT1–RT4)
+1. CLASSIFY the task's blast radius            → risk tier (RT1 — Minimal through RT4 — Critical)
 2. LOOK UP the maximum permissible autonomy    → AL ceiling (Taxonomy §4)
 3. ASSIGN actual autonomy ≤ ceiling, based on  → demonstrated capability
    qualification evidence (AESQS)                (never on convenience)
@@ -59,12 +59,12 @@ Two corollaries follow. First, autonomy is **earned downward from the ceiling by
 
 ### 2.5 Accountability Invariant
 
-Per the AIES guiding principles, humans remain accountable for engineering decisions at every autonomy level. What changes across AL0–AL4 is the *mechanism* of human control (author → reviewer → supervisor → auditor), never the *locus* of accountability.
+Per the AIES guiding principles, humans remain accountable for engineering decisions at every autonomy level. What changes across AL0 — Manual through AL4 — Autonomous is the *mechanism* of human control (author → reviewer → supervisor → auditor), never the *locus* of accountability.
 
 ## 3. Core Practices
 
-- **Declare before deploying.** [AIES-AEBOK-KA-01-R01] Every AI-performed engineering task MUST have a declared autonomy level (AL0–AL4) and an identified risk tier (RT1–RT4) before the AI system performs it, per [AIES-SHARED-02-R01/R02](../../Shared/Taxonomy/README.md#3-autonomy-levels-al0al4).
-- **Bound the envelope.** [AIES-AEBOK-KA-01-R02] Every agent operating at AL3 or AL4 MUST have a defined autonomy envelope — permitted actions, resources, and escalation triggers — recorded in its agent definition (ART-14).
+- **Declare before deploying.** [AIES-AEBOK-KA-01-R01] Every AI-performed engineering task MUST have a declared autonomy level (AL0 — Manual through AL4 — Autonomous) and an identified risk tier (RT1 — Minimal through RT4 — Critical) before the AI system performs it, per [AIES-SHARED-02-R01 — Taxonomy, requirement 01](../../Shared/Taxonomy/README.md#3-autonomy-levels-al0al4).
+- **Bound the envelope.** [AIES-AEBOK-KA-01-R02] Every agent operating at AL3 — Delegated or AL4 — Autonomous MUST have a defined autonomy envelope — permitted actions, resources, and escalation triggers — recorded in its agent definition (ART-14).
 - **Preserve provenance.** [AIES-AEBOK-KA-01-R03] The provenance of every AI-produced or AI-modified artifact MUST be recorded, including the producing actor, autonomy level, and applicable approvals, sufficient to satisfy traceability (EV6) and audit (ART-15).
 - **Scale verification with generation.** [AIES-AEBOK-KA-01-R04] Organizations SHOULD ensure that verification capacity (automated gates, evaluation, human review) grows in proportion to AI generation capacity; generation capability MUST NOT be expanded past the point where existing gates saturate.
 - **Reason in taxonomy terms.** Practitioners SHOULD express AI-participation decisions using canonical IDs (P/X/AL/RT/ROLE/CL/ART/EV) so decisions are comparable across teams and auditable across time.
@@ -74,7 +74,7 @@ Per the AIES guiding principles, humans remain accountable for engineering decis
 | Pattern | Summary |
 |---------|---------|
 | **Bounded Autonomy Envelope** | Define, per agent and task type, the explicit set of permitted actions and resources; everything outside the envelope escalates to a human. See [catalog](../patterns/README.md#pat-01-bounded-autonomy-envelope). |
-| **Risk-Tiered Gating** | Place human approval gates (X07) by risk tier, not uniformly — dense gates on RT3/RT4 paths, automated gates on RT1/RT2. |
+| **Risk-Tiered Gating** | Place human approval gates (X07) by risk tier, not uniformly — dense gates on RT3 — Significant through RT4 — Critical paths, automated gates on RT1 — Minimal through RT2 — Moderate. |
 | **Evidence-Gated Promotion** | Increase an agent's autonomy for a task type only when qualification evidence (AESQS scores over a defined window) supports it, and record the decision. |
 | **Reversible Delegation** | Every autonomy grant carries a pre-defined revocation trigger and rollback path, so delegation failures degrade to lower autonomy rather than to incidents. |
 
@@ -99,10 +99,10 @@ Per the AIES guiding principles, humans remain accountable for engineering decis
 ## Related Documents
 
 - Every other KA builds on this one; read KA-01 first.
-- Gate design and human oversight mechanics: [KA-11 Human-AI Collaboration & Oversight (AIES-AEBOK-KA-11)](KA-11-human-ai-collaboration.md).
-- Evidence and drift detection that feed autonomy decisions: [KA-12 Evaluation & Continuous Improvement (AIES-AEBOK-KA-12)](KA-12-evaluation-improvement.md).
-- Qualification evidence and scoring: [AESQS (AIES-AESQS-00)](../../AESQS/README.md). Operating-model enforcement of these concepts: [AEOS (AIES-AEOS-00)](../../AEOS/README.md).
-- Canonical scales referenced throughout: [Taxonomy (AIES-SHARED-02)](../../Shared/Taxonomy/README.md).
+- Gate design and human oversight mechanics: [KA-11 Human-AI Collaboration & Oversight (AIES-AEBOK-KA-11 — Knowledge Area — Human-AI Collaboration)](KA-11-human-ai-collaboration.md).
+- Evidence and drift detection that feed autonomy decisions: [KA-12 Evaluation & Continuous Improvement (AIES-AEBOK-KA-12 — Knowledge Area — Evaluation and Improvement)](KA-12-evaluation-improvement.md).
+- Qualification evidence and scoring: [AESQS (AIES-AESQS-00 — Qualification Standard)](../../AESQS/README.md). Operating-model enforcement of these concepts: [AIES-AEOS-00 — AEOS — AI Engineering Operating System](../../AEOS/README.md).
+- Canonical scales referenced throughout: [Taxonomy (AIES-SHARED-02 — Taxonomy)](../../Shared/Taxonomy/README.md).
 
 ## References
 

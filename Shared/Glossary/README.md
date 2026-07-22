@@ -6,7 +6,7 @@
 | **Status** | Review |
 | **Audience** | All readers |
 
-Canonical definitions for all terms used across AIES. Modules MUST use these terms as defined here and MUST NOT redefine them. Classification scales (autonomy levels, risk tiers, competency levels, roles) are defined in the [Taxonomy (AIES-SHARED-02)](../Taxonomy/README.md).
+Canonical definitions for all terms used across AIES. Modules MUST use these terms as defined here and MUST NOT redefine them. Classification scales (autonomy levels, risk tiers, competency levels, roles) are defined in the [Taxonomy (AIES-SHARED-02 — Taxonomy)](../Taxonomy/README.md).
 
 The key words "MUST" and "MUST NOT" in this document are to be interpreted as described in RFC 2119.
 
@@ -35,7 +35,7 @@ An immutable, queryable record (ART-15) linking every significant action — hum
 **Autonomy Envelope**
 The bounded set of actions, resources, and decisions an agent may take without escalation. Exceeding the envelope requires escalation to a human or higher-authority process.
 
-**Autonomy Level (AL0–AL4)**
+**Autonomy Level (AL0 — Manual through AL4 — Autonomous)**
 See [Taxonomy §3](../Taxonomy/README.md#3-autonomy-levels-al0al4).
 
 ## C
@@ -111,7 +111,7 @@ An automated or manual checkpoint that blocks progression of an artifact until d
 **Reference Architecture**
 A vendor-neutral, reusable architectural template describing components, responsibilities, and interactions for a class of systems (AEAR).
 
-**Risk Tier (RT1–RT4)**
+**Risk Tier (RT1 — Minimal through RT4 — Critical)**
 See [Taxonomy §4](../Taxonomy/README.md#4-risk-tiers-rt1rt4).
 
 **Role**
@@ -143,9 +143,9 @@ New terms are proposed via pull request per [CONTRIBUTING.md](../../CONTRIBUTING
 
 ## Related Documents
 
-- [Taxonomy (AIES-SHARED-02)](../Taxonomy/README.md) — the classification scales these terms reference
-- [Shared Standards index (AIES-SHARED-00)](../README.md)
-- [Writing Standard (AIES-STD-03)](../../docs/standards/writing-standard.md) — glossary discipline rules for authors
+- [Taxonomy (AIES-SHARED-02 — Taxonomy)](../Taxonomy/README.md) — the classification scales these terms reference
+- [AIES-SHARED-00 — Shared Standards](../README.md)
+- [Writing Standard (AIES-STD-03 — Writing Standard)](../../docs/standards/writing-standard.md) — glossary discipline rules for authors
 
 ## References
 

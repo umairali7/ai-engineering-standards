@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import html
 
-from . import registry, workspace
+from . import constants as C, registry, workspace
 from .report_html import _CSS
 
 
@@ -30,10 +30,10 @@ def render_dashboard() -> str:
     w = p.append
     w("<!doctype html><html lang=en><head><meta charset=utf-8>")
     w("<meta name=viewport content='width=device-width, initial-scale=1'>")
-    w("<title>AIES Qualification Dashboard</title>")
+    w("<title>AIES Engineering Assessment Dashboard</title>")
     w(f"<style>{_CSS}</style></head><body>")
-    w("<h1>AIES Qualification Dashboard</h1>")
-    w("<p class=muted>Overview of registered deployments, qualification runs, "
+    w("<h1>AIES Engineering Assessment Dashboard</h1>")
+    w("<p class=muted>Overview of registered deployments, assessment runs, "
       "and human-recorded grants. Presentation over the run and record files — "
       "no additional claims (docs/PLATFORM.md, AIES-DOC-06).</p>")
 
@@ -51,7 +51,7 @@ def render_dashboard() -> str:
     for r in runs:
         w(f"<tr><td><code>{_esc(r['run_id'])}</code></td>"
           f"<td>{_esc(r['model'])}</td><td>{_esc(r['profile'])}</td>"
-          f"<td>{_esc(r['risk_tier'])}</td>"
+          f"<td>{_esc(C.risk_tier_label(r['risk_tier']))}</td>"
           f"<td>{'aggregated' if r['aggregated'] else _esc(r['status'])}</td></tr>")
     w("</table>")
 
@@ -68,7 +68,7 @@ def render_dashboard() -> str:
                    "superseded": "muted"}.get(rec["status"], "muted")
             w(f"<tr><td><code>{_esc(rec['record_id'])}</code></td>"
               f"<td>{_esc(rec['subject']['deployment'])}</td>"
-              f"<td>{_esc(rec['scope']['risk_tier'])}</td>"
+              f"<td>{_esc(C.risk_tier_label(rec['scope']['risk_tier']))}</td>"
               f"<td>{_esc(rec['decision'])}</td>"
               f"<td class={cls}>{_esc(rec['status'])}</td>"
               f"<td>{_esc(rec['humans']['authority'])}</td></tr>")

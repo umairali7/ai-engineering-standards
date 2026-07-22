@@ -21,14 +21,14 @@ The Governance Officer owns the operating model itself: the policies that constr
 
 ## Responsibilities
 
-1. Own and maintain the organization's instantiation of AEOS policy per the hierarchy in [AIES-AEOS-GOV-01 §2](../governance-operations.md#2-policy-hierarchy).
+1. Own and maintain the organization's instantiation of AEOS policy per the hierarchy in [AIES-AEOS-GOV-01 — Governance Operations §2](../governance-operations.md#2-policy-hierarchy).
 2. Approve agent definitions (ART-14) for activation and material change, jointly with ROLE-08's security assessment.
 3. Own risk-tier classification policy and adjudicate contested classifications; approve (or refuse) any documented risk acceptance that loosens an RT→AL default.
-4. Operate the audit function: verify audit trail (ART-15) completeness and integrity; commission periodic governance reviews per [AIES-AEOS-GOV-01 §7](../governance-operations.md#7-periodic-governance-reviews).
-5. Classify and oversee AI-caused incidents and their mandatory post-incident reviews ([AIES-AEOS-GOV-01 §6](../governance-operations.md#6-incident-classification-and-post-incident-review)).
-6. Own guardrail change control ([AIES-AEOS-GOV-01 §5](../governance-operations.md#5-guardrail-management)).
+4. Operate the audit function: verify audit trail (ART-15) completeness and integrity; commission periodic governance reviews per [AIES-AEOS-GOV-01 — Governance Operations §7](../governance-operations.md#7-periodic-governance-reviews).
+5. Classify and oversee AI-caused incidents and their mandatory post-incident reviews ([AIES-AEOS-GOV-01 — Governance Operations §6](../governance-operations.md#6-incident-classification-and-post-incident-review)).
+6. Own guardrail change control ([AIES-AEOS-GOV-01 — Governance Operations §5](../governance-operations.md#5-guardrail-management)).
 7. Produce compliance reporting (X03) to internal and external stakeholders.
-8. Monitor operating metrics ([AIES-AEOS-GOV-01 §8](../governance-operations.md#8-metrics)) and act on adverse trends.
+8. Monitor operating metrics ([AIES-AEOS-GOV-01 — Governance Operations §8](../governance-operations.md#8-metrics)) and act on adverse trends.
 
 ## Inputs / Outputs
 
@@ -67,10 +67,10 @@ Not applicable for decision authority — this role MUST be human. Governed AI a
 
 ## Related Documents
 
-- [Role Catalog (AIES-AEOS-ROLE-00)](README.md) — shared role-specification requirements and staffing model
-- [Operating Model (AIES-AEOS-OM-01)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
-- [Workflows (AIES-AEOS-WF-01)](../workflows.md) — the collaboration workflows this role participates in
-- [Human Oversight (AIES-AEOS-HO-01)](../human-oversight.md) — the gates that apply to this role's work
+- [Role Catalog (AIES-AEOS-ROLE-00 — Role Model)](README.md) — shared role-specification requirements and staffing model
+- [Operating Model (AIES-AEOS-OM-01 — Operating Model)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
+- [Workflows (AIES-AEOS-WF-01 — Workflows)](../workflows.md) — the collaboration workflows this role participates in
+- [Human Oversight (AIES-AEOS-HO-01 — Human Oversight)](../human-oversight.md) — the gates that apply to this role's work
 
 ## References
 

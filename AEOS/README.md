@@ -14,9 +14,9 @@ The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", and "MAY" in this docu
 
 AEOS answers the third AIES question: **How should AI Engineering teams operate?**
 
-Where [AEBOK](../AEBOK/README.md) defines what AI Engineering should *know* and [AESQS](../AESQS/README.md) defines how capability is *evaluated*, AEOS defines how work actually *flows*: through named roles (ROLE-01 … ROLE-14), across the SDLC phases (P01–P16), under declared autonomy levels (AL0–AL4) bounded by risk tiers (RT1–RT4), past human oversight gates, producing canonical artifacts (ART-01 … ART-15) with full audit trails.
+Where [AEBOK](../AEBOK/README.md) defines what AI Engineering should *know* and [AESQS](../AESQS/README.md) defines how capability is *evaluated*, AEOS defines how work actually *flows*: through named roles (ROLE-01 … ROLE-14), across the SDLC phases (P01–P16), under declared autonomy levels (AL0 — Manual through AL4 — Autonomous) bounded by risk tiers (RT1 — Minimal through RT4 — Critical), past human oversight gates, producing canonical artifacts (ART-01 … ART-15) with full audit trails.
 
-The defining property of the AEOS operating model is **role-staffing independence**: every role can be staffed by a human, an AI agent, or a human-AI pair — the responsibilities, gates, and artifact obligations of the role do not change with the staffing choice. The two exceptions are ROLE-13 (Human Approver) and ROLE-14 (Governance Officer), which MUST be staffed by humans per the [Taxonomy (AIES-SHARED-02)](../Shared/Taxonomy/README.md).
+The defining property of the AEOS operating model is **role-staffing independence**: every role can be staffed by a human, an AI agent, or a human-AI pair — the responsibilities, gates, and artifact obligations of the role do not change with the staffing choice. The two exceptions are ROLE-13 (Human Approver) and ROLE-14 (Governance Officer), which MUST be staffed by humans per the [Taxonomy (AIES-SHARED-02 — Taxonomy)](../Shared/Taxonomy/README.md).
 
 ## 2. Operating Model at a Glance
 
@@ -26,8 +26,8 @@ flowchart LR
         WI[Work Item<br/>ART-05]
     end
     subgraph Classification
-        RT[Risk Tier<br/>RT1-RT4]
-        AL[Autonomy Level<br/>AL0-AL4]
+        RT[Risk Tier<br/>RT1 — Minimal through RT4 — Critical]
+        AL[Autonomy Level<br/>AL0 — Manual through AL4 — Autonomous]
         ST[Staffing<br/>human / agent / pair]
     end
     subgraph Execution["Execution (P01-P16)"]
@@ -83,22 +83,22 @@ Every unit of work is (1) intaken as a work item, (2) classified by risk tier, w
     into AEOS roles)
 ```
 
-- **AESQS qualifies; AEOS grants.** No performer — human or AI — operates above AL1 without a current, in-scope AESQS qualification (per [AIES-AESQS-00-R03](../AESQS/README.md) and [AIES-AEOS-ROLE-00-R04](roles/README.md#3-shared-role-specification-requirements)). AEOS defines the operational procedure that turns qualification evidence into an autonomy envelope ([Operating Model §5](operating-model.md#5-autonomy-assignment)).
+- **AESQS qualifies; AEOS grants.** No performer — human or AI — operates above AL1 — Assisted without a current, in-scope AESQS qualification (per [AIES-AESQS-00-R03 — Qualification Standard, requirement 03](../AESQS/README.md) and [AIES-AEOS-ROLE-00-R04 — Role Model, requirement 04](roles/README.md#3-shared-role-specification-requirements)). AEOS defines the operational procedure that turns qualification evidence into an autonomy envelope ([Operating Model §5](operating-model.md#5-autonomy-assignment)).
 - **AEBOK supplies the practice** each role applies in each phase; AEOS references AEBOK rather than restating knowledge.
 - **AEAR supplies the platform** the operating model runs on: agent runtimes, gate tooling, guardrail enforcement points, telemetry pipelines, and the audit store that persists ART-15 records.
 - **AECT trains and certifies** humans into AEOS roles using the qualification requirements each role specification declares.
 
 ## 5. Conformance
 
-An organization conforms to AEOS when it satisfies the normative requirements (tagged `[AEOS-*-R*]`) in the documents listed in §3. Organizations MAY tighten any AEOS requirement; they MUST NOT loosen a MUST-level requirement without a documented risk acceptance per [Governance Operations (AIES-AEOS-GOV-01)](governance-operations.md).
+An organization conforms to AEOS when it satisfies the normative requirements (tagged `[AEOS-*-R*]`) in the documents listed in §3. Organizations MAY tighten any AEOS requirement; they MUST NOT loosen a MUST-level requirement without a documented risk acceptance per [Governance Operations (AIES-AEOS-GOV-01 — Governance Operations)](governance-operations.md).
 
 ## Related Documents
 
-- [Taxonomy (AIES-SHARED-02)](../Shared/Taxonomy/README.md) — the canonical scales (phases, domains, autonomy levels, risk tiers, roles, artifacts) AEOS operates on
-- [AEBOK (AIES-AEBOK-00)](../AEBOK/README.md) — the practice knowledge each role applies
-- [AESQS (AIES-AESQS-00)](../AESQS/README.md) — the qualification evidence that gates autonomy
-- [AEAR (AIES-AEAR-00)](../AEAR/README.md) — the platform the operating model runs on
-- [AECT (AIES-AECT-00)](../AECT/README.md) — training and certification into AEOS roles
+- [Taxonomy (AIES-SHARED-02 — Taxonomy)](../Shared/Taxonomy/README.md) — the canonical scales (phases, domains, autonomy levels, risk tiers, roles, artifacts) AEOS operates on
+- [AEBOK (AIES-AEBOK-00 — Engineering Body of Knowledge)](../AEBOK/README.md) — the practice knowledge each role applies
+- [AESQS (AIES-AESQS-00 — Qualification Standard)](../AESQS/README.md) — the qualification evidence that gates autonomy
+- [AEAR (AIES-AEAR-00 — Reference Architecture)](../AEAR/README.md) — the platform the operating model runs on
+- [AECT (AIES-AECT-00 — Engineering Certification)](../AECT/README.md) — training and certification into AEOS roles
 
 ## References
 

@@ -91,10 +91,10 @@ The vision is disciplined by the project's non-goals: AIES will not rank vendors
 
 ## Related Documents
 
-- [Project Charter (AIES-DOC-01)](PROJECT_CHARTER.md)
-- [Repository Architecture (AIES-DOC-03)](ARCHITECTURE.md)
-- [SDLC Reference (AIES-DOC-04)](SDLC.md)
-- [Shared Taxonomy (AIES-SHARED-02)](../Shared/Taxonomy/README.md)
+- [AIES-DOC-01 — Project Charter](PROJECT_CHARTER.md)
+- [AIES-DOC-03 — Repository Architecture](ARCHITECTURE.md)
+- [AIES-DOC-04 — SDLC Reference](SDLC.md)
+- [Shared Taxonomy (AIES-SHARED-02 — Taxonomy)](../Shared/Taxonomy/README.md)
 
 ## References
 

@@ -38,7 +38,7 @@ The QA Engineer demonstrates correctness: designing test strategies, building an
 ## Autonomy Constraints
 
 - [AIES-AEOS-ROLE-07-R01] Test evidence used at a gate MUST be produced with independence from the performer under test: a different human, a different agent definition, or automated infrastructure — never self-attestation.
-- [AIES-AEOS-ROLE-07-R02] An AI-staffed QA Engineer MUST NOT weaken, skip, or quarantine failing tests above AL1; test-suite reductions require per-item human review at any autonomy level.
+- [AIES-AEOS-ROLE-07-R02] An AI-staffed QA Engineer MUST NOT weaken, skip, or quarantine failing tests above AL1 — Assisted; test-suite reductions require per-item human review at any autonomy level.
 
 ## Escalation Duties
 
@@ -60,21 +60,21 @@ When ROLE-07 is staffed by an AI agent:
 
 | Risk tier of system under test | Max autonomy for QA tasks |
 |--------------------------------|---------------------------|
-| RT1 | AL4 |
-| RT2 | AL3 |
-| RT3 | AL2 |
-| RT4 | AL1 |
+| RT1 — Minimal | AL4 — Autonomous |
+| RT2 — Moderate | AL3 — Delegated |
+| RT3 — Significant | AL2 — Collaborative |
+| RT4 — Critical | AL1 — Assisted |
 
-- **Mandatory gates:** per-item human review of test-strategy documents for RT3+ scope; per-item review of any test removal or weakening (see R02); sampling audit of generated test quality (assertion strength, not just coverage numbers).
+- **Mandatory gates:** per-item human review of test-strategy documents for RT3 — Significant and above scope; per-item review of any test removal or weakening (see R02); sampling audit of generated test quality (assertion strength, not just coverage numbers).
 - **Telemetry:** defect escape rate past agent-authored suites, mutation/assertion-strength scores where available, flaky-test introduction rate, logged to ART-15.
 - Independence pairing (R01) MUST be configured in the agent definition: a QA agent instance is not assigned to gate the output of an engineering agent sharing the same definition lineage without explicit Governance Officer approval.
 
 ## Related Documents
 
-- [Role Catalog (AIES-AEOS-ROLE-00)](README.md) — shared role-specification requirements and staffing model
-- [Operating Model (AIES-AEOS-OM-01)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
-- [Workflows (AIES-AEOS-WF-01)](../workflows.md) — the collaboration workflows this role participates in
-- [Human Oversight (AIES-AEOS-HO-01)](../human-oversight.md) — the gates that apply to this role's work
+- [Role Catalog (AIES-AEOS-ROLE-00 — Role Model)](README.md) — shared role-specification requirements and staffing model
+- [Operating Model (AIES-AEOS-OM-01 — Operating Model)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
+- [Workflows (AIES-AEOS-WF-01 — Workflows)](../workflows.md) — the collaboration workflows this role participates in
+- [Human Oversight (AIES-AEOS-HO-01 — Human Oversight)](../human-oversight.md) — the gates that apply to this role's work
 
 ## References
 

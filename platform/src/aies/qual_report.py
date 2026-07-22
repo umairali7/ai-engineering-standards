@@ -63,12 +63,12 @@ def render_markdown(record_id: str) -> str:
     a("|---|---|---|---|---|---|")
     for area, d in scope["areas"].items():
         env = d.get("al_envelope", {})
-        a(f"| {area} | {d.get('cl') or 'none'} | "
+        a(f"| {C.competency_label(area)} | {C.identifier_label(d.get('cl')) if d.get('cl') else 'none'} | "
           f"{C.autonomy_level_label(env.get('RT1'))} | {C.autonomy_level_label(env.get('RT2'))} | "
           f"{C.autonomy_level_label(env.get('RT3'))} | {C.autonomy_level_label(env.get('RT4'))} |")
     a("")
     a("Autonomy levels are recommendations bounded by min(risk-tier cap, "
-      "CL-earned cap); AL4 is never granted at initial qualification.")
+      "CL-earned cap); AL4 — Autonomous is never granted at initial qualification.")
     a("")
     if r.get("conditions"):
         a("## Conditions")
@@ -90,9 +90,9 @@ def render_markdown(record_id: str) -> str:
     a("")
     a("## Accountable humans")
     a("")
-    a(f"- Authority (ROLE-13): {hum.get('authority')}")
+    a(f"- Authority ({C.identifier_label('ROLE-13')}): {hum.get('authority')}")
     if hum.get("second"):
-        a(f"- Second (ROLE-14): {hum['second']}")
+        a(f"- Second ({C.identifier_label('ROLE-14')}): {hum['second']}")
     a("")
     a("## Evidence & history")
     a("")
@@ -143,7 +143,7 @@ def render_html(record_id: str) -> str:
       "<th>RT1 — Minimal</th><th>RT2 — Moderate</th><th>RT3 — Significant</th><th>RT4 — Critical</th></tr>")
     for area, d in scope["areas"].items():
         env = d.get("al_envelope", {})
-        w(f"<tr><td>{e(area)}</td><td>{e(d.get('cl') or 'none')}</td>"
+        w(f"<tr><td>{e(C.competency_label(area))}</td><td>{e(C.identifier_label(d.get('cl')) if d.get('cl') else 'none')}</td>"
           f"<td>{e(C.autonomy_level_label(env.get('RT1')))}</td><td>{e(C.autonomy_level_label(env.get('RT2')))}</td>"
           f"<td>{e(C.autonomy_level_label(env.get('RT3')))}</td><td>{e(C.autonomy_level_label(env.get('RT4')))}</td></tr>")
     w("</table>")
@@ -163,9 +163,9 @@ def render_html(record_id: str) -> str:
       f"<td>{e(human_evaluation.get('evaluator') or 'not declared')}</td></tr>")
     w("</table>")
     w("<h2>Accountable humans</h2><ul>")
-    w(f"<li>Authority (ROLE-13): {e(hum.get('authority'))}</li>")
+    w(f"<li>Authority ({e(C.identifier_label('ROLE-13'))}): {e(hum.get('authority'))}</li>")
     if hum.get("second"):
-        w(f"<li>Second (ROLE-14): {e(hum['second'])}</li>")
+        w(f"<li>Second ({e(C.identifier_label('ROLE-14'))}): {e(hum['second'])}</li>")
     w("</ul>")
     w(f"<h2>Evidence</h2><p>Run <code>{e(r['evidence']['run_id'])}</code>. "
       f"Verify against the current environment with "

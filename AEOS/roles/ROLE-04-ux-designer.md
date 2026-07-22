@@ -24,7 +24,7 @@ The UX Designer defines *how humans will use the system*: researching user needs
 1. Conduct and synthesize user research; maintain user and task models (P04).
 2. Design interaction flows, information architecture, and interface specifications (ART-03).
 3. Specify accessibility requirements (X14) and verify designs against them.
-4. Validate designs with users or representative evaluation before engineering commitment on RT3+ scope.
+4. Validate designs with users or representative evaluation before engineering commitment on RT3 — Significant and above scope.
 5. Collaborate with ROLE-02/ROLE-03 to keep requirements and UX specifications consistent.
 6. Review implemented interfaces for specification conformance at quality gates.
 
@@ -37,8 +37,8 @@ The UX Designer defines *how humans will use the system*: researching user needs
 
 ## Autonomy Constraints
 
-- [AIES-AEOS-ROLE-04-R01] UX specifications for user journeys involving irreversible user actions, financial transactions, or regulated data (RT4 characteristics) MUST receive human design review before implementation, regardless of the producing performer's autonomy level.
-- [AIES-AEOS-ROLE-04-R02] An AI-staffed UX Designer MUST NOT substitute synthetic user feedback for required user validation on RT3+ scope; synthetic evaluation MAY supplement it and MUST be labeled as synthetic.
+- [AIES-AEOS-ROLE-04-R01] UX specifications for user journeys involving irreversible user actions, financial transactions, or regulated data (RT4 — Critical characteristics) MUST receive human design review before implementation, regardless of the producing performer's autonomy level.
+- [AIES-AEOS-ROLE-04-R02] An AI-staffed UX Designer MUST NOT substitute synthetic user feedback for required user validation on RT3 — Significant and above scope; synthetic evaluation MAY supplement it and MUST be labeled as synthetic.
 
 ## Escalation Duties
 
@@ -60,21 +60,21 @@ When ROLE-04 is staffed by an AI agent:
 
 | Risk tier of affected scope | Max autonomy for design tasks |
 |-----------------------------|-------------------------------|
-| RT1 | AL4 |
-| RT2 | AL3 |
-| RT3 | AL2 |
-| RT4 | AL1 |
+| RT1 — Minimal | AL4 — Autonomous |
+| RT2 — Moderate | AL3 — Delegated |
+| RT3 — Significant | AL2 — Collaborative |
+| RT4 — Critical | AL1 — Assisted |
 
-- **Mandatory gates:** human design review before engineering commitment on RT3+ journeys (see R01); per-item review of accessibility specifications.
+- **Mandatory gates:** human design review before engineering commitment on RT3 — Significant and above journeys (see R01); per-item review of accessibility specifications.
 - **Telemetry:** design rework rate after user validation, accessibility-audit pass rate, and labeled use of synthetic evaluation logged to ART-15.
 - Agents are strongest at variant exploration, specification drafting, and accessibility auditing; user empathy and validation remain human-anchored activities.
 
 ## Related Documents
 
-- [Role Catalog (AIES-AEOS-ROLE-00)](README.md) — shared role-specification requirements and staffing model
-- [Operating Model (AIES-AEOS-OM-01)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
-- [Workflows (AIES-AEOS-WF-01)](../workflows.md) — the collaboration workflows this role participates in
-- [Human Oversight (AIES-AEOS-HO-01)](../human-oversight.md) — the gates that apply to this role's work
+- [Role Catalog (AIES-AEOS-ROLE-00 — Role Model)](README.md) — shared role-specification requirements and staffing model
+- [Operating Model (AIES-AEOS-OM-01 — Operating Model)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
+- [Workflows (AIES-AEOS-WF-01 — Workflows)](../workflows.md) — the collaboration workflows this role participates in
+- [Human Oversight (AIES-AEOS-HO-01 — Human Oversight)](../human-oversight.md) — the gates that apply to this role's work
 
 ## References
 

@@ -39,7 +39,7 @@ Out of scope:
 
 ## 2. The Credential Ladder at a Glance
 
-Certification tiers map one-to-one onto the [competency levels (CL1–CL4)](../Shared/Taxonomy/README.md#6-competency-levels-cl1cl4) of the shared taxonomy.
+Certification tiers map one-to-one onto the [competency levels (CL1 — Foundation through CL4 — Expert)](../Shared/Taxonomy/README.md#6-competency-levels-cl1cl4) of the shared taxonomy.
 
 | Tier | Credential | CL | One-line meaning |
 |------|-----------|----|------------------|
@@ -48,7 +48,7 @@ Certification tiers map one-to-one onto the [competency levels (CL1–CL4)](../S
 | 3 | **AIES Certified Professional** | CL3 | Adapts practice to novel situations; reviews, gates, and coaches others |
 | 4 | **AIES Certified Fellow** | CL4 | Sets organizational practice; advances the discipline itself |
 
-At the Professional tier and above, candidates MAY add **role-specialization endorsements** (e.g., *Professional – Security Engineering*, *Professional – Architecture*) mapped to the [role model](../Shared/Taxonomy/README.md#5-ai-engineering-roles) (ROLE-01 … ROLE-14). Details in the [Certification Framework (AIES-AECT-CERT-01)](certification-framework.md).
+At the Professional tier and above, candidates MAY add **role-specialization endorsements** (e.g., *Professional – Security Engineering*, *Professional – Architecture*) mapped to the [role model](../Shared/Taxonomy/README.md#5-ai-engineering-roles) (ROLE-01 … ROLE-14). Details in the [Certification Framework (AIES-AECT-CERT-01 — Certification Framework)](certification-framework.md).
 
 ```
    Associate ──► Practitioner ──► Professional ──► Fellow
@@ -90,17 +90,17 @@ At the Professional tier and above, candidates MAY add **role-specialization end
 - **AESQS is the assessment methodology.** Practical assessments and lab scoring use AESQS rubrics along EV1–EV6; AECT defines *what* is assessed and *when*, AESQS defines *how* capability evidence is scored.
 - **AEOS and AEAR supply practical content.** Lab scenarios exercise AEOS operating-model constructs (autonomy envelopes, approval gates, agent role definitions, audit trails) and AEAR reference architectures, so certified engineers can operate real AI-native delivery systems, not just recite theory.
 
-All AECT documents use the [Glossary (AIES-SHARED-01)](../Shared/Glossary/README.md) and [Taxonomy (AIES-SHARED-02)](../Shared/Taxonomy/README.md) without redefinition.
+All AECT documents use the [Glossary (AIES-SHARED-01 — Glossary)](../Shared/Glossary/README.md) and [Taxonomy (AIES-SHARED-02 — Taxonomy)](../Shared/Taxonomy/README.md) without redefinition.
 
 ## 5. Normative Anchors
 
-[AIES-AECT-00-R01] Every AECT curriculum element, exam domain, and lab objective MUST trace to at least one AEBOK Knowledge Area (KA-01 … KA-12).
+[AIES-AECT-00-R01 — Engineering Certification, requirement 01] Every AECT curriculum element, exam domain, and lab objective MUST trace to at least one AEBOK Knowledge Area (KA-01 … KA-12).
 
-[AIES-AECT-00-R02] Certification tiers MUST map one-to-one onto competency levels CL1–CL4 as defined in the shared taxonomy; AECT MUST NOT define an alternative proficiency scale.
+[AIES-AECT-00-R02 — Engineering Certification, requirement 02] Certification tiers MUST map one-to-one onto competency levels CL1–CL4 as defined in the shared taxonomy; AECT MUST NOT define an alternative proficiency scale.
 
-[AIES-AECT-00-R03] AECT credentials MUST be issued to natural persons only. Authorization of AI systems for engineering work is governed exclusively by [AESQS](../AESQS/README.md).
+[AIES-AECT-00-R03 — Engineering Certification, requirement 03] AECT credentials MUST be issued to natural persons only. Authorization of AI systems for engineering work is governed exclusively by [AESQS](../AESQS/README.md).
 
-[AIES-AECT-00-R04] All AECT content MUST remain vendor-neutral: no exam item, lab, or learning module may require knowledge of a specific commercial AI model, product, or provider.
+[AIES-AECT-00-R04 — Engineering Certification, requirement 04] All AECT content MUST remain vendor-neutral: no exam item, lab, or learning module may require knowledge of a specific commercial AI model, product, or provider.
 
 ## 6. Contents
 
@@ -116,14 +116,14 @@ AECT/
 
 ## Related Documents
 
-- [Certification Framework (AIES-AECT-CERT-01)](certification-framework.md)
-- [Learning Paths (AIES-AECT-LP-01)](learning-paths.md)
-- [Exam Blueprints (AIES-AECT-EB-01)](exam-blueprints.md)
-- [Labs (AIES-AECT-LAB-01)](labs.md)
-- [Assessment & Renewal (AIES-AECT-AR-01)](assessment-and-renewal.md)
-- [AEBOK (AIES-AEBOK-00)](../AEBOK/README.md) — the sole syllabus source
-- [AESQS (AIES-AESQS-00)](../AESQS/README.md) — assessment methodology and qualification of AI systems
-- [Glossary (AIES-SHARED-01)](../Shared/Glossary/README.md) · [Taxonomy (AIES-SHARED-02)](../Shared/Taxonomy/README.md)
+- [Certification Framework (AIES-AECT-CERT-01 — Certification Framework)](certification-framework.md)
+- [Learning Paths (AIES-AECT-LP-01 — Learning Paths)](learning-paths.md)
+- [Exam Blueprints (AIES-AECT-EB-01 — Exam Blueprints)](exam-blueprints.md)
+- [Labs (AIES-AECT-LAB-01 — Labs)](labs.md)
+- [Assessment & Renewal (AIES-AECT-AR-01 — Assessment and Renewal)](assessment-and-renewal.md)
+- [AEBOK (AIES-AEBOK-00 — Engineering Body of Knowledge)](../AEBOK/README.md) — the sole syllabus source
+- [AESQS (AIES-AESQS-00 — Qualification Standard)](../AESQS/README.md) — assessment methodology and qualification of AI systems
+- [Glossary (AIES-SHARED-01 — Glossary)](../Shared/Glossary/README.md) · [Taxonomy (AIES-SHARED-02 — Taxonomy)](../Shared/Taxonomy/README.md)
 
 ## References
 

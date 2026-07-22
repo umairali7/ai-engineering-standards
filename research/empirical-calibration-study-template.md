@@ -1,4 +1,4 @@
-# Empirical Calibration Study — Template
+﻿# Empirical Calibration Study — Template
 
 | | |
 |---|---|
@@ -17,7 +17,7 @@ that *cites* the study.
 > composition, selection rationale, the methodology and thresholds versions and
 > values, the scenario set, and repeats — is fixed and dated **before** any run is
 > collected or scored, mirroring the anti-cherry-picking rule for qualification
-> evidence ([AIES-AESQS-CS-01-R12](../AESQS/capability-scoring.md)). Findings are
+> evidence ([AIES-AESQS-CS-01-R12 — Evidence populations are pre-registered and complete](../AESQS/capability-scoring.md)). Findings are
 > filled in afterward against that frozen design. Recording thresholds *after*
 > seeing results, adding or dropping panel models to move a verdict, or narrowing
 > the scenario set post-hoc invalidates the study exactly as it would a
@@ -90,7 +90,7 @@ State them honestly — this is what makes the study trustworthy:
   each needs (raise the ceiling, add a floor, resolve a gameable twin, reduce
   noise). This is the study's most actionable output.
 - **Evidential maturity** — which assessments’ tier claims the findings support or
-  qualify (e.g. does `security` now have RT3-decisional backing?).
+  qualify (e.g. does `security` now have RT3 — Significant-decisional backing?).
 - **`empirical_status` promotions** — the scenarios a human may promote to
   `empirically_calibrated: true`, each citing this study.
 - **Threshold observations** — if a threshold looks mis-set, propose a change *as
@@ -100,6 +100,6 @@ State them honestly — this is what makes the study trustworthy:
 ## References
 
 - [platform/CALIBRATION.md](../platform/CALIBRATION.md) — the harness, metrics, and metadata contract
-- [AIES-AESQS-CS-01 §6, R12](../AESQS/capability-scoring.md) — statistical minimums; register-before-scoring
+- [AIES-AESQS-CS-01 — Capability Scoring §6, R12](../AESQS/capability-scoring.md) — statistical minimums; register-before-scoring
 - The panel models (identity + version) and the assessment under study
 - The assembled `panel.json` and the empirical-calibration result JSON (attach)

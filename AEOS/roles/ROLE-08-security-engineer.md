@@ -22,7 +22,7 @@ The Security Engineer ensures the system resists abuse: threat-modeling designs,
 ## Responsibilities
 
 1. Threat-model architectures and high-risk changes (P11, X01).
-2. Produce security assessments (ART-08) for releases and RT3+ changes.
+2. Produce security assessments (ART-08) for releases and RT3 — Significant and above changes.
 3. Operate and tune automated security scanning in pipelines (with ROLE-09).
 4. Assess agent definitions (ART-14) before activation: tool access, data exposure, injection surfaces, guardrail coverage.
 5. Classify security implications of work at intake (advising risk-tier classification).
@@ -37,8 +37,8 @@ The Security Engineer ensures the system resists abuse: threat-modeling designs,
 
 ## Autonomy Constraints
 
-- [AIES-AEOS-ROLE-08-R01] Security sign-off on RT3+ releases and on agent-definition activation MUST be given by a human; an AI-staffed Security Engineer produces assessments and findings but not the sign-off.
-- [AIES-AEOS-ROLE-08-R02] An AI-staffed Security Engineer MUST NOT be granted offensive tooling (exploitation, credential testing) above AL2, and any such use MUST occur in isolated environments with per-item human review.
+- [AIES-AEOS-ROLE-08-R01] Security sign-off on RT3 — Significant and above releases and on agent-definition activation MUST be given by a human; an AI-staffed Security Engineer produces assessments and findings but not the sign-off.
+- [AIES-AEOS-ROLE-08-R02] An AI-staffed Security Engineer MUST NOT be granted offensive tooling (exploitation, credential testing) above AL2 — Collaborative, and any such use MUST occur in isolated environments with per-item human review.
 - [AIES-AEOS-ROLE-08-R03] Suppression of security findings (accepting risk, marking false positive) above severity thresholds defined by the organization MUST be a human decision.
 
 ## Escalation Duties
@@ -61,21 +61,21 @@ When ROLE-08 is staffed by an AI agent:
 
 | Risk tier of assessed scope | Max autonomy for security tasks |
 |-----------------------------|--------------------------------|
-| RT1 | AL4 (triage and reporting only) |
-| RT2 | AL3 |
-| RT3 | AL2 |
-| RT4 | AL1 |
+| RT1 — Minimal | AL4 — Autonomous (triage and reporting only) |
+| RT2 — Moderate | AL3 — Delegated |
+| RT3 — Significant | AL2 — Collaborative |
+| RT4 — Critical | AL1 — Assisted |
 
-- **Mandatory gates:** human sign-off on RT3+ assessments and all agent-definition activations (see R01); per-item review of finding suppressions (see R03); sampling audit of triage decisions.
+- **Mandatory gates:** human sign-off on RT3 — Significant and above assessments and all agent-definition activations (see R01); per-item review of finding suppressions (see R03); sampling audit of triage decisions.
 - **Telemetry:** finding precision/recall against later-confirmed issues, suppression override rate, time-to-triage, logged to ART-15.
 - A security agent's own tool access is itself a threat surface: its agent definition MUST be assessed by a human security engineer, not by the agent, and re-assessed on every definition version change.
 
 ## Related Documents
 
-- [Role Catalog (AIES-AEOS-ROLE-00)](README.md) — shared role-specification requirements and staffing model
-- [Operating Model (AIES-AEOS-OM-01)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
-- [Workflows (AIES-AEOS-WF-01)](../workflows.md) — the collaboration workflows this role participates in
-- [Human Oversight (AIES-AEOS-HO-01)](../human-oversight.md) — the gates that apply to this role's work
+- [Role Catalog (AIES-AEOS-ROLE-00 — Role Model)](README.md) — shared role-specification requirements and staffing model
+- [Operating Model (AIES-AEOS-OM-01 — Operating Model)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
+- [Workflows (AIES-AEOS-WF-01 — Workflows)](../workflows.md) — the collaboration workflows this role participates in
+- [Human Oversight (AIES-AEOS-HO-01 — Human Oversight)](../human-oversight.md) — the gates that apply to this role's work
 
 ## References
 

@@ -27,7 +27,7 @@ This distinction is the whole safety of the scheme:
   and the [Taxonomy](../Shared/Taxonomy/README.md). These define what
   "qualified" *means*.
 
-[AIES-DOC-09-R01] No automated process — including any AI system — MAY alter the
+[AIES-DOC-09-R01 — Platform Reference, requirement 01] No automated process — including any AI system — MAY alter the
 normative core (gates, weights, minimums, autonomy caps, taxonomy). Such changes
 are Class 3 and MUST proceed through an ADR per [GOVERNANCE.md](../GOVERNANCE.md).
 
@@ -84,7 +84,7 @@ and not before (building the flywheel with no runs to turn it is waste).
 
 ## 4. Maintenance cadence
 
-[AIES-DOC-09-R02] Each normative document SHOULD be reviewed on the cadence
+[AIES-DOC-09-R02 — Platform Reference, requirement 02] Each normative document SHOULD be reviewed on the cadence
 below and either re-affirmed or revised; a review that finds no change still
 records that the document was reviewed.
 
@@ -96,14 +96,14 @@ records that the document was reviewed.
 | **Annual** | Full standard review — every document re-affirmed or revised; taxonomy-stability check; **Crosswalk refresh** against current external frameworks; deprecation review |
 | **Trigger-based (out of cadence)** | Production incident; a new model generation that invalidates suite calibration; a change in a mapped external standard; sustained drift; new high-severity agentic attack pattern |
 
-[AIES-DOC-09-R03] Version increments follow the [Versioning Standard
+[AIES-DOC-09-R03 — Platform Reference, requirement 03] Version increments follow the [Versioning Standard
 (AIES-STD-05)](standards/versioning-standard.md): content and calibration
 improvements are minor/patch; any change to the normative core is a breaking
 change requiring a major increment and an ADR.
 
 ### Deprecation
 
-[AIES-DOC-09-R04] Retiring a document, scenario, competency area, or level MUST
+[AIES-DOC-09-R04 — Platform Reference, requirement 04] Retiring a document, scenario, competency area, or level MUST
 follow the lifecycle: mark **Deprecated**, name the successor, and retain the
 identifier (never reused) so citations do not dangle. Suites retire scenarios by
 version bump; the evidence produced under a retired scenario remains valid for
@@ -123,11 +123,11 @@ the suite version it was gathered on.
 ## Related Documents
 
 - [AEBOK KA-12 — Evaluation & Continuous Improvement](../AEBOK/knowledge-areas/KA-12-evaluation-improvement.md) — the practice this dogfoods
-- [AESQS Revision & Revocation (AIES-AESQS-RR-01)](../AESQS/revision-and-revocation.md) — re-qualification triggers
-- [GOVERNANCE.md (AIES-GOV-01)](../GOVERNANCE.md) — decision classes and the ADR gate
-- [Versioning Standard (AIES-STD-05)](standards/versioning-standard.md) · [Review Standard (AIES-STD-06)](standards/review-standard.md)
-- [Standards Crosswalk (AIES-DOC-07)](CROSSWALK.md) — refreshed on the annual cadence
-- [Qualification Platform (AIES-DOC-06)](PLATFORM.md) — the sensor
+- [AESQS Revision & Revocation (AIES-AESQS-RR-01 — Revision and Revocation)](../AESQS/revision-and-revocation.md) — re-qualification triggers
+- [AIES-GOV-01 — Governance](../GOVERNANCE.md) — decision classes and the ADR gate
+- [Versioning Standard (AIES-STD-05 — Versioning Standard)](standards/versioning-standard.md) · [Review Standard (AIES-STD-06 — Review Standard)](standards/review-standard.md)
+- [AIES-DOC-07 — Standards Crosswalk — How AIES Maps to Adjacent Frameworks](CROSSWALK.md) — refreshed on the annual cadence
+- [AIES-DOC-06 — Engineering Assessment Platform Specification](PLATFORM.md) — the sensor
 
 ## References
 

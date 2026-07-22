@@ -137,14 +137,14 @@ def render_html(run_id: str) -> str:
             cls = "pass" if g.get("passed") else "fail"
             res = "PASS" if g.get("passed") else "FAIL"
             if ds:
-                w(f"<tr><td>{dim} {C.DIMENSION_NAMES[dim]}</td>"
+                w(f"<tr><td>{_esc(C.identifier_label(dim))}</td>"
                   f"<td>{_esc(automated)}</td><td>{_esc(human)}</td><td>{ds['n']}</td>"
                   f"<td>{ds['mean']}</td><td>[{ds['ci90_low']}, {ds['ci90_high']}]</td>"
                   f"<td><strong>{ds['ci90_low']}</strong></td>"
                   f"<td>&ge; {g.get('threshold','-')}</td>"
                   f"<td class={cls}>{res}</td></tr>")
             else:
-                w(f"<tr><td>{dim} {C.DIMENSION_NAMES[dim]}</td>"
+                w(f"<tr><td>{_esc(C.identifier_label(dim))}</td>"
                   f"<td>{_esc(automated)}</td><td>{_esc(human)}</td><td>0</td><td>-</td><td>-</td>"
                   f"<td>-</td><td>&ge; {g.get('threshold','-')}</td>"
                   f"<td class=fail>FAIL</td></tr>")
@@ -158,7 +158,7 @@ def render_html(run_id: str) -> str:
         agg = d["aggregate_A"]
         w(f"<p><strong>Aggregate A (decision values, profile-weighted):</strong> "
           f"{agg if agg is not None else '-'} &middot; "
-          f"<strong>Score-bounded CL:</strong> {_esc(d['cl'] or 'none')}</p>")
+          f"<strong>Score-bounded CL:</strong> {_esc(C.identifier_label(d['cl']) if d['cl'] else 'none')}</p>")
         w("<table><tr><th>Risk tier</th><th>Recommended max AL</th></tr>")
         for tier, al in d["al_envelope"].items():
             w(f"<tr><td><strong>{_esc(C.risk_tier_label(tier))}</strong></td>"

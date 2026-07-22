@@ -71,7 +71,7 @@ The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", and "MAY" in this docu
      there first. Optionally list the key glossary terms this document relies
      on, as links. -->
 
-Terms used in this document are defined in the [Shared Glossary (AIES-SHARED-01)](../Shared/Glossary/README.md) and the [Shared Taxonomy (AIES-SHARED-02)](../Shared/Taxonomy/README.md). This document does not redefine any shared term.
+Terms used in this document are defined in the [Shared Glossary (AIES-SHARED-01 — Glossary)](../Shared/Glossary/README.md) and the [Shared Taxonomy (AIES-SHARED-02 — Taxonomy)](../Shared/Taxonomy/README.md). This document does not redefine any shared term.
 
 Key terms relied upon: <term>, <term>, <term>.
 
@@ -93,7 +93,7 @@ Key terms relied upon: <term>, <term>, <term>.
 **[<DOC-ID>-R03]** <The subject> MAY <optional behavior>.
 
 <!-- Example of a well-formed requirement:
-     [AIES-AEOS-GOV-01-R03] Every autonomous change MUST be traceable to an
+     [AIES-AEOS-GOV-01-R03 — Governance Operations, requirement 03] Every autonomous change MUST be traceable to an
      approved work item. -->
 
 ## 5. Guidance

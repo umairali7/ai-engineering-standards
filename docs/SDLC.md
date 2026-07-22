@@ -6,7 +6,7 @@
 | **Status** | Review |
 | **Audience** | Engineers · Architects · Engineering leadership |
 
-The detailed reference for the sixteen AIES lifecycle phases (P01–P16): what each phase is for, who works in it, what it produces, how AI participates in it, and how work enters and leaves it. Phase, role, artifact, autonomy, and risk identifiers are defined normatively in the [Shared Taxonomy (AIES-SHARED-02)](../Shared/Taxonomy/README.md); this document is guidance built on those definitions.
+The detailed reference for the sixteen AIES lifecycle phases (P01–P16): what each phase is for, who works in it, what it produces, how AI participates in it, and how work enters and leaves it. Phase, role, artifact, autonomy, and risk identifiers are defined normatively in the [Shared Taxonomy (AIES-SHARED-02 — Taxonomy)](../Shared/Taxonomy/README.md); this document is guidance built on those definitions.
 
 The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", and "MAY" in this document are to be interpreted as described in RFC 2119.
 
@@ -35,7 +35,7 @@ The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", and "MAY" in this docu
 
 Two rules shape AI participation in every phase:
 
-- Every AI-performed task MUST carry a declared autonomy level (AL0–AL4), and the maximum level is derived from the task's risk tier (RT1–RT4) per the [Taxonomy §3–4](../Shared/Taxonomy/README.md). The per-phase guidance below describes *typical* assignments within those ceilings; organizations MAY tighten them and MUST NOT exceed them without documented risk acceptance.
+- Every AI-performed task MUST carry a declared autonomy level (AL0 — Manual through AL4 — Autonomous), and the maximum level is derived from the task's risk tier (RT1 — Minimal through RT4 — Critical) per the [Taxonomy §3–4](../Shared/Taxonomy/README.md). The per-phase guidance below describes *typical* assignments within those ceilings; organizations MAY tighten them and MUST NOT exceed them without documented risk acceptance.
 - Human accountability never transfers. Gated decisions belong to ROLE-13 (Human Approver); governance oversight belongs to ROLE-14 (Governance Officer). Both MUST be humans.
 
 ### Reading the phase entries
@@ -56,14 +56,14 @@ Each entry gives: **Purpose** · **Key activities** · **Primary roles** (ROLE I
 
 **Typical artifacts.** ART-01 (Business Case).
 
-**AI participation.** AI accelerates evidence-gathering, not judgment. Market synthesis, scenario modeling, and drafting of investment cases sit comfortably at AL1–AL2. Strategy *decisions* are RT4 by nature (irreversible commitments, fiduciary consequences) and remain AL0–AL1: AI informs, humans decide.
+**AI participation.** AI accelerates evidence-gathering, not judgment. Market synthesis, scenario modeling, and drafting of investment cases sit comfortably at AL1 — Assisted through AL2 — Collaborative. Strategy *decisions* are RT4 — Critical by nature (irreversible commitments, fiduciary consequences) and remain AL0 — Manual through AL1 — Assisted: AI informs, humans decide.
 
 | Risk tier | Typical autonomy |
 |-----------|------------------|
-| RT1 (research summaries, internal briefs) | AL2–AL3 |
-| RT2 (draft business cases) | AL2 |
-| RT3 (portfolio recommendations) | AL1 |
-| RT4 (investment decisions) | AL0–AL1 |
+| RT1 — Minimal (research summaries, internal briefs) | AL2 — Collaborative through AL3 — Delegated |
+| RT2 — Moderate (draft business cases) | AL2 — Collaborative |
+| RT3 — Significant (portfolio recommendations) | AL1 — Assisted |
+| RT4 — Critical (investment decisions) | AL0 — Manual through AL1 — Assisted |
 
 **Entry criteria.** A strategic question or opportunity is articulated; sponsorship exists.
 **Exit criteria.** An approved business case (ART-01) with measurable outcomes, constraints, and an accountable owner.
@@ -82,14 +82,14 @@ Each entry gives: **Purpose** · **Key activities** · **Primary roles** (ROLE I
 
 **Typical artifacts.** ART-01 (Business Case, refined), inputs to ART-02 (Product Requirement).
 
-**AI participation.** AI is strong at synthesizing interview notes, mining process documentation, drafting current-state models, and surfacing inconsistencies across sources. Elicitation itself — the human conversation — stays human-led, with AI at AL1 preparing questions and AL2 producing analysis drafts for analyst review. Misframed problems poison every downstream phase, so analysis conclusions warrant per-item human review (AL2 ceiling in practice, even where risk tiering would permit more).
+**AI participation.** AI is strong at synthesizing interview notes, mining process documentation, drafting current-state models, and surfacing inconsistencies across sources. Elicitation itself — the human conversation — stays human-led, with AI at AL1 — Assisted preparing questions and AL2 — Collaborative producing analysis drafts for analyst review. Misframed problems poison every downstream phase, so analysis conclusions warrant per-item human review (AL2 — Collaborative ceiling in practice, even where risk tiering would permit more).
 
 | Risk tier | Typical autonomy |
 |-----------|------------------|
-| RT1 (note synthesis, doc mining) | AL3 |
-| RT2 (draft process models, gap analyses) | AL2 |
-| RT3 (feasibility conclusions, scope recommendations) | AL1–AL2 |
-| RT4 (regulated-domain analysis) | AL1 |
+| RT1 — Minimal (note synthesis, doc mining) | AL3 — Delegated |
+| RT2 — Moderate (draft process models, gap analyses) | AL2 — Collaborative |
+| RT3 — Significant (feasibility conclusions, scope recommendations) | AL1 — Assisted through AL2 — Collaborative |
+| RT4 — Critical (regulated-domain analysis) | AL1 — Assisted |
 
 **Entry criteria.** An approved or in-progress business case names the opportunity.
 **Exit criteria.** A validated problem statement and analyzed needs, accepted by stakeholders, feeding P03/P05.
@@ -108,14 +108,14 @@ Each entry gives: **Purpose** · **Key activities** · **Primary roles** (ROLE I
 
 **Typical artifacts.** ART-02 (Product Requirement), ART-05 (Work Item / Plan, at epic level).
 
-**AI participation.** AI drafts requirement candidates, clusters and de-duplicates backlog items, simulates prioritization scenarios, and keeps roadmap documents consistent. Applying risk tiers to backlog items (a prerequisite for all downstream autonomy decisions) is an analysis task AI can draft at AL2 with human ratification — see the worked example EX-01 in [examples/](../examples/README.md). Prioritization *decisions* embody accountability for value and remain human.
+**AI participation.** AI drafts requirement candidates, clusters and de-duplicates backlog items, simulates prioritization scenarios, and keeps roadmap documents consistent. Applying risk tiers to backlog items (a prerequisite for all downstream autonomy decisions) is an analysis task AI can draft at AL2 — Collaborative with human ratification — see the worked example EX-01 in [examples/](../examples/README.md). Prioritization *decisions* embody accountability for value and remain human.
 
 | Risk tier | Typical autonomy |
 |-----------|------------------|
-| RT1 (backlog hygiene, duplicate detection) | AL3–AL4 |
-| RT2 (draft requirements, draft risk-tiering) | AL2–AL3 |
-| RT3 (roadmap changes, cut-line decisions) | AL1 |
-| RT4 (commitments with contractual/regulatory force) | AL0–AL1 |
+| RT1 — Minimal (backlog hygiene, duplicate detection) | AL3 — Delegated through AL4 — Autonomous |
+| RT2 — Moderate (draft requirements, draft risk-tiering) | AL2 — Collaborative through AL3 — Delegated |
+| RT3 — Significant (roadmap changes, cut-line decisions) | AL1 — Assisted |
+| RT4 — Critical (commitments with contractual/regulatory force) | AL0 — Manual through AL1 — Assisted |
 
 **Entry criteria.** Validated problem statement and business case exist.
 **Exit criteria.** A prioritized, risk-tiered backlog with measurable success criteria; requirements ready for P05 elaboration.
@@ -138,10 +138,10 @@ Each entry gives: **Purpose** · **Key activities** · **Primary roles** (ROLE I
 
 | Risk tier | Typical autonomy |
 |-----------|------------------|
-| RT1 (exploratory variants, prototype scaffolds) | AL3–AL4 |
-| RT2 (production design drafts, UX copy) | AL2–AL3 |
-| RT3 (customer-facing flows, accessibility-critical surfaces) | AL2 |
-| RT4 (safety-critical interaction design) | AL1 |
+| RT1 — Minimal (exploratory variants, prototype scaffolds) | AL3 — Delegated through AL4 — Autonomous |
+| RT2 — Moderate (production design drafts, UX copy) | AL2 — Collaborative through AL3 — Delegated |
+| RT3 — Significant (customer-facing flows, accessibility-critical surfaces) | AL2 — Collaborative |
+| RT4 — Critical (safety-critical interaction design) | AL1 — Assisted |
 
 **Entry criteria.** Prioritized requirements identify the users and jobs to design for.
 **Exit criteria.** UX specification (ART-03) validated with users, meeting accessibility criteria, ready for P05/P09.
@@ -160,14 +160,14 @@ Each entry gives: **Purpose** · **Key activities** · **Primary roles** (ROLE I
 
 **Typical artifacts.** ART-02 (Product Requirement, elaborated with acceptance criteria).
 
-**AI participation.** This is one of AI's highest-leverage phases: drafting acceptance criteria, detecting ambiguity and contradiction across a requirement set, generating traceability links, and keeping specifications synchronized with decisions. Because every downstream phase consumes requirements, errors amplify — per-item human review (AL2) is the working norm for anything that will be built, with AL3 acceptable for consistency-checking and traceability maintenance where outputs are advisory.
+**AI participation.** This is one of AI's highest-leverage phases: drafting acceptance criteria, detecting ambiguity and contradiction across a requirement set, generating traceability links, and keeping specifications synchronized with decisions. Because every downstream phase consumes requirements, errors amplify — per-item human review (AL2 — Collaborative) is the working norm for anything that will be built, with AL3 — Delegated acceptable for consistency-checking and traceability maintenance where outputs are advisory.
 
 | Risk tier | Typical autonomy |
 |-----------|------------------|
-| RT1 (formatting, traceability link upkeep) | AL3–AL4 |
-| RT2 (draft acceptance criteria, ambiguity reports) | AL2–AL3 |
-| RT3 (requirements for customer-facing behavior) | AL2 |
-| RT4 (requirements for safety/financial/regulated functions) | AL1 |
+| RT1 — Minimal (formatting, traceability link upkeep) | AL3 — Delegated through AL4 — Autonomous |
+| RT2 — Moderate (draft acceptance criteria, ambiguity reports) | AL2 — Collaborative through AL3 — Delegated |
+| RT3 — Significant (requirements for customer-facing behavior) | AL2 — Collaborative |
+| RT4 — Critical (requirements for safety/financial/regulated functions) | AL1 — Assisted |
 
 **Entry criteria.** Prioritized backlog items selected for elaboration; UX inputs available where relevant.
 **Exit criteria.** Requirements baselined: testable, risk-tiered, traceable, and approved.
@@ -188,14 +188,14 @@ Each entry gives: **Purpose** · **Key activities** · **Primary roles** (ROLE I
 
 **Typical artifacts.** ART-04 (Architecture Decision Record) capturing the comparison and choice.
 
-**AI participation.** AI enumerates options humans miss, builds comparison matrices, drafts ADR text, and rapidly produces throwaway proof-of-concept code (RT1 — high autonomy is appropriate precisely because PoC code never ships). The *decision* is gated: option selection commits the organization and is recorded in an ADR with human deciders.
+**AI participation.** AI enumerates options humans miss, builds comparison matrices, drafts ADR text, and rapidly produces throwaway proof-of-concept code (for RT1 — Minimal work, high autonomy is appropriate precisely because PoC code never ships). The *decision* is gated: option selection commits the organization and is recorded in an ADR with human deciders.
 
 | Risk tier | Typical autonomy |
 |-----------|------------------|
-| RT1 (PoC spikes, comparison drafts) | AL3–AL4 |
-| RT2 (trade-off analyses) | AL2–AL3 |
-| RT3 (recommendations affecting production direction) | AL1–AL2 |
-| RT4 (irreversible platform commitments) | AL1 |
+| RT1 — Minimal (PoC spikes, comparison drafts) | AL3 — Delegated through AL4 — Autonomous |
+| RT2 — Moderate (trade-off analyses) | AL2 — Collaborative through AL3 — Delegated |
+| RT3 — Significant (recommendations affecting production direction) | AL1 — Assisted through AL2 — Collaborative |
+| RT4 — Critical (irreversible platform commitments) | AL1 — Assisted |
 
 **Entry criteria.** Baselined requirements and constraints; a decision worth analyzing.
 **Exit criteria.** An accepted ADR (ART-04) selecting the option, with alternatives and trade-offs recorded.
@@ -214,14 +214,14 @@ Each entry gives: **Purpose** · **Key activities** · **Primary roles** (ROLE I
 
 **Typical artifacts.** ART-04 (Architecture Decision Record), architecture documentation, [diagram sources](../diagrams/README.md).
 
-**AI participation.** AI drafts architecture documents and diagrams, checks designs against stated quality scenarios, detects drift between documented and implemented architecture, and stress-tests proposals ("what breaks under 10× load?"). Architectural decisions are long-lived and expensive to reverse — typically RT3–RT4 — so the decision itself stays at AL1–AL2 with the analysis pipeline at AL2–AL3.
+**AI participation.** AI drafts architecture documents and diagrams, checks designs against stated quality scenarios, detects drift between documented and implemented architecture, and stress-tests proposals ("what breaks under 10× load?"). Architectural decisions are long-lived and expensive to reverse — typically RT3 — Significant through RT4 — Critical — so the decision itself stays at AL1 — Assisted through AL2 — Collaborative with the analysis pipeline at AL2 — Collaborative through AL3 — Delegated.
 
 | Risk tier | Typical autonomy |
 |-----------|------------------|
-| RT1 (diagram generation, doc formatting) | AL3–AL4 |
-| RT2 (draft designs for internal components) | AL2–AL3 |
-| RT3 (production system structure, schema design) | AL2 |
-| RT4 (safety-critical / regulated architecture) | AL1 |
+| RT1 — Minimal (diagram generation, doc formatting) | AL3 — Delegated through AL4 — Autonomous |
+| RT2 — Moderate (draft designs for internal components) | AL2 — Collaborative through AL3 — Delegated |
+| RT3 — Significant (production system structure, schema design) | AL2 — Collaborative |
+| RT4 — Critical (safety-critical / regulated architecture) | AL1 — Assisted |
 
 **Entry criteria.** Selected solution option; baselined requirements with quality attributes.
 **Exit criteria.** Approved architecture with ADRs recorded; conformance criteria available to P09; threat model inputs delivered to P11.
@@ -240,14 +240,14 @@ Each entry gives: **Purpose** · **Key activities** · **Primary roles** (ROLE I
 
 **Typical artifacts.** ART-05 (Work Item / Plan).
 
-**AI participation.** AI decomposes epics into work items, drafts estimates from historical data, detects dependency conflicts, and continuously replans as reality diverges. Plans are advisory until committed, which keeps most planning work at RT1–RT2 and allows high autonomy; the *commitment* (what the team promises, what the release contains) is a human decision. Every work item MUST leave planning with a risk tier, because that tier drives autonomy ceilings in P09–P13.
+**AI participation.** AI decomposes epics into work items, drafts estimates from historical data, detects dependency conflicts, and continuously replans as reality diverges. Plans are advisory until committed, which keeps most planning work at RT1 — Minimal through RT2 — Moderate and allows high autonomy; the *commitment* (what the team promises, what the release contains) is a human decision. Every work item MUST leave planning with a risk tier, because that tier drives autonomy ceilings in P09–P13.
 
 | Risk tier | Typical autonomy |
 |-----------|------------------|
-| RT1 (decomposition drafts, estimate suggestions) | AL3–AL4 |
-| RT2 (iteration plan drafts, dependency analysis) | AL3 |
-| RT3 (commitment-affecting replans) | AL1–AL2 |
-| RT4 (plans with contractual/regulatory deadlines) | AL1 |
+| RT1 — Minimal (decomposition drafts, estimate suggestions) | AL3 — Delegated through AL4 — Autonomous |
+| RT2 — Moderate (iteration plan drafts, dependency analysis) | AL3 — Delegated |
+| RT3 — Significant (commitment-affecting replans) | AL1 — Assisted through AL2 — Collaborative |
+| RT4 — Critical (plans with contractual/regulatory deadlines) | AL1 — Assisted |
 
 **Entry criteria.** Approved architecture and prioritized, elaborated backlog.
 **Exit criteria.** Committed plan of risk-tiered work items with owners (human, AI, or pair) and definitions of done.
@@ -272,10 +272,10 @@ Each entry gives: **Purpose** · **Key activities** · **Primary roles** (ROLE I
 
 | Risk tier | Typical autonomy |
 |-----------|------------------|
-| RT1 (formatting, typos, test scaffolding, prototypes) | AL4 |
-| RT2 (feature code behind review, internal tooling) | AL3 |
-| RT3 (auth-adjacent code, schema changes, customer-facing behavior) | AL2 |
-| RT4 (safety-critical, financial, regulated, irreversible) | AL1 |
+| RT1 — Minimal (formatting, typos, test scaffolding, prototypes) | AL4 — Autonomous |
+| RT2 — Moderate (feature code behind review, internal tooling) | AL3 — Delegated |
+| RT3 — Significant (auth-adjacent code, schema changes, customer-facing behavior) | AL2 — Collaborative |
+| RT4 — Critical (safety-critical, financial, regulated, irreversible) | AL1 — Assisted |
 
 **Entry criteria.** A planned, risk-tiered work item with acceptance criteria and an assigned performer.
 **Exit criteria.** Change merged through the tier-appropriate gate: tests pass, review complete, provenance recorded, traceability to work item intact.
@@ -294,17 +294,17 @@ Each entry gives: **Purpose** · **Key activities** · **Primary roles** (ROLE I
 
 **Typical artifacts.** ART-07 (Test Suite & Test Report).
 
-**AI participation.** AI generates test cases from requirements, mutates inputs to find edge cases, maintains suites as code evolves, and triages failures. A structural caution applies: **the independence rule** — an AI system SHOULD NOT be the sole verifier of its own output class. Verification of AI-produced code by the same agent (or an agent sharing its context) weakens the evidence; independent suites, property-based checks, and human sampling restore it. Test *code* is usually RT1–RT2 (it does not ship to users), permitting high autonomy; the *quality verdict* on an RT3+ change is gated.
+**AI participation.** AI generates test cases from requirements, mutates inputs to find edge cases, maintains suites as code evolves, and triages failures. A structural caution applies: **the independence rule** — an AI system SHOULD NOT be the sole verifier of its own output class. Verification of AI-produced code by the same agent (or an agent sharing its context) weakens the evidence; independent suites, property-based checks, and human sampling restore it. Test *code* is usually RT1 — Minimal through RT2 — Moderate (it does not ship to users), permitting high autonomy; the *quality verdict* on an RT3 — Significant and above change is gated.
 
 | Risk tier | Typical autonomy |
 |-----------|------------------|
-| RT1 (test scaffolding, regression maintenance) | AL4 |
-| RT2 (test suites for reviewed features) | AL3 |
-| RT3 (acceptance verdicts on significant changes) | AL2 |
-| RT4 (verification of critical functions) | AL1 |
+| RT1 — Minimal (test scaffolding, regression maintenance) | AL4 — Autonomous |
+| RT2 — Moderate (test suites for reviewed features) | AL3 — Delegated |
+| RT3 — Significant (acceptance verdicts on significant changes) | AL2 — Collaborative |
+| RT4 — Critical (verification of critical functions) | AL1 — Assisted |
 
 **Entry criteria.** Testable requirements and a change (or system) to verify.
-**Exit criteria.** Tier-appropriate evidence recorded (ART-07): coverage adequate, gates passed, residual defects dispositioned by an accountable human where RT3+.
+**Exit criteria.** Tier-appropriate evidence recorded (ART-07): coverage adequate, gates passed, residual defects dispositioned by an accountable human where RT3 — Significant and above.
 
 **Cross-cutting hotspots.** X07 Human Oversight (verdict gates), X13 Reliability, X05 Risk Management.
 
@@ -320,17 +320,17 @@ Each entry gives: **Purpose** · **Key activities** · **Primary roles** (ROLE I
 
 **Typical artifacts.** ART-08 (Security Assessment).
 
-**AI participation.** AI scales security work dramatically — scanning, triage, threat-model drafting, exploit-hypothesis generation — but security conclusions are adversarial judgments with asymmetric failure costs. Findings and fixes are drafted at AL2–AL3; *risk acceptance and severity dispositions* are human (AL1). Note the dual mandate: this phase secures the product **and** the AI systems participating in its production. Agent credentials, tool envelopes, and guardrails are security assets under this phase's scrutiny.
+**AI participation.** AI scales security work dramatically — scanning, triage, threat-model drafting, exploit-hypothesis generation — but security conclusions are adversarial judgments with asymmetric failure costs. Findings and fixes are drafted at AL2 — Collaborative through AL3 — Delegated; *risk acceptance and severity dispositions* are human (AL1 — Assisted). Note the dual mandate: this phase secures the product **and** the AI systems participating in its production. Agent credentials, tool envelopes, and guardrails are security assets under this phase's scrutiny.
 
 | Risk tier | Typical autonomy |
 |-----------|------------------|
-| RT1 (scan execution, finding de-duplication) | AL3–AL4 |
-| RT2 (triage drafts, fix proposals for internal systems) | AL2–AL3 |
-| RT3 (auth-adjacent fixes, severity dispositions) | AL2 |
-| RT4 (risk acceptance, incident-grade findings) | AL0–AL1 |
+| RT1 — Minimal (scan execution, finding de-duplication) | AL3 — Delegated through AL4 — Autonomous |
+| RT2 — Moderate (triage drafts, fix proposals for internal systems) | AL2 — Collaborative through AL3 — Delegated |
+| RT3 — Significant (auth-adjacent fixes, severity dispositions) | AL2 — Collaborative |
+| RT4 — Critical (risk acceptance, incident-grade findings) | AL0 — Manual through AL1 — Assisted |
 
 **Entry criteria.** Design or change available for assessment; threat model inputs from P07.
-**Exit criteria.** Assessment recorded (ART-08); findings dispositioned; no unaccepted RT3+ risk outstanding at the gate.
+**Exit criteria.** Assessment recorded (ART-08); findings dispositioned; no unaccepted RT3 — Significant and above risk outstanding at the gate.
 
 **Cross-cutting hotspots.** X01 Security (definitional), X02 Privacy, X03 Compliance, X06 AI Safety.
 
@@ -346,14 +346,14 @@ Each entry gives: **Purpose** · **Key activities** · **Primary roles** (ROLE I
 
 **Typical artifacts.** ART-09 (Pipeline Definition).
 
-**AI participation.** AI maintains pipeline definitions, diagnoses build failures, optimizes caching and flow, and drafts infrastructure code. Pipelines are the *enforcement fabric* for AIES controls — the place where autonomy envelopes, gates, and audit trails become executable (see worked example EX-05, a gate design for a delivery pipeline). Because pipeline changes can silently alter what reaches production, production-affecting pipeline and infrastructure changes are RT3 by default even when the diff looks small.
+**AI participation.** AI maintains pipeline definitions, diagnoses build failures, optimizes caching and flow, and drafts infrastructure code. Pipelines are the *enforcement fabric* for AIES controls — the place where autonomy envelopes, gates, and audit trails become executable (see worked example EX-05, a gate design for a delivery pipeline). Because pipeline changes can silently alter what reaches production, production-affecting pipeline and infrastructure changes are RT3 — Significant by default even when the diff looks small.
 
 | Risk tier | Typical autonomy |
 |-----------|------------------|
-| RT1 (non-production tooling, cache tuning) | AL3–AL4 |
-| RT2 (build steps for internal systems) | AL3 |
-| RT3 (production pipeline/config, deployment logic) | AL2 |
-| RT4 (gate removal or bypass, credential handling) | AL1 |
+| RT1 — Minimal (non-production tooling, cache tuning) | AL3 — Delegated through AL4 — Autonomous |
+| RT2 — Moderate (build steps for internal systems) | AL3 — Delegated |
+| RT3 — Significant (production pipeline/config, deployment logic) | AL2 — Collaborative |
+| RT4 — Critical (gate removal or bypass, credential handling) | AL1 — Assisted |
 
 **Entry criteria.** A defined path-to-production need; quality and security gates specified by P10/P11.
 **Exit criteria.** Versioned pipeline (ART-09) enforcing tier-appropriate gates, with every execution audit-trailed.
@@ -374,14 +374,14 @@ Each entry gives: **Purpose** · **Key activities** · **Primary roles** (ROLE I
 
 **Typical artifacts.** ART-10 (Release Record).
 
-**AI participation.** AI assembles release notes, verifies rollout health against baselines, executes progressive-delivery steps within a defined envelope, and triggers rollback when guardrail metrics breach. Releases at RT1–RT2 with automated verification and automatic rollback are a natural AL3 fit (human approves the checkpoint policy, AI executes within it). User-visible or contractually significant releases keep a human decision at the front.
+**AI participation.** AI assembles release notes, verifies rollout health against baselines, executes progressive-delivery steps within a defined envelope, and triggers rollback when guardrail metrics breach. Releases at RT1 — Minimal through RT2 — Moderate with automated verification and automatic rollback are a natural AL3 — Delegated fit (human approves the checkpoint policy, AI executes within it). User-visible or contractually significant releases keep a human decision at the front.
 
 | Risk tier | Typical autonomy |
 |-----------|------------------|
-| RT1 (internal tool releases, doc releases) | AL3–AL4 |
-| RT2 (staged rollout of reviewed features) | AL3 |
-| RT3 (customer-facing behavior changes) | AL2 |
-| RT4 (regulated, financial, irreversible releases) | AL1 |
+| RT1 — Minimal (internal tool releases, doc releases) | AL3 — Delegated through AL4 — Autonomous |
+| RT2 — Moderate (staged rollout of reviewed features) | AL3 — Delegated |
+| RT3 — Significant (customer-facing behavior changes) | AL2 — Collaborative |
+| RT4 — Critical (regulated, financial, irreversible releases) | AL1 — Assisted |
 
 **Entry criteria.** Change has passed P10/P11/P12 gates; rollback path verified.
 **Exit criteria.** Release live at intended exposure; ART-10 recorded (what shipped, who/what approved, verification evidence, rollback status).
@@ -400,14 +400,14 @@ Each entry gives: **Purpose** · **Key activities** · **Primary roles** (ROLE I
 
 **Typical artifacts.** ART-11 (Runbook).
 
-**AI participation.** AI executes runbooks, correlates signals during incidents, drafts incident timelines, and performs routine remediation (restarts, scaling, cert rotation) inside a tightly specified envelope. Operations is where AL3 delegation shows its clearest value *and* its sharpest edge: actions are immediate and production-real. The envelope discipline is strict — well-rehearsed, reversible remediations at AL3; novel or destructive interventions escalate to humans. Every autonomous action lands in the audit trail (ART-15).
+**AI participation.** AI executes runbooks, correlates signals during incidents, drafts incident timelines, and performs routine remediation (restarts, scaling, cert rotation) inside a tightly specified envelope. Operations is where AL3 — Delegated delegation shows its clearest value *and* its sharpest edge: actions are immediate and production-real. The envelope discipline is strict — well-rehearsed, reversible remediations at AL3 — Delegated; novel or destructive interventions escalate to humans. Every autonomous action lands in the audit trail (ART-15).
 
 | Risk tier | Typical autonomy |
 |-----------|------------------|
-| RT1 (diagnostics, log collection) | AL4 |
-| RT2 (rehearsed, reversible remediation per runbook) | AL3 |
-| RT3 (production config changes, failovers) | AL2 |
-| RT4 (data-destructive or irreversible interventions) | AL1 |
+| RT1 — Minimal (diagnostics, log collection) | AL4 — Autonomous |
+| RT2 — Moderate (rehearsed, reversible remediation per runbook) | AL3 — Delegated |
+| RT3 — Significant (production config changes, failovers) | AL2 — Collaborative |
+| RT4 — Critical (data-destructive or irreversible interventions) | AL1 — Assisted |
 
 **Entry criteria.** System in production with runbooks, SLOs, and escalation paths defined.
 **Exit criteria.** Continuous phase — "exit" per event: incident resolved, action audit-trailed, learning routed to P16.
@@ -426,14 +426,14 @@ Each entry gives: **Purpose** · **Key activities** · **Primary roles** (ROLE I
 
 **Typical artifacts.** ART-12 (Telemetry & Evaluation Report).
 
-**AI participation.** AI tunes alert thresholds, detects anomalies, drafts dashboards, and summarizes behavior for humans. Observability outputs are mostly advisory (RT1–RT2), so autonomy can run high — with one caution: alert *suppression* and SLO redefinition change what humans get to see, and are RT3 gate-worthy. Observability is also the substrate of the Evidence Driven principle: AESQS qualification and AL-increase decisions consume the evaluation data this phase produces.
+**AI participation.** AI tunes alert thresholds, detects anomalies, drafts dashboards, and summarizes behavior for humans. Observability outputs are mostly advisory (RT1 — Minimal through RT2 — Moderate), so autonomy can run high — with one caution: alert *suppression* and SLO redefinition change what humans get to see, and are RT3 — Significant gate-worthy. Observability is also the substrate of the Evidence Driven principle: AESQS qualification and AL-increase decisions consume the evaluation data this phase produces.
 
 | Risk tier | Typical autonomy |
 |-----------|------------------|
-| RT1 (dashboards, summaries, anomaly flags) | AL3–AL4 |
-| RT2 (alert tuning with human-visible changelog) | AL3 |
-| RT3 (alert suppression, SLO changes) | AL2 |
-| RT4 (telemetry affecting regulatory reporting) | AL1 |
+| RT1 — Minimal (dashboards, summaries, anomaly flags) | AL3 — Delegated through AL4 — Autonomous |
+| RT2 — Moderate (alert tuning with human-visible changelog) | AL3 — Delegated |
+| RT3 — Significant (alert suppression, SLO changes) | AL2 — Collaborative |
+| RT4 — Critical (telemetry affecting regulatory reporting) | AL1 — Assisted |
 
 **Entry criteria.** System (or engineering process) running with instrumentation requirements defined.
 **Exit criteria.** Continuous phase — success is that P14 and P16 decisions are made on current, trustworthy evidence (ART-12).
@@ -456,10 +456,10 @@ Each entry gives: **Purpose** · **Key activities** · **Primary roles** (ROLE I
 
 | Risk tier | Typical autonomy |
 |-----------|------------------|
-| RT1 (pattern reports, retro drafts) | AL3–AL4 |
-| RT2 (context-asset updates, process proposals) | AL2–AL3 |
-| RT3 (agent-definition changes) | AL2 |
-| RT4 (autonomy-grant decisions) | AL0–AL1 (human decision on AI-prepared evidence) |
+| RT1 — Minimal (pattern reports, retro drafts) | AL3 — Delegated through AL4 — Autonomous |
+| RT2 — Moderate (context-asset updates, process proposals) | AL2 — Collaborative through AL3 — Delegated |
+| RT3 — Significant (agent-definition changes) | AL2 — Collaborative |
+| RT4 — Critical (autonomy-grant decisions) | AL0 — Manual through AL1 — Assisted (human decision on AI-prepared evidence) |
 
 **Entry criteria.** Evidence exists — telemetry, evaluations, audit trails, incident learnings.
 **Exit criteria.** Continuous phase — improvements are themselves work items that re-enter the lifecycle at the appropriate phase with the appropriate risk tier.
@@ -477,11 +477,11 @@ Each entry gives: **Purpose** · **Key activities** · **Primary roles** (ROLE I
 
 ## Related Documents
 
-- [Shared Taxonomy (AIES-SHARED-02)](../Shared/Taxonomy/README.md) — the normative phase, domain, autonomy, risk, role, and artifact identifiers this reference builds on
-- [AEBOK (AIES-AEBOK-00)](../AEBOK/README.md) — per-phase knowledge areas
-- [AESQS (AIES-AESQS-00)](../AESQS/README.md) — capability evaluation for each phase's task classes
-- [AEOS (AIES-AEOS-00)](../AEOS/README.md) — the roles, gates, and workflows that execute these phases
-- [Repository Architecture (AIES-DOC-03)](ARCHITECTURE.md)
+- [Shared Taxonomy (AIES-SHARED-02 — Taxonomy)](../Shared/Taxonomy/README.md) — the normative phase, domain, autonomy, risk, role, and artifact identifiers this reference builds on
+- [AEBOK (AIES-AEBOK-00 — Engineering Body of Knowledge)](../AEBOK/README.md) — per-phase knowledge areas
+- [AESQS (AIES-AESQS-00 — Qualification Standard)](../AESQS/README.md) — capability evaluation for each phase's task classes
+- [AIES-AEOS-00 — AEOS — AI Engineering Operating System](../AEOS/README.md) — the roles, gates, and workflows that execute these phases
+- [AIES-DOC-03 — Repository Architecture](ARCHITECTURE.md)
 
 ## References
 

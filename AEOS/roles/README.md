@@ -8,13 +8,13 @@
 
 The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", and "MAY" in this document are to be interpreted as described in RFC 2119.
 
-This catalog indexes the fourteen AEOS role specifications and defines the shared requirements every role specification follows. Role IDs, names, and primary phases are canonical per [Taxonomy §5 (AIES-SHARED-02)](../../Shared/Taxonomy/README.md#5-ai-engineering-roles); this catalog MUST NOT diverge from them.
+This catalog indexes the fourteen AEOS role specifications and defines the shared requirements every role specification follows. Role IDs, names, and primary phases are canonical per [Taxonomy §5 (AIES-SHARED-02 — Taxonomy)](../../Shared/Taxonomy/README.md#5-ai-engineering-roles); this catalog MUST NOT diverge from them.
 
 ---
 
 ## 1. Staffing Model
 
-Each role can be staffed by a **human**, an **AI agent**, or a **human-AI pair**, with the responsibilities constant across staffing modes — except ROLE-13 and ROLE-14, which MUST be staffed by humans. Staffing is decided per work item via the procedure in [Operating Model §4 (AIES-AEOS-OM-01)](../operating-model.md#4-staffing-decision-procedure).
+Each role can be staffed by a **human**, an **AI agent**, or a **human-AI pair**, with the responsibilities constant across staffing modes — except ROLE-13 and ROLE-14, which MUST be staffed by humans. Staffing is decided per work item via the procedure in [Operating Model §4 (AIES-AEOS-OM-01 — Operating Model)](../operating-model.md#4-staffing-decision-procedure).
 
 ## 2. Role Catalog
 
@@ -51,22 +51,22 @@ Every role specification (AIES-AEOS-ROLE-01 … AIES-AEOS-ROLE-14) MUST contain 
 
 Normative requirements:
 
-- [AIES-AEOS-ROLE-00-R01] Role specifications MUST use the section structure above; deviations require an ADR.
-- [AIES-AEOS-ROLE-00-R02] A role specification MUST NOT grant autonomy beyond the RT→AL defaults of [Taxonomy §4](../../Shared/Taxonomy/README.md#4-risk-tiers-rt1rt4); it MAY only tighten them.
-- [AIES-AEOS-ROLE-00-R03] Every role's "AI staffing notes" MUST state, per risk tier, the maximum autonomy level at which an agent may perform the role's task types.
-- [AIES-AEOS-ROLE-00-R04] A performer (human or agent) MUST NOT hold a role without the qualifications the specification requires; provisional holds pending qualification are limited to AL1 participation under supervision.
-- [AIES-AEOS-ROLE-00-R05] One performer MAY hold multiple roles on different work items, but MUST NOT hold both a producing role and the Human Approver (ROLE-13) role for the same artifact.
+- [AIES-AEOS-ROLE-00-R01 — Role Model, requirement 01] Role specifications MUST use the section structure above; deviations require an ADR.
+- [AIES-AEOS-ROLE-00-R02 — Role Model, requirement 02] A role specification MUST NOT grant autonomy beyond the RT→AL defaults of [Taxonomy §4](../../Shared/Taxonomy/README.md#4-risk-tiers-rt1rt4); it MAY only tighten them.
+- [AIES-AEOS-ROLE-00-R03 — Role Model, requirement 03] Every role's "AI staffing notes" MUST state, per risk tier, the maximum autonomy level at which an agent may perform the role's task types.
+- [AIES-AEOS-ROLE-00-R04 — Role Model, requirement 04] A performer (human or agent) MUST NOT hold a role without the qualifications the specification requires; provisional holds pending qualification are limited to AL1 — Assisted participation under supervision.
+- [AIES-AEOS-ROLE-00-R05 — Role Model, requirement 05] One performer MAY hold multiple roles on different work items, but MUST NOT hold both a producing role and the Human Approver (ROLE-13) role for the same artifact.
 
 ## 4. Reading Order
 
-New adopters SHOULD read the [Operating Model (AIES-AEOS-OM-01)](../operating-model.md) first, then the roles relevant to their teams, then the [Workflows (AIES-AEOS-WF-01)](../workflows.md) that connect them.
+New adopters SHOULD read the [Operating Model (AIES-AEOS-OM-01 — Operating Model)](../operating-model.md) first, then the roles relevant to their teams, then the [Workflows (AIES-AEOS-WF-01 — Workflows)](../workflows.md) that connect them.
 
 ## Related Documents
 
-- [Taxonomy (AIES-SHARED-02)](../../Shared/Taxonomy/README.md) — canonical role IDs, names, and primary phases
-- [Operating Model (AIES-AEOS-OM-01)](../operating-model.md) — staffing decisions and autonomy assignment
-- [Workflows (AIES-AEOS-WF-01)](../workflows.md) — how the roles collaborate
-- [Human Oversight (AIES-AEOS-HO-01)](../human-oversight.md) — the gates roles submit work to
+- [Taxonomy (AIES-SHARED-02 — Taxonomy)](../../Shared/Taxonomy/README.md) — canonical role IDs, names, and primary phases
+- [Operating Model (AIES-AEOS-OM-01 — Operating Model)](../operating-model.md) — staffing decisions and autonomy assignment
+- [Workflows (AIES-AEOS-WF-01 — Workflows)](../workflows.md) — how the roles collaborate
+- [Human Oversight (AIES-AEOS-HO-01 — Human Oversight)](../human-oversight.md) — the gates roles submit work to
 
 ## References
 

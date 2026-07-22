@@ -1,7 +1,7 @@
 # Example conformance statements
 
 Worked examples for the two conformance classes in
-[CONFORMANCE.md (AIES-DOC-08)](../../../docs/CONFORMANCE.md), checkable with
+[CONFORMANCE.md (AIES-DOC-08 — Conformance Guide)](../../../docs/CONFORMANCE.md), checkable with
 `aies conform`.
 
 | File | Class | What it claims |

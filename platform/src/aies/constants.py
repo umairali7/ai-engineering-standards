@@ -27,6 +27,51 @@ DIMENSION_NAMES = {
     "EV6": "Traceability",
 }
 
+PHASE_NAMES = {
+    "P01": "Business Strategy", "P02": "Business Analysis",
+    "P03": "Product Management", "P04": "User Experience",
+    "P05": "Requirements Engineering", "P06": "Solution Analysis",
+    "P07": "Architecture", "P08": "Planning", "P09": "Engineering",
+    "P10": "Testing & Quality", "P11": "Security", "P12": "DevOps",
+    "P13": "Release", "P14": "Operations", "P15": "Observability",
+    "P16": "Continuous Improvement",
+}
+
+DOMAIN_NAMES = {
+    "X01": "Security", "X02": "Privacy", "X03": "Compliance",
+    "X04": "Governance", "X05": "Risk Management", "X06": "AI Safety",
+    "X07": "Human Oversight", "X08": "Documentation",
+    "X09": "Knowledge Management", "X10": "Cost Optimization",
+    "X11": "Performance", "X12": "Scalability", "X13": "Reliability",
+    "X14": "Accessibility", "X15": "Sustainability",
+}
+
+ROLE_NAMES = {
+    "ROLE-01": "Planner", "ROLE-02": "Business Analyst",
+    "ROLE-03": "Product Manager", "ROLE-04": "UX Designer",
+    "ROLE-05": "Architect", "ROLE-06": "Software Engineer",
+    "ROLE-07": "QA Engineer", "ROLE-08": "Security Engineer",
+    "ROLE-09": "DevOps Engineer", "ROLE-10": "SRE",
+    "ROLE-11": "Documentation Engineer", "ROLE-12": "Knowledge Manager",
+    "ROLE-13": "Human Approver", "ROLE-14": "Governance Officer",
+}
+
+COMPETENCY_LEVEL_NAMES = {
+    "CL1": "Foundation", "CL2": "Practitioner", "CL3": "Professional",
+    "CL4": "Expert",
+}
+
+ARTIFACT_NAMES = {
+    "ART-01": "Business Case", "ART-02": "Product Requirement",
+    "ART-03": "UX Specification", "ART-04": "Architecture Decision Record",
+    "ART-05": "Work Item / Plan", "ART-06": "Source Change",
+    "ART-07": "Test Suite & Test Report", "ART-08": "Security Assessment",
+    "ART-09": "Pipeline Definition", "ART-10": "Release Record",
+    "ART-11": "Runbook", "ART-12": "Telemetry & Evaluation Report",
+    "ART-13": "Prompt / Context Asset", "ART-14": "Agent Definition",
+    "ART-15": "Audit Trail Record",
+}
+
 RISK_TIERS = ("RT1", "RT2", "RT3", "RT4")
 RISK_TIER_NAMES = {
     "RT1": "Minimal",
@@ -73,6 +118,18 @@ def autonomy_level_label(level: str | None) -> str:
 def competency_label(code: str | None) -> str:
     """Return the human-readable competency label while retaining its code."""
     return f"{code} — {COMPETENCY_NAMES[code]}" if code in COMPETENCY_NAMES else (code or "-")
+
+
+def identifier_label(code: str | None) -> str:
+    """Return a readable canonical taxonomy identifier without changing its code.
+
+    Canonical evidence serializes the short code. Human-facing renderers use
+    this function so a code is never presented as unexplained shorthand.
+    """
+    names = (DIMENSION_NAMES | PHASE_NAMES | DOMAIN_NAMES | ROLE_NAMES |
+             COMPETENCY_LEVEL_NAMES | ARTIFACT_NAMES | RISK_TIER_NAMES |
+             AUTONOMY_LEVEL_NAMES | COMPETENCY_NAMES)
+    return f"{code} — {names[code]}" if code in names else (code or "-")
 
 # AIES-AESQS-CS-01 §2 — risk-tier dimension weights.
 WEIGHTS = {

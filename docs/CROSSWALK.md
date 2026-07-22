@@ -34,7 +34,7 @@ claims of certified equivalence, conformance, or endorsement** — see §6.
 
 ## 1. Autonomy levels
 
-AIES [AL0–AL4 (AIES-SHARED-02 §3)](../Shared/Taxonomy/README.md#3-autonomy-levels-al0al4)
+AIES [AL0 — Manual through AL4 — Autonomous (AIES-SHARED-02 §3)](../Shared/Taxonomy/README.md#3-autonomy-levels-al0al4)
 align to the [CSA *Levels of Autonomy for Agentic AI*](https://cloudsecurityalliance.org/blog/2026/01/28/levels-of-autonomy)
 (6 levels, 0–5) and the [ASDLC autonomy scale](https://asdlc.io/concepts/levels-of-autonomy/)
 (L1–L5). The mapping is approximate — the scales draw their boundaries slightly
@@ -43,22 +43,22 @@ differently — but the through-line (human role shifts from performer → revie
 
 | AIES | AIES human role | ≈ CSA level | ≈ ASDLC level |
 |------|-----------------|-------------|---------------|
-| **AL0** Manual | Performer | L0 No Autonomy | (below L1) |
-| **AL1** Assisted | Author | L1 Assisted | L1 Assistive |
-| **AL2** Collaborative | Reviewer (per item) | L1–L2 (per-item → batch approval) | L2 Task-Based |
-| **AL3** Delegated | Supervisor (checkpoints + sampling) | L3 Conditional (within boundaries) | L3 Conditional |
-| **AL4** Autonomous | Auditor (policy + audit) | L4 High Autonomy | L4 High |
+| **AL0 — Manual** Manual | Performer | L0 No Autonomy | (below L1) |
+| **AL1 — Assisted** Assisted | Author | L1 Assisted | L1 Assistive |
+| **AL2 — Collaborative** Collaborative | Reviewer (per item) | L1–L2 (per-item → batch approval) | L2 Task-Based |
+| **AL3 — Delegated** Delegated | Supervisor (checkpoints + sampling) | L3 Conditional (within boundaries) | L3 Conditional |
+| **AL4 — Autonomous** Autonomous | Auditor (policy + audit) | L4 High Autonomy | L4 High |
 | *(none — by design)* | — | L5 Full (self-directed) | L5 Full |
 
 Notes:
 - **AIES deliberately has no "full autonomy" level.** CSA L5 / ASDLC L5 (goal-
   setting, self-modifying, no human loop) has no AIES equivalent; AIES caps the
-  scale at AL4 and never grants even AL4 at initial qualification
-  ([AIES-AESQS-CS-01-R08](../AESQS/capability-scoring.md)).
-- **AL1 vs AL2 is the fuzziest boundary.** AIES AL1 is conservative (AI
+  scale at AL4 — Autonomous and never grants even AL4 — Autonomous at initial qualification
+  ([AIES-AESQS-CS-01-R08 — Initial qualification cannot grant AL4](../AESQS/capability-scoring.md)).
+- **AL1 — Assisted vs AL2 — Collaborative is the fuzziest boundary.** AIES AL1 — Assisted is conservative (AI
   *suggests*, a human authors); CSA L1 already has the AI *executing* with
-  per-action approval, which sits between AIES AL1 and AL2.
-- All three scales agree that mid-scale (AIES AL3 / CSA L3 / ASDLC L3) is where
+  per-action approval, which sits between AIES AL1 — Assisted and AL2 — Collaborative.
+- All three scales agree that mid-scale (AIES AL3 — Delegated / CSA L3 / ASDLC L3) is where
   bounded delegation lives and where oversight must be strongest; ASDLC calls
   L3 "the production ceiling."
 - A fourth, academic taxonomy — *Levels of Autonomy for AI Agents* (arXiv
@@ -72,7 +72,7 @@ Notes:
 
 ## 2. Risk tiers
 
-AIES [RT1–RT4 (AIES-SHARED-02 §4)](../Shared/Taxonomy/README.md#4-risk-tiers-rt1rt4)
+AIES [RT1 — Minimal through RT4 — Critical (AIES-SHARED-02 §4)](../Shared/Taxonomy/README.md#4-risk-tiers-rt1rt4)
 align to the EU AI Act's risk categories. **Unit-of-analysis caveat:** the EU AI
 Act classifies an *AI system's* risk; AIES RT classifies a *task or change's*
 blast radius. They are used differently, so this is a rough correspondence for
@@ -80,10 +80,10 @@ calibrating expectations, not a legal equivalence.
 
 | AIES risk tier | ≈ EU AI Act category |
 |----------------|----------------------|
-| **RT1** Minimal | Minimal risk |
-| **RT2** Moderate | Limited / transparency-obligation risk |
-| **RT3** Significant | High risk |
-| **RT4** Critical | High risk / prohibited (unacceptable) uses |
+| **RT1 — Minimal** Minimal | Minimal risk |
+| **RT2 — Moderate** Moderate | Limited / transparency-obligation risk |
+| **RT3 — Significant** Significant | High risk |
+| **RT4 — Critical** Critical | High risk / prohibited (unacceptable) uses |
 
 The EU AI Act does not tier by four levels identically; NIST AI RMF is not
 tiered at all (see §3). AIES's RT→AL cap table is AIES's own control and is not

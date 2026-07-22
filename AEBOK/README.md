@@ -57,7 +57,7 @@ AEBOK is the knowledge foundation on which the other modules build:
 - **AEAR** shows what platforms that embody AEBOK knowledge look like structurally.
 - **AECT** packages AEBOK content into learning paths, labs, and certification tracks per competency level.
 
-All AEBOK documents use the [Glossary (AIES-SHARED-01)](../Shared/Glossary/README.md) and [Taxonomy (AIES-SHARED-02)](../Shared/Taxonomy/README.md) without redefinition.
+All AEBOK documents use the [Glossary (AIES-SHARED-01 — Glossary)](../Shared/Glossary/README.md) and [Taxonomy (AIES-SHARED-02 — Taxonomy)](../Shared/Taxonomy/README.md) without redefinition.
 
 ## 3. Knowledge Area Map
 
@@ -78,7 +78,7 @@ AEBOK is organized into twelve Knowledge Areas (KAs). KA-01 is foundational; KA-
 | [KA-11](knowledge-areas/KA-11-human-ai-collaboration.md) | Human-AI Collaboration & Oversight | Gate design, review ergonomics, accountability, and skill preservation |
 | [KA-12](knowledge-areas/KA-12-evaluation-improvement.md) | Evaluation & Continuous Improvement | Measuring engineering outcomes, closing feedback loops, and detecting capability drift |
 
-A consolidated [Pattern & Anti-Pattern Catalog (AIES-AEBOK-PAT-00)](patterns/README.md) cross-references the named patterns used throughout the KAs.
+A consolidated [AIES-AEBOK-PAT-00 — AEBOK Pattern & Anti-Pattern Catalog](patterns/README.md) cross-references the named patterns used throughout the KAs.
 
 ## 4. Mapping Knowledge Areas to SDLC Phases
 
@@ -117,9 +117,9 @@ Every KA document (Document ID `AIES-AEBOK-KA-NN`) follows the same structure so
 6. **Competency Expectations** — what CL1–CL4 proficiency looks like in this KA.
 7. **Related Documents** — navigation to adjacent knowledge.
 
-[AIES-AEBOK-00-R01] Every AEBOK Knowledge Area document MUST follow the structure in §5 and MUST reference taxonomy IDs (phases, autonomy levels, risk tiers, roles, artifact types) rather than introducing competing scales.
+[AIES-AEBOK-00-R01 — Engineering Body of Knowledge, requirement 01] Every AEBOK Knowledge Area document MUST follow the structure in §5 and MUST reference taxonomy IDs (phases, autonomy levels, risk tiers, roles, artifact types) rather than introducing competing scales.
 
-[AIES-AEBOK-00-R02] Normative requirements within Knowledge Areas MUST carry stable requirement IDs of the form `AIES-AEBOK-KA-NN-RMM`.
+[AIES-AEBOK-00-R02 — Engineering Body of Knowledge, requirement 02] Normative requirements within Knowledge Areas MUST carry stable requirement IDs of the form `AIES-AEBOK-KA-NN-RMM`.
 
 ## 6. Reading Guidance by Audience
 
@@ -160,13 +160,13 @@ AEBOK/
 
 ## Related Documents
 
-- [Glossary (AIES-SHARED-01)](../Shared/Glossary/README.md) — canonical term definitions used without redefinition
-- [Taxonomy (AIES-SHARED-02)](../Shared/Taxonomy/README.md) — canonical scales (P/X/AL/RT/ROLE/CL/ART/EV)
-- [Pattern & Anti-Pattern Catalog (AIES-AEBOK-PAT-00)](patterns/README.md) — cross-cutting pattern canon
-- [AESQS (AIES-AESQS-00)](../AESQS/README.md) — capability measurement and scoring
-- [AEOS (AIES-AEOS-00)](../AEOS/README.md) — day-to-day operating model
-- [AEAR (AIES-AEAR-00)](../AEAR/README.md) — platform reference architectures
-- [AECT (AIES-AECT-00)](../AECT/README.md) — curricula, labs, and exams
+- [Glossary (AIES-SHARED-01 — Glossary)](../Shared/Glossary/README.md) — canonical term definitions used without redefinition
+- [Taxonomy (AIES-SHARED-02 — Taxonomy)](../Shared/Taxonomy/README.md) — canonical scales (P/X/AL/RT/ROLE/CL/ART/EV)
+- [AIES-AEBOK-PAT-00 — AEBOK Pattern & Anti-Pattern Catalog](patterns/README.md) — cross-cutting pattern canon
+- [AESQS (AIES-AESQS-00 — Qualification Standard)](../AESQS/README.md) — capability measurement and scoring
+- [AIES-AEOS-00 — AEOS — AI Engineering Operating System](../AEOS/README.md) — day-to-day operating model
+- [AEAR (AIES-AEAR-00 — Reference Architecture)](../AEAR/README.md) — platform reference architectures
+- [AECT (AIES-AECT-00 — Engineering Certification)](../AECT/README.md) — curricula, labs, and exams
 
 ## References
 

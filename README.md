@@ -206,13 +206,18 @@ reviews the platform's **own** assessment corpus for calibration, coverage,
 behavioral diversity, duplication, and empirical maturity — advisory,
 multidimensional, and never a single grade.
 
+Platform capability results are always **risk-scoped**: RT1 — Minimal through RT4 — Critical carry
+different evidence, gate, and autonomy requirements. An ECM `not assessed`
+task is an evidence gap, not a negative capability claim; `--all-areas` covers
+all areas only for the selected risk tier.
+
 ## Contributing
 
 Contributions are welcome. Every proposal should include an engineering rationale, problem statement, alternatives considered, trade-offs, references, and impact analysis. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Versioning
 
-The standard versions as a whole — Semantic Versioning via git tags and the [CHANGELOG](CHANGELOG.md), per the [Versioning Standard (AIES-STD-05)](docs/standards/versioning-standard.md):
+The standard versions as a whole — Semantic Versioning via git tags and the [CHANGELOG](CHANGELOG.md), per the [Versioning Standard (AIES-STD-05 — Versioning Standard)](docs/standards/versioning-standard.md):
 
 | Version | Status |
 |---------|--------|
@@ -220,7 +225,7 @@ The standard versions as a whole — Semantic Versioning via git tags and the [C
 | v1.x | Stable Standards |
 | v2.x | Major Evolution |
 
-Individual documents carry a lifecycle status only (Draft → Review → Approved → Deprecated) per the [Review Standard (AIES-STD-06)](docs/standards/review-standard.md) — no per-document versions or dates; git history is the system of record.
+Individual documents carry a lifecycle status only (Draft → Review → Approved → Deprecated) per the [Review Standard (AIES-STD-06 — Review Standard)](docs/standards/review-standard.md) — no per-document versions or dates; git history is the system of record.
 
 ## Current Status
 

@@ -10,7 +10,7 @@ The vendor-neutral reference architecture for an **Enterprise AI Engineering Pla
 
 The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", and "MAY" in this document are to be interpreted as described in RFC 2119.
 
-Terminology follows the [Glossary (AIES-SHARED-01)](../Shared/Glossary/README.md); classification scales follow the [Taxonomy (AIES-SHARED-02)](../Shared/Taxonomy/README.md).
+Terminology follows the [Glossary (AIES-SHARED-01 — Glossary)](../Shared/Glossary/README.md); classification scales follow the [Taxonomy (AIES-SHARED-02 — Taxonomy)](../Shared/Taxonomy/README.md).
 
 ---
 
@@ -18,7 +18,7 @@ Terminology follows the [Glossary (AIES-SHARED-01)](../Shared/Glossary/README.md
 
 This document defines **what capabilities an enterprise AI engineering platform must provide and how they are structured** — not which products provide them. It is written for enterprise architects, platform engineering teams, and the security, compliance, and governance functions that must approve such platforms.
 
-The architecture assumes the operating model defined by [AEOS](../AEOS/README.md): work flows through roles (ROLE-01…ROLE-14), every AI-performed task carries a declared autonomy level (AL0–AL4) derived from its risk tier (RT1–RT4), and humans retain authority at defined gates. The platform is the machinery that makes that operating model enforceable rather than aspirational.
+The architecture assumes the operating model defined by [AEOS](../AEOS/README.md): work flows through roles (ROLE-01…ROLE-14), every AI-performed task carries a declared autonomy level (AL0 — Manual through AL4 — Autonomous) derived from its risk tier (RT1 — Minimal through RT4 — Critical), and humans retain authority at defined gates. The platform is the machinery that makes that operating model enforceable rather than aspirational.
 
 Out of scope: model training infrastructure, data science experimentation platforms, and end-user AI product features. Where those systems exist, they integrate with this architecture as adjacent systems.
 
@@ -31,8 +31,8 @@ Out of scope: model training infrastructure, data science experimentation platfo
 | 3 | **Agents are first-class principals** | Agents receive identity, entitlements, and audit obligations equivalent in rigor to those of human engineers |
 | 4 | **Least authority per task** | Access is granted per task, scoped to the task's declared autonomy level and risk tier, and revoked at task completion |
 | 5 | **Everything observable, everything attributable** | Every significant action produces an audit trail record (ART-15) with provenance |
-| 6 | **Degrade toward human control** | On failure or uncertainty, the platform reduces autonomy (AL(n) → AL(n−1) → … → AL0), never increases it |
-| 7 | **Evidence before authority** | Autonomy level increases require qualification evidence per [AESQS](../AESQS/README.md) ([AIES-SHARED-02-R03]) |
+| 6 | **Degrade toward human control** | On failure or uncertainty, the platform reduces autonomy (AL(n) → AL(n−1) → … → AL0 — Manual), never increases it |
+| 7 | **Evidence before authority** | Autonomy level increases require qualification evidence per [AESQS](../AESQS/README.md) ([AIES-SHARED-02-R03 — Taxonomy, requirement 03]) |
 
 ## 3. The Layered Plane Model
 
@@ -87,9 +87,9 @@ Reading the diagram:
 - The **Governance Plane** underlies everything: no plane accepts a request without a principal identity and entitlement decision it issued.
 - The **Observability Plane** receives events from all planes; nothing significant happens unobserved.
 
-[AIES-AEAR-CORE-01-R01] A conformant platform MUST provide the responsibilities of all eight planes. Planes MAY be realized by shared infrastructure, but their interfaces and policy boundaries MUST remain distinguishable.
+[AIES-AEAR-CORE-01-R01 — Core Reference Architecture, requirement 01] A conformant platform MUST provide the responsibilities of all eight planes. Planes MAY be realized by shared infrastructure, but their interfaces and policy boundaries MUST remain distinguishable.
 
-[AIES-AEAR-CORE-01-R02] All inter-plane communication MUST occur over defined, versioned interfaces; no plane may bypass the Guardrail Plane's enforcement points or the Governance Plane's identity checks.
+[AIES-AEAR-CORE-01-R02 — Core Reference Architecture, requirement 02] All inter-plane communication MUST occur over defined, versioned interfaces; no plane may bypass the Guardrail Plane's enforcement points or the Governance Plane's identity checks.
 
 ---
 
@@ -102,7 +102,7 @@ Where humans meet the platform. Every human role in the Taxonomy — from ROLE-0
 - Present AI assistance inside the tools engineers already use (IDEs, terminals, chat surfaces).
 - Surface AI-produced artifacts for structured human review at the fidelity the risk tier demands.
 - Provide **approval consoles**: dedicated surfaces where ROLE-13 approvers see pending gates, the evidence behind each request, and the exact scope being authorized.
-- Provide oversight dashboards for supervisors (AL3 checkpoint review, AL4 sampling and audit).
+- Provide oversight dashboards for supervisors (AL3 — Delegated checkpoint review, AL4 — Autonomous sampling and audit).
 
 **Key components**
 
@@ -116,10 +116,10 @@ Where humans meet the platform. Every human role in the Taxonomy — from ROLE-0
 
 **Normative requirements**
 
-- [AIES-AEAR-CORE-01-R03] Every surface in the Interaction Plane MUST display the provenance of AI-produced content (producing agent, autonomy level, model version identifier) wherever that content is presented for human decision.
-- [AIES-AEAR-CORE-01-R04] Approval actions MUST be attributable to an authenticated human principal and MUST NOT be automatable, scriptable, or delegable to an agent (see [AIES-SHARED-02 §5]: ROLE-13 is human-only).
-- [AIES-AEAR-CORE-01-R05] The approval console MUST present the full scope of what is being approved (files, systems, actions, autonomy envelope) before authorization; blanket or blind approvals MUST NOT be offered as a default interaction.
-- [AIES-AEAR-CORE-01-R06] Interaction surfaces SHOULD make rejection and escalation as low-friction as approval, to avoid approval-fatigue bias.
+- [AIES-AEAR-CORE-01-R03 — Core Reference Architecture, requirement 03] Every surface in the Interaction Plane MUST display the provenance of AI-produced content (producing agent, autonomy level, model version identifier) wherever that content is presented for human decision.
+- [AIES-AEAR-CORE-01-R04 — Core Reference Architecture, requirement 04] Approval actions MUST be attributable to an authenticated human principal and MUST NOT be automatable, scriptable, or delegable to an agent (see [AIES-SHARED-02 §5]: ROLE-13 is human-only).
+- [AIES-AEAR-CORE-01-R05 — Core Reference Architecture, requirement 05] The approval console MUST present the full scope of what is being approved (files, systems, actions, autonomy envelope) before authorization; blanket or blind approvals MUST NOT be offered as a default interaction.
+- [AIES-AEAR-CORE-01-R06 — Core Reference Architecture, requirement 06] Interaction surfaces SHOULD make rejection and escalation as low-friction as approval, to avoid approval-fatigue bias.
 
 **Interfaces**: submits tasks to and receives results from the **Orchestration Plane**; authenticates every session via the **Governance Plane**; renders evidence sourced from the **Observability Plane**.
 
@@ -147,12 +147,12 @@ The platform's brain: it turns intents into governed agent work.
 
 **Normative requirements**
 
-- [AIES-AEAR-CORE-01-R07] Every task executed by the Orchestration Plane MUST carry a declared risk tier and autonomy level before execution begins ([AIES-SHARED-02-R01]).
-- [AIES-AEAR-CORE-01-R08] The autonomy envelope MUST be enforced by the Orchestration Plane as a deterministic check on every agent action; the agent's own reasoning MUST NOT be the enforcement mechanism.
-- [AIES-AEAR-CORE-01-R09] Agents MUST only be instantiated from versioned, approved Agent Definitions (ART-14) resolved from the Governance Plane registry.
-- [AIES-AEAR-CORE-01-R10] When an agent delegates to another agent, the delegate's effective authority MUST be the intersection of both envelopes; delegation MUST NOT amplify authority.
-- [AIES-AEAR-CORE-01-R11] Envelope breaches MUST halt the offending action, produce an ART-15 record, and escalate per the agent's escalation rules; the platform MUST NOT silently retry a blocked action.
-- [AIES-AEAR-CORE-01-R12] Workflow definitions SHOULD be declarative, versioned artifacts subject to the same review controls as source changes.
+- [AIES-AEAR-CORE-01-R07 — Core Reference Architecture, requirement 07] Every task executed by the Orchestration Plane MUST carry a declared risk tier and autonomy level before execution begins ([AIES-SHARED-02-R01 — Taxonomy, requirement 01]).
+- [AIES-AEAR-CORE-01-R08 — Core Reference Architecture, requirement 08] The autonomy envelope MUST be enforced by the Orchestration Plane as a deterministic check on every agent action; the agent's own reasoning MUST NOT be the enforcement mechanism.
+- [AIES-AEAR-CORE-01-R09 — Core Reference Architecture, requirement 09] Agents MUST only be instantiated from versioned, approved Agent Definitions (ART-14) resolved from the Governance Plane registry.
+- [AIES-AEAR-CORE-01-R10 — Core Reference Architecture, requirement 10] When an agent delegates to another agent, the delegate's effective authority MUST be the intersection of both envelopes; delegation MUST NOT amplify authority.
+- [AIES-AEAR-CORE-01-R11 — Core Reference Architecture, requirement 11] Envelope breaches MUST halt the offending action, produce an ART-15 record, and escalate per the agent's escalation rules; the platform MUST NOT silently retry a blocked action.
+- [AIES-AEAR-CORE-01-R12 — Core Reference Architecture, requirement 12] Workflow definitions SHOULD be declarative, versioned artifacts subject to the same review controls as source changes.
 
 **Interfaces**: receives tasks and returns results via the **Interaction Plane**; requests inference from the **Model Plane**; requests assembled context from the **Context & Knowledge Plane**; dispatches actions to the **Execution Plane** — all through **Guardrail Plane** enforcement points; resolves identities, definitions, and entitlements from the **Governance Plane**; emits full activity telemetry to the **Observability Plane**.
 
@@ -180,12 +180,12 @@ All model inference flows through a single logical choke point: the **model gate
 
 **Normative requirements**
 
-- [AIES-AEAR-CORE-01-R13] All model inference MUST traverse the model gateway; direct provider access from any other plane MUST be technically prevented (egress control, see [AIES-AEAR-XC-01](cross-cutting-concerns.md)).
-- [AIES-AEAR-CORE-01-R14] The platform MUST support at least two interchangeable providers (or deployments) for each critical capability class, and failover between them MUST be exercised (tested), not merely configured.
-- [AIES-AEAR-CORE-01-R15] Every inference request and response MUST be attributable to a model identifier and version, recorded in the corresponding ART-15 audit record.
-- [AIES-AEAR-CORE-01-R16] Model version changes MUST pass the platform's evaluation pipeline (Observability Plane) before serving tasks at RT2 or above; organizations SHOULD gate all tiers.
-- [AIES-AEAR-CORE-01-R17] The gateway MUST enforce budget and quota policy at request time; exhausted budgets MUST fail closed with escalation, not degrade into unmetered usage.
-- [AIES-AEAR-CORE-01-R18] The gateway SHOULD support routing by data-handling class so that requests carrying regulated data reach only providers/deployments approved for that class.
+- [AIES-AEAR-CORE-01-R13 — Core Reference Architecture, requirement 13] All model inference MUST traverse the model gateway; direct provider access from any other plane MUST be technically prevented (egress control, see [AIES-AEAR-XC-01 — Cross-Cutting Concerns](cross-cutting-concerns.md)).
+- [AIES-AEAR-CORE-01-R14 — Core Reference Architecture, requirement 14] The platform MUST support at least two interchangeable providers (or deployments) for each critical capability class, and failover between them MUST be exercised (tested), not merely configured.
+- [AIES-AEAR-CORE-01-R15 — Core Reference Architecture, requirement 15] Every inference request and response MUST be attributable to a model identifier and version, recorded in the corresponding ART-15 audit record.
+- [AIES-AEAR-CORE-01-R16 — Core Reference Architecture, requirement 16] Model version changes MUST pass the platform's evaluation pipeline (Observability Plane) before serving tasks at RT2 — Moderate or above; organizations SHOULD gate all tiers.
+- [AIES-AEAR-CORE-01-R17 — Core Reference Architecture, requirement 17] The gateway MUST enforce budget and quota policy at request time; exhausted budgets MUST fail closed with escalation, not degrade into unmetered usage.
+- [AIES-AEAR-CORE-01-R18 — Core Reference Architecture, requirement 18] The gateway SHOULD support routing by data-handling class so that requests carrying regulated data reach only providers/deployments approved for that class.
 
 **Interfaces**: serves the **Orchestration Plane** (and, where permitted, the Context & Knowledge Plane for embedding/enrichment inference); enforces **Guardrail Plane** content policies on prompts and completions; reports usage to the **Observability Plane**; takes provider approval status and budget policy from the **Governance Plane**.
 
@@ -212,11 +212,11 @@ What the organization knows, made safely available to agents. Quality of context
 
 **Normative requirements**
 
-- [AIES-AEAR-CORE-01-R19] Retrieval MUST be entitlement-aware: an agent MUST NOT retrieve content its acting principal (or the human it acts for) is not entitled to read.
-- [AIES-AEAR-CORE-01-R20] Every item ingested into a knowledge store MUST carry a data classification, and classification MUST propagate through retrieval into context assembly so downstream planes can enforce data-handling policy.
-- [AIES-AEAR-CORE-01-R21] Context assets (ART-13) MUST be versioned and MUST pass a review workflow proportionate to the risk tier of the tasks they serve before production use.
-- [AIES-AEAR-CORE-01-R22] The context assembled for each task MUST be recorded (or deterministically reconstructible) to satisfy provenance and traceability obligations.
-- [AIES-AEAR-CORE-01-R23] Knowledge stores SHOULD track freshness and source provenance, and the context assembler SHOULD prefer authoritative, current sources over stale or derived ones.
+- [AIES-AEAR-CORE-01-R19 — Core Reference Architecture, requirement 19] Retrieval MUST be entitlement-aware: an agent MUST NOT retrieve content its acting principal (or the human it acts for) is not entitled to read.
+- [AIES-AEAR-CORE-01-R20 — Core Reference Architecture, requirement 20] Every item ingested into a knowledge store MUST carry a data classification, and classification MUST propagate through retrieval into context assembly so downstream planes can enforce data-handling policy.
+- [AIES-AEAR-CORE-01-R21 — Core Reference Architecture, requirement 21] Context assets (ART-13) MUST be versioned and MUST pass a review workflow proportionate to the risk tier of the tasks they serve before production use.
+- [AIES-AEAR-CORE-01-R22 — Core Reference Architecture, requirement 22] The context assembled for each task MUST be recorded (or deterministically reconstructible) to satisfy provenance and traceability obligations.
+- [AIES-AEAR-CORE-01-R23 — Core Reference Architecture, requirement 23] Knowledge stores SHOULD track freshness and source provenance, and the context assembler SHOULD prefer authoritative, current sources over stale or derived ones.
 
 **Interfaces**: serves assembled context to the **Orchestration Plane**; may use the **Model Plane** for embedding and enrichment; all external-source ingestion passes **Guardrail Plane** ingress controls; classification and entitlement policy come from the **Governance Plane**; retrieval and assembly events flow to the **Observability Plane**.
 
@@ -243,14 +243,14 @@ Where agent intentions become real actions — and therefore where containment m
 
 **Normative requirements**
 
-- [AIES-AEAR-CORE-01-R24] All agent-initiated tool execution MUST occur in sandboxed environments with explicitly granted capabilities; default capability MUST be none.
-- [AIES-AEAR-CORE-01-R25] Code environments MUST be ephemeral and reproducible; state MUST NOT persist between tasks except through governed artifact channels (version control, artifact staging).
-- [AIES-AEAR-CORE-01-R26] Agents MUST reach production-affecting systems only through existing CI/CD pipelines and their quality gates; the Execution Plane MUST NOT offer agents a direct path to production.
-- [AIES-AEAR-CORE-01-R27] Sandbox network access MUST be default-deny, with per-task allowlists enforced by the Guardrail Plane's egress control.
-- [AIES-AEAR-CORE-01-R28] Execution environments MUST NOT contain long-lived credentials; secrets are brokered per §9.
-- [AIES-AEAR-CORE-01-R29] Irreversible actions (data deletion, external communications, financial operations) MUST be classified RT4 by default and thus gated at AL1 unless a documented risk acceptance says otherwise ([AIES-SHARED-02 §4]).
-- [AIES-AEAR-CORE-01-R60] Agent-accessible tools and connector servers MUST be resolved from a governed registry; production agents MUST NOT dynamically discover, install, or call unregistered tools.
-- [AIES-AEAR-CORE-01-R61] Tool schemas, connector metadata, and remote API descriptions MUST be treated as untrusted input and MUST NOT be permitted to change an agent's envelope, entitlements, or policy obligations.
+- [AIES-AEAR-CORE-01-R24 — Core Reference Architecture, requirement 24] All agent-initiated tool execution MUST occur in sandboxed environments with explicitly granted capabilities; default capability MUST be none.
+- [AIES-AEAR-CORE-01-R25 — Core Reference Architecture, requirement 25] Code environments MUST be ephemeral and reproducible; state MUST NOT persist between tasks except through governed artifact channels (version control, artifact staging).
+- [AIES-AEAR-CORE-01-R26 — Core Reference Architecture, requirement 26] Agents MUST reach production-affecting systems only through existing CI/CD pipelines and their quality gates; the Execution Plane MUST NOT offer agents a direct path to production.
+- [AIES-AEAR-CORE-01-R27 — Core Reference Architecture, requirement 27] Sandbox network access MUST be default-deny, with per-task allowlists enforced by the Guardrail Plane's egress control.
+- [AIES-AEAR-CORE-01-R28 — Core Reference Architecture, requirement 28] Execution environments MUST NOT contain long-lived credentials; secrets are brokered per §9.
+- [AIES-AEAR-CORE-01-R29 — Core Reference Architecture, requirement 29] Irreversible actions (data deletion, external communications, financial operations) MUST be classified RT4 — Critical by default and thus gated at AL1 — Assisted unless a documented risk acceptance says otherwise ([AIES-SHARED-02 §4]).
+- [AIES-AEAR-CORE-01-R60 — Core Reference Architecture, requirement 60] Agent-accessible tools and connector servers MUST be resolved from a governed registry; production agents MUST NOT dynamically discover, install, or call unregistered tools.
+- [AIES-AEAR-CORE-01-R61 — Core Reference Architecture, requirement 61] Tool schemas, connector metadata, and remote API descriptions MUST be treated as untrusted input and MUST NOT be permitted to change an agent's envelope, entitlements, or policy obligations.
 
 **Interfaces**: receives action requests from the **Orchestration Plane** through **Guardrail Plane** filters; integrates with external SDLC toolchains (§14); emits execution telemetry to the **Observability Plane**; sandbox capability grants derive from **Governance Plane** entitlements.
 
@@ -278,13 +278,13 @@ Deterministic controls that hold **regardless of what any model says or any prom
 
 **Normative requirements**
 
-- [AIES-AEAR-CORE-01-R30] Guardrails MUST be enforced by deterministic components outside the model; a model's refusal behavior MUST NOT be counted as a control.
-- [AIES-AEAR-CORE-01-R31] Guardrail policy MUST be expressed as versioned policy-as-code, reviewed and released through the same change controls as production software.
-- [AIES-AEAR-CORE-01-R32] Guardrail decisions MUST fail closed: on policy-engine unavailability, the affected action classes MUST be denied and escalated.
-- [AIES-AEAR-CORE-01-R33] Secret material MUST NOT appear in prompts, assembled context, model traffic, or logs; the secrets broker MUST issue only short-lived, task-scoped credentials.
-- [AIES-AEAR-CORE-01-R34] Every guardrail denial MUST produce an ART-15 record including the policy that fired; denials MUST be visible to supervision surfaces in the Interaction Plane.
-- [AIES-AEAR-CORE-01-R35] Guardrail bypass paths (break-glass) MUST require human authorization by ROLE-13 or ROLE-14, MUST be time-bound, and MUST be conspicuously audited.
-- [AIES-AEAR-CORE-01-R62] Guardrails MUST inspect agent tool calls before execution, including the target tool, action class, parameters, data classification, destination, and expected side effects.
+- [AIES-AEAR-CORE-01-R30 — Core Reference Architecture, requirement 30] Guardrails MUST be enforced by deterministic components outside the model; a model's refusal behavior MUST NOT be counted as a control.
+- [AIES-AEAR-CORE-01-R31 — Core Reference Architecture, requirement 31] Guardrail policy MUST be expressed as versioned policy-as-code, reviewed and released through the same change controls as production software.
+- [AIES-AEAR-CORE-01-R32 — Core Reference Architecture, requirement 32] Guardrail decisions MUST fail closed: on policy-engine unavailability, the affected action classes MUST be denied and escalated.
+- [AIES-AEAR-CORE-01-R33 — Core Reference Architecture, requirement 33] Secret material MUST NOT appear in prompts, assembled context, model traffic, or logs; the secrets broker MUST issue only short-lived, task-scoped credentials.
+- [AIES-AEAR-CORE-01-R34 — Core Reference Architecture, requirement 34] Every guardrail denial MUST produce an ART-15 record including the policy that fired; denials MUST be visible to supervision surfaces in the Interaction Plane.
+- [AIES-AEAR-CORE-01-R35 — Core Reference Architecture, requirement 35] Guardrail bypass paths (break-glass) MUST require human authorization by ROLE-13 or ROLE-14, MUST be time-bound, and MUST be conspicuously audited.
+- [AIES-AEAR-CORE-01-R62 — Core Reference Architecture, requirement 62] Guardrails MUST inspect agent tool calls before execution, including the target tool, action class, parameters, data classification, destination, and expected side effects.
 
 **Interfaces**: interposed on **Orchestration→Model**, **Orchestration→Execution**, **Context ingestion**, and **all egress**; policy content and principal attributes come from the **Governance Plane**; all decisions stream to the **Observability Plane**.
 
@@ -311,13 +311,13 @@ If the Governance Plane is the platform's law, this plane is its memory and its 
 
 **Normative requirements**
 
-- [AIES-AEAR-CORE-01-R36] Every significant agent action MUST produce an ART-15 record capturing actor, task, autonomy level, inputs (or references), model version, actions taken, and outputs; records MUST be tamper-evident and retained per compliance policy.
-- [AIES-AEAR-CORE-01-R37] Telemetry MUST be correlatable end-to-end: a single task identifier MUST link interaction, orchestration, inference, context, execution, and guardrail events.
-- [AIES-AEAR-CORE-01-R38] The platform MUST operate evaluation pipelines whose outputs (ART-12) are the evidentiary basis for autonomy-level changes; autonomy MUST NOT be raised without such evidence ([AIES-SHARED-02-R03]).
-- [AIES-AEAR-CORE-01-R39] Evaluation MUST run continuously in production (sampling live outputs), not only pre-release.
-- [AIES-AEAR-CORE-01-R40] Observability data access MUST itself be entitlement-controlled and audited, since activity logs and captured context may contain sensitive material.
-- [AIES-AEAR-CORE-01-R41] Anomalous agent behavior SHOULD trigger automatic autonomy reduction for the affected agent pending human review (principle 6, §2).
-- [AIES-AEAR-CORE-01-R63] Observability MUST preserve tool-call provenance sufficient to reconstruct which tool or connector was called, with which parameters, under which capability grant, and with what external side effect.
+- [AIES-AEAR-CORE-01-R36 — Core Reference Architecture, requirement 36] Every significant agent action MUST produce an ART-15 record capturing actor, task, autonomy level, inputs (or references), model version, actions taken, and outputs; records MUST be tamper-evident and retained per compliance policy.
+- [AIES-AEAR-CORE-01-R37 — Core Reference Architecture, requirement 37] Telemetry MUST be correlatable end-to-end: a single task identifier MUST link interaction, orchestration, inference, context, execution, and guardrail events.
+- [AIES-AEAR-CORE-01-R38 — Core Reference Architecture, requirement 38] The platform MUST operate evaluation pipelines whose outputs (ART-12) are the evidentiary basis for autonomy-level changes; autonomy MUST NOT be raised without such evidence ([AIES-SHARED-02-R03 — Taxonomy, requirement 03]).
+- [AIES-AEAR-CORE-01-R39 — Core Reference Architecture, requirement 39] Evaluation MUST run continuously in production (sampling live outputs), not only pre-release.
+- [AIES-AEAR-CORE-01-R40 — Core Reference Architecture, requirement 40] Observability data access MUST itself be entitlement-controlled and audited, since activity logs and captured context may contain sensitive material.
+- [AIES-AEAR-CORE-01-R41 — Core Reference Architecture, requirement 41] Anomalous agent behavior SHOULD trigger automatic autonomy reduction for the affected agent pending human review (principle 6, §2).
+- [AIES-AEAR-CORE-01-R63 — Core Reference Architecture, requirement 63] Observability MUST preserve tool-call provenance sufficient to reconstruct which tool or connector was called, with which parameters, under which capability grant, and with what external side effect.
 
 **Interfaces**: receives events from **all planes**; feeds evidence to the **Interaction Plane** (dashboards, approval consoles), the **Governance Plane** (compliance reporting), and **AESQS** processes; entitlements from the **Governance Plane**.
 
@@ -346,12 +346,12 @@ The root of authority. Everything else enforces; this plane decides who and what
 
 **Normative requirements**
 
-- [AIES-AEAR-CORE-01-R42] Every agent instance MUST hold a unique identity distinct from any human identity, linked to its Agent Definition version (ART-14) and to an accountable human owner.
-- [AIES-AEAR-CORE-01-R43] Agents MUST NOT authenticate using human credentials, and humans MUST NOT act under agent identities; shared or ambient credentials MUST NOT exist on the platform.
-- [AIES-AEAR-CORE-01-R44] Entitlements granted to an agent for a task MUST be derived from, and MUST NOT exceed, the task's declared autonomy level and risk tier; entitlements MUST expire at task completion.
-- [AIES-AEAR-CORE-01-R45] Changes to Agent Definitions, entitlement policy, guardrail policy, or registered tool capabilities MUST themselves be treated as RT3-or-higher changes with corresponding human review.
-- [AIES-AEAR-CORE-01-R46] The Governance Plane MUST be able to demonstrate, for any past action, the full authorization chain: which principal, under which definition and version, with which entitlements, approved by whom.
-- [AIES-AEAR-CORE-01-R47] Compliance reporting SHOULD be generated from platform evidence automatically rather than assembled manually (see [AIES-AEAR-XC-01 §4](cross-cutting-concerns.md#4-compliance-evidence-generation-x03)).
+- [AIES-AEAR-CORE-01-R42 — Core Reference Architecture, requirement 42] Every agent instance MUST hold a unique identity distinct from any human identity, linked to its Agent Definition version (ART-14) and to an accountable human owner.
+- [AIES-AEAR-CORE-01-R43 — Core Reference Architecture, requirement 43] Agents MUST NOT authenticate using human credentials, and humans MUST NOT act under agent identities; shared or ambient credentials MUST NOT exist on the platform.
+- [AIES-AEAR-CORE-01-R44 — Core Reference Architecture, requirement 44] Entitlements granted to an agent for a task MUST be derived from, and MUST NOT exceed, the task's declared autonomy level and risk tier; entitlements MUST expire at task completion.
+- [AIES-AEAR-CORE-01-R45 — Core Reference Architecture, requirement 45] Changes to Agent Definitions, entitlement policy, guardrail policy, or registered tool capabilities MUST themselves be treated as RT3 — Significant-or-higher changes with corresponding human review.
+- [AIES-AEAR-CORE-01-R46 — Core Reference Architecture, requirement 46] The Governance Plane MUST be able to demonstrate, for any past action, the full authorization chain: which principal, under which definition and version, with which entitlements, approved by whom.
+- [AIES-AEAR-CORE-01-R47 — Core Reference Architecture, requirement 47] Compliance reporting SHOULD be generated from platform evidence automatically rather than assembled manually (see [AIES-AEAR-XC-01 — Cross-Cutting Concerns §4](cross-cutting-concerns.md#4-compliance-evidence-generation-x03)).
 
 **Interfaces**: authenticates and authorizes **every plane**; supplies Agent Definitions to the **Orchestration Plane**, policy to the **Guardrail Plane**, and classification/entitlement schemes to the **Context & Knowledge Plane**; consumes evidence from the **Observability Plane**.
 
@@ -359,7 +359,7 @@ The root of authority. Everything else enforces; this plane decides who and what
 
 ## 12. Cross-Plane Flows (Illustrative)
 
-A representative AL3 (Delegated) engineering task at RT2:
+A representative AL3 — Delegated (Delegated) engineering task at RT2 — Moderate:
 
 ```mermaid
 sequenceDiagram
@@ -372,7 +372,7 @@ sequenceDiagram
     participant GR as Guardrail
     participant OB as Observability
 
-    H->>O: Submit task (ART-05, RT2, AL3)
+    H->>O: Submit task (ART-05, RT2 — Moderate, AL3 â€” Delegated)
     O->>G: Resolve agent definition + entitlements
     G-->>O: Agent identity, envelope, scoped entitlements
     O->>C: Request task context
@@ -384,7 +384,7 @@ sequenceDiagram
         O->>E: Sandboxed execution
     end
     E-->>O: Staged artifact (ART-06)
-    O->>H: Checkpoint per AL3 envelope
+    O->>H: Checkpoint per AL3 â€” Delegated envelope
     H-->>O: Approve / reject / escalate
     O->>OB: Complete ART-15 trail (continuous)
 ```
@@ -398,14 +398,14 @@ The plane model is topology-independent. Three canonical topologies, plus the hy
 All planes deployed within one organization's security boundary; model providers may be external (reached only through the model gateway and egress controls) or internally hosted.
 
 - Simplest entitlement and data-residency story; the default for organizations with strong sovereignty or confidentiality needs.
-- [AIES-AEAR-CORE-01-R48] Even in single-tenant deployments, internal segmentation between planes (especially Execution and Guardrail) MUST be preserved; single tenancy is not a substitute for containment.
+- [AIES-AEAR-CORE-01-R48 — Core Reference Architecture, requirement 48] Even in single-tenant deployments, internal segmentation between planes (especially Execution and Guardrail) MUST be preserved; single tenancy is not a substitute for containment.
 
 ### 13.2 Multi-Tenant
 
 One platform instance serves multiple organizational tenants (business units, subsidiaries, or — for platform vendors — customers).
 
-- [AIES-AEAR-CORE-01-R49] Multi-tenant deployments MUST isolate per tenant: knowledge stores and context, agent identities and entitlements, audit trails, cost accounting, and guardrail policy. Cross-tenant retrieval or delegation MUST be impossible by default.
-- [AIES-AEAR-CORE-01-R50] Tenant-level noisy-neighbor protection (quotas on inference, execution, and retrieval) MUST be enforced in the Model and Execution Planes.
+- [AIES-AEAR-CORE-01-R49 — Core Reference Architecture, requirement 49] Multi-tenant deployments MUST isolate per tenant: knowledge stores and context, agent identities and entitlements, audit trails, cost accounting, and guardrail policy. Cross-tenant retrieval or delegation MUST be impossible by default.
+- [AIES-AEAR-CORE-01-R50 — Core Reference Architecture, requirement 50] Tenant-level noisy-neighbor protection (quotas on inference, execution, and retrieval) MUST be enforced in the Model and Execution Planes.
 - Evaluation baselines and anomaly models SHOULD be per-tenant, since behavior norms differ.
 
 ### 13.3 Air-Gapped
@@ -413,13 +413,13 @@ One platform instance serves multiple organizational tenants (business units, su
 No egress to external networks; all model serving, knowledge storage, and toolchains are inside the boundary.
 
 - The Model Plane fronts internally hosted model deployments only; the gateway's routing/failover/versioning duties are unchanged.
-- [AIES-AEAR-CORE-01-R51] Air-gapped deployments MUST replace external-provider failover with redundancy across internal model deployments and MUST define degraded-mode operation (reduced autonomy, queueing) for model unavailability.
-- Model, knowledge, and policy updates arrive through controlled transfer processes; the update channel MUST be treated as a supply-chain risk surface (see [AIES-AEAR-XC-01](cross-cutting-concerns.md)).
+- [AIES-AEAR-CORE-01-R51 — Core Reference Architecture, requirement 51] Air-gapped deployments MUST replace external-provider failover with redundancy across internal model deployments and MUST define degraded-mode operation (reduced autonomy, queueing) for model unavailability.
+- Model, knowledge, and policy updates arrive through controlled transfer processes; the update channel MUST be treated as a supply-chain risk surface (see [AIES-AEAR-XC-01 — Cross-Cutting Concerns](cross-cutting-concerns.md)).
 - The [Government blueprint](blueprints/government.md) details this topology.
 
 ### 13.4 Hybrid
 
-Most real estates mix the above (e.g., single-tenant control planes with externally served models for RT1–RT2 work and internally served models for RT3–RT4 data classes). The model gateway's data-handling-class routing ([AIES-AEAR-CORE-01-R18]) is the mechanism that makes hybrid safe.
+Most real estates mix the above (e.g., single-tenant control planes with externally served models for RT1 — Minimal through RT2 — Moderate work and internally served models for RT3 — Significant through RT4 — Critical data classes). The model gateway's data-handling-class routing ([AIES-AEAR-CORE-01-R18 — Core Reference Architecture, requirement 18]) is the mechanism that makes hybrid safe.
 
 ## 14. Integration with Existing SDLC Toolchains
 
@@ -429,39 +429,39 @@ The platform augments — never replaces — the organization's existing enginee
 |-----------------|-------------------|--------------------|
 | Version control | Execution Plane toolchain connector | Agents author changes (ART-06) under their own identity; merges pass existing review + quality gates |
 | Work tracking | Orchestration Plane task router | Tasks (ART-05) originate in, and report status to, the existing tracker |
-| CI/CD | Execution Plane | Agents trigger and consume pipelines (ART-09); they MUST NOT bypass pipeline gates ([AIES-AEAR-CORE-01-R26]) |
-| Code review tooling | Interaction Plane review UI | AI-authored changes enter the same review flow with provenance labels ([AIES-AEAR-CORE-01-R03]) |
+| CI/CD | Execution Plane | Agents trigger and consume pipelines (ART-09); they MUST NOT bypass pipeline gates ([AIES-AEAR-CORE-01-R26 — Core Reference Architecture, requirement 26]) |
+| Code review tooling | Interaction Plane review UI | AI-authored changes enter the same review flow with provenance labels ([AIES-AEAR-CORE-01-R03 — Core Reference Architecture, requirement 03]) |
 | Artifact/package registries | Execution Plane | Agent-published artifacts pass the same signing and scanning gates |
 | Enterprise identity provider | Governance Plane | Human identities federate; agent identities extend (not fork) the enterprise identity model |
 | Enterprise observability | Observability Plane | Platform telemetry exports to enterprise systems; ART-15 remains the system of record |
 
-[AIES-AEAR-CORE-01-R52] Agent actions in external toolchains MUST be performed under the agent's own identity (service principal), never under a shared or human account, so that toolchain-native audit logs remain attributable.
+[AIES-AEAR-CORE-01-R52 — Core Reference Architecture, requirement 52] Agent actions in external toolchains MUST be performed under the agent's own identity (service principal), never under a shared or human account, so that toolchain-native audit logs remain attributable.
 
-[AIES-AEAR-CORE-01-R53] The platform SHOULD integrate through the toolchains' standard extension interfaces rather than screen-level or credential-sharing mechanisms, so integrations survive toolchain upgrades and remain auditable.
+[AIES-AEAR-CORE-01-R53 — Core Reference Architecture, requirement 53] The platform SHOULD integrate through the toolchains' standard extension interfaces rather than screen-level or credential-sharing mechanisms, so integrations survive toolchain upgrades and remain auditable.
 
 ## 15. Non-Functional Requirements
 
-Aligned to cross-cutting domains X10–X13; architectural treatment in [AIES-AEAR-XC-01](cross-cutting-concerns.md).
+Aligned to cross-cutting domains X10–X13; architectural treatment in [AIES-AEAR-XC-01 — Cross-Cutting Concerns](cross-cutting-concerns.md).
 
 ### 15.1 Cost (X10)
 
-- [AIES-AEAR-CORE-01-R54] Every unit of AI spend (inference tokens, execution compute, storage) MUST be attributable to a principal, task, and cost center at the time it is incurred.
-- [AIES-AEAR-CORE-01-R55] Budgets and quotas MUST be enforceable at request time (fail-closed), not only reported retrospectively.
+- [AIES-AEAR-CORE-01-R54 — Core Reference Architecture, requirement 54] Every unit of AI spend (inference tokens, execution compute, storage) MUST be attributable to a principal, task, and cost center at the time it is incurred.
+- [AIES-AEAR-CORE-01-R55 — Core Reference Architecture, requirement 55] Budgets and quotas MUST be enforceable at request time (fail-closed), not only reported retrospectively.
 
 ### 15.2 Performance (X11)
 
-- [AIES-AEAR-CORE-01-R56] The platform MUST define latency classes for interactive assistance versus batch/delegated work, and the model gateway MUST route accordingly.
+- [AIES-AEAR-CORE-01-R56 — Core Reference Architecture, requirement 56] The platform MUST define latency classes for interactive assistance versus batch/delegated work, and the model gateway MUST route accordingly.
 - Guardrail and entitlement checks sit on the hot path; their decision latency SHOULD be budgeted explicitly (they are part of the product's responsiveness, not overhead to be disabled).
 
 ### 15.3 Scalability (X12)
 
-- [AIES-AEAR-CORE-01-R57] Orchestration and Execution Planes MUST scale horizontally with task volume; agent concurrency limits MUST be policy-controlled per team/tenant, not emergent from infrastructure limits.
+- [AIES-AEAR-CORE-01-R57 — Core Reference Architecture, requirement 57] Orchestration and Execution Planes MUST scale horizontally with task volume; agent concurrency limits MUST be policy-controlled per team/tenant, not emergent from infrastructure limits.
 - Knowledge stores and telemetry retention are the dominant storage growth surfaces and SHOULD have lifecycle policies from day one.
 
 ### 15.4 Reliability (X13)
 
-- [AIES-AEAR-CORE-01-R58] The platform MUST define and test degraded modes: model provider loss (gateway failover), evaluation pipeline loss (autonomy freezes at current level; increases blocked), guardrail policy engine loss (fail closed per [AIES-AEAR-CORE-01-R32]), and observability loss (agent execution at AL3–AL4 halts, since unobserved autonomy violates X07).
-- [AIES-AEAR-CORE-01-R59] Degradation MUST move autonomy downward, never upward: loss of a control results in more human involvement, not silent continuation.
+- [AIES-AEAR-CORE-01-R58 — Core Reference Architecture, requirement 58] The platform MUST define and test degraded modes: model provider loss (gateway failover), evaluation pipeline loss (autonomy freezes at current level; increases blocked), guardrail policy engine loss (fail closed per [AIES-AEAR-CORE-01-R32 — Core Reference Architecture, requirement 32]), and observability loss (agent execution at AL3 — Delegated through AL4 — Autonomous halts, since unobserved autonomy violates X07).
+- [AIES-AEAR-CORE-01-R59 — Core Reference Architecture, requirement 59] Degradation MUST move autonomy downward, never upward: loss of a control results in more human involvement, not silent continuation.
 
 ## 16. Capability Checklist
 
@@ -478,7 +478,7 @@ A self-assessment instrument. Each item maps to normative requirements above; "Y
 | 7 | Does all inference pass through a model gateway, with direct provider access blocked? | Model | R13 |
 | 8 | Can you fail over between at least two providers per critical capability class — and have you tested it? | Model | R14 |
 | 9 | Is every inference attributable to a model version in the audit trail? | Model | R15 |
-| 10 | Are model version changes evaluation-gated before serving RT2+ work? | Model / Observability | R16 |
+| 10 | Are model version changes evaluation-gated before serving RT2 — Moderate and above work? | Model / Observability | R16 |
 | 11 | Are budgets/quotas enforced at request time, fail-closed? | Model | R17, R55 |
 | 12 | Is retrieval entitlement-aware and classification-propagating? | Context & Knowledge | R19, R20 |
 | 13 | Are context assets (ART-13) versioned and review-gated? | Context & Knowledge | R21 |
@@ -499,16 +499,16 @@ A self-assessment instrument. Each item maps to normative requirements above; "Y
 | 28 | Are toolchain actions performed under agent-owned identities? | Execution / Governance | R52 |
 | 29 | Are degraded modes defined, tested, and autonomy-reducing? | All | R58, R59 |
 
-Scoring guidance: organizations SHOULD treat items 3, 4, 17, 18, 21, 25, and 29 as gating for any AL3+ operation; the remainder sequence naturally with autonomy ambitions. AESQS provides the formal capability-scoring method.
+Scoring guidance: organizations SHOULD treat items 3, 4, 17, 18, 21, 25, and 29 as gating for any AL3 — Delegated+ operation; the remainder sequence naturally with autonomy ambitions. AESQS provides the formal capability-scoring method.
 
 ---
 
 ## Related Documents
 
-- [AIES-AEAR-00 — Module Overview](README.md)
-- [AIES-AEAR-XC-01 — Cross-Cutting Concerns](cross-cutting-concerns.md)
-- [AIES-AEAR-BP-00 — Blueprint Catalog](blueprints/README.md)
-- [Taxonomy (AIES-SHARED-02)](../Shared/Taxonomy/README.md) · [Glossary (AIES-SHARED-01)](../Shared/Glossary/README.md)
+- [AIES-AEAR-00 — AEAR — AI Engineering Architecture Reference](README.md)
+- [AIES-AEAR-XC-01 — Cross-Cutting Concerns in Platform Architecture](cross-cutting-concerns.md)
+- [AIES-AEAR-BP-00 — AEAR Blueprint Catalog](blueprints/README.md)
+- [Taxonomy (AIES-SHARED-02 — Taxonomy)](../Shared/Taxonomy/README.md) · [Glossary (AIES-SHARED-01 — Glossary)](../Shared/Glossary/README.md)
 
 ## References
 

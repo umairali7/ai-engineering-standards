@@ -8,7 +8,7 @@
 
 How the whole AIES system wires together, and exactly how to install the
 `aies` platform and run a real qualification against a model you host.
-Specification: [PLATFORM.md (AIES-DOC-06)](../docs/PLATFORM.md).
+Specification: [AIES-DOC-06 — Engineering Assessment Platform Specification](../docs/PLATFORM.md).
 
 ---
 
@@ -22,7 +22,7 @@ it; a **runtime adapter** is the only thing that talks to an actual model.
 │ THE STANDARD  (Markdown — the "what" and "how much")                        │
 │                                                                             │
 │   Shared/  Glossary + Taxonomy  ── canonical scales: EV1–EV6, CL1–CL4,      │
-│      │                             AL0–AL4, RT1–RT4, ROLE-01..14            │
+│      │                  AL0 — Manual through AL4 — Autonomous; RT1 — Minimal through RT4 — Critical; ROLE-01..14            │
 │      ▼                                                                      │
 │   AEBOK ──► AESQS ──► AEOS ──► AEAR ──► AECT      docs/standards/ govern    │
 │  (know)   (qualify)  (operate)(architect)(certify)  every document          │
@@ -365,7 +365,7 @@ evidence (unparseable replies are skipped, never fabricated) and is a poor
 choice regardless of how capable the underlying model is.
 
 Pick `--area` from `CA-01 … CA-12` (repeat for several). For a *decisional*
-result an AI system needs ≥ 20 (RT1), 30 (RT2), 50 (RT3), 100 (RT4) scored
+result an AI system needs ≥ 20 (RT1 — Minimal), 30 (RT2 — Moderate), 50 (RT3 — Significant), 100 (RT4 — Critical) scored
 items per area — grow `--repeats`; under-sampled runs are labelled
 **NON-DECISIONAL**.
 
@@ -450,6 +450,25 @@ aies qualify --resume <run-id> --judge local-gpt-oss --parallel 4 \
   --consider-advisory-review --human-evaluation "Your Name"
 ```
 
+### Reading risk-scoped capability profiles
+
+Every qualification run has **one risk-tier scope**: RT1 — Minimal, RT2 — Moderate,
+RT3 — Significant, or RT4 — Critical. This is deliberate: each
+tier has different gates, sample minimums, and autonomy limits, so combining
+them into one score would hide the risk context.
+
+`--all-areas` means **all competency areas at the selected tier**. For example,
+`--all-areas --rt 2` can populate the RT2 — Moderate engineering-task profile; it does not
+demonstrate RT1 — Minimal, RT3 — Significant, or RT4 — Critical capability. A complete cross-tier picture requires
+separately scoped runs, which must remain visibly tier-labelled until a future
+all-tier orchestrator presents them together.
+
+In an Engineering Capability Matrix, **not assessed** means no mapped scored
+scenario evidence was collected for that task. It is unknown, not a failure or
+a low score. **Observed** means evidence exists but has not reached the stated
+task-confidence threshold. Only **demonstrated** rows have sufficient evidence
+for their recorded tier and protocol.
+
 ### 5.5 Aggregate and report
 
 ```
@@ -495,7 +514,7 @@ on it.
 
 ### 5.7 Worked example — a complete run against Ollama, start to finish
 
-Concretely, qualifying a model served by Ollama as an RT2 software engineer
+Concretely, qualifying a model served by Ollama as an RT2 — Moderate software engineer
 in AI-assisted implementation (CA-05):
 
 ```
@@ -511,8 +530,8 @@ aies doctor                         # ollama -> [OK] endpoint reachable
 aies discover                       # -> created ollama-llama3.1-8b
 aies registry list
 
-# 3. run the benchmark (RT2 needs >=30 scored items; CA-05 has ~10 distinct
-#    RT2 scenarios, so 3 repeats x 10 = 30 — repeats now add variance, not padding)
+# 3. run the benchmark (RT2 — Moderate needs >=30 scored items; CA-05 has ~10 distinct
+#    RT2 — Moderate scenarios, so 3 repeats x 10 = 30 — repeats now add variance, not padding)
 aies qualify ollama-llama3.1-8b --profile coder --rt 2 --area CA-05 \
       --repeats 3 --parallel 4
 #    prints a run id, e.g. run-YYYYMMDDT...-ollama-llama3.1-8b-ab12cd
@@ -560,8 +579,8 @@ form of [conformance](../docs/CONFORMANCE.md).
 
 ```
 aies audit .                      # scorecard + ranked recommendations (markdown)
-aies audit . --rt 2               # evaluate against RT2's required evidence
-aies audit . --gate --rt 2        # CI mode: non-zero exit if RT2 evidence is missing
+aies audit . --rt 2               # evaluate against RT2 — Moderate required evidence
+aies audit . --gate --rt 2        # CI mode: non-zero exit if RT2 — Moderate evidence is missing
 aies audit . --attest attest.json # supply evidence for non-detectable practices
 aies audit . --format json        # machine-readable
 ```
@@ -611,17 +630,17 @@ A `PASS` is an assessment outcome; a named human still records any grant.
 Every number the platform emits is evidence with full provenance (which model
 build, which environment, which rater, which suite version), stored as plain
 append-only files you can diff and audit. The gates and statistical minimums
-are engine constants transcribed from [AIES-AESQS-CS-01](../AESQS/capability-scoring.md);
+are engine constants transcribed from [AIES-AESQS-CS-01 — Capability Scoring](../AESQS/capability-scoring.md);
 no profile or flag can relax them. The scoped grant is a human decision the
 tool records — not one it makes.
 
 ## Related Documents
 
-- [Platform Specification (AIES-DOC-06)](../docs/PLATFORM.md)
-- [Platform README (AIES-PLAT-00)](README.md)
+- [AIES-DOC-06 — Engineering Assessment Platform Specification](../docs/PLATFORM.md)
+- [AIES-PLAT-00 — AIES Engineering Assessment Platform](README.md)
 - [ADR-0002 — Qualification Platform](../adr/ADR-0002-Qualification-Platform.md)
-- [AESQS Capability Scoring (AIES-AESQS-CS-01)](../AESQS/capability-scoring.md)
-- [Taxonomy (AIES-SHARED-02)](../Shared/Taxonomy/README.md)
+- [AESQS Capability Scoring (AIES-AESQS-CS-01 — Capability Scoring)](../AESQS/capability-scoring.md)
+- [Taxonomy (AIES-SHARED-02 — Taxonomy)](../Shared/Taxonomy/README.md)
 
 ## References
 

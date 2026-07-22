@@ -19,6 +19,8 @@ from __future__ import annotations
 import datetime
 import re
 
+from . import constants as C
+
 METHODOLOGY_VERSION = "1.0"
 
 # Advisory targets, versioned with the methodology. These shape recommendations;
@@ -190,7 +192,8 @@ def health(root=None) -> dict:
     for x in narrow:
         recs.append({"priority": 2, "dimension": "behavioral_diversity",
                      "action": f"widen distinct high-tier decision kinds in {x['area']}",
-                     "evidence": f"{x['high_tier_families']} kinds among {x['rt3_rt4']} RT3/RT4 "
+                     "evidence": f"{x['high_tier_families']} kinds among {x['rt3_rt4']} "
+                                 f"RT3 — Significant / RT4 — Critical scenarios "
                                  f"(advisory target {DIVERSITY_MIN_HIGH_TIER_FAMILIES})"})
 
     # --- dimension: duplication risk --------------------------------------
@@ -408,8 +411,8 @@ def render(report: dict, coverage_only: bool = False) -> str:
 
     cov = d["coverage"]
     if coverage_only:
-        L.append("coverage — RT distribution per area")
-        L.append("  area    RT1  RT2  RT3  RT4")
+        L.append("coverage — risk-tier distribution per area (RT1 — Minimal through RT4 — Critical)")
+        L.append("  area    RT1 Minimal  RT2 Moderate  RT3 Significant  RT4 Critical")
         for area, rt in cov["by_area"].items():
             L.append(f"  {area:6} {rt['RT1']:4} {rt['RT2']:4} {rt['RT3']:4} {rt['RT4']:4}")
         L.append("")
@@ -417,7 +420,7 @@ def render(report: dict, coverage_only: bool = False) -> str:
         for a in cov["assessments"]:
             thin = ", ".join(f"{x['area']}={x['distinct_at_or_above_tier']}"
                              for x in a["thin_mandatory_areas"]) or "all mandatory areas adequate"
-            L.append(f"  {a['id']:14} {a['declared_tier']}   thin: {thin}")
+            L.append(f"  {a['id']:14} {C.risk_tier_label(a['declared_tier']):22} thin: {thin}")
         return "\n".join(L)
 
     cal = d["calibration"]
@@ -428,8 +431,8 @@ def render(report: dict, coverage_only: bool = False) -> str:
           ""]
     rtt = cov["rt_distribution_total"]
     L += ["coverage",
-          f"  RT distribution (total): RT1={rtt['RT1']} RT2={rtt['RT2']} "
-          f"RT3={rtt['RT3']} RT4={rtt['RT4']}",
+          f"  Risk-tier distribution (total): RT1 — Minimal={rtt['RT1']} RT2 — Moderate={rtt['RT2']} "
+          f"RT3 — Significant={rtt['RT3']} RT4 — Critical={rtt['RT4']}",
           f"  assessments with thin mandatory areas at their tier: "
           f"{[a['id'] for a in cov['assessments'] if a['thin_mandatory_areas']] or 'none'}",
           ""]

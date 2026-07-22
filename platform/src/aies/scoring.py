@@ -88,7 +88,8 @@ def apply_gates(dims: dict[str, DimensionScore], risk_tier: str) -> tuple[list[G
 
     Gates are evaluated against decision values (lower confidence
     bounds), so variance that drops a bound below its gate fails the
-    gate even when the mean passes (R13). One zero on EV3 at RT3-RT4
+    gate even when the mean passes (R13). One zero on EV3 at RT3 — Significant
+    through RT4 — Critical
     fails the hard gate outright (R04).
     """
     gates: list[GateResult] = []
@@ -107,7 +108,7 @@ def apply_gates(dims: dict[str, DimensionScore], risk_tier: str) -> tuple[list[G
             passed = False
             ev3_hard_fail = True
             reason = ("single evidence item scored 0 on EV3 at "
-                      f"{risk_tier} (AIES-AESQS-CS-01-R04)")
+                      f"{C.risk_tier_label(risk_tier)} (AIES-AESQS-CS-01-R04)")
         elif not passed:
             reason = (f"decision value {d.ci_low} below gate {threshold}"
                       + ("" if d.mean < threshold else
@@ -124,7 +125,8 @@ def effective_weights(risk_tier: str, adjustments: dict[str, float] | None) -> d
 
     Per-dimension delta capped at +/-0.05; weights must still sum to 1;
     combined EV3+EV6 weight must not fall below the tier baseline for
-    RT3-RT4. Violations raise: gates and floors are non-negotiable (D3).
+    RT3 — Significant through RT4 — Critical. Violations raise: gates and
+    floors are non-negotiable (D3).
     """
     base = dict(C.WEIGHTS[risk_tier])
     if not adjustments:
@@ -151,7 +153,7 @@ def effective_weights(risk_tier: str, adjustments: dict[str, float] | None) -> d
         if out["EV3"] + out["EV6"] < floor - 1e-9:
             raise ValueError(
                 "profile reduces combined EV3+EV6 weight below the "
-                f"{risk_tier} floor of {floor} (AIES-AESQS-CS-01-R03)"
+                f"{C.risk_tier_label(risk_tier)} floor of {floor} (AIES-AESQS-CS-01-R03)"
             )
     return out
 

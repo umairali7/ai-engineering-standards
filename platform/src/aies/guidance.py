@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from . import ecm, workspace
+from . import constants as C, ecm, workspace
 
 
 def render_markdown(ref: str) -> str:
@@ -12,7 +12,7 @@ def render_markdown(ref: str) -> str:
     lines = ["# AIES Deployment Guidance", "",
              "> **INFORMATIONAL — NOT A QUALIFICATION, GRANT, OR DEPLOYMENT AUTHORIZATION.**", "",
              f"Subject: `{matrix['subject']}`  ", f"Run: `{matrix['run_id']}`  ",
-             f"Scope: {matrix['risk_tier']} · {matrix['profile']} profile", "",
+             f"Scope: {C.risk_tier_label(matrix['risk_tier'])} · {matrix['profile']} profile", "",
              "## Use", ""]
     if summary["task_demonstrated"]:
         lines += [f"- `{x['task']}` — only within its assessed scope and approved autonomy envelope."

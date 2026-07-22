@@ -464,7 +464,8 @@ def cmd_capabilities(args) -> int:
         sample = ("decisional" if r["decisional"]
                   else f"NON-DEC {r['n_scored']}/{r['min_sample']}")
         label = C.competency_label(r['area'])
-        print(f"  {label[:52]:52} {r['cl']:4} "
+        cl = C.identifier_label(r['cl']) if r['cl'] else "none"
+        print(f"  {label[:52]:52} {cl[:18]:18} "
               f"{r['aggregate']:.2f}  {C.autonomy_level_label(r['al_at_rt'])[:18]:18} {gate} {sample}")
     print("\n  CL = competency level · AGG = weighted aggregate · "
           f"AL = autonomy ceiling at {C.risk_tier_label(prof['risk_tier'])}. Read across areas for "
@@ -623,7 +624,7 @@ def cmd_runs(args) -> int:
     _out(runs, args.json,
          "\n".join(
              f"{r['run_id']:45} {r['model']:20} {r['profile']:10} "
-             f"{r['risk_tier']} {'aggregated' if r['aggregated'] else r['status']}"
+             f"{C.risk_tier_label(r['risk_tier']):22} {'aggregated' if r['aggregated'] else r['status']}"
              for r in runs) or "(no runs)")
     return 0
 
@@ -717,7 +718,7 @@ def cmd_grant(args) -> int:
              f"  authority: {record['humans']['authority']}"
              + (f", second: {record['humans']['second']}" if record['humans']['second'] else "")
              + f"\n  subject: {record['subject']['deployment']} "
-             f"@ RT{record['scope']['risk_tier'][-1]}"
+             f"@ {C.risk_tier_label(record['scope']['risk_tier'])}"
              + f"\n  advisory review: {'considered' if record['evidence_consideration']['automated_advisory_review']['considered_by_authority'] else 'not declared'}"
              + f"\n  human evaluation: {record['evidence_consideration']['human_evaluation']['evaluator'] or 'not declared'}")
     except qualification.QualificationError as e:
@@ -748,7 +749,7 @@ def cmd_qualifications(args) -> int:
             recs = qualification.list_records()
             _out(recs, args.json,
                  "\n".join(f"{r['record_id']:48} {r['subject']['deployment']:20} "
-                           f"{r['scope']['risk_tier']} {r['decision']:20} [{r['status']}]"
+                           f"{C.risk_tier_label(r['scope']['risk_tier']):22} {r['decision']:20} [{r['status']}]"
                            for r in recs) or "(no qualification records)")
         elif args.q_cmd == "show":
             _out(qualification.get_record(args.record), args.json)
@@ -959,7 +960,7 @@ def cmd_qualification(args) -> int:
             recs = sorted(recs, key=lambda r: r.get("recorded_at", ""), reverse=True)
             _out(recs, args.json,
                  "\n".join(f"{r['recorded_at'][:19]}  {r['record_id']:16} "
-                           f"{r['subject']['deployment']:20} {r['scope']['risk_tier']} "
+                           f"{r['subject']['deployment']:20} {C.risk_tier_label(r['scope']['risk_tier']):22} "
                            f"{r['decision']:20} [{r['status']}]"
                            for r in recs) or "(no qualification history)")
             return 0
@@ -1031,7 +1032,8 @@ def cmd_journey(args) -> int:
             items = journeys.list_journeys()
             _out(items, args.json,
                  "\n".join(f"{j['id']:14} {j['title']}\n"
-                           + "".join(f"    {s['area']}  {s.get('phase') or ''} ({s['id']})\n"
+                           + "".join(f"    {C.competency_label(s['area'])}  "
+                                      f"{C.identifier_label(s.get('phase')) if s.get('phase') else ''} ({s['id']})\n"
                                      for s in j["steps"])
                            for j in items) or "(no journeys)")
         elif args.journey_cmd == "show":
@@ -1159,7 +1161,7 @@ typical workflow:
 
   # audit a repository's engineering practice against AIES (maturity per area):
   aies audit .                                 scorecard + ranked recommendations
-  aies audit . --gate --rt 2                   CI gate: fail if RT2 evidence is missing
+  aies audit . --gate --rt 2                   CI gate: fail if RT2 — Moderate evidence is missing
 
   # supply-chain provenance:
   aies deployment verify-artifact <id> --artifact model.bin   check checksum/signature
@@ -1216,7 +1218,7 @@ def build_parser() -> argparse.ArgumentParser:
                         "Authoritative — sets --area/--profile; --rt/--repeats override it")
     q.add_argument("--profile", default="enterprise")
     q.add_argument("--rt", type=int, choices=(1, 2, 3, 4), default=None,
-                   help="scoped risk tier (default RT2, or the assessment's tier)")
+                   help="scoped risk tier (default RT2 — Moderate, or the assessment's tier)")
     q.add_argument("--area", action="append", default=None,
                    help="competency area (repeatable); default CA-05")
     q.add_argument("--all-areas", action="store_true",
@@ -1321,7 +1323,7 @@ def build_parser() -> argparse.ArgumentParser:
                     help="evaluate against this risk tier's required evidence")
     au.add_argument("--gate", action="store_true",
                     help="CI mode: non-zero exit if RT-required evidence is missing "
-                         "(implies the given --rt, default RT2)")
+                         "(implies the given --rt, default RT2 — Moderate)")
     au.add_argument("--attest", default=None, metavar="FILE",
                     help="attestation JSON for non-detectable practices "
                          "({items:[{id, evidence}]})")

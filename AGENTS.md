@@ -43,7 +43,7 @@ This repository can audit its own conformance:
 
 ```
 aies audit .            # maturity per area, verified/asserted/gap
-aies audit . --rt 2     # against RT2's required evidence
+aies audit . --rt 2     # against RT2 — Moderate required evidence
 ```
 
 Contributions should not regress the repo's audit posture; ideally they improve

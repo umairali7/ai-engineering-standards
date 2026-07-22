@@ -6,7 +6,7 @@
 | **Status** | Review |
 | **Audience** | Architects · Platform teams · Security engineers |
 
-How the cross-cutting domains X01–X15 ([Taxonomy §2](../Shared/Taxonomy/README.md#2-cross-cutting-domains-x01x15)) manifest in the architecture of an Enterprise AI Engineering Platform. This document extends the [Core Reference Architecture (AIES-AEAR-CORE-01)](core-reference-architecture.md); plane names and requirement references below refer to that document.
+How the cross-cutting domains X01–X15 ([Taxonomy §2](../Shared/Taxonomy/README.md#2-cross-cutting-domains-x01x15)) manifest in the architecture of an Enterprise AI Engineering Platform. This document extends the [Core Reference Architecture (AIES-AEAR-CORE-01 — Core Reference Architecture)](core-reference-architecture.md); plane names and requirement references below refer to that document.
 
 The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", and "MAY" in this document are to be interpreted as described in RFC 2119.
 
@@ -56,9 +56,9 @@ The platform is partitioned into security zones with default-deny boundaries bet
 
 Normative rules:
 
-- [AIES-AEAR-XC-01-R01] The Execution Zone MUST be treated as compromisable: nothing in it may hold long-lived credentials, reach the Control Zone's administrative interfaces, or egress except through the Egress Zone.
-- [AIES-AEAR-XC-01-R02] Content that originated outside the platform trust boundary (retrieved documents, web content, third-party code) MUST be tagged as untrusted through context assembly, and guardrail policy MUST be able to condition action decisions on the presence of untrusted content in an agent's context.
-- [AIES-AEAR-XC-01-R03] Zone boundaries MUST be enforced by network and platform controls, not by agent instructions.
+- [AIES-AEAR-XC-01-R01 — Cross-Cutting Concerns, requirement 01] The Execution Zone MUST be treated as compromisable: nothing in it may hold long-lived credentials, reach the Control Zone's administrative interfaces, or egress except through the Egress Zone.
+- [AIES-AEAR-XC-01-R02 — Cross-Cutting Concerns, requirement 02] Content that originated outside the platform trust boundary (retrieved documents, web content, third-party code) MUST be tagged as untrusted through context assembly, and guardrail policy MUST be able to condition action decisions on the presence of untrusted content in an agent's context.
+- [AIES-AEAR-XC-01-R03 — Cross-Cutting Concerns, requirement 03] Zone boundaries MUST be enforced by network and platform controls, not by agent instructions.
 
 ### 2.2 Agent Identity Architecture
 
@@ -70,9 +70,9 @@ Agent Definition (ART-14)          ── what kind of agent (versioned, approve
          └── Task-scoped grant     ── what it may do right now (expires with task)
 ```
 
-- [AIES-AEAR-XC-01-R04] Credentials MUST attach to the task-scoped grant, not to the definition or instance, so that compromise of a running agent yields only that task's authority for that task's duration.
-- [AIES-AEAR-XC-01-R05] Every agent identity MUST resolve to an accountable human owner and to the ART-14 version in force; ownerless agents MUST NOT run.
-- [AIES-AEAR-XC-01-R06] Agent identity events (issuance, grant, expiry, revocation) MUST be recorded as ART-15 audit records.
+- [AIES-AEAR-XC-01-R04 — Cross-Cutting Concerns, requirement 04] Credentials MUST attach to the task-scoped grant, not to the definition or instance, so that compromise of a running agent yields only that task's authority for that task's duration.
+- [AIES-AEAR-XC-01-R05 — Cross-Cutting Concerns, requirement 05] Every agent identity MUST resolve to an accountable human owner and to the ART-14 version in force; ownerless agents MUST NOT run.
+- [AIES-AEAR-XC-01-R06 — Cross-Cutting Concerns, requirement 06] Agent identity events (issuance, grant, expiry, revocation) MUST be recorded as ART-15 audit records.
 
 AI safety (X06) inherits this machinery: containment (zones), bounded authority (task-scoped grants), and preserved human control (autonomy degradation, §6) are the platform's safety case.
 
@@ -82,9 +82,9 @@ Context is where privacy risk concentrates: the Context & Knowledge Plane aggreg
 
 ### 3.1 Classification-Driven Data Flow
 
-- [AIES-AEAR-XC-01-R07] Every knowledge item MUST carry a data classification at ingestion (per AIES-AEAR-CORE-01-R20), including whether it contains personal data and which jurisdiction(s) govern it.
-- [AIES-AEAR-XC-01-R08] Classification MUST propagate through retrieval and context assembly, and the model gateway MUST route (or refuse) requests based on the highest classification present in the assembled context (AIES-AEAR-CORE-01-R18).
-- [AIES-AEAR-XC-01-R09] Personal data SHOULD be minimized, pseudonymized, or masked during context assembly unless the task demonstrably requires it; the decision MUST be policy-driven, not agent-discretionary.
+- [AIES-AEAR-XC-01-R07 — Cross-Cutting Concerns, requirement 07] Every knowledge item MUST carry a data classification at ingestion (per AIES-AEAR-CORE-01-R20 — Core Reference Architecture, requirement 20), including whether it contains personal data and which jurisdiction(s) govern it.
+- [AIES-AEAR-XC-01-R08 — Cross-Cutting Concerns, requirement 08] Classification MUST propagate through retrieval and context assembly, and the model gateway MUST route (or refuse) requests based on the highest classification present in the assembled context (AIES-AEAR-CORE-01-R18 — Core Reference Architecture, requirement 18).
+- [AIES-AEAR-XC-01-R09 — Cross-Cutting Concerns, requirement 09] Personal data SHOULD be minimized, pseudonymized, or masked during context assembly unless the task demonstrably requires it; the decision MUST be policy-driven, not agent-discretionary.
 
 ### 3.2 Residency Architecture
 
@@ -101,9 +101,9 @@ Residency domain A (jurisdiction A)         Residency domain B (jurisdiction B)
                      (policy, identity, audit metadata — not payload data)
 ```
 
-- [AIES-AEAR-XC-01-R10] Where residency obligations apply, context payloads MUST be assembled, served to models, and retained within the residency domain; only governance metadata (identifiers, classifications, audit references) MAY cross domains.
-- [AIES-AEAR-XC-01-R11] Observability captures of prompts/context (AIES-AEAR-CORE-01-R22, R36) are themselves personal-data stores where they contain personal data, and MUST inherit retention, access, and residency policy accordingly.
-- [AIES-AEAR-XC-01-R12] The platform MUST support erasure obligations: given a data-subject reference, locate and remediate affected knowledge items, derived indexes (including vector representations), and retained context captures.
+- [AIES-AEAR-XC-01-R10 — Cross-Cutting Concerns, requirement 10] Where residency obligations apply, context payloads MUST be assembled, served to models, and retained within the residency domain; only governance metadata (identifiers, classifications, audit references) MAY cross domains.
+- [AIES-AEAR-XC-01-R11 — Cross-Cutting Concerns, requirement 11] Observability captures of prompts/context (AIES-AEAR-CORE-01-R22 — Core Reference Architecture, requirement 22, R36) are themselves personal-data stores where they contain personal data, and MUST inherit retention, access, and residency policy accordingly.
+- [AIES-AEAR-XC-01-R12 — Cross-Cutting Concerns, requirement 12] The platform MUST support erasure obligations: given a data-subject reference, locate and remediate affected knowledge items, derived indexes (including vector representations), and retained context captures.
 
 ## 4. Compliance Evidence Generation (X03)
 
@@ -120,10 +120,10 @@ Entitlement grants/expiries   →   least-authority operation
 Gate approvals (X07)          →   human oversight actually exercised
 ```
 
-- [AIES-AEAR-XC-01-R13] The Governance Plane MUST maintain a machine-readable mapping from each external obligation the organization asserts (regulation, standard clause, internal policy) to the platform controls and evidence sources that satisfy it.
-- [AIES-AEAR-XC-01-R14] Compliance reports MUST be reproducible: the same query over the same evidence period yields the same report, and reports cite the underlying ART-15/ART-12 records.
-- [AIES-AEAR-XC-01-R15] Evidence stores MUST be tamper-evident and retained per the longest applicable obligation; retention conflicts with privacy erasure (§3) MUST be resolved by documented policy, not ad hoc.
-- [AIES-AEAR-XC-01-R16] Control failures (guardrail engine outage, evaluation gaps, missing audit records) MUST themselves be recorded and reportable — absence of evidence must be detectable.
+- [AIES-AEAR-XC-01-R13 — Cross-Cutting Concerns, requirement 13] The Governance Plane MUST maintain a machine-readable mapping from each external obligation the organization asserts (regulation, standard clause, internal policy) to the platform controls and evidence sources that satisfy it.
+- [AIES-AEAR-XC-01-R14 — Cross-Cutting Concerns, requirement 14] Compliance reports MUST be reproducible: the same query over the same evidence period yields the same report, and reports cite the underlying ART-15/ART-12 records.
+- [AIES-AEAR-XC-01-R15 — Cross-Cutting Concerns, requirement 15] Evidence stores MUST be tamper-evident and retained per the longest applicable obligation; retention conflicts with privacy erasure (§3) MUST be resolved by documented policy, not ad hoc.
+- [AIES-AEAR-XC-01-R16 — Cross-Cutting Concerns, requirement 16] Control failures (guardrail engine outage, evaluation gaps, missing audit records) MUST themselves be recorded and reportable — absence of evidence must be detectable.
 
 ## 5. Cost Management Architecture (X10)
 
@@ -131,8 +131,8 @@ AI spend is high-variance and per-request; cost management must therefore be **i
 
 ### 5.1 Token and Resource Accounting
 
-- [AIES-AEAR-XC-01-R17] The model gateway MUST meter every request (tokens in/out, model class, latency) and attribute it to principal, task, team/tenant, and cost center at request time (AIES-AEAR-CORE-01-R54).
-- [AIES-AEAR-XC-01-R18] Execution Plane compute and Context & Knowledge Plane storage/retrieval SHOULD be attributed with the same keys, so total cost-per-task is computable.
+- [AIES-AEAR-XC-01-R17 — Cross-Cutting Concerns, requirement 17] The model gateway MUST meter every request (tokens in/out, model class, latency) and attribute it to principal, task, team/tenant, and cost center at request time (AIES-AEAR-CORE-01-R54 — Core Reference Architecture, requirement 54).
+- [AIES-AEAR-XC-01-R18 — Cross-Cutting Concerns, requirement 18] Execution Plane compute and Context & Knowledge Plane storage/retrieval SHOULD be attributed with the same keys, so total cost-per-task is computable.
 
 ### 5.2 Budget and Quota Enforcement
 
@@ -145,9 +145,9 @@ Organization budget
            └── Per-task ceilings (declared in ART-05 or ART-14)
 ```
 
-- [AIES-AEAR-XC-01-R19] Budget exhaustion MUST fail closed with escalation (AIES-AEAR-CORE-01-R17); the platform MUST distinguish soft thresholds (alert, require approval to continue) from hard ceilings (halt).
-- [AIES-AEAR-XC-01-R20] Runaway-consumption protection MUST exist at per-task granularity (loop detection, per-task token ceilings), independent of team budgets — one defective agent run must not consume a team's month.
-- [AIES-AEAR-XC-01-R21] Cost telemetry SHOULD flow to the same Observability Plane dashboards as quality telemetry, so cost-quality trade-offs (EV5 Efficiency) are visible where routing policy is decided.
+- [AIES-AEAR-XC-01-R19 — Cross-Cutting Concerns, requirement 19] Budget exhaustion MUST fail closed with escalation (AIES-AEAR-CORE-01-R17 — Core Reference Architecture, requirement 17); the platform MUST distinguish soft thresholds (alert, require approval to continue) from hard ceilings (halt).
+- [AIES-AEAR-XC-01-R20 — Cross-Cutting Concerns, requirement 20] Runaway-consumption protection MUST exist at per-task granularity (loop detection, per-task token ceilings), independent of team budgets — one defective agent run must not consume a team's month.
+- [AIES-AEAR-XC-01-R21 — Cross-Cutting Concerns, requirement 21] Cost telemetry SHOULD flow to the same Observability Plane dashboards as quality telemetry, so cost-quality trade-offs (EV5 Efficiency) are visible where routing policy is decided.
 
 Cost optimization levers the architecture should expose as **policy**, not code change: model-class routing (cheaper models for lower-EV-requirement tasks), context budget limits per task type, caching of assembled context and inference where determinism permits, and batch scheduling of non-interactive work.
 
@@ -167,8 +167,8 @@ Primary provider/deployment degraded?
   5. No serving path → degrade autonomy (§6.2)
 ```
 
-- [AIES-AEAR-XC-01-R22] Failover MUST preserve data-handling constraints: an alternate provider outside the request's data-handling class MUST NOT be used, even during an outage ([AIES-AEAR-CORE-01-R18] holds under failure).
-- [AIES-AEAR-XC-01-R23] Failover events MUST be recorded in ART-15 with the substituted model version, since output provenance changes.
+- [AIES-AEAR-XC-01-R22 — Cross-Cutting Concerns, requirement 22] Failover MUST preserve data-handling constraints: an alternate provider outside the request's data-handling class MUST NOT be used, even during an outage ([AIES-AEAR-CORE-01-R18 — Core Reference Architecture, requirement 18] holds under failure).
+- [AIES-AEAR-XC-01-R23 — Cross-Cutting Concerns, requirement 23] Failover events MUST be recorded in ART-15 with the substituted model version, since output provenance changes.
 
 ### 6.2 Degradation to Lower Autonomy
 
@@ -176,38 +176,38 @@ The platform's signature reliability pattern (AIES-AEAR-CORE-01 §2 principle 6,
 
 | Failure | Degradation |
 |---------|-------------|
-| Evaluation pipeline down | Autonomy increases blocked; AL4 tasks drop to AL3 sampling via human queue |
-| Observability ingestion down | AL3–AL4 execution halts (unobserved autonomy violates X07); AL1–AL2 may continue |
-| Guardrail policy engine down | Affected action classes denied (fail closed, AIES-AEAR-CORE-01-R32) |
+| Evaluation pipeline down | Autonomy increases blocked; AL4 — Autonomous tasks drop to AL3 — Delegated sampling via human queue |
+| Observability ingestion down | AL3 — Delegated through AL4 — Autonomous execution halts (unobserved autonomy violates X07); AL1 — Assisted through AL2 — Collaborative may continue |
+| Guardrail policy engine down | Affected action classes denied (fail closed, AIES-AEAR-CORE-01-R32 — Core Reference Architecture, requirement 32) |
 | Model quality regression detected | Affected task types drop one autonomy level pending review |
-| Anomalous agent behavior | Instance suspended; agent type may be demoted (AIES-AEAR-CORE-01-R41) |
+| Anomalous agent behavior | Instance suspended; agent type may be demoted (AIES-AEAR-CORE-01-R41 — Core Reference Architecture, requirement 41) |
 
-- [AIES-AEAR-XC-01-R24] Each degraded mode MUST have a defined trigger, a defined reduced-autonomy state, a human notification path, and a defined recovery procedure — and MUST be exercised through testing, not merely documented.
-- [AIES-AEAR-XC-01-R25] Recovery to normal autonomy MUST be an explicit, human-authorized action, not automatic on signal clearance.
+- [AIES-AEAR-XC-01-R24 — Cross-Cutting Concerns, requirement 24] Each degraded mode MUST have a defined trigger, a defined reduced-autonomy state, a human notification path, and a defined recovery procedure — and MUST be exercised through testing, not merely documented.
+- [AIES-AEAR-XC-01-R25 — Cross-Cutting Concerns, requirement 25] Recovery to normal autonomy MUST be an explicit, human-authorized action, not automatic on signal clearance.
 
 ## 7. Performance and Scalability (X11, X12)
 
 ### 7.1 Latency Classes
 
 - **Interactive** (IDE/chat assistance): human-perceptible latency budget; guardrail and entitlement decisions on this path MUST be engineered for low latency (caching of policy decisions with bounded staleness MAY be used where policy semantics permit).
-- **Reviewable** (AL2 draft production): seconds-to-minutes; throughput matters more than latency.
-- **Delegated/batch** (AL3–AL4 workflows): schedulable; optimize for cost and evaluation coverage over speed.
+- **Reviewable** (AL2 — Collaborative draft production): seconds-to-minutes; throughput matters more than latency.
+- **Delegated/batch** (AL3 — Delegated through AL4 — Autonomous workflows): schedulable; optimize for cost and evaluation coverage over speed.
 
-[AIES-AEAR-XC-01-R26] Task types MUST declare a latency class, and the Model and Orchestration Planes MUST route and prioritize by it; interactive traffic MUST NOT be starved by batch agent workloads.
+[AIES-AEAR-XC-01-R26 — Cross-Cutting Concerns, requirement 26] Task types MUST declare a latency class, and the Model and Orchestration Planes MUST route and prioritize by it; interactive traffic MUST NOT be starved by batch agent workloads.
 
 ### 7.2 Scaling Surfaces
 
 | Surface | Scaling behavior | Architectural note |
 |---------|------------------|--------------------|
-| Agent concurrency | Horizontal (Orchestration/Execution) | Bounded by policy per team/tenant (AIES-AEAR-CORE-01-R57), not by accident |
+| Agent concurrency | Horizontal (Orchestration/Execution) | Bounded by policy per team/tenant (AIES-AEAR-CORE-01-R57 — Core Reference Architecture, requirement 57), not by accident |
 | Inference throughput | Provider capacity + gateway queueing | Multi-provider routing doubles as capacity management |
 | Retrieval | Read-heavy; index sharding/replication | Entitlement filtering must scale with the index, not post-filter |
 | Telemetry & ART-15 | Highest-volume write path in the platform | Append-optimized store; retention tiering from day one |
-| Evaluation | Grows with output volume × sampling rate | Sampling policy is the cost lever; RT3+ SHOULD be sampled at higher rates |
+| Evaluation | Grows with output volume × sampling rate | Sampling policy is the cost lever; RT3 — Significant and above SHOULD be sampled at higher rates |
 
 ## 8. Remaining Domains in Brief
 
-- **X05 Risk Management** — risk tiers (RT1–RT4) are the platform's load-bearing risk abstraction; the tier assignment mechanism (who classifies tasks, how disputes escalate) lives in AEOS, while the platform MUST make the tier machine-readable on every task and enforce tier-derived policy everywhere (AIES-AEAR-CORE-01-R07, R44).
+- **X05 Risk Management** — risk tiers (RT1 — Minimal through RT4 — Critical) are the platform's load-bearing risk abstraction; the tier assignment mechanism (who classifies tasks, how disputes escalate) lives in AEOS, while the platform MUST make the tier machine-readable on every task and enforce tier-derived policy everywhere (AIES-AEAR-CORE-01-R07 — Core Reference Architecture, requirement 07, R44).
 - **X07 Human Oversight** — architecturally realized as approval consoles and dashboards (Interaction Plane), gates (Orchestration), sampling queues (Observability), and human-only roles (Governance); see AIES-AEAR-CORE-01 §4, §12.
 - **X08 Documentation** — platform configuration (Agent Definitions, workflows, policy-as-code) is documentation-as-code and MUST be versioned with review history; generated documentation inherits provenance labeling.
 - **X09 Knowledge Management** — the Context & Knowledge Plane is X09's architectural home; ART-13 lifecycle is its governing process.
@@ -218,9 +218,9 @@ The platform's signature reliability pattern (AIES-AEAR-CORE-01 §2 principle 6,
 
 ## Related Documents
 
-- [AIES-AEAR-CORE-01 — Core Reference Architecture](core-reference-architecture.md)
-- [AIES-AEAR-BP-00 — Blueprint Catalog](blueprints/README.md) (industry-specific manifestations of these concerns)
-- [Taxonomy (AIES-SHARED-02)](../Shared/Taxonomy/README.md) · [Glossary (AIES-SHARED-01)](../Shared/Glossary/README.md)
+- [AIES-AEAR-CORE-01 — Core Reference Architecture — Enterprise AI Engineering Platform](core-reference-architecture.md)
+- [AIES-AEAR-BP-00 — AEAR Blueprint Catalog](blueprints/README.md) (industry-specific manifestations of these concerns)
+- [Taxonomy (AIES-SHARED-02 — Taxonomy)](../Shared/Taxonomy/README.md) · [Glossary (AIES-SHARED-01 — Glossary)](../Shared/Glossary/README.md)
 
 ## References
 

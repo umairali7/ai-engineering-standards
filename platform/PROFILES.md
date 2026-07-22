@@ -10,7 +10,7 @@ A **profile** is a weighting preset that expresses an organization's emphasis
 when qualifying a deployment. It changes *how much each competency area and
 each evaluation dimension counts* — never the pass/fail thresholds. The gates
 and statistical minimums are engine constants from
-[AIES-AESQS-CS-01](../AESQS/capability-scoring.md); **no profile can relax
+[AIES-AESQS-CS-01 — Capability Scoring](../AESQS/capability-scoring.md); **no profile can relax
 them** (PLATFORM.md design decision D3). A profile makes a qualification
 emphasize what you care about; it can never make an unsafe model look safe.
 
@@ -19,15 +19,15 @@ emphasize what you care about; it can never make an unsafe model look safe.
 Two knobs, both bounded:
 
 - **`area_weights`** — relative emphasis across competency areas
-  [CA-01…CA-12](../AESQS/competency-framework.md). An area at weight `2.0`
+  [CA-01 — AI-Native SDLC Foundations through CA-12 — Governance, Risk & AI Safety](../AESQS/competency-framework.md). An area at weight `2.0`
   counts twice as much toward the overall picture as one at `1.0`; unlisted
   areas default to `1.0`. This shapes *which competencies dominate the summary*.
 - **`dimension_weight_adjustments`** — small shifts (±0.05 max per dimension,
-  per [AIES-AESQS-CS-01-R03](../AESQS/capability-scoring.md)) to the per-tier
-  [EV1–EV6](../Shared/Taxonomy/README.md#8-evaluation-dimensions-ev1ev6) weights.
+  per [AIES-AESQS-CS-01-R03 — Risk-tier weight adjustments remain bounded](../AESQS/capability-scoring.md)) to the per-tier
+  [EV1 — Correctness through EV6 — Traceability](../Shared/Taxonomy/README.md#8-evaluation-dimensions-ev1ev6) weights.
   The Profile Loader rejects any adjustment beyond the bound, any set that
   fails to sum to 1.0, or any that drops the combined EV3+EV6 (safety +
-  traceability) weight below the RT3/RT4 floor.
+  traceability) weight below the RT3 — Significant through RT4 — Critical floor.
 
 What a profile **cannot** touch: the EV3 safety gate, the EV1/EV6 gates, the
 per-tier minimum sample sizes, or the confidence level. Those are the standard.
@@ -81,10 +81,10 @@ which is exactly the ambiguity versioning exists to remove.
 
 ## Related Documents
 
-- [Capability Scoring (AIES-AESQS-CS-01)](../AESQS/capability-scoring.md) — the weights, gates, and minimums profiles operate within
-- [Competency Framework (AIES-AESQS-CF-01)](../AESQS/competency-framework.md) — the CA-01…CA-12 areas
-- [Platform Specification (AIES-DOC-06) §5.2, §6](../docs/PLATFORM.md)
-- [Deployments (AIES-PLAT-03)](DEPLOYMENTS.md) · [Guide (AIES-PLAT-01)](GUIDE.md)
+- [Capability Scoring (AIES-AESQS-CS-01 — Capability Scoring)](../AESQS/capability-scoring.md) — the weights, gates, and minimums profiles operate within
+- [Competency Framework (AIES-AESQS-CF-01 — Competency Framework)](../AESQS/competency-framework.md) — the CA-01…CA-12 areas
+- [AIES-DOC-06 — Engineering Assessment Platform Specification](../docs/PLATFORM.md)
+- [AIES-PLAT-03 — Deployments — Qualify Deployments, Not Models](DEPLOYMENTS.md) · [AIES-PLAT-01 — AIES Platform — Architecture & Run Guide](GUIDE.md)
 
 ## References
 

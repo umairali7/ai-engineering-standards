@@ -6,7 +6,7 @@
 | **Status** | Review |
 | **Audience** | Architects · Platform teams · Engineering leadership |
 
-Adaptation of the [Core Reference Architecture (AIES-AEAR-CORE-01)](../core-reference-architecture.md) for online retailers, marketplaces, and omnichannel commerce estates. Assumes the [Enterprise Platform blueprint](enterprise-platform.md) as baseline and adds the constraints of consumer scale, payment adjacency, and an engineering culture built on rapid experimentation.
+Adaptation of the [Core Reference Architecture (AIES-AEAR-CORE-01 — Core Reference Architecture)](../core-reference-architecture.md) for online retailers, marketplaces, and omnichannel commerce estates. Assumes the [Enterprise Platform blueprint](enterprise-platform.md) as baseline and adds the constraints of consumer scale, payment adjacency, and an engineering culture built on rapid experimentation.
 
 The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", and "MAY" in this document are to be interpreted as described in RFC 2119.
 
@@ -24,37 +24,37 @@ E-commerce engineering is defined by a tension the platform must make explicit r
 
 ## 2. Risk-Tier Profile
 
-Typical defaults; per [AIES-AEAR-BP-00-R01](README.md), validate locally.
+Typical defaults; per [AIES-AEAR-BP-00-R01 — Industry Blueprints, requirement 01](README.md), validate locally.
 
 | Task type | Typical tier | Rationale | Default max AL |
 |-----------|-------------|-----------|----------------|
-| Internal tooling, test scaffolding, docs | RT1 | Low blast radius | AL4 |
-| Storefront feature code behind experiment flags and review | RT2 | Contained by flags, canaries, and existing gates | AL3 |
-| Search, ranking, and recommendation pipeline changes | RT2–RT3 | Revenue-shaping at scale; escalates to RT3 where output is a regulated claim (availability, price ordering) | AL3 → AL2 |
-| Pricing, promotion, and tax-calculation logic | RT3 | Consumer-protection exposure; systematic error at scale | AL2 |
-| Checkout flow, order capture, and inventory commitment | RT3 | Direct revenue path; customer-facing behavior per [Taxonomy §4](../../Shared/Taxonomy/README.md#4-risk-tiers-rt1rt4) | AL2 |
-| **Payment processing, stored-credential handling, refunds** | **RT4** | Cardholder-data scope; financial transactions are RT4 by definition ([AIES-AEAR-CORE-01-R29]) | AL1 |
-| Customer PII stores, consent management, deletion pipelines | RT4 | Regulated data; deletion errors are irreversible in both directions | AL1 |
-| Fraud-screening rules for orders and accounts | RT4 | Control-system degradation is not observable in ordinary tests | AL1 |
+| Internal tooling, test scaffolding, docs | RT1 — Minimal | Low blast radius | AL4 — Autonomous |
+| Storefront feature code behind experiment flags and review | RT2 — Moderate | Contained by flags, canaries, and existing gates | AL3 — Delegated |
+| Search, ranking, and recommendation pipeline changes | RT2 — Moderate–RT3 — Significant | Revenue-shaping at scale; escalates to RT3 — Significant where output is a regulated claim (availability, price ordering) | AL3 — Delegated → AL2 — Collaborative |
+| Pricing, promotion, and tax-calculation logic | RT3 — Significant | Consumer-protection exposure; systematic error at scale | AL2 — Collaborative |
+| Checkout flow, order capture, and inventory commitment | RT3 — Significant | Direct revenue path; customer-facing behavior per [Taxonomy §4](../../Shared/Taxonomy/README.md#4-risk-tiers-rt1rt4) | AL2 — Collaborative |
+| **Payment processing, stored-credential handling, refunds** | **RT4 — Critical** | Cardholder-data scope; financial transactions are RT4 — Critical by definition ([AIES-AEAR-CORE-01-R29 — Core Reference Architecture, requirement 29]) | AL1 — Assisted |
+| Customer PII stores, consent management, deletion pipelines | RT4 — Critical | Regulated data; deletion errors are irreversible in both directions | AL1 — Assisted |
+| Fraud-screening rules for orders and accounts | RT4 — Critical | Control-system degradation is not observable in ordinary tests | AL1 — Assisted |
 
-[AIES-AEAR-BP-ECOMMERCE-R01] Any engineering task whose change surface intersects the cardholder-data environment MUST be classified RT4, and the intersection check MUST be structural (dependency and deployment-target analysis), not declared by the task author.
+[AIES-AEAR-BP-ECOMMERCE-R01] Any engineering task whose change surface intersects the cardholder-data environment MUST be classified RT4 — Critical, and the intersection check MUST be structural (dependency and deployment-target analysis), not declared by the task author.
 
-[AIES-AEAR-BP-ECOMMERCE-R02] Changes to price computation, promotion eligibility, or tax logic MUST be classified RT3 or higher even when the code change is small, because the blast radius is every concurrent shopper.
+[AIES-AEAR-BP-ECOMMERCE-R02] Changes to price computation, promotion eligibility, or tax logic MUST be classified RT3 — Significant or higher even when the code change is small, because the blast radius is every concurrent shopper.
 
 ## 3. Architecture Deltas from the Core
 
 ### 3.1 Topology
 
-Multi-tenant or hybrid per [AIES-AEAR-CORE-01 §13](../core-reference-architecture.md#13-deployment-topologies). Externally served models MAY handle RT1–RT2 work; tasks whose context carries customer PII or payment-adjacent data route via the model gateway's data-handling-class routing ([AIES-AEAR-CORE-01-R18]) to approved deployments only. Marketplace operators serving third-party sellers SHOULD treat seller data segregation with the multi-tenant isolation rules of [AIES-AEAR-CORE-01-R49].
+Multi-tenant or hybrid per [AIES-AEAR-CORE-01 — Core Reference Architecture §13](../core-reference-architecture.md#13-deployment-topologies). Externally served models MAY handle RT1 — Minimal through RT2 — Moderate work; tasks whose context carries customer PII or payment-adjacent data route via the model gateway's data-handling-class routing ([AIES-AEAR-CORE-01-R18 — Core Reference Architecture, requirement 18]) to approved deployments only. Marketplace operators serving third-party sellers SHOULD treat seller data segregation with the multi-tenant isolation rules of [AIES-AEAR-CORE-01-R49 — Core Reference Architecture, requirement 49].
 
 ### 3.2 Plane-Level Deltas
 
 | Plane | E-commerce delta |
 |-------|------------------|
 | Interaction | Oversight dashboards surface **trading-calendar state** (normal / restricted / freeze) alongside autonomy levels, so approvers see the seasonal risk posture at every gate |
-| Orchestration | The workflow engine integrates with the **experimentation platform**: AI-produced RT2 changes ship behind experiment flags with automated rollback criteria as a standard workflow step. Autonomy envelopes are **calendar-modulated** (see [AIES-AEAR-BP-ECOMMERCE-R03]) |
-| Model | Latency-class routing ([AIES-AEAR-CORE-01-R56]) matters doubly: interactive assistance during incident response on the revenue path gets priority routing. Cost attribution per team is the primary velocity governor |
-| Context & Knowledge | Customer PII and cardholder data MUST NOT enter shared knowledge stores; context for storefront work uses masked or synthetic order data ([AIES-AEAR-BP-ECOMMERCE-R04]). Consent and purpose tags propagate through retrieval per [AIES-AEAR-CORE-01-R20] |
+| Orchestration | The workflow engine integrates with the **experimentation platform**: AI-produced RT2 — Moderate changes ship behind experiment flags with automated rollback criteria as a standard workflow step. Autonomy envelopes are **calendar-modulated** (see [AIES-AEAR-BP-ECOMMERCE-R03]) |
+| Model | Latency-class routing ([AIES-AEAR-CORE-01-R56 — Core Reference Architecture, requirement 56]) matters doubly: interactive assistance during incident response on the revenue path gets priority routing. Cost attribution per team is the primary velocity governor |
+| Context & Knowledge | Customer PII and cardholder data MUST NOT enter shared knowledge stores; context for storefront work uses masked or synthetic order data ([AIES-AEAR-BP-ECOMMERCE-R04]). Consent and purpose tags propagate through retrieval per [AIES-AEAR-CORE-01-R20 — Core Reference Architecture, requirement 20] |
 | Execution | Sandboxes have no network reachability to the cardholder-data environment — structurally absent, not policy-denied. Load-realistic staging (traffic replay on synthetic data) stands in for production verification of peak-path changes |
 | Guardrail | See §4. Guardrail policy consumes the trading calendar as a policy input |
 | Observability | Evaluation pipelines correlate agent-produced changes with **experiment outcomes and conversion metrics**, giving AESQS qualification evidence a direct business-metric dimension. Anomaly detection baselines are season-aware |
@@ -64,37 +64,37 @@ Multi-tenant or hybrid per [AIES-AEAR-CORE-01 §13](../core-reference-architectu
 
 Peak-season change freezes are the industry's existing risk instrument; the platform encodes them as autonomy policy rather than as informal custom.
 
-[AIES-AEAR-BP-ECOMMERCE-R03] The Orchestration Plane MUST consume a change-controlled trading calendar and MUST reduce the maximum permissible autonomy level for designated revenue-path systems during restricted and freeze windows (e.g., AL3 → AL2 in restricted windows; RT2+ changes held entirely during freeze). Calendar overrides are break-glass events per [AIES-AEAR-CORE-01-R35].
+[AIES-AEAR-BP-ECOMMERCE-R03] The Orchestration Plane MUST consume a change-controlled trading calendar and MUST reduce the maximum permissible autonomy level for designated revenue-path systems during restricted and freeze windows (e.g., AL3 — Delegated → AL2 — Collaborative in restricted windows; RT2 — Moderate and above changes held entirely during freeze). Calendar overrides are break-glass events per [AIES-AEAR-CORE-01-R35 — Core Reference Architecture, requirement 35].
 
-This is an application of core principle 6 (*degrade toward human control*): elevated business risk moves autonomy downward on a schedule. Because the window and its end are pre-authorized in the change-controlled calendar, restoration after the window MAY be automatic (and MUST be audited) — unlike failure-triggered degradation, where recovery requires explicit human authorization per [AIES-AEAR-XC-01-R25](../cross-cutting-concerns.md#62-degradation-to-lower-autonomy).
+This is an application of core principle 6 (*degrade toward human control*): elevated business risk moves autonomy downward on a schedule. Because the window and its end are pre-authorized in the change-controlled calendar, restoration after the window MAY be automatic (and MUST be audited) — unlike failure-triggered degradation, where recovery requires explicit human authorization per [AIES-AEAR-XC-01-R25 — Cross-Cutting Concerns, requirement 25](../cross-cutting-concerns.md#62-degradation-to-lower-autonomy).
 
 ## 4. Domain-Specific Guardrails
 
-- **Cardholder-data scope lock** — deny agent actions (retrieval, execution, deployment) that would touch the cardholder-data environment unless the task is explicitly tiered RT4 with an AL1 workflow; the scope inventory is owned by ROLE-14 and change-controlled.
+- **Cardholder-data scope lock** — deny agent actions (retrieval, execution, deployment) that would touch the cardholder-data environment unless the task is explicitly tiered RT4 — Critical with an AL1 — Assisted workflow; the scope inventory is owned by ROLE-14 and change-controlled.
 - **PII egress inspection** — content inspection blocks customer identifiers, addresses, order histories, and payment tokens from prompts, assembled context, and model traffic to deployments not approved for that data class.
-- **Price-and-claim gate** — customer-visible text or logic asserting price, discount, availability, or delivery promises requires a human gate at RT3 regardless of change size.
-- **Experiment-flag enforcement** — agent-authored storefront changes at RT2+ MUST deploy behind an experiment or feature flag with a predefined rollback trigger; unflagged direct deployment is a guardrail denial.
-- **Freeze enforcement** — during freeze windows the action filter denies production-affecting actions on revenue-path systems for all principals, human and agent, with break-glass per [AIES-AEAR-CORE-01-R35].
+- **Price-and-claim gate** — customer-visible text or logic asserting price, discount, availability, or delivery promises requires a human gate at RT3 — Significant regardless of change size.
+- **Experiment-flag enforcement** — agent-authored storefront changes at RT2 — Moderate and above MUST deploy behind an experiment or feature flag with a predefined rollback trigger; unflagged direct deployment is a guardrail denial.
+- **Freeze enforcement** — during freeze windows the action filter denies production-affecting actions on revenue-path systems for all principals, human and agent, with break-glass per [AIES-AEAR-CORE-01-R35 — Core Reference Architecture, requirement 35].
 - **Consent-scope retrieval filter** — retrieval excludes customer data whose consent basis does not cover internal engineering use.
 
 ## 5. Example Use Cases
 
 | Use case | Phases | Typical RT | Typical AL |
 |----------|--------|-----------|------------|
-| Test-suite generation for a catalog service | P10 | RT2 | AL3 |
-| Storefront UI component refactor behind an experiment flag | P09 | RT2 | AL3 |
-| Search-ranking feature change with offline evaluation | P09, P10 | RT3 | AL2 |
-| Promotion-eligibility rule change before a sale event | P09 | RT3 | AL2 + merchandising gate |
-| Checkout latency optimization (peak-path) | P09, P11 | RT3 | AL2, held in freeze windows |
-| Refund-processing workflow change | P09 | RT4 | AL1 |
-| Consent-management pipeline modification | P09, X02 | RT4 | AL1 |
-| Dependency upgrades across internal tooling | P09, P10 | RT2 | AL3 with checkpoint sampling |
+| Test-suite generation for a catalog service | P10 | RT2 — Moderate | AL3 — Delegated |
+| Storefront UI component refactor behind an experiment flag | P09 | RT2 — Moderate | AL3 — Delegated |
+| Search-ranking feature change with offline evaluation | P09, P10 | RT3 — Significant | AL2 — Collaborative |
+| Promotion-eligibility rule change before a sale event | P09 | RT3 — Significant | AL2 — Collaborative + merchandising gate |
+| Checkout latency optimization (peak-path) | P09, P11 | RT3 — Significant | AL2 — Collaborative, held in freeze windows |
+| Refund-processing workflow change | P09 | RT4 — Critical | AL1 — Assisted |
+| Consent-management pipeline modification | P09, X02 | RT4 — Critical | AL1 — Assisted |
+| Dependency upgrades across internal tooling | P09, P10 | RT2 — Moderate | AL3 — Delegated with checkpoint sampling |
 
 ---
 
 ## Related Documents
 
-- [AIES-AEAR-BP-00 — Blueprint Catalog](README.md) · [AIES-AEAR-BP-ENTERPRISE — Enterprise Platform](enterprise-platform.md) · [AIES-AEAR-CORE-01 — Core Reference Architecture](../core-reference-architecture.md) · [AIES-AEAR-XC-01 — Cross-Cutting Concerns](../cross-cutting-concerns.md)
+- [AIES-AEAR-BP-00 — AEAR Blueprint Catalog](README.md) · [AIES-AEAR-BP-ENTERPRIS — Industry BlueprintE — Enterprise Platform](enterprise-platform.md) · [AIES-AEAR-CORE-01 — Core Reference Architecture — Enterprise AI Engineering Platform](../core-reference-architecture.md) · [AIES-AEAR-XC-01 — Cross-Cutting Concerns in Platform Architecture](../cross-cutting-concerns.md)
 
 ## References
 

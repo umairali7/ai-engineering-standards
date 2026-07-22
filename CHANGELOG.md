@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Canonical human-readable identifier convention** ([ADR-0010](adr/ADR-0010-Human-Readable-Identifier-Convention.md)): all reader-facing taxonomy identifiers use `CODE — Title`; raw codes remain only where a machine contract, path, flag, or stable record ID requires them. The shared renderer now covers competency areas, levels, roles, phases, domains, artifacts, evaluation dimensions, risk tiers, and autonomy levels.
+
+- **Human-readable risk and autonomy labels**: reader-facing reports, CLI output, dashboards, corpus/calibration views, documentation, examples, and templates now render canonical codes alongside their meanings (for example, `RT2 — Moderate` and `AL3 — Delegated`). Configuration and JSON values retain the canonical codes required by the engine.
+
+- **Risk-scoped ECM guidance**: the project README, platform README/Guide, platform specification, and AIES-ECM-01 now state in user-facing language that a run covers one tier, `--all-areas` covers all areas only at that tier, and `not assessed` means unknown evidence rather than a failed capability.
+
 - **One-command resumed automated evaluation**: `aies qualify --resume <run> --judge <deployment>` now scores (or safely reuses a prior score from) already-collected responses, aggregates, and writes Markdown, HTML, JSON, and ECM artifacts in one invocation. Optional human review declarations can travel in the same command; no separate `review` or `resume` handoff is required for routine evaluation.
 
 - **Human review without a grant**: `aies review` now accepts `--consider-advisory-review` and `--human-evaluation NAME`, persists that declaration in the review package, and renders it in the evidence report. This lets a human record consideration of automated advisory evidence and a qualitative or scored human evaluation on non-decisional runs; it deliberately does not bypass grant readiness.

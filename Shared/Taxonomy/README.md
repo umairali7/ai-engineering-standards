@@ -49,34 +49,34 @@ Domains that apply to every phase.
 | X04 | Governance | X09 | Knowledge Management | X14 | Accessibility |
 | X05 | Risk Management | X10 | Cost Optimization | X15 | Sustainability |
 
-## 3. Autonomy Levels (AL0–AL4)
+## 3. Autonomy Levels (AL0 — Manual through AL4 — Autonomous)
 
 How much independent authority an AI system holds for a given task. Autonomy is assigned **per task type, per risk tier** — never globally to a whole system.
 
 | Level | Name | Description | Human Role |
 |-------|------|-------------|------------|
-| **AL0** | Manual | Human performs the task; AI is not involved | Performer |
-| **AL1** | Assisted | AI suggests; human authors and decides | Author |
-| **AL2** | Collaborative | AI produces drafts/changes; human reviews every output before it takes effect | Reviewer (per item) |
-| **AL3** | Delegated | AI executes within a defined envelope; human approves at checkpoints and by sampling | Supervisor (per checkpoint) |
-| **AL4** | Autonomous | AI executes end-to-end within hard guardrails; human sets policy and audits outcomes | Auditor (per policy) |
+| **AL0 — Manual** | Manual | Human performs the task; AI is not involved | Performer |
+| **AL1 — Assisted** | Assisted | AI suggests; human authors and decides | Author |
+| **AL2 — Collaborative** | Collaborative | AI produces drafts/changes; human reviews every output before it takes effect | Reviewer (per item) |
+| **AL3 — Delegated** | Delegated | AI executes within a defined envelope; human approves at checkpoints and by sampling | Supervisor (per checkpoint) |
+| **AL4 — Autonomous** | Autonomous | AI executes end-to-end within hard guardrails; human sets policy and audits outcomes | Auditor (per policy) |
 
 Normative rules:
 
-- [AIES-SHARED-02-R01] Every AI-performed task MUST have a declared autonomy level.
-- [AIES-SHARED-02-R02] The maximum permissible autonomy level MUST be derived from the task's risk tier (see §4).
-- [AIES-SHARED-02-R03] Autonomy level increases MUST be evidence-driven (qualification data per [AESQS](../../AESQS/README.md)) and reversible.
+- [AIES-SHARED-02-R01 — Taxonomy, requirement 01] Every AI-performed task MUST have a declared autonomy level.
+- [AIES-SHARED-02-R02 — Taxonomy, requirement 02] The maximum permissible autonomy level MUST be derived from the task's risk tier (see §4).
+- [AIES-SHARED-02-R03 — Taxonomy, requirement 03] Autonomy level increases MUST be evidence-driven (qualification data per [AESQS](../../AESQS/README.md)) and reversible.
 
-## 4. Risk Tiers (RT1–RT4)
+## 4. Risk Tiers (RT1 — Minimal through RT4 — Critical)
 
 Classifies the blast radius of a task or change.
 
-| Tier | Name | Examples | Max Autonomy (default) |
-|------|------|----------|------------------------|
-| **RT1** | Minimal | Formatting, doc typos, test scaffolding, internal prototypes | AL4 |
-| **RT2** | Moderate | Feature code behind review, test suites, internal tooling | AL3 |
-| **RT3** | Significant | Production configuration, schema changes, auth-adjacent code, customer-facing behavior | AL2 |
-| **RT4** | Critical | Safety-critical systems, financial transactions, regulated data, irreversible actions | AL1 |
+| Risk tier | Examples | Max Autonomy (default) |
+|-----------|----------|------------------------|
+| **RT1 — Minimal** | Formatting, doc typos, test scaffolding, internal prototypes | AL4 — Autonomous |
+| **RT2 — Moderate** | Feature code behind review, test suites, internal tooling | AL3 — Delegated |
+| **RT3 — Significant** | Production configuration, schema changes, auth-adjacent code, customer-facing behavior | AL2 — Collaborative |
+| **RT4 — Critical** | Safety-critical systems, financial transactions, regulated data, irreversible actions | AL1 — Assisted |
 
 Organizations MAY tighten these defaults; they MUST NOT loosen them without a documented risk acceptance per [AEOS governance](../../AEOS/README.md).
 
@@ -157,11 +157,11 @@ Any change to this taxonomy is a breaking change for all modules and MUST go thr
 
 ## Related Documents
 
-- [Glossary (AIES-SHARED-01)](../Glossary/README.md) — canonical term definitions
-- [Shared Standards index (AIES-SHARED-00)](../README.md)
-- [SDLC Reference (AIES-DOC-04)](../../docs/SDLC.md) — detailed guidance for phases P01–P16
-- [Metadata Standard (AIES-STD-02)](../../docs/standards/metadata-standard.md) — the identifier scheme built on these codes
-- [Standards Crosswalk (AIES-DOC-07)](../../docs/CROSSWALK.md) — how the autonomy levels and risk tiers here map to CSA, ASDLC, the EU AI Act, ISO/IEC 42001, and NIST AI RMF
+- [Glossary (AIES-SHARED-01 — Glossary)](../Glossary/README.md) — canonical term definitions
+- [AIES-SHARED-00 — Shared Standards](../README.md)
+- [AIES-DOC-04 — SDLC Reference](../../docs/SDLC.md) — detailed guidance for phases P01–P16
+- [Metadata Standard (AIES-STD-02 — Metadata Standard)](../../docs/standards/metadata-standard.md) — the identifier scheme built on these codes
+- [AIES-DOC-07 — Standards Crosswalk — How AIES Maps to Adjacent Frameworks](../../docs/CROSSWALK.md) — how the autonomy levels and risk tiers here map to CSA, ASDLC, the EU AI Act, ISO/IEC 42001, and NIST AI RMF
 
 ## References
 

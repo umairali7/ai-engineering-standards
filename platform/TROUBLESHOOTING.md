@@ -80,7 +80,7 @@ Almost always the **subject model**, not the platform.
   in the deployment) — often the single biggest speedup.
 - **Do less while exploring.** `--repeats 1` collects one answer per scenario
   (report labelled **NON-DECISIONAL**, which is correct for a spot-check). Raise
-  repeats only for a decisional result (RT1/2/3/4 need ≥20/30/50/100 scored items
+  repeats only for a decisional result (RT1 — Minimal/2/3/4 need ≥20/30/50/100 scored items
   per area).
 
 ### `--parallel N` doesn't speed things up
@@ -169,9 +169,9 @@ runs) until the area reaches its minimum; the gate is intentional.
 
 ## Related Documents
 
-- [Guide (AIES-PLAT-01)](GUIDE.md) — setup and a start-to-finish run
-- [Deployments (AIES-PLAT-03)](DEPLOYMENTS.md) · [Runtimes (AIES-PLAT-04)](RUNTIMES.md)
-- [Platform Specification (AIES-DOC-06)](../docs/PLATFORM.md)
+- [AIES-PLAT-01 — AIES Platform — Architecture & Run Guide](GUIDE.md) — setup and a start-to-finish run
+- [AIES-PLAT-03 — Deployments — Qualify Deployments, Not Models](DEPLOYMENTS.md) · [AIES-PLAT-04 — Runtimes — the Runtime Interface](RUNTIMES.md)
+- [AIES-DOC-06 — Engineering Assessment Platform Specification](../docs/PLATFORM.md)
 - [Example deployments & judges](examples/deployments/README.md)
 
 ## References

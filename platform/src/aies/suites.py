@@ -189,14 +189,14 @@ def render_calibration(report: dict[str, Any]) -> str:
         f"  floor trap          : {t.get('floor_trap', 0)}",
         f"  refuse/escalate case: {t.get('refuse_case', 0)}",
         f"  hold-out twins      : {t.get('hold_out_twins', 0)}",
-        f"  RT3/RT4 scenarios   : {t.get('rt3_rt4', 0)}",
+        f"  RT3 — Significant / RT4 — Critical scenarios: {t.get('rt3_rt4', 0)}",
         f"  design-reviewed     : {t.get('design_reviewed', 0)}",
         f"  empirically calib.  : {t.get('empirically_calibrated', 0)}   (0 until a model panel exists)",
         "",
         "  behavioral diversity: 'fam' = distinct decision kinds; 'hi-fam' = distinct",
-        "  kinds among RT3/RT4 (a thin hi-fam is a coverage gap even if RT3/4 looks ok)",
+        "  kinds among RT3 — Significant / RT4 — Critical (a thin high-tier family is a coverage gap even if totals look adequate)",
         "",
-        "  area    scen  calib  ceil  trap  refuse  twin  RT3/4  fam  hi-fam",
+        "  area    scen  calib  ceil  trap  refuse  twin  high-tier  fam  hi-fam",
     ]
     for a in report["areas"]:
         lines.append(f"  {a['area']:6} {a['scenarios']:5} {a['calibrated']:6} "

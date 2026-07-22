@@ -30,7 +30,7 @@ The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", and "MAY" in this docu
 
 ### 2.1 Responsibilities
 
-- **Contributors** follow [CONTRIBUTING.md](CONTRIBUTING.md) and the [Documentation Standards (AIES-STD-00)](docs/standards/README.md). Proposals for substantive changes MUST include the engineering rationale package (problem statement, alternatives, trade-offs, references, impact analysis).
+- **Contributors** follow [CONTRIBUTING.md](CONTRIBUTING.md) and the [Documentation Standards (AIES-STD-00 — Documentation Standards)](docs/standards/README.md). Proposals for substantive changes MUST include the engineering rationale package (problem statement, alternatives, trade-offs, references, impact analysis).
 - **Reviewers** evaluate drafts against the [evaluation dimensions](Shared/Taxonomy/README.md#8-evaluation-dimensions-ev1ev6) — correctness, completeness, safety, maintainability, efficiency, traceability — and record their review as PR reviews or review issues.
 - **Module Editors** are accountable for their module's internal consistency, for ensuring it uses the [Shared Glossary](Shared/Glossary/README.md) and [Taxonomy](Shared/Taxonomy/README.md) without redefinition, and for shepherding module documents through the status lifecycle (§5). There is exactly one Module Editor per module; a person MAY edit at most two modules.
 - **Maintainers** hold merge rights on protected branches, steward the Shared Standards, run releases (§6), and adjudicate escalations (§4.3). At least three Maintainers SHOULD exist; while the project has fewer, Maintainers act with the same process discipline and record all decisions publicly.
@@ -83,7 +83,7 @@ A proposal that cannot achieve consensus after escalation is rejected without pr
 
 ## 5. Document Ratification
 
-Documents move through the lifecycle defined in the [Review Standard (AIES-STD-06)](docs/standards/review-standard.md): `Draft → Review → Approved → Deprecated`.
+Documents move through the lifecycle defined in the [Review Standard (AIES-STD-06 — Review Standard)](docs/standards/review-standard.md): `Draft → Review → Approved → Deprecated`.
 
 | Transition | Who Decides | Requirements |
 |------------|-------------|--------------|
@@ -111,7 +111,7 @@ While the standard is pre-1.0 (v0.x), minor versions MAY contain breaking change
 A release is cut by a Maintainer using this checklist:
 
 1. All PRs targeted for the release are merged; no open Class 3 comment window overlaps the release content.
-2. Every changed document's metadata table conforms to the [Metadata Standard (AIES-STD-02)](docs/standards/metadata-standard.md) and shows the correct status.
+2. Every changed document's metadata table conforms to the [Metadata Standard (AIES-STD-02 — Metadata Standard)](docs/standards/metadata-standard.md) and shows the correct status.
 3. Cross-references and relative links validated across the repository.
 4. Glossary and Taxonomy checked for terms introduced by the release but not yet registered.
 5. [CHANGELOG.md](CHANGELOG.md) updated in Keep a Changelog format; Unreleased section emptied into the new version entry.
@@ -136,14 +136,14 @@ Changes to this document are Class 3: ADR, Maintainer lazy consensus, and a 7-da
 
 ## Related Documents
 
-- [CONTRIBUTING.md (AIES-GOV-02)](CONTRIBUTING.md)
+- [AIES-GOV-02 — Contributing to AIES](CONTRIBUTING.md)
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
-- [SECURITY.md (AIES-GOV-03)](SECURITY.md)
-- [Documentation Standards (AIES-STD-00)](docs/standards/README.md)
-- [Review Standard (AIES-STD-06)](docs/standards/review-standard.md)
-- [Versioning Standard (AIES-STD-05)](docs/standards/versioning-standard.md)
-- [Architecture Decision Records (AIES-ADR-00)](adr/README.md)
-- [Continuous Improvement & Maintenance (AIES-DOC-09)](docs/IMPROVEMENT.md) — the review cadence and the data-driven improvement loop
+- [AIES-GOV-03 — Security Policy](SECURITY.md)
+- [Documentation Standards (AIES-STD-00 — Documentation Standards)](docs/standards/README.md)
+- [Review Standard (AIES-STD-06 — Review Standard)](docs/standards/review-standard.md)
+- [Versioning Standard (AIES-STD-05 — Versioning Standard)](docs/standards/versioning-standard.md)
+- [AIES-ADR-00 — Architecture Decision Records](adr/README.md)
+- [Continuous Improvement & Maintenance (AIES-DOC-09 — Platform Reference)](docs/IMPROVEMENT.md) — the review cadence and the data-driven improvement loop
 
 ## References
 

@@ -63,8 +63,8 @@ simply has one competency area per step.
   combine repeats and several journeys (or pair with suite runs) to reach
   decisional sizes. This is intentional: a journey's value is showing whether
   the phases cohere, which a human reads directly from the transcript.
-- Journeys are scored at one declared risk tier (JOURNEY-01 at RT2, JOURNEY-02
-  at RT3), so the gates reflect the stakes of the work being carried.
+- Journeys are scored at one declared risk tier (JOURNEY-01 at RT2 — Moderate, JOURNEY-02
+  at RT3 — Significant), so the gates reflect the stakes of the work being carried.
 
 ## Authoring a journey
 
@@ -73,7 +73,7 @@ Add a YAML file under `platform/journeys/`:
 ```yaml
 id: JOURNEY-03
 title: <what work this carries and through which phases>
-risk_tier: RT2                 # the tier the whole journey is scored at
+risk_tier: RT2                 # RT2 — Moderate; the tier the whole journey is scored at
 steps:
   - id: J03-S1-<phase>
     area: CA-02                 # a competency area (CA-01…CA-12)
@@ -99,10 +99,10 @@ Step ids are unique within the journey; `area` must be a real CA-01…CA-12 code
 
 ## Related Documents
 
-- [Platform Specification (AIES-DOC-06)](../docs/PLATFORM.md)
-- [Guide (AIES-PLAT-01)](GUIDE.md) · [Deployments (AIES-PLAT-03)](DEPLOYMENTS.md) · [Profiles (AIES-PLAT-02)](PROFILES.md)
-- [Competency Framework (AIES-AESQS-CF-01)](../AESQS/competency-framework.md) — the CA areas steps map to
-- [SDLC Reference (AIES-DOC-04)](../docs/SDLC.md) — the phases journeys traverse
+- [AIES-DOC-06 — Engineering Assessment Platform Specification](../docs/PLATFORM.md)
+- [AIES-PLAT-01 — AIES Platform — Architecture & Run Guide](GUIDE.md) · [AIES-PLAT-03 — Deployments — Qualify Deployments, Not Models](DEPLOYMENTS.md) · [AIES-PLAT-02 — Qualification Profiles](PROFILES.md)
+- [Competency Framework (AIES-AESQS-CF-01 — Competency Framework)](../AESQS/competency-framework.md) — the CA areas steps map to
+- [AIES-DOC-04 — SDLC Reference](../docs/SDLC.md) — the phases journeys traverse
 
 ## References
 

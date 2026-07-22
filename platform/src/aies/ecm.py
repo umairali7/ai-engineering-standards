@@ -173,7 +173,7 @@ def render_markdown(matrix: dict) -> str:
         "",
         f"Subject: `{matrix['subject']}`  ",
         f"Run: `{matrix['run_id']}`  ",
-        f"Scope: {matrix['risk_tier']} · {matrix['profile']} profile  ",
+        f"Scope: {C.risk_tier_label(matrix['risk_tier'])} · {matrix['profile']} profile  ",
         f"Mapping: {matrix['mapping']['scope']}",
         "",
         "## Task Capability Profile",
@@ -256,7 +256,7 @@ def render_html(matrix: dict) -> str:
 <title>Engineering Capability Matrix — {html.escape(matrix['subject'])}</title>
 <style>body{{font:16px system-ui;max-width:960px;margin:3rem auto;padding:0 1rem;color:#17202a}} table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #cbd5e1;padding:.5rem;text-align:left}}th{{background:#eaf2f8}}.notice{{padding:.75rem;background:#fff3cd;font-weight:600}}</style>
 <h1>Engineering Capability Matrix (ECM)</h1><p class='notice'>INFORMATIONAL — NOT A QUALIFICATION, GRANT, OR DEPLOYMENT AUTHORIZATION.</p>
-<p><b>Subject:</b> {html.escape(matrix['subject'])}<br><b>Run:</b> {html.escape(matrix['run_id'])}<br><b>Scope:</b> {html.escape(matrix['risk_tier'])} · {html.escape(matrix['profile'])}</p>
+<p><b>Subject:</b> {html.escape(matrix['subject'])}<br><b>Run:</b> {html.escape(matrix['run_id'])}<br><b>Scope:</b> {html.escape(C.risk_tier_label(matrix['risk_tier']))} · {html.escape(matrix['profile'])}</p>
 <h2>Task Capability Profile</h2><table><thead><tr><th>Task</th><th>Observed performance</th><th>Evidence confidence</th><th>Evidence</th><th>Status</th></tr></thead><tbody>{task_rows}</tbody></table>
 <p>High observed performance with low evidence confidence is not a recommendation.</p>
 <table><thead><tr><th>Evidence family</th><th>Mean EV score</th><th>Scenarios</th><th>Responses</th><th>Ratings</th><th>Adequacy</th></tr></thead><tbody>{rows}</tbody></table>

@@ -21,12 +21,12 @@ The DevOps Engineer makes change flow to production safely: building and maintai
 
 ## Responsibilities
 
-1. Define and maintain CI/CD pipelines (ART-09) that enforce the automated gates required by [AIES-AEOS-HO-01](../human-oversight.md) and quality criteria from ROLE-07/ROLE-08.
+1. Define and maintain CI/CD pipelines (ART-09) that enforce the automated gates required by [AIES-AEOS-HO-01 — Human Oversight](../human-oversight.md) and quality criteria from ROLE-07/ROLE-08.
 2. Execute releases and produce release records (ART-10) linking every deployed change to its work items, approvals, and evidence (P13).
 3. Manage environments and infrastructure-as-code within envelope.
 4. Implement rollback mechanisms and verify them regularly.
 5. Embed provenance capture in pipelines so ART-15 records are produced automatically.
-6. Manage pipeline changes under change control — pipelines are themselves RT3 artifacts (they gate production).
+6. Manage pipeline changes under change control — pipelines are themselves RT3 — Significant artifacts (they gate production).
 
 ## Inputs / Outputs
 
@@ -37,8 +37,8 @@ The DevOps Engineer makes change flow to production safely: building and maintai
 
 ## Autonomy Constraints
 
-- [AIES-AEOS-ROLE-09-R01] Production releases of RT3+ scope MUST pass a human approval gate (ROLE-13) before deployment; an AI-staffed DevOps Engineer MAY execute the approved deployment mechanically.
-- [AIES-AEOS-ROLE-09-R02] Changes to pipeline gate logic (which checks run, what blocks) are RT3 minimum and MUST receive per-item human review at any staffing mode — gates MUST NOT be modifiable by the performers they gate.
+- [AIES-AEOS-ROLE-09-R01] Production releases of RT3 — Significant and above scope MUST pass a human approval gate (ROLE-13) before deployment; an AI-staffed DevOps Engineer MAY execute the approved deployment mechanically.
+- [AIES-AEOS-ROLE-09-R02] Changes to pipeline gate logic (which checks run, what blocks) are RT3 — Significant minimum and MUST receive per-item human review at any staffing mode — gates MUST NOT be modifiable by the performers they gate.
 - [AIES-AEOS-ROLE-09-R03] An AI-staffed DevOps Engineer MUST NOT bypass, disable, or reorder gates in any pipeline execution; such actions are guardrail-enforced prohibitions.
 
 ## Escalation Duties
@@ -61,21 +61,21 @@ When ROLE-09 is staffed by an AI agent:
 
 | Risk tier of the operation | Max autonomy for DevOps tasks |
 |----------------------------|-------------------------------|
-| RT1 (ephemeral/dev environments) | AL4 |
-| RT2 (staging, internal tooling pipelines) | AL3 |
-| RT3 (production deployment, pipeline gate logic) | AL2 |
-| RT4 (irreversible operations, regulated-data infrastructure) | AL1 |
+| RT1 — Minimal (ephemeral/dev environments) | AL4 — Autonomous |
+| RT2 — Moderate (staging, internal tooling pipelines) | AL3 — Delegated |
+| RT3 — Significant (production deployment, pipeline gate logic) | AL2 — Collaborative |
+| RT4 — Critical (irreversible operations, regulated-data infrastructure) | AL1 — Assisted |
 
-- **Mandatory gates:** human release approval for RT3+ (see R01); per-item review of gate-logic changes (see R02); automated verification of rollback readiness before any production deployment.
+- **Mandatory gates:** human release approval for RT3 — Significant and above (see R01); per-item review of gate-logic changes (see R02); automated verification of rollback readiness before any production deployment.
 - **Telemetry:** deployment success rate, rollback frequency and duration, change failure rate, gate-bypass attempts (MUST be zero; any attempt is an incident), logged to ART-15.
 - Credentials available to a DevOps agent MUST be scoped per environment and per task; production credentials are released to the agent only within an approved deployment window.
 
 ## Related Documents
 
-- [Role Catalog (AIES-AEOS-ROLE-00)](README.md) — shared role-specification requirements and staffing model
-- [Operating Model (AIES-AEOS-OM-01)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
-- [Workflows (AIES-AEOS-WF-01)](../workflows.md) — the collaboration workflows this role participates in
-- [Human Oversight (AIES-AEOS-HO-01)](../human-oversight.md) — the gates that apply to this role's work
+- [Role Catalog (AIES-AEOS-ROLE-00 — Role Model)](README.md) — shared role-specification requirements and staffing model
+- [Operating Model (AIES-AEOS-OM-01 — Operating Model)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
+- [Workflows (AIES-AEOS-WF-01 — Workflows)](../workflows.md) — the collaboration workflows this role participates in
+- [Human Oversight (AIES-AEOS-HO-01 — Human Oversight)](../human-oversight.md) — the gates that apply to this role's work
 
 ## References
 

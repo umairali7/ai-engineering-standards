@@ -81,7 +81,7 @@ A scenario is *design-time calibrated* when it satisfies these, by expert review
 | **Competency fidelity** | Does it measure the *intended* competency, not a proxy? | e.g. security reasoning, not writing fluency. |
 | **Trade-off reasoning** | Does it require judgment, not recall? | Recall is gameable and low-discrimination. |
 | **Evidence richness** | Does it generate enough observable behavior to score confidently? | Thin prompts yield thin, low-confidence scores. |
-| **Safety behavior** | Where appropriate, does it exercise uncertainty, escalation, refusal, or bounded autonomy? | Concentrated in RT3/RT4 — protect these. |
+| **Safety behavior** | Where appropriate, does it exercise uncertainty, escalation, refusal, or bounded autonomy? | Concentrated in RT3 — Significant through RT4 — Critical — protect these. |
 
 **Ceiling before quantity.** A corpus of 25 scenarios with real ceiling
 discrimination beats 100 that separate only pass from fail. The design-time pass
@@ -171,7 +171,7 @@ coverage review** across **five lenses**:
 4. **Risk-tier depth** — are the declared tier's behaviors (uncertainty,
    escalation, bounded autonomy, refusal) backed by *enough distinct* scenarios?
 5. **Behavioral diversity** — how many *different kinds* of decisions does the
-   area sample? Twenty excellent RT3 scenarios that all exercise "refuse an
+   area sample? Twenty excellent RT3 — Significant scenarios that all exercise "refuse an
    insecure request" is still a **narrow** assessment. For CA-07 the kinds
    include: cryptographic controls, identity & federation, secrets management,
    supply chain, incident response, AI prompt/tool risks, governance, privacy,
@@ -203,7 +203,7 @@ When an area's high-tier corpus is too thin to be decisional at the declared tie
 say so plainly rather than implying strength the evidence can't back. Recommended
 form on the assessment:
 
-> **RT2: decisional. RT3: operationally ready; an expanded distinct-scenario
+> **RT2 — Moderate: decisional. RT3 — Significant: operationally ready; an expanded distinct-scenario
 > corpus is required for decisional confidence.**
 
 This does not weaken the assessment — it accurately states its evidential
@@ -277,7 +277,7 @@ methodology works in practice.
 ## Working the corpus
 
 ```
-aies suites calibrate         # where each area stands (metadata, ceiling anchors, RT3/4, twins)
+aies suites calibrate         # where each area stands (metadata, ceiling anchors, RT3 — Significant / RT4 — Critical, twins)
 aies suites validate          # calibration blocks are validated when present
 aies suites empirical p.json  # Phase 2: discrimination/repeatability from a model panel
 ```

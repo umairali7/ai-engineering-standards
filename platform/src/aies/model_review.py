@@ -45,7 +45,7 @@ def _scenario_prompts(area_ids: set[str]) -> dict[str, str]:
 
 
 def _review_prompt(task: str, candidate: str, area: str) -> str:
-    dims = "\n".join(f"  {d} ({C.DIMENSION_NAMES[d]})" for d in C.DIMENSIONS)
+    dims = "\n".join(f"  {C.identifier_label(d)}" for d in C.DIMENSIONS)
     return (
         "You are a qualification reviewer. Score the CANDIDATE RESPONSE to the "
         "TASK on each dimension using integers 0-4 "

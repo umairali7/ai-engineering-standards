@@ -23,10 +23,10 @@ setup see [GUIDE.md](GUIDE.md); for the specification see
 | **Profile** | A weighting preset — per-area and per-dimension emphasis. Versioned (semver). Cannot express gates or minimums (D3). |
 | **Assessment** | Declarative composition ([ADR-0005](../adr/ADR-0005-Assessment-as-Code.md)): which competencies compose a named qualification, mandatory vs advisory, weights, profile, risk tier, sampling. Data, not code. |
 | **Competency Area (CA-01…CA-12)** | The twelve areas of AI-engineering capability (SDLC foundations, implementation, testing, security, governance, …). |
-| **Risk Tier (RT1–RT4)** | The stakes of the scope. Higher tiers demand higher gates and larger samples. |
+| **Risk Tier (RT1 — Minimal through RT4 — Critical)** | The stakes of the scope. Higher tiers demand higher gates and larger samples. |
 | **Dimension (EV1–EV6)** | The six scored qualities: Correctness, Completeness, Safety & Security, Maintainability, Efficiency, Traceability. 0–4 integer anchors. |
 | **Competency Level (CL1–CL4)** | The competency a score supports at a tier. AI systems cap at CL3. |
-| **Autonomy Level (AL0–AL4)** | How much independence a deployment may be granted; `min(risk-tier cap, CL-earned cap)`. |
+| **Autonomy Level (AL0 — Manual through AL4 — Autonomous)** | How much independence a deployment may be granted; `min(risk-tier cap, CL-earned cap)`. |
 | **Decision value** | The **lower bound** of a dimension's 90% confidence interval — never the mean (anti-optimism). |
 | **Gate** | A hard per-dimension minimum (esp. EV3). A failed gate denies the tier; no profile can express or relax one. |
 | **Decisional / NON-DECISIONAL** | Whether a result met the statistical minimum sample (20/30/50/100 for AI by tier). Under-sampled results can never look like qualification evidence. |

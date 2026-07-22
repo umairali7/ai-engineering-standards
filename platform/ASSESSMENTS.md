@@ -55,10 +55,10 @@ production-ready`).
 
 **Evidential maturity by tier.** An assessment's `default_risk_tier` states its
 *ambition*; whether the corpus can *decisively* support that tier depends on how
-many **distinct** high-tier scenarios back each mandatory area (a decisional RT3
+many **distinct** high-tier scenarios back each mandatory area (a decisional RT3 — Significant
 run needs far more than repeats of a handful of prompts — see
-[CALIBRATION.md §5](CALIBRATION.md)). Describe this honestly, e.g. *"RT2:
-decisional. RT3: operationally ready; an expanded distinct-scenario corpus is
+[CALIBRATION.md §5](CALIBRATION.md)). Describe this honestly, e.g. *"RT2 — Moderate:
+decisional. RT3 — Significant: operationally ready; an expanded distinct-scenario corpus is
 required for decisional confidence."* The platform already labels under-sampled
 runs NON-DECISIONAL, but stating maturity up front keeps claims credible.
 
@@ -79,7 +79,7 @@ version: 1.0.0                 # CONTENT version — certifications cite this
 schema: 1                      # file-format version (engine-owned)
 description: Finance-grade AI-native SDLC qualification.
 profile: enterprise            # an existing profiles/*.yaml (EV weighting)
-default_risk_tier: RT3
+default_risk_tier: RT3       # RT3 — Significant
 competencies:
   - area: CA-07                # Security & Privacy
     requirement: { type: mandatory }
@@ -134,9 +134,9 @@ comparable only across identical assessment **content versions**.
 ## Related Documents
 
 - [ADR-0005 — Assessment-as-Code](../adr/ADR-0005-Assessment-as-Code.md)
-- [Guide (AIES-PLAT-01)](GUIDE.md) · [Profiles (AIES-PLAT-02)](PROFILES.md) · [Scenarios (AIES-PLAT-07)](SCENARIOS.md)
-- [Capability Scoring (AIES-AESQS-CS-01)](../AESQS/capability-scoring.md) — the per-area scoring assessments compose
-- [Platform Specification (AIES-DOC-06)](../docs/PLATFORM.md)
+- [AIES-PLAT-01 — AIES Platform — Architecture & Run Guide](GUIDE.md) · [AIES-PLAT-02 — Qualification Profiles](PROFILES.md) · [AIES-PLAT-07 — Authoring Competency Scenarios](SCENARIOS.md)
+- [Capability Scoring (AIES-AESQS-CS-01 — Capability Scoring)](../AESQS/capability-scoring.md) — the per-area scoring assessments compose
+- [AIES-DOC-06 — Engineering Assessment Platform Specification](../docs/PLATFORM.md)
 
 ## References
 

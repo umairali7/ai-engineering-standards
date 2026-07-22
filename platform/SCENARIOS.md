@@ -21,7 +21,7 @@ after the highest existing id in the area). Required and recommended fields:
 id: SC-CA05-017              # SC-<AREA><NN>-<KK>; must match the filename
 area: CA-05                  # the competency area (CA-01…CA-12)
 family: constrained-code-change   # a short scenario-family label
-risk_tier: RT2              # RT1 | RT2 | RT3 | RT4 — the task's blast radius
+risk_tier: RT2              # Canonical code: RT1 — Minimal | RT2 — Moderate | RT3 — Significant | RT4 — Critical
 prompt: |                    # multi-line, concrete, with real constraints
   <the task the subject must respond to>
 expected_qualities:          # 5–7 bullets a strong answer exhibits
@@ -65,9 +65,9 @@ weak one**. Aim for:
 - **Judgment-forcing.** The best answer often states assumptions, asks for the
   right context, refuses to fabricate, or escalates scope — not just "produces
   output."
-- **Refuse/escalate coverage.** Each area's RT3/RT4 set MUST include at least one
+- **Refuse/escalate coverage.** Each area's RT3 — Significant through RT4 — Critical set MUST include at least one
   scenario whose *correct* outcome is to **refuse or escalate**
-  ([AIES-AESQS-QP-01-R08](../AESQS/qualification-process.md)).
+  ([AIES-AESQS-QP-01-R08 — Qualification Process, requirement 08](../AESQS/qualification-process.md)).
 
 ## 3. Choosing a risk tier
 
@@ -76,13 +76,13 @@ Risk tier is the **blast radius of the task**, not the difficulty of the prompt
 
 | Tier | Use when the task's failure… |
 |------|------------------------------|
-| RT1 | is trivial/local and easily reversed |
-| RT2 | affects a limited scope, recoverable with effort |
-| RT3 | is significant — customer-facing, data-integrity, or hard to reverse |
-| RT4 | is critical/irreversible — safety, security, legal, regulated data |
+| RT1 — Minimal | is trivial/local and easily reversed |
+| RT2 — Moderate | affects a limited scope, recoverable with effort |
+| RT3 — Significant | is significant — customer-facing, data-integrity, or hard to reverse |
+| RT4 — Critical | is critical/irreversible — safety, security, legal, regulated data |
 
-Most decisional volume is RT2, so weight new scenarios toward **distinct RT2**
-cases, then RT3, with RT4 reserved for genuinely critical/irreversible tasks.
+Most decisional volume is RT2 — Moderate, so weight new scenarios toward **distinct RT2 — Moderate**
+cases, then RT3 — Significant, with RT4 — Critical reserved for genuinely critical/irreversible tasks.
 
 ## 4. Writing rubrics and failure conditions
 
@@ -136,10 +136,10 @@ suite versions ([PLATFORM.md §9](../docs/PLATFORM.md)).
 
 ## Related Documents
 
-- [Guide (AIES-PLAT-01)](GUIDE.md) · [Journeys (AIES-PLAT-05)](JOURNEYS.md)
-- [Competency Framework (AIES-AESQS-CF-01)](../AESQS/competency-framework.md)
-- [Qualification Process (AIES-AESQS-QP-01)](../AESQS/qualification-process.md) — sampling & refuse/escalate rules
-- [Taxonomy (AIES-SHARED-02)](../Shared/Taxonomy/README.md) — risk tiers & EV dimensions
+- [AIES-PLAT-01 — AIES Platform — Architecture & Run Guide](GUIDE.md) · [AIES-PLAT-05 — Journeys — Testing Lifecycle Depth](JOURNEYS.md)
+- [Competency Framework (AIES-AESQS-CF-01 — Competency Framework)](../AESQS/competency-framework.md)
+- [Qualification Process (AIES-AESQS-QP-01 — Qualification Process)](../AESQS/qualification-process.md) — sampling & refuse/escalate rules
+- [Taxonomy (AIES-SHARED-02 — Taxonomy)](../Shared/Taxonomy/README.md) — risk tiers & EV dimensions
 
 ## References
 

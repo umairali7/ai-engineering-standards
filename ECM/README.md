@@ -17,6 +17,13 @@ ECM does not qualify a subject and does not grant deployment authority. It
 consumes qualification evidence; it never changes gates, risk tiers, autonomy
 limits, or human accountability.
 
+Each ECM is scoped to the risk tier recorded in its source run. A task marked
+`not assessed` has no mapped scored evidence in that scope; it does not mean
+the subject failed the task. A task marked `observed` has evidence below the
+matrix confidence threshold, while `demonstrated` meets that threshold for its
+recorded tier and protocol. An all-area run covers all areas at one tier, not
+all four risk tiers.
+
 ## 2. Architecture
 
 ```text
@@ -77,5 +84,5 @@ subject claim.
 ## Related Documents
 
 - [ADR-0008](../adr/ADR-0008-Engineering-Capability-Matrix-Standard-and-Task-Taxonomy.md)
-- [Capability Scoring (AIES-AESQS-CS-01)](../AESQS/capability-scoring.md)
+- [Capability Scoring (AIES-AESQS-CS-01 — Capability Scoring)](../AESQS/capability-scoring.md)
 - [Platform](../docs/PLATFORM.md)

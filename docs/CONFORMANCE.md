@@ -36,7 +36,7 @@ different things can conform:
   AIES. Its evidence is a set of Qualification Records (and the audit trails
   behind them) produced by an AIES implementation.
 
-[AIES-DOC-08-R01] A conformance statement MUST declare exactly one class.
+[AIES-DOC-08-R01 — Conformance Guide, requirement 01] A conformance statement MUST declare exactly one class.
 
 ## 2. Three assurance levels
 
@@ -48,12 +48,12 @@ A claim's weight depends on how it is substantiated:
 | **evidence-backed** | Each material claim references verifiable artifacts (Qualification Records). | That each referenced record exists and is a live grant. |
 | **independently-reviewed** | A named reviewer, independent of the claimant, attests to the claim. | That a reviewer is named — **not** that they are independent. |
 
-[AIES-DOC-08-R02] An **independently-reviewed** statement MUST name the
+[AIES-DOC-08-R02 — Conformance Guide, requirement 02] An **independently-reviewed** statement MUST name the
 reviewer. The independence of that reviewer is a human attestation that the
 tooling cannot and does not verify; readers MUST treat the named reviewer as
 the accountable party.
 
-[AIES-DOC-08-R03] An **evidence-backed** statement is *substantiated* only if
+[AIES-DOC-08-R03 — Conformance Guide, requirement 03] An **evidence-backed** statement is *substantiated* only if
 every evidence-bearing claim references a Qualification Record that exists and
 holds a live grant status (`active` or `conditional`). A record that is
 `denied`, `invalidated`, `revoked`, or absent MUST render the statement **not
@@ -73,14 +73,14 @@ conformance_statement:
   reviewer: <name>                # required only for independently-reviewed
   date: <YYYY-MM-DD>
   claims:
-    - statement: "Deployment <id> is qualified for CA-05 at RT2 (AL2)."
+    - statement: "Deployment <id> is qualified for CA-05 at RT2 — Moderate (AL2 — Collaborative)."
       evidence:
         qualification_record: QUAL-2026-001   # checked against the workspace
     - statement: "Human approval gates operate per AIES-AEOS-HO-01."
       evidence: {}                             # self-asserted; not tool-verifiable
 ```
 
-[AIES-DOC-08-R04] Every conformance statement MUST name the AIES version it
+[AIES-DOC-08-R04 — Conformance Guide, requirement 04] Every conformance statement MUST name the AIES version it
 claims against. Conformance is always to a specific version — a claim against
 v0.4.0 says nothing about a later version.
 
@@ -112,7 +112,7 @@ The checker:
   Qualification Record backs it — not that the qualification decision was
   correct. That correctness rests on the human authority who granted it
   ([PLATFORM.md D8](PLATFORM.md)), the rubric scoring, and the sample
-  ([AIES-AESQS-CS-01](../AESQS/capability-scoring.md)).
+  ([AIES-AESQS-CS-01 — Capability Scoring](../AESQS/capability-scoring.md)).
 - **It is not a certificate issued by AIES.** AIES is an open standard, not a
   certifying body. A conformance statement is a claim the claimant publishes
   and stands behind; anyone can re-run `aies conform check` against the cited
@@ -124,10 +124,10 @@ The checker:
 
 ## Related Documents
 
-- [Qualification Platform (AIES-DOC-06)](PLATFORM.md) — the `aies conform` command and the records it checks
-- [AESQS Capability Scoring (AIES-AESQS-CS-01)](../AESQS/capability-scoring.md) — the requirements an implementation enforces
-- [AESQS Qualification Process (AIES-AESQS-QP-01)](../AESQS/qualification-process.md) — how grants are made
-- [Standards Crosswalk (AIES-DOC-07)](CROSSWALK.md) · [GOVERNANCE.md (AIES-GOV-01)](../GOVERNANCE.md)
+- [AIES-DOC-06 — Engineering Assessment Platform Specification](PLATFORM.md) — the `aies conform` command and the records it checks
+- [AESQS Capability Scoring (AIES-AESQS-CS-01 — Capability Scoring)](../AESQS/capability-scoring.md) — the requirements an implementation enforces
+- [AESQS Qualification Process (AIES-AESQS-QP-01 — Qualification Process)](../AESQS/qualification-process.md) — how grants are made
+- [AIES-DOC-07 — Standards Crosswalk — How AIES Maps to Adjacent Frameworks](CROSSWALK.md) · [AIES-GOV-01 — Governance](../GOVERNANCE.md)
 
 ## References
 

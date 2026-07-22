@@ -198,7 +198,7 @@ def render_markdown(result: dict) -> str:
     out += ["## 1. Normative (authoritative)", "",
             "| Competency | Requirement | Outcome |", "|---|---|---|"]
     for c in dec["competencies"]:
-        out.append(f"| {c['area']} | {c['requirement']} | **{c['outcome']}** |")
+        out.append(f"| {C.competency_label(c['area'])} | {c['requirement']} | **{c['outcome']}** |")
     out.append("")
     out.append(f"**Overall outcome: {dec['overall']}** — decided over the "
                "mandatory competencies (advisory competencies never fail an "
@@ -207,15 +207,15 @@ def render_markdown(result: dict) -> str:
     if dec["reasons"]:
         out += ["### Reasons", ""]
         for r in dec["reasons"]:
-            out.append(f"- **{r['area']}** — `{r['kind']}`: {r['detail']}")
+            out.append(f"- **{C.competency_label(r['area'])}** — `{r['kind']}`: {r['detail']}")
         out.append("")
 
     # Layer 2 — Diagnostic
     out += ["## 2. Diagnostic (informational — engineering feedback)", "",
             "| Area | Aggregate | CL | Decisional |", "|---|---|---|---|"]
     for area, d in result["diagnostics"].items():
-        out.append(f"| {area} | {d.get('aggregate') if d.get('aggregate') is not None else '-'} "
-                   f"| {d.get('cl') or '-'} | {'yes' if d.get('decisional') else 'no'} |")
+        out.append(f"| {C.competency_label(area)} | {d.get('aggregate') if d.get('aggregate') is not None else '-'} "
+                   f"| {C.identifier_label(d.get('cl')) if d.get('cl') else '-'} | {'yes' if d.get('decisional') else 'no'} |")
     out.append("")
 
     # Layer 3 — Informational analytics
@@ -275,7 +275,7 @@ def render_html(result: dict) -> str:
     w("<table><tr><th>Competency</th><th>Requirement</th><th>Outcome</th></tr>")
     for c in dec["competencies"]:
         oc = "pass" if c["outcome"] == "PASS" else "fail"
-        w(f"<tr><td>{_esc(c['area'])}</td><td>{_esc(c['requirement'])}</td>"
+        w(f"<tr><td>{_esc(C.competency_label(c['area']))}</td><td>{_esc(c['requirement'])}</td>"
           f"<td class={oc}>{_esc(c['outcome'])}</td></tr>")
     w("</table>")
     ov = "pass" if dec["overall"] == "PASS" else "fail"
@@ -285,7 +285,7 @@ def render_html(result: dict) -> str:
     if dec["reasons"]:
         w("<h3>Reasons</h3><ul>")
         for r in dec["reasons"]:
-            w(f"<li><strong>{_esc(r['area'])}</strong> &mdash; "
+            w(f"<li><strong>{_esc(C.competency_label(r['area']))}</strong> &mdash; "
               f"<code>{_esc(r['kind'])}</code>: {_esc(r['detail'])}</li>")
         w("</ul>")
 
@@ -294,8 +294,8 @@ def render_html(result: dict) -> str:
     w("<table><tr><th>Area</th><th>Aggregate</th><th>CL</th><th>Decisional</th></tr>")
     for area, d in result["diagnostics"].items():
         agg = d.get("aggregate")
-        w(f"<tr><td>{_esc(area)}</td><td>{_esc(agg) if agg is not None else '-'}</td>"
-          f"<td>{_esc(d.get('cl') or '-')}</td>"
+        w(f"<tr><td>{_esc(C.competency_label(area))}</td><td>{_esc(agg) if agg is not None else '-'}</td>"
+          f"<td>{_esc(C.identifier_label(d.get('cl')) if d.get('cl') else '-')}</td>"
           f"<td>{'yes' if d.get('decisional') else 'no'}</td></tr>")
     w("</table>")
 

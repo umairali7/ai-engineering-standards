@@ -37,7 +37,7 @@ The Documentation Engineer keeps the written record of the system accurate, curr
 
 ## Autonomy Constraints
 
-- [AIES-AEOS-ROLE-11-R01] AI-generated documentation of system behavior MUST be verified against the actual behavior (tests, telemetry, or human confirmation) before publication for RT3+ systems; plausible-but-unverified behavioral claims are a gate failure.
+- [AIES-AEOS-ROLE-11-R01] AI-generated documentation of system behavior MUST be verified against the actual behavior (tests, telemetry, or human confirmation) before publication for RT3 — Significant and above systems; plausible-but-unverified behavioral claims are a gate failure.
 - [AIES-AEOS-ROLE-11-R02] Documentation with legal, compliance, or safety content (X03/X06) MUST receive human review before publication at any autonomy level.
 
 ## Escalation Duties
@@ -60,21 +60,21 @@ When ROLE-11 is staffed by an AI agent:
 
 | Risk tier of documented system | Max autonomy for documentation tasks |
 |--------------------------------|--------------------------------------|
-| RT1 (internal docs, typo fixes — themselves RT1 changes) | AL4 |
-| RT2 (engineering docs, internal guides) | AL3 |
-| RT3 (user-facing docs for production behavior) | AL2 |
-| RT4 (safety, legal, compliance content) | AL1 |
+| RT1 — Minimal (internal docs, typo fixes — themselves RT1 — Minimal changes) | AL4 — Autonomous |
+| RT2 — Moderate (engineering docs, internal guides) | AL3 — Delegated |
+| RT3 — Significant (user-facing docs for production behavior) | AL2 — Collaborative |
+| RT4 — Critical (safety, legal, compliance content) | AL1 — Assisted |
 
-- **Mandatory gates:** behavioral verification before publication for RT3+ (see R01); human review of R02 content; sampling audit of published documentation accuracy.
+- **Mandatory gates:** behavioral verification before publication for RT3 — Significant and above (see R01); human review of R02 content; sampling audit of published documentation accuracy.
 - **Telemetry:** documentation defect reports, drift detection lag (release date vs. doc update date), verification coverage, logged to ART-15.
 - Documentation agents are well suited to drift detection (diffing docs against release records) and draft synchronization; they MUST cite the artifact evidence for every behavioral claim they write.
 
 ## Related Documents
 
-- [Role Catalog (AIES-AEOS-ROLE-00)](README.md) — shared role-specification requirements and staffing model
-- [Operating Model (AIES-AEOS-OM-01)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
-- [Workflows (AIES-AEOS-WF-01)](../workflows.md) — the collaboration workflows this role participates in
-- [Human Oversight (AIES-AEOS-HO-01)](../human-oversight.md) — the gates that apply to this role's work
+- [Role Catalog (AIES-AEOS-ROLE-00 — Role Model)](README.md) — shared role-specification requirements and staffing model
+- [Operating Model (AIES-AEOS-OM-01 — Operating Model)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
+- [Workflows (AIES-AEOS-WF-01 — Workflows)](../workflows.md) — the collaboration workflows this role participates in
+- [Human Oversight (AIES-AEOS-HO-01 — Human Oversight)](../human-oversight.md) — the gates that apply to this role's work
 
 ## References
 

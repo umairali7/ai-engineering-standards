@@ -12,7 +12,7 @@ The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", and "MAY" in this docu
 
 ## 1. Purpose
 
-KA-12 covers Continuous Improvement (P16) for AI-native delivery — the discipline that turns the rest of AEBOK from a static rulebook into a closed control loop. Every consequential claim in the standard is empirical: that an agent is qualified for a task type, that a gate catches what it should, that curated context helps, that AL3 is safe for this component. KA-12 defines how those claims are measured (EV1–EV6 in practice), how measurement is kept honest as capability and systems drift, and how evidence flows back into autonomy assignments, context assets, and practice. Without this KA, autonomy decisions run on anecdote and first impressions — and an organization's AI participation is governed by whoever tells the most recent story.
+KA-12 covers Continuous Improvement (P16) for AI-native delivery — the discipline that turns the rest of AEBOK from a static rulebook into a closed control loop. Every consequential claim in the standard is empirical: that an agent is qualified for a task type, that a gate catches what it should, that curated context helps, that AL3 — Delegated is safe for this component. KA-12 defines how those claims are measured (EV1–EV6 in practice), how measurement is kept honest as capability and systems drift, and how evidence flows back into autonomy assignments, context assets, and practice. Without this KA, autonomy decisions run on anecdote and first impressions — and an organization's AI participation is governed by whoever tells the most recent story.
 
 ## 2. Key Concepts
 
@@ -26,7 +26,7 @@ KA-12 covers Continuous Improvement (P16) for AI-native delivery — the discipl
 ## 3. Core Practices
 
 - **Measure outcomes on the canonical dimensions.** [AIES-AEBOK-KA-12-R01] Organizations MUST define outcome metrics mapped to EV1–EV6 for AI-participating work, record them as telemetry and evaluation reports (ART-12) at a defined cadence, and use them — not throughput or anecdote — as the basis for practice and autonomy decisions.
-- **Re-evaluate on a cadence, not on faith.** [AIES-AEBOK-KA-12-R02] Every task type executed at AL2+ MUST be re-evaluated against a versioned golden-task baseline on a defined schedule and after any known change to the performer's configuration or context; unexplained score movement MUST trigger investigation before the affected autonomy assignments are relied upon further.
+- **Re-evaluate on a cadence, not on faith.** [AIES-AEBOK-KA-12-R02] Every task type executed at AL2 — Collaborative+ MUST be re-evaluated against a versioned golden-task baseline on a defined schedule and after any known change to the performer's configuration or context; unexplained score movement MUST trigger investigation before the affected autonomy assignments are relied upon further.
 - **Adjust autonomy only on evidence.** [AIES-AEBOK-KA-12-R03] Changes to an autonomy assignment — in either direction — MUST cite qualification evidence per [AESQS](../../AESQS/README.md) and MUST be recorded with the evidence, the decider, and the review date; demotion paths MUST be exercised when degradation evidence appears, not deferred for delivery convenience.
 - **Route findings to owned corrections.** [AIES-AEBOK-KA-12-R04] Defects, incidents, and review rejections attributable to wrong or missing context MUST be routed as correction work items to the owning context assets ([KA-10](KA-10-context-knowledge.md)); golden task suites SHOULD be refreshed from the same findings so the instrument tracks reality.
 - **Guard the metrics themselves.** Metrics used in gates or autonomy decisions SHOULD be paired with counter-metrics (e.g., throughput with rework rate, evaluation pass rate with escape rate) and periodically audited for gaming — a metric that only ever improves has usually stopped measuring.
@@ -63,11 +63,11 @@ KA-12 covers Continuous Improvement (P16) for AI-native delivery — the discipl
 
 ## Related Documents
 
-- Evaluation mechanics, oracles, and suite construction: [KA-06 Testing & Quality Engineering (AIES-AEBOK-KA-06)](KA-06-testing-quality.md).
-- Production signals that feed the loop: [KA-09 Operations & Observability (AIES-AEBOK-KA-09)](KA-09-operations-observability.md); gate-health signals: [KA-11 Human-AI Collaboration & Oversight (AIES-AEBOK-KA-11)](KA-11-human-ai-collaboration.md).
-- Where corrections land: [KA-10 Context & Knowledge Management (AIES-AEBOK-KA-10)](KA-10-context-knowledge.md); the autonomy model being adjusted: [KA-01 Foundations (AIES-AEBOK-KA-01)](KA-01-foundations.md).
-- Qualification scoring and evidence windows: [AESQS (AIES-AESQS-00)](../../AESQS/README.md); evaluation dimensions EV1–EV6: [Taxonomy §8 (AIES-SHARED-02)](../../Shared/Taxonomy/README.md#8-evaluation-dimensions-ev1ev6); improvement workflows: [AEOS (AIES-AEOS-00)](../../AEOS/README.md).
-- How this KA is applied to the standard itself (the improvement flywheel and maintenance cadence): [Continuous Improvement & Maintenance (AIES-DOC-09)](../../docs/IMPROVEMENT.md).
+- Evaluation mechanics, oracles, and suite construction: [KA-06 Testing & Quality Engineering (AIES-AEBOK-KA-06 — Knowledge Area — Testing and Quality)](KA-06-testing-quality.md).
+- Production signals that feed the loop: [KA-09 Operations & Observability (AIES-AEBOK-KA-09 — Knowledge Area — Operations and Observability)](KA-09-operations-observability.md); gate-health signals: [KA-11 Human-AI Collaboration & Oversight (AIES-AEBOK-KA-11 — Knowledge Area — Human-AI Collaboration)](KA-11-human-ai-collaboration.md).
+- Where corrections land: [KA-10 Context & Knowledge Management (AIES-AEBOK-KA-10 — Knowledge Area — Context and Knowledge)](KA-10-context-knowledge.md); the autonomy model being adjusted: [KA-01 Foundations (AIES-AEBOK-KA-01 — Knowledge Area — Foundations)](KA-01-foundations.md).
+- Qualification scoring and evidence windows: [AESQS (AIES-AESQS-00 — Qualification Standard)](../../AESQS/README.md); evaluation dimensions EV1–EV6: [Taxonomy §8 (AIES-SHARED-02 — Taxonomy)](../../Shared/Taxonomy/README.md#8-evaluation-dimensions-ev1ev6); improvement workflows: [AIES-AEOS-00 — AEOS — AI Engineering Operating System](../../AEOS/README.md).
+- How this KA is applied to the standard itself (the improvement flywheel and maintenance cadence): [Continuous Improvement & Maintenance (AIES-DOC-09 — Platform Reference)](../../docs/IMPROVEMENT.md).
 
 ## References
 

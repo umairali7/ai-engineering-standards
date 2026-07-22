@@ -41,18 +41,18 @@ An engineering agent is, from a security standpoint, a privileged automated acto
 
 ### 2.3 AI-Assisted Security Work
 
-AI meaningfully assists ROLE-08 in threat-model drafting, security-focused code review at scale, misconfiguration detection, and attack-scenario enumeration — typically at AL1–AL2, because security conclusions are risk acceptances. AI security *findings* are leads; AI security *sign-off* does not exist: security approval is a human act.
+AI meaningfully assists ROLE-08 in threat-model drafting, security-focused code review at scale, misconfiguration detection, and attack-scenario enumeration — typically at AL1 — Assisted through AL2 — Collaborative, because security conclusions are risk acceptances. AI security *findings* are leads; AI security *sign-off* does not exist: security approval is a human act.
 
 ## 3. Core Practices
 
 - **Threat-model the delivery system itself.** [AIES-AEBOK-KA-07-R01] Organizations MUST maintain a threat model covering their AI-native delivery system — agents, tools, credentials, context stores, pipelines — as a system under threat, distinct from the products it builds, and MUST revisit it when agent capabilities or autonomy levels change.
-- **Scope agent credentials minimally.** [AIES-AEBOK-KA-07-R02] Agent credentials MUST follow least privilege scoped to task and risk zone; long-lived, broadly scoped credentials MUST NOT be issued to agents operating at AL2+.
+- **Scope agent credentials minimally.** [AIES-AEBOK-KA-07-R02] Agent credentials MUST follow least privilege scoped to task and risk zone; long-lived, broadly scoped credentials MUST NOT be issued to agents operating at AL2 — Collaborative+.
 - **Keep secrets out of agent context.** [AIES-AEBOK-KA-07-R03] Secrets MUST NOT be placed in agent-readable context (prompts, context assets, readable configuration); agents obtain capabilities through brokered, audited mechanisms that never expose the underlying credential.
 - **Treat external content as untrusted.** [AIES-AEBOK-KA-07-R04] Content from outside the trust boundary that enters agent context (issues, external docs, retrieved web content, third-party code) MUST be treated as untrusted input; high-consequence tool actions triggered by such content MUST require human confirmation or hard guardrails, per risk tier.
-- **Verify dependencies independently of generation.** [AIES-AEBOK-KA-07-R05] Dependency additions in AI-produced changes MUST be validated against an allowlist or registry-verification policy before merge (existence, provenance, known-vulnerability status) — reinforcing [AIES-AEBOK-KA-05-R04](KA-05-implementation.md).
+- **Verify dependencies independently of generation.** [AIES-AEBOK-KA-07-R05] Dependency additions in AI-produced changes MUST be validated against an allowlist or registry-verification policy before merge (existence, provenance, known-vulnerability status) — reinforcing [AIES-AEBOK-KA-05 — KA-05 — AI-Assisted Implementation](KA-05-implementation.md).
 - **Register and mediate tools.** [AIES-AEBOK-KA-07-R06] Agent-accessible tools, plugins, connector servers, and API adapters MUST be approved inventory items with declared capabilities, owners, data classes, and permitted action classes; agents MUST NOT discover or call arbitrary tools outside the governed registry.
-- **Expire and re-validate memory.** [AIES-AEBOK-KA-07-R07] Persistent memory, retrieval indexes, cached summaries, and context assets used by agents MUST have provenance, review cadence, and retirement rules; security-relevant or externally influenced entries MUST be re-validated before they can influence RT3+ work.
-- **Scan AI-produced code as untrusted by default.** Security scanning (SAST, secret detection, dependency audit) applies to all changes, and findings-thresholds for AI-produced changes SHOULD be at least as strict as for human changes; RT3+ changes touching auth, crypto, or data handling receive human security review regardless of scan results.
+- **Expire and re-validate memory.** [AIES-AEBOK-KA-07-R07] Persistent memory, retrieval indexes, cached summaries, and context assets used by agents MUST have provenance, review cadence, and retirement rules; security-relevant or externally influenced entries MUST be re-validated before they can influence RT3 — Significant and above work.
+- **Scan AI-produced code as untrusted by default.** Security scanning (SAST, secret detection, dependency audit) applies to all changes, and findings-thresholds for AI-produced changes SHOULD be at least as strict as for human changes; RT3 — Significant and above changes touching auth, crypto, or data handling receive human security review regardless of scan results.
 - **Use AI to widen security coverage, not to replace judgment.** Teams SHOULD use AI-assisted review to screen the change volume humans cannot cover, routing findings to ROLE-08; AI findings feed human decisions and are never auto-dismissed by another model.
 
 ## 4. Patterns
@@ -76,7 +76,7 @@ AI meaningfully assists ROLE-08 in threat-model drafting, security-focused code 
 | **Trusted-Because-Internal** | Internal content (tickets, comments, wiki) flows into agent context unsanitized; the trust boundary assumed dissolved the day agents started reading everything. |
 | **Tool Autodiscovery in Production** | Agents dynamically connect to unreviewed tools or connector servers; tool metadata becomes an unsupervised authority-escalation path. |
 | **Forever Memory** | Agent memory is never expired, quarantined, or revalidated; poisoned context survives long after the original attack is gone. |
-| **Scan-and-Ship** | Clean automated scans treated as security approval for RT3+ AI-produced changes; scanners never saw the authorization logic flaw. |
+| **Scan-and-Ship** | Clean automated scans treated as security approval for RT3 — Significant and above AI-produced changes; scanners never saw the authorization logic flaw. |
 | **Security Findings Firehose** | AI-generated security findings flood human triage without ranking or dedup; real findings drown, and the team learns to ignore the channel. |
 
 ## 6. Competency Expectations
@@ -85,16 +85,16 @@ AI meaningfully assists ROLE-08 in threat-model drafting, security-focused code 
 |-------|----------------------|
 | **CL1** | Explains prompt injection, slopsquatting, and least-privilege-for-agents; recognizes secrets-in-context violations; follows dependency verification procedure. |
 | **CL2** | Independently applies untrusted-input posture to agent workflows; configures task-scoped credentials; triages AI security findings for standard systems. |
-| **CL3** | Threat-models AI-native delivery systems; designs guardrail and broker architectures; leads security review of RT3+ AI-produced change; coaches teams on injection-resistant workflow design. |
+| **CL3** | Threat-models AI-native delivery systems; designs guardrail and broker architectures; leads security review of RT3 — Significant and above AI-produced change; coaches teams on injection-resistant workflow design. |
 | **CL4** | Sets organizational security policy for AI participation (X01 across all phases); evaluates residual risk of autonomy expansions; evolves the threat model as attack techniques develop. |
 
 ## Related Documents
 
-- Architectural enforcement of risk zones and boundaries: [KA-03 Architecture & Design (AIES-AEBOK-KA-03)](KA-03-architecture-design.md).
-- Implementation-side controls this KA reinforces: [KA-05 (AIES-AEBOK-KA-05)](KA-05-implementation.md); pipeline enforcement: [KA-08 DevOps & Release (AIES-AEBOK-KA-08)](KA-08-devops-release.md).
-- Detection and audit telemetry: [KA-09 Operations & Observability (AIES-AEBOK-KA-09)](KA-09-operations-observability.md).
-- Protecting the context store from poisoning: [KA-10 Context & Knowledge Management (AIES-AEBOK-KA-10)](KA-10-context-knowledge.md).
-- Security Engineer role (ROLE-08) and gate authority: [AEOS (AIES-AEOS-00)](../../AEOS/README.md); platform security architecture: [AEAR (AIES-AEAR-00)](../../AEAR/README.md).
+- Architectural enforcement of risk zones and boundaries: [KA-03 Architecture & Design (AIES-AEBOK-KA-03 — Knowledge Area — Architecture Design)](KA-03-architecture-design.md).
+- Implementation-side controls this KA reinforces: [KA-05 (AIES-AEBOK-KA-05 — Knowledge Area — Implementation)](KA-05-implementation.md); pipeline enforcement: [KA-08 DevOps & Release (AIES-AEBOK-KA-08 — Knowledge Area — DevOps and Release)](KA-08-devops-release.md).
+- Detection and audit telemetry: [KA-09 Operations & Observability (AIES-AEBOK-KA-09 — Knowledge Area — Operations and Observability)](KA-09-operations-observability.md).
+- Protecting the context store from poisoning: [KA-10 Context & Knowledge Management (AIES-AEBOK-KA-10 — Knowledge Area — Context and Knowledge)](KA-10-context-knowledge.md).
+- Security Engineer role (ROLE-08) and gate authority: [AIES-AEOS-00 — AEOS — AI Engineering Operating System](../../AEOS/README.md); platform security architecture: [AEAR (AIES-AEAR-00 — Reference Architecture)](../../AEAR/README.md).
 
 ## References
 
@@ -105,4 +105,4 @@ AI meaningfully assists ROLE-08 in threat-model drafting, security-focused code 
 - NIST AI 100-2e2025 — Adversarial Machine Learning: A Taxonomy and Terminology of Attacks and Mitigations (incl. indirect prompt injection, agent memory poisoning, supply-chain attacks)
 - MITRE ATLAS — Adversarial Threat Landscape for Artificial-Intelligence Systems (attack tactics & techniques)
 - CISA/NCSC — Guidelines for Secure AI System Development
-- Standards crosswalk for this area: [Security & supply-chain standards (AIES-DOC-07 §3b)](../../docs/CROSSWALK.md)
+- Standards crosswalk for this area: [AIES-DOC-07 — Standards Crosswalk — How AIES Maps to Adjacent Frameworks](../../docs/CROSSWALK.md)

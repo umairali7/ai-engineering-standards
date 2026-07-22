@@ -35,7 +35,7 @@ Every research note MUST use the following structure so that notes remain compar
 | **Implications** | What the findings suggest for AIES, explicitly naming the affected module(s) (AEBOK, AESQS, AEOS, AEAR, AECT, or Shared) and, where possible, the affected document or requirement IDs |
 | **References** | Full citations; external standards by name and version |
 
-Notes are named `RES-NN-<short-title>.md` and carry the standard metadata table per the [Metadata Standard (AIES-STD-02)](../docs/standards/metadata-standard.md).
+Notes are named `RES-NN-<short-title>.md` and carry the standard metadata table per the [Metadata Standard (AIES-STD-02 — Metadata Standard)](../docs/standards/metadata-standard.md).
 
 ## 3. Index
 
@@ -53,10 +53,10 @@ Notes are named `RES-NN-<short-title>.md` and carry the standard metadata table 
 
 ## Related Documents
 
-- [Repository Architecture (AIES-DOC-03)](../docs/ARCHITECTURE.md)
-- [Metadata Standard (AIES-STD-02)](../docs/standards/metadata-standard.md)
+- [AIES-DOC-03 — Repository Architecture](../docs/ARCHITECTURE.md)
+- [Metadata Standard (AIES-STD-02 — Metadata Standard)](../docs/standards/metadata-standard.md)
 - [CONTRIBUTING.md](../CONTRIBUTING.md)
-- [GOVERNANCE.md (AIES-GOV-01)](../GOVERNANCE.md)
+- [AIES-GOV-01 — Governance](../GOVERNANCE.md)
 
 ## References
 

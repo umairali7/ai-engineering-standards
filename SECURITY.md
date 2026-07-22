@@ -62,8 +62,8 @@ If you are unsure whether a flaw in the standard is security-sensitive, report i
 
 ## Related Documents
 
-- [GOVERNANCE.md (AIES-GOV-01)](GOVERNANCE.md)
-- [CONTRIBUTING.md (AIES-GOV-02)](CONTRIBUTING.md)
+- [AIES-GOV-01 — Governance](GOVERNANCE.md)
+- [AIES-GOV-02 — Contributing to AIES](CONTRIBUTING.md)
 - [Errata Report template](.github/ISSUE_TEMPLATE/bug_report.md)
 - [CHANGELOG.md](CHANGELOG.md)
 

@@ -206,13 +206,13 @@ def render_markdown(run_id: str) -> str:
             automated = _source_cell(source_scores.get(area, {}), "automated", dim)
             human = _source_cell(source_scores.get(area, {}), "human", dim)
             if ds:
-                a(f"| {dim} {C.DIMENSION_NAMES[dim]} | {automated} | {human} | "
+                a(f"| {C.identifier_label(dim)} | {automated} | {human} | "
                   f"{ds['n']} | {ds['mean']} | "
                   f"[{ds['ci90_low']}, {ds['ci90_high']}] | **{ds['ci90_low']}** | "
                   f">= {g.get('threshold', '-')} | "
                   f"{'PASS' if g.get('passed') else '**FAIL**'} |")
             else:
-                a(f"| {dim} {C.DIMENSION_NAMES[dim]} | {automated} | {human} | "
+                a(f"| {C.identifier_label(dim)} | {automated} | {human} | "
                   "0 | - | - | - | "
                   f">= {g.get('threshold', '-')} | **FAIL** (no evidence) |")
         a("")
@@ -230,7 +230,7 @@ def render_markdown(run_id: str) -> str:
         a(f"**Aggregate A (over decision values, profile-weighted): "
           f"{d['aggregate_A'] if d['aggregate_A'] is not None else '-'}**")
         a("")
-        a(f"**Score-bounded competency level:** {d['cl'] or 'none'} - {d['cl_note']}")
+        a(f"**Score-bounded competency level:** {C.identifier_label(d['cl']) if d['cl'] else 'none'} - {d['cl_note']}")
         a("")
         a("### Recommended autonomy envelope (min of RT cap and CL-earned cap)")
         a("")

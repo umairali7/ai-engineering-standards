@@ -6,7 +6,7 @@
 | **Status** | Review |
 | **Audience** | Architects · Platform teams · Engineering leadership |
 
-Adaptation of the [Core Reference Architecture (AIES-AEAR-CORE-01)](../core-reference-architecture.md) for healthcare providers, payers, health-tech firms, and life-sciences organizations. Assumes the [Enterprise Platform blueprint](enterprise-platform.md) as baseline and adds the constraints of patient-data protection, clinical safety, and regulated software lifecycles.
+Adaptation of the [Core Reference Architecture (AIES-AEAR-CORE-01 — Core Reference Architecture)](../core-reference-architecture.md) for healthcare providers, payers, health-tech firms, and life-sciences organizations. Assumes the [Enterprise Platform blueprint](enterprise-platform.md) as baseline and adds the constraints of patient-data protection, clinical safety, and regulated software lifecycles.
 
 The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", and "MAY" in this document are to be interpreted as described in RFC 2119.
 
@@ -24,19 +24,19 @@ Two obligations dominate: **patients must not be harmed** and **patient data mus
 
 ## 2. Risk-Tier Profile
 
-Typical defaults; per [AIES-AEAR-BP-00-R01](README.md), validate locally — clinical-risk assessment (hazard analysis) is the local authority, not this table.
+Typical defaults; per [AIES-AEAR-BP-00-R01 — Industry Blueprints, requirement 01](README.md), validate locally — clinical-risk assessment (hazard analysis) is the local authority, not this table.
 
 | Task type | Typical tier | Rationale | Default max AL |
 |-----------|-------------|-----------|----------------|
-| Documentation, internal tooling, test scaffolding (no patient data) | RT1 | Low blast radius | AL4 |
-| Administrative/back-office systems (scheduling, billing logic behind review) | RT2 | Contained; no direct clinical path | AL3 |
-| Systems handling identifiable patient data (portals, records access, claims) | RT3 | Privacy breach blast radius | AL2 |
-| Clinical-data interchange interfaces (message parsing, terminology/unit mapping, patient-identity matching) | RT3–RT4 | Silent data corruption becomes clinical harm | AL2 → AL1 |
-| **Clinical-decision-adjacent code** (order entry, dosing calculation, alerting, results display, triage logic) | **RT4** | Defects reach the point of care; safety-critical per [Taxonomy §4](../../Shared/Taxonomy/README.md#4-risk-tiers-rt1rt4) | AL1 |
-| Software classified as (or embedded in) a medical device | RT4 | Regulated lifecycle; change control is a legal obligation | AL1 |
-| De-identification and consent-management logic | RT4 | A defect converts the whole downstream estate into a breach | AL1 |
+| Documentation, internal tooling, test scaffolding (no patient data) | RT1 — Minimal | Low blast radius | AL4 — Autonomous |
+| Administrative/back-office systems (scheduling, billing logic behind review) | RT2 — Moderate | Contained; no direct clinical path | AL3 — Delegated |
+| Systems handling identifiable patient data (portals, records access, claims) | RT3 — Significant | Privacy breach blast radius | AL2 — Collaborative |
+| Clinical-data interchange interfaces (message parsing, terminology/unit mapping, patient-identity matching) | RT3 — Significant through RT4 — Critical | Silent data corruption becomes clinical harm | AL2 — Collaborative → AL1 — Assisted |
+| **Clinical-decision-adjacent code** (order entry, dosing calculation, alerting, results display, triage logic) | **RT4 — Critical** | Defects reach the point of care; safety-critical per [Taxonomy §4](../../Shared/Taxonomy/README.md#4-risk-tiers-rt1rt4) | AL1 — Assisted |
+| Software classified as (or embedded in) a medical device | RT4 — Critical | Regulated lifecycle; change control is a legal obligation | AL1 — Assisted |
+| De-identification and consent-management logic | RT4 — Critical | A defect converts the whole downstream estate into a breach | AL1 — Assisted |
 
-[AIES-AEAR-BP-HEALTHCARE-R01] Code whose output can influence a clinical decision — directly (dosing, alerts) or through presentation (results display, ordering defaults) — MUST be classified RT4; "adjacent" is determined by clinical hazard analysis, not by system naming.
+[AIES-AEAR-BP-HEALTHCARE-R01] Code whose output can influence a clinical decision — directly (dosing, alerts) or through presentation (results display, ordering defaults) — MUST be classified RT4 — Critical; "adjacent" is determined by clinical hazard analysis, not by system naming.
 
 [AIES-AEAR-BP-HEALTHCARE-R02] Changes to device-classified software MUST flow through the manufacturer's regulated change process; the platform's gates supplement, and MUST NOT substitute for, that process.
 
@@ -44,13 +44,13 @@ Typical defaults; per [AIES-AEAR-BP-00-R01](README.md), validate locally — cli
 
 ### 3.1 Topology
 
-Single-tenant or hybrid ([AIES-AEAR-CORE-01 §13](../core-reference-architecture.md#13-deployment-topologies)): identifiable patient data classes route only to deployments approved for health data (in-jurisdiction, contractually bound), enforced by data-handling-class routing ([AIES-AEAR-CORE-01-R18]). Many organizations run RT1–RT2 work on external capacity and confine health-data classes to dedicated deployments.
+Single-tenant or hybrid ([AIES-AEAR-CORE-01 — Core Reference Architecture §13](../core-reference-architecture.md#13-deployment-topologies)): identifiable patient data classes route only to deployments approved for health data (in-jurisdiction, contractually bound), enforced by data-handling-class routing ([AIES-AEAR-CORE-01-R18 — Core Reference Architecture, requirement 18]). Many organizations run RT1 — Minimal through RT2 — Moderate work on external capacity and confine health-data classes to dedicated deployments.
 
 ### 3.2 Plane-Level Deltas
 
 | Plane | Healthcare delta |
 |-------|------------------|
-| Interaction | Review UIs for RT4 clinical-adjacent changes display the linked hazard-analysis items alongside the diff, so reviewers judge clinical impact, not just code quality. Approval gates for device software integrate the quality-management sign-off roles |
+| Interaction | Review UIs for RT4 — Critical clinical-adjacent changes display the linked hazard-analysis items alongside the diff, so reviewers judge clinical impact, not just code quality. Approval gates for device software integrate the quality-management sign-off roles |
 | Orchestration | Workflows for device-classified repositories embed the regulated lifecycle's stages (requirements trace → implementation → verification → release record) so agent work lands inside the design-history discipline automatically |
 | Model | Model registry records, per model version, whether it is approved for health-data classes. Inference on identifiable patient data is exceptional and logged as a disclosure-relevant event |
 | Context & Knowledge | The load-bearing delta — see §3.3. Consent and de-identification controls sit at ingestion |
@@ -64,14 +64,14 @@ Single-tenant or hybrid ([AIES-AEAR-CORE-01 §13](../core-reference-architecture
 Patient data reaching the Context & Knowledge Plane is the blueprint's central hazard.
 
 - [AIES-AEAR-BP-HEALTHCARE-R05] Identifiable patient data MUST NOT be ingested into knowledge stores or context assets. Ingestion pipelines MUST apply validated de-identification (or verify consent covering the specific secondary use) before indexing, and the de-identification method MUST be documented and periodically re-validated against re-identification risk.
-- [AIES-AEAR-BP-HEALTHCARE-R06] Data classification ([AIES-AEAR-CORE-01-R20]) MUST distinguish at minimum: identifiable health data, de-identified health data, and limited datasets — because each carries different permissible flows, and classification drives gateway routing and guardrail policy.
+- [AIES-AEAR-BP-HEALTHCARE-R06] Data classification ([AIES-AEAR-CORE-01-R20 — Core Reference Architecture, requirement 20]) MUST distinguish at minimum: identifiable health data, de-identified health data, and limited datasets — because each carries different permissible flows, and classification drives gateway routing and guardrail policy.
 - [AIES-AEAR-BP-HEALTHCARE-R07] Where a task genuinely requires identifiable data (e.g., debugging a specific record-processing failure), the grant MUST be per-task, minimum-necessary, human-approved, and produce a disclosure-accounting record.
 - Re-identification risk compounds: retrieval can join individually de-identified fragments. Retrieval policy SHOULD limit cross-source aggregation on health-data classes.
 
 ## 4. Domain-Specific Guardrails
 
 - **Patient-identifier egress block** — content inspection denies identifiable health data in prompts, context, model traffic, and logs destined for any deployment not approved for that class; fails closed.
-- **Clinical-module write lock** — agent-authored changes to designated clinical-decision-adjacent modules are denied unless the task carries RT4/AL1 classification with linked hazard-analysis reference; the module list is owned by the clinical-safety function.
+- **Clinical-module write lock** — agent-authored changes to designated clinical-decision-adjacent modules are denied unless the task carries RT4 — Critical/AL1 — Assisted classification with linked hazard-analysis reference; the module list is owned by the clinical-safety function.
 - **Device-lifecycle enforcement** — merges to device-classified repositories require the regulated process's verification evidence attached; the platform gate checks for its presence.
 - **Terminology and unit safety** — changes touching clinical terminology mappings, units of measure, or reference ranges trigger a mandatory specialist review gate regardless of diff size.
 - **Consent-scope enforcement** — retrieval filters exclude data whose consent or de-identification status does not cover engineering use; absence of status metadata is treated as "not permitted".
@@ -81,20 +81,20 @@ Patient data reaching the Context & Knowledge Plane is the blueprint's central h
 
 | Use case | Phases | Typical RT | Typical AL |
 |----------|--------|-----------|------------|
-| Test generation for a claims-processing service (synthetic data) | P10 | RT2 | AL3 |
-| Documentation of a legacy interchange interface from message samples (de-identified) | P15, X08 | RT1 | AL4 with spot audit |
-| Refactoring inside a dosing-calculation library | P09 | RT4 | AL1 |
-| Drafting hazard-analysis updates from incident telemetry | P16, X05 | RT3 | AL2 (clinical-safety human owns the artifact) |
-| Patient-portal UI feature behind review (no clinical logic) | P09, P04 | RT2–RT3 | AL3 → AL2 |
-| De-identification pipeline rule change | P09 | RT4 | AL1 |
-| Interchange mapping update (new lab-result code) | P09, P10 | RT3 | AL2 with specialist gate |
-| On-call runbook drafting for a scheduling system | P14, X08 | RT1 | AL4 |
+| Test generation for a claims-processing service (synthetic data) | P10 | RT2 — Moderate | AL3 — Delegated |
+| Documentation of a legacy interchange interface from message samples (de-identified) | P15, X08 | RT1 — Minimal | AL4 — Autonomous with spot audit |
+| Refactoring inside a dosing-calculation library | P09 | RT4 — Critical | AL1 — Assisted |
+| Drafting hazard-analysis updates from incident telemetry | P16, X05 | RT3 — Significant | AL2 — Collaborative (clinical-safety human owns the artifact) |
+| Patient-portal UI feature behind review (no clinical logic) | P09, P04 | RT2 — Moderate–RT3 — Significant | AL3 — Delegated → AL2 — Collaborative |
+| De-identification pipeline rule change | P09 | RT4 — Critical | AL1 — Assisted |
+| Interchange mapping update (new lab-result code) | P09, P10 | RT3 — Significant | AL2 — Collaborative with specialist gate |
+| On-call runbook drafting for a scheduling system | P14, X08 | RT1 — Minimal | AL4 — Autonomous |
 
 ---
 
 ## Related Documents
 
-- [AIES-AEAR-BP-00 — Blueprint Catalog](README.md) · [AIES-AEAR-BP-ENTERPRISE — Enterprise Platform](enterprise-platform.md) · [AIES-AEAR-CORE-01 — Core Reference Architecture](../core-reference-architecture.md) · [AIES-AEAR-XC-01 — Cross-Cutting Concerns](../cross-cutting-concerns.md)
+- [AIES-AEAR-BP-00 — AEAR Blueprint Catalog](README.md) · [AIES-AEAR-BP-ENTERPRIS — Industry BlueprintE — Enterprise Platform](enterprise-platform.md) · [AIES-AEAR-CORE-01 — Core Reference Architecture — Enterprise AI Engineering Platform](../core-reference-architecture.md) · [AIES-AEAR-XC-01 — Cross-Cutting Concerns in Platform Architecture](../cross-cutting-concerns.md)
 
 ## References
 

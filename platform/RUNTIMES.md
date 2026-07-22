@@ -95,9 +95,9 @@ format, or in-process loading.
 
 ## Related Documents
 
-- [Platform Specification (AIES-DOC-06) §8](../docs/PLATFORM.md) — the plugin contract
-- [Deployments (AIES-PLAT-03)](DEPLOYMENTS.md) — what an adapter serves
-- [Guide (AIES-PLAT-01)](GUIDE.md) · [external adapter example](examples/external_adapter/README.md)
+- [AIES-DOC-06 — Engineering Assessment Platform Specification](../docs/PLATFORM.md) — the plugin contract
+- [AIES-PLAT-03 — Deployments — Qualify Deployments, Not Models](DEPLOYMENTS.md) — what an adapter serves
+- [AIES-PLAT-01 — AIES Platform — Architecture & Run Guide](GUIDE.md) · [external adapter example](examples/external_adapter/README.md)
 
 ## References
 

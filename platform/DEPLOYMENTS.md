@@ -15,7 +15,7 @@ is one of the load-bearing ideas of the whole project.
 A model's behavior is not a property of the weights alone. The same checkpoint
 answers differently at a different quantization, under a different runtime, with
 different generation settings, on different hardware. "Is Qwen3.5 qualified as
-an RT2 engineer?" is not answerable. **"Is *this deployment* qualified?"** is:
+an RT2 — Moderate engineer?" is not answerable. **"Is *this deployment* qualified?"** is:
 
 ```
         deployment: local-qwen
@@ -148,10 +148,10 @@ output is biased and warned against).
 
 ## Related Documents
 
-- [Platform Specification (AIES-DOC-06) §5.1, D7, D11](../docs/PLATFORM.md)
-- [Guide (AIES-PLAT-01)](GUIDE.md) — setup and a start-to-finish run
-- [Profiles (AIES-PLAT-02)](PROFILES.md)
-- [Revision & Revocation (AIES-AESQS-RR-01)](../AESQS/revision-and-revocation.md) — re-qualification triggers
+- [AIES-DOC-06 — Engineering Assessment Platform Specification](../docs/PLATFORM.md)
+- [AIES-PLAT-01 — AIES Platform — Architecture & Run Guide](GUIDE.md) — setup and a start-to-finish run
+- [AIES-PLAT-02 — Qualification Profiles](PROFILES.md)
+- [Revision & Revocation (AIES-AESQS-RR-01 — Revision and Revocation)](../AESQS/revision-and-revocation.md) — re-qualification triggers
 
 ## References
 

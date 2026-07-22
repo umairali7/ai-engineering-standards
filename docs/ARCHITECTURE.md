@@ -93,7 +93,7 @@ Dependencies flow downward: a module may depend only on modules below it and on 
 
 In words:
 
-- **Shared** is the base. Every module uses its glossary and taxonomies; none may redefine them. Documentation conventions live in the [Documentation Standards (AIES-STD-00)](standards/README.md).
+- **Shared** is the base. Every module uses its glossary and taxonomies; none may redefine them. Documentation conventions live in the [Documentation Standards (AIES-STD-00 — Documentation Standards)](standards/README.md).
 - **AEBOK** defines what competent AI Engineering practice *is*. It feeds **AESQS** (you evaluate against defined knowledge) and **AECT** (you teach and examine defined knowledge).
 - **AESQS** produces the qualification evidence that **AEOS** requires before granting or raising an autonomy level (per [Taxonomy R03](../Shared/Taxonomy/README.md)).
 - **AEOS** defines the operating model that **AEAR** platforms host: reference architectures exist to run AEOS-shaped workflows with enforced envelopes, gates, and audit trails.
@@ -102,7 +102,7 @@ A change to Shared is a breaking change for all five modules and requires an ADR
 
 ## 3. Document Identifier Scheme
 
-Defined normatively in the [Metadata Standard (AIES-STD-02)](standards/metadata-standard.md); summarized here:
+Defined normatively in the [Metadata Standard (AIES-STD-02 — Metadata Standard)](standards/metadata-standard.md); summarized here:
 
 ```
 AIES-<AREA>-<NUMBER>             repository-level documents
@@ -124,7 +124,7 @@ IDs are stable and never reused. Individual normative requirements inside a docu
 
 ## 4. Document Status Lifecycle
 
-Every standards-style document carries a metadata table (Document ID, Status, Audience — per the [Metadata Standard (AIES-STD-02)](standards/metadata-standard.md)) and moves through the lifecycle defined in the [Review Standard (AIES-STD-06)](standards/review-standard.md):
+Every standards-style document carries a metadata table (Document ID, Status, Audience — per the [Metadata Standard (AIES-STD-02 — Metadata Standard)](standards/metadata-standard.md)) and moves through the lifecycle defined in the [Review Standard (AIES-STD-06 — Review Standard)](standards/review-standard.md):
 
 ```
 Draft ──► Review ──► Approved ──► Deprecated
@@ -145,8 +145,8 @@ ADRs follow their own lifecycle (Proposed → Accepted → Superseded) described
 
 | You are creating… | It belongs in… | Governed by |
 |-------------------|---------------|-------------|
-| A new normative standard or specification | The owning module directory (`AEBOK/`, `AESQS/`, …) | [Standard template](../templates/STANDARD_TEMPLATE.md), [Documentation Standards (AIES-STD-00)](standards/README.md) |
-| A project-level document (charter, guides) | `docs/` with an `AIES-DOC-*` ID | [Documentation Standards (AIES-STD-00)](standards/README.md) |
+| A new normative standard or specification | The owning module directory (`AEBOK/`, `AESQS/`, …) | [Standard template](../templates/STANDARD_TEMPLATE.md), [Documentation Standards (AIES-STD-00 — Documentation Standards)](standards/README.md) |
+| A project-level document (charter, guides) | `docs/` with an `AIES-DOC-*` ID | [Documentation Standards (AIES-STD-00 — Documentation Standards)](standards/README.md) |
 | A term definition | [Shared/Glossary/](../Shared/Glossary/README.md) — never locally | Glossary rules, ADR if breaking |
 | A classification scale or scale change | [Shared/Taxonomy/](../Shared/Taxonomy/README.md) — never locally | Taxonomy change control (ADR required) |
 | A significant decision record | `adr/` as `ADR-NNNN-Title.md` | [ADR template](../templates/ADR_TEMPLATE.md), [adr/README.md](../adr/README.md) |
@@ -169,7 +169,7 @@ ADRs follow their own lifecycle (Proposed → Accepted → Superseded) described
 | Design how my team operates with AI | [AEOS/](../AEOS/README.md) |
 | Design an enterprise AI engineering platform | [AEAR/](../AEAR/README.md) |
 | Get trained or certified | [AECT/](../AECT/README.md) |
-| Write a new AIES document | [templates/STANDARD_TEMPLATE.md](../templates/STANDARD_TEMPLATE.md) and the [Documentation Standards (AIES-STD-00)](standards/README.md) |
+| Write a new AIES document | [templates/STANDARD_TEMPLATE.md](../templates/STANDARD_TEMPLATE.md) and the [Documentation Standards (AIES-STD-00 — Documentation Standards)](standards/README.md) |
 | Propose or understand a structural decision | [adr/](../adr/README.md) |
 | See the standards applied concretely | [examples/](../examples/README.md) |
 | Contribute | [CONTRIBUTING.md](../CONTRIBUTING.md) and [GOVERNANCE.md](../GOVERNANCE.md) |
@@ -178,10 +178,10 @@ ADRs follow their own lifecycle (Proposed → Accepted → Superseded) described
 
 ## Related Documents
 
-- [Shared Standards (AIES-SHARED-00)](../Shared/README.md)
-- [Documentation Standards (AIES-STD-00)](standards/README.md)
+- [AIES-SHARED-00 — Shared Standards](../Shared/README.md)
+- [Documentation Standards (AIES-STD-00 — Documentation Standards)](standards/README.md)
 - [ADR-0001: Repository Foundation](../adr/ADR-0001-Repository-Foundation.md)
-- [Project Charter (AIES-DOC-01)](PROJECT_CHARTER.md)
+- [AIES-DOC-01 — Project Charter](PROJECT_CHARTER.md)
 
 ## References
 

@@ -39,7 +39,7 @@ Worked examples are welcome contributions — they are Class 2 (substantive) cha
 
 ## Related Documents
 
-- [Repository Architecture (AIES-DOC-03)](../docs/ARCHITECTURE.md)
+- [AIES-DOC-03 — Repository Architecture](../docs/ARCHITECTURE.md)
 - [Standard template](../templates/STANDARD_TEMPLATE.md)
 - [ROADMAP.md](../ROADMAP.md)
 

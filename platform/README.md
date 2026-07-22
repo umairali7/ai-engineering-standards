@@ -8,13 +8,18 @@
 
 The `aies` command-line tool: the executable reference implementation of the
 [AESQS](../AESQS/README.md) qualification methodology. Specification:
-[docs/PLATFORM.md (AIES-DOC-06)](../docs/PLATFORM.md). Platform-identity
+[AIES-DOC-06 — Engineering Assessment Platform Specification](../docs/PLATFORM.md). Platform-identity
 proposal: [ADR-0009](../adr/ADR-0009-Engineering-Assessment-Platform-Identity.md).
 
 The current executable subject adapters assess AI deployments and repositories.
 Canonical evidence, ECM, and decision-product boundaries are subject-neutral so
 future adapters can assess agents, MCP servers, RAG systems, pipelines, and
 platforms without redefining the product.
+
+**Capability scope is explicit.** A run assesses one risk tier (RT1 — Minimal through RT4 — Critical).
+`--all-areas` expands coverage across competency areas only at that selected
+tier; it is not an all-tier claim. ECM rows marked `not assessed` mean no
+mapped scored evidence exists for that task, not that the subject failed it.
 
 **The platform prepares evidence; it never grants.** A human qualification
 authority records every grant (PLATFORM.md D8). Output is always scoped —
@@ -147,17 +152,17 @@ auto-detected on its conventional port, override via `AIES_<RUNTIME>_BASE_URL`),
 
 ## What the engine enforces (and profiles cannot change)
 
-Transcribed from [AIES-AESQS-CS-01](../AESQS/capability-scoring.md) into
+Transcribed from [AIES-AESQS-CS-01 — Capability Scoring](../AESQS/capability-scoring.md) into
 [`src/aies/constants.py`](src/aies/constants.py); conformance tests in
 [`tests/`](tests/) map behavior to requirement IDs:
 
 - **EV1–EV6 scoring, 0–4 integer anchors** — no other scales (D2)
 - **Decision values are lower 90% confidence bounds**, not means (R02/R11/R13)
 - **Minimum gates per risk tier** — a failed EV3 gate denies the tier; one
-  EV3 zero at RT3–RT4 fails outright; no profile can express a gate (D3)
+  EV3 zero at RT3 — Significant through RT4 — Critical fails outright; no profile can express a gate (D3)
 - **Statistical minimums** — under-sampled results are labeled
   NON-DECISIONAL and can never look like qualification evidence (D6)
-- **AI systems cap at CL3; AL4 never at initial qualification** (R07/R08)
+- **AI systems cap at CL3; AL4 — Autonomous never at initial qualification** (R07/R08)
 - **Autonomy = min(risk-tier cap, CL-earned cap)** per tier (R09)
 - **Environment fingerprint is provenance**; change = re-qualification trigger (D7)
 
@@ -177,17 +182,17 @@ platform/
 All twelve competency areas (CA-01…CA-12) ship demonstration suites of
 about sixteen scenarios each (189 in total), including many hard, distinct
 scenarios that combine multiple constraints, ambiguity, safety pressure, and
-governance trade-offs, plus RT3/RT4 refuse-or-escalate cases.
+governance trade-offs, plus RT3 — Significant through RT4 — Critical refuse-or-escalate cases.
 The suites are useful for smoke tests, calibration, and early comparison, but
 they are still not a full public qualification benchmark by themselves. A
-*decisional* RT2 assessment needs ≥ 30 scored items per area
+*decisional* RT2 — Moderate assessment needs ≥ 30 scored items per area
 (AIES-AESQS-CS-01 §6), so teams should use repeats and additional held-out
 scenarios before treating results as qualification evidence — the platform
 labels under-sampled runs NON-DECISIONAL automatically.
 
 ## Related Documents
 
-- [Platform Specification (AIES-DOC-06)](../docs/PLATFORM.md)
+- [AIES-DOC-06 — Engineering Assessment Platform Specification](../docs/PLATFORM.md)
 - [ADR-0009 — Engineering Assessment Platform Identity](../adr/ADR-0009-Engineering-Assessment-Platform-Identity.md)
 - [AIES-AESQS-CS-01 — Capability Scoring](../AESQS/capability-scoring.md)
 - [AIES-AESQS-ER-01 — Evaluation Rubrics](../AESQS/evaluation-rubrics.md)

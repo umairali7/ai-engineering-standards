@@ -61,8 +61,8 @@ def compare(ref_a: str, ref_b: str) -> dict:
 
     if a["risk_tier"] != b["risk_tier"]:
         raise CompareError(
-            f"runs are scoped to different risk tiers ({a['risk_tier']} vs "
-            f"{b['risk_tier']}); deltas across tiers are not comparable"
+            f"runs are scoped to different risk tiers ({C.risk_tier_label(a['risk_tier'])} vs "
+            f"{C.risk_tier_label(b['risk_tier'])}); deltas across tiers are not comparable"
         )
 
     common = sorted(set(a["areas"]) & set(b["areas"]))
@@ -155,7 +155,7 @@ def render_markdown(cmp: dict) -> str:
         a("|---|---|---|---|")
         for dim, v in d["dimensions"].items():
             marker = "+" if v["delta"] > 0 else ""
-            a(f"| {dim} {C.DIMENSION_NAMES[dim]} | {v['a']} | {v['b']} | "
+            a(f"| {C.identifier_label(dim)} | {v['a']} | {v['b']} | "
               f"{marker}{v['delta']} |")
         agg = d["aggregate"]
         a(f"| **Aggregate A** | **{agg['a']}** | **{agg['b']}** | "
@@ -163,7 +163,8 @@ def render_markdown(cmp: dict) -> str:
         a("")
         a(f"Gates: A {'pass' if d['gates_passed']['a'] else 'FAIL'} / "
           f"B {'pass' if d['gates_passed']['b'] else 'FAIL'} | "
-          f"CL: A {d['cl']['a'] or 'none'} / B {d['cl']['b'] or 'none'} | "
+          f"CL: A {C.identifier_label(d['cl']['a']) if d['cl']['a'] else 'none'} / "
+          f"B {C.identifier_label(d['cl']['b']) if d['cl']['b'] else 'none'} | "
           f"Decisional: A {'yes' if d['decisional']['a'] else 'NO'} / "
           f"B {'yes' if d['decisional']['b'] else 'NO'}")
         a("")
@@ -171,7 +172,7 @@ def render_markdown(cmp: dict) -> str:
         a("## Incomparable areas")
         a("")
         for x in cmp["incomparable_areas"]:
-            a(f"- **{x['area']}**: {x['reason']} (`{x['suite_a']}` vs `{x['suite_b']}`) "
+            a(f"- **{C.competency_label(x['area'])}**: {x['reason']} (`{x['suite_a']}` vs `{x['suite_b']}`) "
               "- results on different suite versions are never diffed")
         a("")
     a("---")

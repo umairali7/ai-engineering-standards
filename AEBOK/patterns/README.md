@@ -14,7 +14,7 @@ The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", and "MAY" in this docu
 
 This catalog consolidates the named patterns and anti-patterns of AI participation in engineering work that recur across the [AEBOK Knowledge Areas](../README.md#3-knowledge-area-map). Each entry has a stable ID (`PAT-NN` / `APAT-NN`) so that KAs, [AEOS](../../AEOS/README.md) workflows, and [AECT](../../AECT/README.md) course material can reference the same concept without redefinition. Individual KAs also name *local* patterns specific to their phase (e.g., Agent Activity Ledger in [KA-09](../knowledge-areas/KA-09-operations-observability.md)); this catalog indexes the cross-cutting canon that multiple KAs share.
 
-Catalog entries are descriptive vocabulary, not requirements. Where a pattern is mandatory in some context, the owning KA states it as a tagged requirement; this catalog links to the KAs where that normative language lives. All entries use taxonomy IDs ([AIES-SHARED-02](../../Shared/Taxonomy/README.md)) for phases, autonomy levels, risk tiers, roles, and artifacts.
+Catalog entries are descriptive vocabulary, not requirements. Where a pattern is mandatory in some context, the owning KA states it as a tagged requirement; this catalog links to the KAs where that normative language lives. All entries use taxonomy IDs ([AIES-SHARED-02 — Taxonomy](../../Shared/Taxonomy/README.md)) for phases, autonomy levels, risk tiers, roles, and artifacts.
 
 ## 2. Patterns
 
@@ -29,8 +29,8 @@ Reusable approaches that make AI participation bounded, verifiable, and traceabl
 | <a id="pat-05-context-curation-pipeline"></a>PAT-05 | **Context Curation Pipeline** | Organizational knowledge reaches agents raw — ambiguous, stale, contradictory — or not at all. | Knowledge flows through an explicit pipeline: capture → transform for machine consumption → validate → version → publish as owned context assets (ART-13). | [KA-10](../knowledge-areas/KA-10-context-knowledge.md), [KA-03](../knowledge-areas/KA-03-architecture-design.md) | All (X09) |
 | <a id="pat-06-golden-task-regression"></a>PAT-06 | **Golden Task Regression** | Changes to prompts, context, or configuration alter AI behavior invisibly; quality regressions surface in production. | A curated, versioned suite of representative tasks with expected outcomes gates every change to an AI component and doubles as the drift-detection baseline. | [KA-06](../knowledge-areas/KA-06-testing-quality.md), [KA-12](../knowledge-areas/KA-12-evaluation-improvement.md) | P10, P16 |
 | <a id="pat-07-independent-test-channel"></a>PAT-07 | **Independent Test Channel** | When one actor (or one context) produces both code and its tests, errors correlate and pass in pairs. | Verification for an AI-produced change is produced through a path — actor, context, inputs — disjoint from the implementation, restoring error decorrelation. | [KA-06](../knowledge-areas/KA-06-testing-quality.md), [KA-05](../knowledge-areas/KA-05-implementation.md) | P09–P10 |
-| <a id="pat-08-human-checkpoint-sampling"></a>PAT-08 | **Human Checkpoint Sampling** | Per-item human review does not survive AL3 volume; dropping review entirely is not an option. | Humans review a risk-weighted sample of outputs plus all envelope-edge events, with sampling rates tied to the performer's evaluation history and tightened on degradation. | [KA-11](../knowledge-areas/KA-11-human-ai-collaboration.md), [KA-05](../knowledge-areas/KA-05-implementation.md) | P09 (X07) |
-| <a id="pat-09-degrade-to-assist"></a>PAT-09 | **Degrade-to-Assist** | When an AI performer's quality slips in operation, the only prepared responses are "ignore" or "shut down". | Define degradation triggers and fallback levels in advance; autonomy steps down (AL3 → AL2 → AL1) when signals cross thresholds, so capability degrades to assistance instead of failing opaque. | [KA-09](../knowledge-areas/KA-09-operations-observability.md), [KA-12](../knowledge-areas/KA-12-evaluation-improvement.md) | P14–P15 |
+| <a id="pat-08-human-checkpoint-sampling"></a>PAT-08 | **Human Checkpoint Sampling** | Per-item human review does not survive AL3 — Delegated volume; dropping review entirely is not an option. | Humans review a risk-weighted sample of outputs plus all envelope-edge events, with sampling rates tied to the performer's evaluation history and tightened on degradation. | [KA-11](../knowledge-areas/KA-11-human-ai-collaboration.md), [KA-05](../knowledge-areas/KA-05-implementation.md) | P09 (X07) |
+| <a id="pat-09-degrade-to-assist"></a>PAT-09 | **Degrade-to-Assist** | When an AI performer's quality slips in operation, the only prepared responses are "ignore" or "shut down". | Define degradation triggers and fallback levels in advance; autonomy steps down (AL3 — Delegated → AL2 — Collaborative → AL1 — Assisted) when signals cross thresholds, so capability degrades to assistance instead of failing opaque. | [KA-09](../knowledge-areas/KA-09-operations-observability.md), [KA-12](../knowledge-areas/KA-12-evaluation-improvement.md) | P14–P15 |
 | <a id="pat-10-feedback-to-context-loop"></a>PAT-10 | **Feedback-to-Context Loop** | Production incidents and review rejections repeat because the knowledge that caused them is never corrected at its source. | Findings traced to wrong or missing context become correction work items against the owning context assets; golden suites refresh from the same findings. | [KA-12](../knowledge-areas/KA-12-evaluation-improvement.md), [KA-10](../knowledge-areas/KA-10-context-knowledge.md) | P16 (X09) |
 
 ## 3. Anti-Patterns
@@ -58,11 +58,11 @@ Named failure modes of AI-native delivery. Each row states the symptom to recogn
 
 ## Related Documents
 
-- [AEBOK Module Overview (AIES-AEBOK-00)](../README.md) — the Knowledge Areas this catalog cross-references
-- [Taxonomy (AIES-SHARED-02)](../../Shared/Taxonomy/README.md) — canonical IDs for phases, autonomy levels, risk tiers, roles, and artifacts
-- [AEOS (AIES-AEOS-00)](../../AEOS/README.md) — workflows that reference catalog entries
-- [AECT (AIES-AECT-00)](../../AECT/README.md) — course material built on this vocabulary
-- [Governance (AIES-GOV-01)](../../GOVERNANCE.md) — the change process for extending the catalog
+- [AEBOK Module Overview (AIES-AEBOK-00 — Engineering Body of Knowledge)](../README.md) — the Knowledge Areas this catalog cross-references
+- [Taxonomy (AIES-SHARED-02 — Taxonomy)](../../Shared/Taxonomy/README.md) — canonical IDs for phases, autonomy levels, risk tiers, roles, and artifacts
+- [AIES-AEOS-00 — AEOS — AI Engineering Operating System](../../AEOS/README.md) — workflows that reference catalog entries
+- [AECT (AIES-AECT-00 — Engineering Certification)](../../AECT/README.md) — course material built on this vocabulary
+- [AIES-GOV-01 — Governance](../../GOVERNANCE.md) — the change process for extending the catalog
 
 ## References
 

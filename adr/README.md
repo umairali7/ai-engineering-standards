@@ -17,7 +17,7 @@ The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", and "MAY" in this docu
 An ADR MUST be written for every **Class 3 — Normative / Breaking** decision as defined in [GOVERNANCE.md §3](../GOVERNANCE.md). In particular:
 
 - Any change to RFC 2119 requirements in an Approved document, or deprecation of an Approved document.
-- Any change to the [Shared Taxonomy (AIES-SHARED-02)](../Shared/Taxonomy/README.md) or redefinition of a [Shared Glossary (AIES-SHARED-01)](../Shared/Glossary/README.md) term — changes to Shared Standards are always at least Class 3, because they break every module.
+- Any change to the [Shared Taxonomy (AIES-SHARED-02 — Taxonomy)](../Shared/Taxonomy/README.md) or redefinition of a [Shared Glossary (AIES-SHARED-01 — Glossary)](../Shared/Glossary/README.md) term — changes to Shared Standards are always at least Class 3, because they break every module.
 - Changes that alter Document IDs or requirement IDs.
 - Changes to [GOVERNANCE.md](../GOVERNANCE.md) itself.
 - Changes to the repository structure (directory layout, module boundaries, dependency model) described in [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md), including changes to the document skeletons in [templates/](../templates/).
@@ -74,14 +74,15 @@ Accepted ADRs are never edited to change the decision. If circumstances change, 
 | [ADR-0007](ADR-0007-Scenario-Rubric-Applicability-Metadata.md) | Scenario rubric applicability metadata | Accepted |
 | [ADR-0008](ADR-0008-Engineering-Capability-Matrix-Standard-and-Task-Taxonomy.md) | Establish an Engineering Capability Matrix standard and task taxonomy | Accepted |
 | [ADR-0009](ADR-0009-Engineering-Assessment-Platform-Identity.md) | Establish the Engineering Assessment Platform identity | Accepted |
+| [ADR-0010](ADR-0010-Human-Readable-Identifier-Convention.md) | Canonical human-readable identifier display convention | Accepted |
 
 ## Related Documents
 
-- [GOVERNANCE.md (AIES-GOV-01)](../GOVERNANCE.md)
+- [AIES-GOV-01 — Governance](../GOVERNANCE.md)
 - [ADR template](../templates/ADR_TEMPLATE.md)
-- [Repository Architecture (AIES-DOC-03)](../docs/ARCHITECTURE.md)
-- [Documentation Standards (AIES-STD-00)](../docs/standards/README.md)
-- [Versioning Standard (AIES-STD-05)](../docs/standards/versioning-standard.md)
+- [AIES-DOC-03 — Repository Architecture](../docs/ARCHITECTURE.md)
+- [Documentation Standards (AIES-STD-00 — Documentation Standards)](../docs/standards/README.md)
+- [Versioning Standard (AIES-STD-05 — Versioning Standard)](../docs/standards/versioning-standard.md)
 
 ## References
 

@@ -141,7 +141,7 @@ repository, AI system, or another assessable subject—not only a bare model.
 
 ```text
 Engineering Capability Matrix — exploratory (non-decisional)
-Subject: local-qwen3-coder-next-8but | CA-05 | RT2
+Subject: local-qwen3-coder-next-8but | CA-05 | RT2 — Moderate
 Evidence: 21 scored items / 30 required; judge-produced ratings
 
 Task family              Evidence-derived signal       Coverage
@@ -160,7 +160,7 @@ Limitations and cautions
 ```
 
 “Best fit” should appear only as a policy layer with explicit conditions, e.g.
-“appropriate for human-reviewed RT2 implementation tasks within the recorded
+“appropriate for human-reviewed RT2 — Moderate implementation tasks within the recorded
 autonomy envelope.” It should not infer that a model is safe for security-
 critical work merely because it performs well on general coding tasks.
 
@@ -186,6 +186,6 @@ The supplied CA-05 run is promising exploratory evidence: all reported
 dimension decision values exceed their gates and the aggregate is high. It is
 not a qualification result and cannot substantiate broad claims because it is
 explicitly non-decisional (21 scored items against a minimum of 30), covers
-only CA-05 at RT2, and used heuristic judge ratings. It supports the need for a
+only CA-05 at RT2 — Moderate, and used heuristic judge ratings. It supports the need for a
 matrix that communicates *what was observed* while carrying those limits
 forward, not a profile that converts a partial sample into product marketing.

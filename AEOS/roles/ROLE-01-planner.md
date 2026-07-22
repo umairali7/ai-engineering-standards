@@ -22,11 +22,11 @@ The Planner decomposes approved objectives into work items (ART-05) that are cor
 ## Responsibilities
 
 1. Decompose product requirements (ART-02) and architecture decisions (ART-04) into work items with clear objectives and acceptance criteria (P08).
-2. Propose the risk tier (RT1–RT4) for each work item, with rationale, for confirmation at intake.
+2. Propose the risk tier (RT1 — Minimal through RT4 — Critical) for each work item, with rationale, for confirmation at intake.
 3. Sequence and estimate work, identifying dependencies and critical paths.
-4. Ensure every work item names an accountable human before execution ([AIES-AEOS-OM-01-R01](../operating-model.md#1-principles)).
+4. Ensure every work item names an accountable human before execution ([AIES-AEOS-OM-01-R01 — Operating Model, requirement 01](../operating-model.md#1-principles)).
 5. Maintain plan-to-artifact traceability as work progresses (X04).
-6. Re-plan when scope changes, triggering risk-tier re-evaluation per [AIES-AEOS-OM-01-R07](../operating-model.md#2-work-intake-and-flow).
+6. Re-plan when scope changes, triggering risk-tier re-evaluation per [AIES-AEOS-OM-01-R07 — Operating Model, requirement 07](../operating-model.md#2-work-intake-and-flow).
 
 ## Inputs / Outputs
 
@@ -60,21 +60,21 @@ When ROLE-01 is staffed by an AI agent:
 
 | Risk tier of planned work | Max autonomy for planning tasks |
 |---------------------------|--------------------------------|
-| RT1 | AL4 |
-| RT2 | AL3 |
-| RT3 | AL2 |
-| RT4 | AL1 |
+| RT1 — Minimal | AL4 — Autonomous |
+| RT2 — Moderate | AL3 — Delegated |
+| RT3 — Significant | AL2 — Collaborative |
+| RT4 — Critical | AL1 — Assisted |
 
-- **Mandatory gates:** per-item human review of risk-tier proposals (all tiers); checkpoint review of plan structure before execution begins on RT3+ plans.
+- **Mandatory gates:** per-item human review of risk-tier proposals (all tiers); checkpoint review of plan structure before execution begins on RT3 — Significant and above plans.
 - **Telemetry:** planning-accuracy metrics (estimate vs. actual, re-plan frequency), risk-tier proposal override rate, and all plan changes logged to ART-15.
 - The planning task's own risk tier follows the highest-tier work item in the plan.
 
 ## Related Documents
 
-- [Role Catalog (AIES-AEOS-ROLE-00)](README.md) — shared role-specification requirements and staffing model
-- [Operating Model (AIES-AEOS-OM-01)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
-- [Workflows (AIES-AEOS-WF-01)](../workflows.md) — the collaboration workflows this role participates in
-- [Human Oversight (AIES-AEOS-HO-01)](../human-oversight.md) — the gates that apply to this role's work
+- [Role Catalog (AIES-AEOS-ROLE-00 — Role Model)](README.md) — shared role-specification requirements and staffing model
+- [Operating Model (AIES-AEOS-OM-01 — Operating Model)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
+- [Workflows (AIES-AEOS-WF-01 — Workflows)](../workflows.md) — the collaboration workflows this role participates in
+- [Human Oversight (AIES-AEOS-HO-01 — Human Oversight)](../human-oversight.md) — the gates that apply to this role's work
 
 ## References
 

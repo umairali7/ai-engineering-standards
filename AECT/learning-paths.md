@@ -12,11 +12,11 @@ The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", and "MAY" in this docu
 
 ## 1. Purpose
 
-This document defines the structured curricula that take a learner from first contact with AIES to certification readiness. Every path is assembled from [AEBOK Knowledge Areas (KA-01 … KA-12)](../AEBOK/README.md) — AEBOK is the sole syllabus source — supplemented by practical [labs (AIES-AECT-LAB-01)](labs.md) and shared standards material.
+This document defines the structured curricula that take a learner from first contact with AIES to certification readiness. Every path is assembled from [AEBOK Knowledge Areas (KA-01 … KA-12)](../AEBOK/README.md) — AEBOK is the sole syllabus source — supplemented by practical [labs (AIES-AECT-LAB-01 — Labs)](labs.md) and shared standards material.
 
-[AIES-AECT-LP-01-R01] Every learning-path module MUST map to one or more AEBOK Knowledge Areas or to the Shared Standards (Glossary, Taxonomy); paths MUST NOT introduce knowledge content of their own.
+[AIES-AECT-LP-01-R01 — Learning Paths, requirement 01] Every learning-path module MUST map to one or more AEBOK Knowledge Areas or to the Shared Standards (Glossary, Taxonomy); paths MUST NOT introduce knowledge content of their own.
 
-[AIES-AECT-LP-01-R02] Every learning path MUST declare its target audience, prerequisite, module sequence, estimated effort, exit competency level (CL1–CL4), and the certification it prepares for.
+[AIES-AECT-LP-01-R02 — Learning Paths, requirement 02] Every learning path MUST declare its target audience, prerequisite, module sequence, estimated effort, exit competency level (CL1–CL4), and the certification it prepares for.
 
 Effort estimates are stated in **study hours** (guided reading, exercises, and labs) and assume a working software professional; they are planning aids, not requirements. Training providers MAY repackage paths but MUST preserve the KA coverage and exit competency claims.
 
@@ -58,8 +58,8 @@ Effort estimates are stated in **study hours** (guided reading, exercises, and l
 | # | Module | Source | Hours |
 |---|--------|--------|-------|
 | F1 | AIES orientation: modules, principles, document conventions | [README](../README.md), [Shared](../Shared/README.md) | 2 |
-| F2 | Canonical vocabulary | [Glossary (AIES-SHARED-01)](../Shared/Glossary/README.md) | 3 |
-| F3 | The taxonomy: phases P01–P16, domains X01–X15, autonomy AL0–AL4, risk RT1–RT4, roles, CL levels, EV dimensions | [Taxonomy (AIES-SHARED-02)](../Shared/Taxonomy/README.md) | 6 |
+| F2 | Canonical vocabulary | [Glossary (AIES-SHARED-01 — Glossary)](../Shared/Glossary/README.md) | 3 |
+| F3 | The taxonomy: phases P01–P16, domains X01–X15, autonomy AL0 — Manual through AL4 — Autonomous, risk RT1 — Minimal through RT4 — Critical, roles, CL levels, EV dimensions | [Taxonomy (AIES-SHARED-02 — Taxonomy)](../Shared/Taxonomy/README.md) | 6 |
 | F4 | Foundations of AI-native engineering: economics, risk, the autonomy/risk model in practice | [AEBOK KA-01](../AEBOK/knowledge-areas/KA-01-foundations.md) | 8 |
 | F5 | A tour of the lifecycle KAs: what changes in each phase when AI participates | [AEBOK KA-02 … KA-09](../AEBOK/README.md#3-knowledge-area-map) (survey depth) | 6 |
 | F6 | Working under oversight: gates, review, accountability | [AEBOK KA-11](../AEBOK/knowledge-areas/KA-11-human-ai-collaboration.md) (survey depth) | 4 |
@@ -163,7 +163,7 @@ Each role path has a common shape: a **Practitioner segment** (deep study of the
 | L4 | Qualification as a management instrument | [AESQS](../AESQS/README.md) | Working knowledge |
 | L5 | Portfolio-scale risk and autonomy policy | [KA-01](../AEBOK/knowledge-areas/KA-01-foundations.md), [Taxonomy §3–4](../Shared/Taxonomy/README.md#3-autonomy-levels-al0al4) | Deep |
 | L6 | Labs | LAB-03, LAB-05, LAB-10 at CL3 depth | Assessed |
-| L7 | Fellow preparation: portfolio assembly, contribution planning, panel expectations | [AIES-AECT-CERT-01 §2.4–2.5](certification-framework.md#24-portfolio-professional-and-fellow) | Guided |
+| L7 | Fellow preparation: portfolio assembly, contribution planning, panel expectations | [AIES-AECT-CERT-01 — Certification Framework §2.4–2.5](certification-framework.md#24-portfolio-professional-and-fellow) | Guided |
 
 ## 5. Choosing a Path
 
@@ -171,15 +171,15 @@ Each role path has a common shape: a **Practitioner segment** (deep study of the
 |-------------|-----------|------|
 | New to AI-native work, any role | LP-F | The role path matching your day job |
 | An experienced engineer skipping Associate (waiver) | LP-F modules F3–F4 as self-check | LP-ENG Practitioner segment |
-| Holding one Professional endorsement, wanting another | The new endorsement's deep-dive KAs ([AIES-AECT-CERT-01 §3](certification-framework.md#3-role-specialization-endorsements)) | Endorsement exam section + role lab |
+| Holding one Professional endorsement, wanting another | The new endorsement's deep-dive KAs ([AIES-AECT-CERT-01 — Certification Framework §3](certification-framework.md#3-role-specialization-endorsements)) | Endorsement exam section + role lab |
 | A leader accountable for gates and governance | LP-F (if new) | LP-LEAD |
 
 ## Related Documents
 
-- [Certification Framework (AIES-AECT-CERT-01)](certification-framework.md) — the credentials these paths prepare for
-- [Exam Blueprints (AIES-AECT-EB-01)](exam-blueprints.md) — how path content is examined
-- [Labs (AIES-AECT-LAB-01)](labs.md) — the practical labs referenced above
-- [AEBOK (AIES-AEBOK-00)](../AEBOK/README.md) — the knowledge itself
+- [Certification Framework (AIES-AECT-CERT-01 — Certification Framework)](certification-framework.md) — the credentials these paths prepare for
+- [Exam Blueprints (AIES-AECT-EB-01 — Exam Blueprints)](exam-blueprints.md) — how path content is examined
+- [Labs (AIES-AECT-LAB-01 — Labs)](labs.md) — the practical labs referenced above
+- [AEBOK (AIES-AEBOK-00 — Engineering Body of Knowledge)](../AEBOK/README.md) — the knowledge itself
 
 ## References
 

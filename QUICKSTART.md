@@ -39,7 +39,7 @@ aies qualify mock-mock-small \
 
 > **Why these values.** The deployment id is `mock-mock-small` (not bare `mock`).
 > The judge must differ from the candidate — never self-judge. `--repeats 5`
-> gathers enough scored items to clear the RT2 statistical minimum, so the result
+> gathers enough scored items to clear the RT2 — Moderate statistical minimum, so the result
 > is *decisional* rather than INSUFFICIENT EVIDENCE.
 
 The command prints the Canonical Assessment Result and the run id. Grab the run:

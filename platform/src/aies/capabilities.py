@@ -9,7 +9,7 @@ it makes no new claims — a NON-DECISIONAL area stays NON-DECISIONAL.
 
 from __future__ import annotations
 
-from . import compare, runner
+from . import compare, constants as C, runner
 
 
 def _area_name(code: str) -> str:
@@ -31,6 +31,7 @@ def capability_profile(ref: str) -> dict:
         rows.append({
             "area": code,
             "name": _area_name(code),
+            "label": C.competency_label(code),
             "cl": a["cl"],
             "decisional": a["decisional"],
             "n_scored": a["n_scored"],

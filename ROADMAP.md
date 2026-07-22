@@ -75,7 +75,7 @@ Entry criteria: AEBOK KA structure frozen (competencies must map to knowledge). 
 Deliverables:
 
 - Role specifications (`AIES-AEOS-ROLE-nn`) for ROLE-01…ROLE-14, including human-mandatory roles
-- Workflow definitions binding autonomy levels AL0–AL4 to risk tiers RT1–RT4 with approval gates
+- Workflow definitions binding autonomy levels AL0 — Manual through AL4 — Autonomous to risk tiers RT1 — Minimal through RT4 — Critical with approval gates
 - Human oversight model: gate placement, sampling, escalation runbooks
 - Governance and audit-trail requirements (`AIES-AEOS-GOV-nn`) covering artifacts ART-14/ART-15
 
@@ -115,7 +115,7 @@ Phase 7 no longer builds evaluation tooling of its own: it produces reference *a
 
 Deliverables:
 
-- Worked qualification runs executed with the `aies` platform ([PLATFORM.md (AIES-DOC-06)](docs/PLATFORM.md)) published as reference artifacts in [examples/](examples/README.md) — evidence packages, reports, and Qualification Records for representative role scopes
+- Worked qualification runs executed with the `aies` platform ([AIES-DOC-06 — Engineering Assessment Platform Specification](docs/PLATFORM.md)) published as reference artifacts in [examples/](examples/README.md) — evidence packages, reports, and Qualification Records for representative role scopes
 - Executable, vendor-neutral reference implementations of key AEOS workflows and AEAR components, built against the platform's runtime-adapter boundary (no vendor lock-in)
 - Conformance checklists linking implementation behavior to requirement IDs
 
@@ -125,7 +125,7 @@ Entry criteria: platform milestone M1 shipped ([PLATFORM.md §10](docs/PLATFORM.
 
 **Status: 🚧 In progress — M1–M4 landed; independent pilot outstanding (per [ADR-0009](adr/ADR-0009-Engineering-Assessment-Platform-Identity.md))**
 
-The `aies` command-line platform: an executable reference implementation of AESQS that currently runs qualification evidence collection against locally- or remotely-hosted AI deployments and audits repositories. Its canonical evidence architecture is subject-neutral, so future executors can assess agents, MCP servers, RAG systems, pipelines, and platforms without a second identity change. It is specified in [PLATFORM.md (AIES-DOC-06)](docs/PLATFORM.md). Originally gated behind Phase 7, it is pulled forward so that executing the standard hardens AESQS before v1.0; Phase 7 now consumes it.
+The `aies` command-line platform: an executable reference implementation of AESQS that currently runs qualification evidence collection against locally- or remotely-hosted AI deployments and audits repositories. Its canonical evidence architecture is subject-neutral, so future executors can assess agents, MCP servers, RAG systems, pipelines, and platforms without a second identity change. It is specified in [AIES-DOC-06 — Engineering Assessment Platform Specification](docs/PLATFORM.md). Originally gated behind Phase 7, it is pulled forward so that executing the standard hardens AESQS before v1.0; Phase 7 now consumes it.
 
 Deliverables (milestones per [PLATFORM.md §10](docs/PLATFORM.md)):
 
@@ -151,7 +151,7 @@ Entry criteria: AESQS at Review status (execution feedback is part of hardening 
 | Done | P1 | Add `aies suites validate` and run it in CI | Prevents scenario schema, ID, rubric, and risk-tier drift |
 | In progress | P1 | `aies audit <repo>` — executable repository conformance assessment ([ADR-0004](adr/ADR-0004-Repository-Conformance-Audit.md)) | Extends AIES from scoring a *model* to scoring the *engineering practice* around it: maturity per competency area, three-state evidence (verified/asserted/gap), CI gate. Design accepted; implementation phased (strong areas first) |
 | In progress | P1 | Assessment-as-Code — declarative competency composition ([ADR-0005](adr/ADR-0005-Assessment-as-Code.md)) | Shipped: `assessments/*.yaml` (enterprise/coder/security/architecture) + strict validator; `qualify --assessment` composes + scores + decides; a frozen Decision Engine emits PASS/FAIL/INCONCLUSIVE/INSUFFICIENT-EVIDENCE (gate-first, no blended score) with structured reasons over a Canonical Assessment Result; `aies assessment list/show/validate/result` (Markdown/JSON/HTML views); shipped assessments gated by `aies suites validate` in CI. Remaining: SARIF renderer, assessment composition/inheritance (`extends`) |
-| In progress | P1 | Grow each CA suite to decisional-ready public and held-out sets | ~16 public scenarios per CA (189 total), RT2 distinct ~10/area plus more RT3/RT4 refuse-escalate cases; reaching full decisional-distinct sizes (30/50/100) and held-out sets remains |
+| In progress | P1 | Grow each CA suite to decisional-ready public and held-out sets | ~16 public scenarios per CA (189 total), RT2 — Moderate distinct ~10/area plus more RT3 — Significant through RT4 — Critical refuse-escalate cases; reaching full decisional-distinct sizes (30/50/100) and held-out sets remains |
 | Done | P1 | Add connector/tool/memory attack scenarios to CA-07 and governance response scenarios to CA-12 | `SC-CA07-011`, `SC-CA11-011`, and `SC-CA12-011` cover this initial tranche |
 | Open | P2 | Add bridges/exporters for Inspect AI or comparable eval traces | Lets AIES complement the eval ecosystem instead of duplicating it |
 | In progress | P2 | Record model signature and AI-BOM in the deployment manifest (OpenSSF Model Signing; CycloneDX/SPDX) | Aligns deployment provenance (D7) with AI supply-chain standards ([CROSSWALK §3b](docs/CROSSWALK.md)). Declaration + evidence pass-through done; cryptographic verification (Sigstore/OMS) remains |
@@ -186,9 +186,9 @@ Milestones are sequential quality gates, not dates. Progress between them is vis
 
 ## Related Documents
 
-- [Project Charter (AIES-DOC-01)](docs/PROJECT_CHARTER.md) — the scope and success criteria this roadmap delivers
-- [Vision (AIES-DOC-02)](docs/VISION.md) — the end state the phases build toward
-- [GOVERNANCE.md (AIES-GOV-01)](GOVERNANCE.md) — the release and consensus process that gates each milestone
+- [AIES-DOC-01 — Project Charter](docs/PROJECT_CHARTER.md) — the scope and success criteria this roadmap delivers
+- [AIES-DOC-02 — Vision](docs/VISION.md) — the end state the phases build toward
+- [AIES-GOV-01 — Governance](GOVERNANCE.md) — the release and consensus process that gates each milestone
 - [CHANGELOG.md](CHANGELOG.md) — what has shipped so far
 
 ## References

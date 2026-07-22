@@ -88,7 +88,7 @@ version: 1.0.0                 # CONTENT version — certifications cite this
 schema: 1                      # assessment file-FORMAT version (engine-owned)
 description: Enterprise-grade AI-native SDLC qualification.
 profile: enterprise            # EV-dimension weighting (existing profiles/*.yaml)
-default_risk_tier: RT2
+default_risk_tier: RT2             # RT2 — Moderate
 competencies:                  # the areas this qualification composes
   - area: CA-04                # Architecture & Solution Design
     requirement: { type: mandatory }   # mandatory competencies decide PASS/FAIL

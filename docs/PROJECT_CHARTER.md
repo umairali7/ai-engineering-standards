@@ -22,7 +22,7 @@ The AIES project exists to close that gap by producing an open, engineering-firs
 - **Certify** engineers through a defined competency and credentialing framework.
 - **Operate** AI-native delivery organizations reliably at enterprise scale.
 
-The intended long-term position of AIES is stated in the [Vision (AIES-DOC-02)](VISION.md): to be for AI Engineering what PMBOK is for project management and TOGAF is for enterprise architecture.
+The intended long-term position of AIES is stated in the [AIES-DOC-02 — Vision](VISION.md): to be for AI Engineering what PMBOK is for project management and TOGAF is for enterprise architecture.
 
 ## 2. Scope
 
@@ -74,7 +74,7 @@ Success is measured, not asserted. The project tracks the following criteria tow
 
 | # | Criterion | Measure | Target Horizon |
 |---|-----------|---------|----------------|
-| SC-1 | **Standards completeness** | All five modules (AEBOK, AESQS, AEOS, AEAR, AECT) reach **Approved** status per the [Review Standard (AIES-STD-06)](standards/review-standard.md) | v1.0 release |
+| SC-1 | **Standards completeness** | All five modules (AEBOK, AESQS, AEOS, AEAR, AECT) reach **Approved** status per the [Review Standard (AIES-STD-06 — Review Standard)](standards/review-standard.md) | v1.0 release |
 | SC-2 | **Shared foundation stability** | Glossary and Taxonomy pass a full release cycle without breaking changes | v1.0 + 1 cycle |
 | SC-3 | **Organizational adoption** | At least **10 organizations** publicly reference AIES in their engineering or governance documentation | Within 12 months of v1.0 |
 | SC-4 | **Certification operational** | The AECT certification program is operational: at least one credential examinable, with published syllabus and passing criteria | Within 18 months of v1.0 |
@@ -90,7 +90,7 @@ The project is governed by the model defined in [GOVERNANCE.md](../GOVERNANCE.md
 
 - **Consensus over ownership.** No individual contributor owns the standards; engineering consensus drives evolution.
 - **Decisions are recorded.** Structural, normative, and shared-vocabulary changes require an Architecture Decision Record ([adr/](../adr/README.md)).
-- **Review before ratification.** Documents progress Draft → Review → Approved via peer and engineering review per the [Review Standard (AIES-STD-06)](standards/review-standard.md).
+- **Review before ratification.** Documents progress Draft → Review → Approved via peer and engineering review per the [Review Standard (AIES-STD-06 — Review Standard)](standards/review-standard.md).
 - **Versioned releases.** The standard as a whole follows semantic versioning; breaking changes to Shared standards are treated as breaking for every module.
 - **Open participation.** Contribution rules, proposal requirements, and conduct expectations are defined in [CONTRIBUTING.md](../CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md).
 
@@ -126,12 +126,12 @@ Risks are reviewed each release; material changes to this register are recorded 
 
 ## Related Documents
 
-- [Vision (AIES-DOC-02)](VISION.md)
-- [Repository Architecture (AIES-DOC-03)](ARCHITECTURE.md)
-- [SDLC Reference (AIES-DOC-04)](SDLC.md)
-- [FAQ (AIES-DOC-05)](FAQ.md)
-- [Shared Standards (AIES-SHARED-00)](../Shared/README.md)
-- [GOVERNANCE.md (AIES-GOV-01)](../GOVERNANCE.md) · [ROADMAP.md](../ROADMAP.md) · [CONTRIBUTING.md](../CONTRIBUTING.md)
+- [AIES-DOC-02 — Vision](VISION.md)
+- [AIES-DOC-03 — Repository Architecture](ARCHITECTURE.md)
+- [AIES-DOC-04 — SDLC Reference](SDLC.md)
+- [AIES-DOC-05 — Frequently Asked Questions](FAQ.md)
+- [AIES-SHARED-00 — Shared Standards](../Shared/README.md)
+- [AIES-GOV-01 — Governance](../GOVERNANCE.md) · [ROADMAP.md](../ROADMAP.md) · [CONTRIBUTING.md](../CONTRIBUTING.md)
 
 ## References
 

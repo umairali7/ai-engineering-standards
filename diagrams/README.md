@@ -6,7 +6,7 @@
 | **Status** | Review |
 | **Audience** | Contributors & maintainers |
 
-This directory holds the text-first diagram sources used across the AIES repository, and defines the directory-specific conventions they follow. This README is subordinate to the [Diagram Standard (AIES-STD-04)](../docs/standards/diagram-standard.md), which is the normative authority for diagram requirements; nothing here overrides it.
+This directory holds the text-first diagram sources used across the AIES repository, and defines the directory-specific conventions they follow. This README is subordinate to the [Diagram Standard (AIES-STD-04 — Diagram Standard)](../docs/standards/diagram-standard.md), which is the normative authority for diagram requirements; nothing here overrides it.
 
 The key words "MUST" and "SHOULD" in this document are to be interpreted as described in RFC 2119.
 
@@ -45,8 +45,8 @@ where `<module>` is one of `shared`, `aebok`, `aesqs`, `aeos`, `aear`, `aect`, o
 
 ## Related Documents
 
-- [Diagram Standard (AIES-STD-04)](../docs/standards/diagram-standard.md) — the normative standard this directory is subordinate to
-- [Repository Architecture (AIES-DOC-03)](../docs/ARCHITECTURE.md)
+- [Diagram Standard (AIES-STD-04 — Diagram Standard)](../docs/standards/diagram-standard.md) — the normative standard this directory is subordinate to
+- [AIES-DOC-03 — Repository Architecture](../docs/ARCHITECTURE.md)
 
 ## References
 

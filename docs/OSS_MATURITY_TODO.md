@@ -25,13 +25,13 @@ foundation to a genuinely reusable public OSS standard and platform.
 | Done | P0 | Clean release artifacts | `make release-hygiene` and CI reject tracked `.env`, `.DS_Store`, `__pycache__`, `.pytest_cache`, egg-info, bytecode, or `aies-workspace`; the tracked release tree passes |
 | Open | P0 | Publish independent pilot | Two full real-model runs, one hosted and one local, with reports and lessons learned |
 | Done | P1 | Add suite validator | `aies suites validate` checks schemas, IDs, dimensions, risk tiers, repeats, and suite counts; CI runs it |
-| In progress | P1 | Grow scenario suites | Current: 212 scenarios across 12 areas, with RT2 distinct coverage around 10/area and high-tier behavioral diversity met; target: full decisional-distinct sizes (30/50/100) plus held-out sets |
+| In progress | P1 | Grow scenario suites | Current: 212 scenarios across 12 areas, with RT2 — Moderate distinct coverage around 10/area and high-tier behavioral diversity met; target: full decisional-distinct sizes (30/50/100) plus held-out sets |
 | Open | P1 | Empirically calibrate the real-model panel | Score independently rated real-model runs, run `aies suites empirical`, publish the pre-registered panel/study, and have a human record any scenario promotion; design-time calibration alone remains insufficient |
-| Done | P1 | Widen high-tier behavioral diversity | Added distinct RT3/RT4 decision kinds in CA-02, CA-03, CA-04, CA-05, CA-06, CA-08, and CA-10; `aies corpus health` now meets its diversity target without repeated refusal/escalation padding |
-| Done | P1 | Fill justified RT4 coverage gaps | Added genuinely RT4-appropriate scenarios for CA-08 regulated release authorization, CA-10 critical override governance, and CA-11 legal-hold context isolation |
+| Done | P1 | Widen high-tier behavioral diversity | Added distinct RT3 — Significant through RT4 — Critical decision kinds in CA-02, CA-03, CA-04, CA-05, CA-06, CA-08, and CA-10; `aies corpus health` now meets its diversity target without repeated refusal/escalation padding |
+| Done | P1 | Fill justified RT4 — Critical coverage gaps | Added genuinely RT4 — Critical-appropriate scenarios for CA-08 regulated release authorization, CA-10 critical override governance, and CA-11 legal-hold context isolation |
 | In progress | P1 | Separate deliberate partial rubrics from coverage defects | ADR-0007 is accepted and `rubric_applicability` is schema-validated and separately reported. Human-review each of the 124 legacy omissions as add-rubric / declare-with-rationale / revise; unexpected omissions remain warnings until the reviewed migration is complete |
-| In progress | P1 | Make RT2 runs diversity-ready without repeats | Qualification-grade RT2 runs use 30 distinct scenarios per competency area with `--repeats 1`; current corpus has 9–10 distinct RT2 scenarios per area and needs 241 individually reviewed additions plus explicit public/held-out selection policy. Repeats remain optional stability evidence and never count toward distinct-task breadth |
-| Done | P1 | Add scenario authoring guide | [SCENARIOS.md (AIES-PLAT-07)](../platform/SCENARIOS.md) — schema, quality bar, risk-tier and rubric guidance, validation |
+| In progress | P1 | Make RT2 — Moderate runs diversity-ready without repeats | Qualification-grade RT2 — Moderate runs use 30 distinct scenarios per competency area with `--repeats 1`; current corpus has 9–10 distinct RT2 — Moderate scenarios per area and needs 241 individually reviewed additions plus explicit public/held-out selection policy. Repeats remain optional stability evidence and never count toward distinct-task breadth |
+| Done | P1 | Add scenario authoring guide | [AIES-PLAT-07 — Authoring Competency Scenarios](../platform/SCENARIOS.md) — schema, quality bar, risk-tier and rubric guidance, validation |
 | Done | P1 | Add ecosystem bridge | `aies import` ingests external EV1–EV6 eval results (Inspect/DeepEval/other) as automated ratings; `aies export` writes a generic eval-log JSON that round-trips through import |
 | Done | P1 | Executable repository conformance audit | `aies audit <repo>` — maturity per competency area, three-state evidence (verified/asserted/gap), `--gate --rt N` for CI ([ADR-0004](../adr/ADR-0004-Repository-Conformance-Audit.md)) |
 | Done | P1 | Supply-chain provenance | Deployment manifests may declare `provenance.signature` / `ai_bom`; `aies deployment verify-artifact` recomputes the SHA-256 and verifies a detached signature |
@@ -54,7 +54,7 @@ foundation to a genuinely reusable public OSS standard and platform.
 
 The platform now ships 212 scenarios across 12 competency areas. The
 `SC-CAxx-011`…`016` scenarios are complex, distinct cases (multi-constraint,
-adversarial, cross-cutting, and RT3/RT4 refuse-or-escalate) intended to exercise
+adversarial, cross-cutting, and RT3 — Significant through RT4 — Critical refuse-or-escalate) intended to exercise
 judgment rather than single-concept recall, and to reduce run repetition by
 giving decisional samples more distinct prompts.
 
@@ -69,11 +69,11 @@ Completed scenario tranche:
 | yes | Added one complex integration scenario per competency area (`SC-CA01-011` through `SC-CA12-011`) |
 | yes | Added agentic tool-security coverage to CA-07 via `SC-CA07-011` |
 | yes | Added external-framework governance response coverage to CA-12 via `SC-CA12-011` |
-| yes | Added 12 distinct high-tier scenarios for the identified behavioral-diversity and RT4 coverage gaps; the current validated corpus contains 212 scenarios and `aies corpus health` reports no high-tier diversity gaps |
-| yes | Added a [scenario authoring guide (AIES-PLAT-07)](../platform/SCENARIOS.md) so contributors can grow suites consistently |
+| yes | Added 12 distinct high-tier scenarios for the identified behavioral-diversity and RT4 — Critical coverage gaps; the current validated corpus contains 212 scenarios and `aies corpus health` reports no high-tier diversity gaps |
+| yes | Added a [AIES-PLAT-07 — Authoring Competency Scenarios](../platform/SCENARIOS.md) so contributors can grow suites consistently |
 
 Next implementation item: grow each area to full **decisional-distinct** sizes
-(≥ 20/30/50/100 distinct scenarios per RT1–RT4) and add **held-out** suites, so a
+(≥ 20/30/50/100 distinct scenarios per RT1 — Minimal through RT4 — Critical) and add **held-out** suites, so a
 decisional run draws distinct prompts without leaning on repeats.
 
 ## 4. Implementation Sequence
@@ -84,7 +84,7 @@ decisional run draws distinct prompts without leaning on repeats.
 2. **Scenario structure:** decide the additive metadata boundary in an ADR,
    then distinguish intentional non-applicable EV dimensions from accidental
    rubric omissions and make the validator signal actionable.
-3. **Coverage depth:** expand high-tier behavioral diversity and justified RT4
+3. **Coverage depth:** expand high-tier behavioral diversity and justified RT4 — Critical
    coverage; split public, held-out, and twin scenarios so repeats do not create
    a false appearance of independent evidence.
 4. **Engineering Capability Matrix:** render existing scenario families from

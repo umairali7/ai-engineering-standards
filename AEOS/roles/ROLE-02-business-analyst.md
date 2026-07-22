@@ -38,7 +38,7 @@ The Business Analyst establishes *what problem is being solved* and *what the sy
 ## Autonomy Constraints
 
 - [AIES-AEOS-ROLE-02-R01] Requirements produced by an AI-staffed Business Analyst MUST be reviewed by a human with domain knowledge before entering P08 planning, regardless of autonomy level.
-- [AIES-AEOS-ROLE-02-R02] An AI-staffed Business Analyst MUST NOT be the sole channel of stakeholder elicitation for RT3+ scope; it MAY prepare, structure, and analyze elicitation material.
+- [AIES-AEOS-ROLE-02-R02] An AI-staffed Business Analyst MUST NOT be the sole channel of stakeholder elicitation for RT3 — Significant and above scope; it MAY prepare, structure, and analyze elicitation material.
 
 ## Escalation Duties
 
@@ -60,21 +60,21 @@ When ROLE-02 is staffed by an AI agent:
 
 | Risk tier of affected scope | Max autonomy for analysis tasks |
 |-----------------------------|--------------------------------|
-| RT1 | AL4 |
-| RT2 | AL3 |
-| RT3 | AL2 |
-| RT4 | AL1 |
+| RT1 — Minimal | AL4 — Autonomous |
+| RT2 — Moderate | AL3 — Delegated |
+| RT3 — Significant | AL2 — Collaborative |
+| RT4 — Critical | AL1 — Assisted |
 
-- **Mandatory gates:** per-item human review of every new or changed requirement before planning (see R01); checkpoint review of traceability links on RT3+ scope.
+- **Mandatory gates:** per-item human review of every new or changed requirement before planning (see R01); checkpoint review of traceability links on RT3 — Significant and above scope.
 - **Telemetry:** requirement defect rate (requirements later found wrong or ambiguous), stakeholder correction rate, and hallucinated-constraint incidents logged to ART-15.
 - Agents SHOULD ground all requirement statements in cited elicitation sources (ART-13 context assets); uncited requirement content is an escalation trigger.
 
 ## Related Documents
 
-- [Role Catalog (AIES-AEOS-ROLE-00)](README.md) — shared role-specification requirements and staffing model
-- [Operating Model (AIES-AEOS-OM-01)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
-- [Workflows (AIES-AEOS-WF-01)](../workflows.md) — the collaboration workflows this role participates in
-- [Human Oversight (AIES-AEOS-HO-01)](../human-oversight.md) — the gates that apply to this role's work
+- [Role Catalog (AIES-AEOS-ROLE-00 — Role Model)](README.md) — shared role-specification requirements and staffing model
+- [Operating Model (AIES-AEOS-OM-01 — Operating Model)](../operating-model.md) — work intake, staffing, autonomy assignment, and escalation
+- [Workflows (AIES-AEOS-WF-01 — Workflows)](../workflows.md) — the collaboration workflows this role participates in
+- [Human Oversight (AIES-AEOS-HO-01 — Human Oversight)](../human-oversight.md) — the gates that apply to this role's work
 
 ## References
 

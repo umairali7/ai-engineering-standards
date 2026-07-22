@@ -86,8 +86,8 @@ For answers to common questions about this code of conduct, see the FAQ at <http
 
 ## Related Documents
 
-- [GOVERNANCE.md (AIES-GOV-01)](GOVERNANCE.md)
-- [CONTRIBUTING.md (AIES-GOV-02)](CONTRIBUTING.md)
+- [AIES-GOV-01 — Governance](GOVERNANCE.md)
+- [AIES-GOV-02 — Contributing to AIES](CONTRIBUTING.md)
 
 ## References
 

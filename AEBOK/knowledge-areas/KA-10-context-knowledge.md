@@ -25,9 +25,9 @@ KA-10 covers Knowledge Management (X09) as a cross-cutting discipline of AI-nati
 
 ## 3. Core Practices
 
-- **Manage context assets under change control.** [AIES-AEBOK-KA-10-R01] Context assets (ART-13) consumed by AI performers in RT2+ work MUST be versioned, MUST have a designated owner, and MUST change only through reviewed, recorded change — not through in-place edits to live prompts or retrieval sources.
+- **Manage context assets under change control.** [AIES-AEBOK-KA-10-R01] Context assets (ART-13) consumed by AI performers in RT2 — Moderate and above work MUST be versioned, MUST have a designated owner, and MUST change only through reviewed, recorded change — not through in-place edits to live prompts or retrieval sources.
 - **Make consumption traceable.** [AIES-AEBOK-KA-10-R02] It MUST be possible to determine, for any AI-produced artifact, which context assets and versions were assembled for its production, so that context-induced defects can be traced to their source and corrected once rather than rediscovered per incident (EV6).
-- **Track freshness and enforce it at assembly.** [AIES-AEBOK-KA-10-R03] Every context asset MUST carry a validation status and a review-by date; assets past their review-by date MUST be excluded from assembly for RT3+ tasks or explicitly flagged to the performer and reviewer.
+- **Track freshness and enforce it at assembly.** [AIES-AEBOK-KA-10-R03] Every context asset MUST carry a validation status and a review-by date; assets past their review-by date MUST be excluded from assembly for RT3 — Significant and above tasks or explicitly flagged to the performer and reviewer.
 - **Retire deliberately.** [AIES-AEBOK-KA-10-R04] Superseded or invalidated assets MUST be removed from all assembly sources when retired; retirement is a lifecycle action with a record, not abandonment in place.
 - **Close the loop from downstream evidence.** Review rejections, incident findings, and evaluation failures traced to wrong or missing context SHOULD produce corrections to the responsible assets ([KA-12](KA-12-evaluation-improvement.md)); teams SHOULD treat repeated agent misunderstandings as a signal that knowledge needs curation, not that agents need scolding.
 - **Protect the store.** Because context assets steer everything agents produce, write access to assembly sources SHOULD be treated as a security-sensitive privilege — see delivery-chain poisoning in [KA-07](KA-07-security.md).
@@ -63,11 +63,11 @@ KA-10 covers Knowledge Management (X09) as a cross-cutting discipline of AI-nati
 
 ## Related Documents
 
-- ADRs and conventions as consumable context: [KA-03 Architecture & Design (AIES-AEBOK-KA-03)](KA-03-architecture-design.md); bundling context with routed tasks: [KA-04 Planning & Work Decomposition (AIES-AEBOK-KA-04)](KA-04-planning-decomposition.md).
-- Golden task sets and evaluation rubrics as decaying quality assets: [KA-06 Testing & Quality Engineering (AIES-AEBOK-KA-06)](KA-06-testing-quality.md).
-- Poisoning and injection risks to the context store: [KA-07 Security Engineering (AIES-AEBOK-KA-07)](KA-07-security.md).
-- Feedback loops that keep assets current: [KA-12 Evaluation & Continuous Improvement (AIES-AEBOK-KA-12)](KA-12-evaluation-improvement.md); operational knowledge sources: [KA-09 Operations & Observability (AIES-AEBOK-KA-09)](KA-09-operations-observability.md).
-- Knowledge Manager role (ROLE-12) and staffing: [AEOS (AIES-AEOS-00)](../../AEOS/README.md); context-store reference architecture: [AEAR (AIES-AEAR-00)](../../AEAR/README.md); artifact type ART-13: [Taxonomy §7 (AIES-SHARED-02)](../../Shared/Taxonomy/README.md#7-artifact-types).
+- ADRs and conventions as consumable context: [KA-03 Architecture & Design (AIES-AEBOK-KA-03 — Knowledge Area — Architecture Design)](KA-03-architecture-design.md); bundling context with routed tasks: [KA-04 Planning & Work Decomposition (AIES-AEBOK-KA-04 — Knowledge Area — Planning and Decomposition)](KA-04-planning-decomposition.md).
+- Golden task sets and evaluation rubrics as decaying quality assets: [KA-06 Testing & Quality Engineering (AIES-AEBOK-KA-06 — Knowledge Area — Testing and Quality)](KA-06-testing-quality.md).
+- Poisoning and injection risks to the context store: [KA-07 Security Engineering (AIES-AEBOK-KA-07 — Knowledge Area — Security)](KA-07-security.md).
+- Feedback loops that keep assets current: [KA-12 Evaluation & Continuous Improvement (AIES-AEBOK-KA-12 — Knowledge Area — Evaluation and Improvement)](KA-12-evaluation-improvement.md); operational knowledge sources: [KA-09 Operations & Observability (AIES-AEBOK-KA-09 — Knowledge Area — Operations and Observability)](KA-09-operations-observability.md).
+- Knowledge Manager role (ROLE-12) and staffing: [AIES-AEOS-00 — AEOS — AI Engineering Operating System](../../AEOS/README.md); context-store reference architecture: [AEAR (AIES-AEAR-00 — Reference Architecture)](../../AEAR/README.md); artifact type ART-13: [Taxonomy §7 (AIES-SHARED-02 — Taxonomy)](../../Shared/Taxonomy/README.md#7-artifact-types).
 
 ## References
 

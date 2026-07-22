@@ -14,11 +14,11 @@ The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", and "MAY" in this docu
 
 This document defines the examination blueprints for the AIES certification tiers: the content domains and their weightings, item formats, item counts, duration, and pass thresholds, plus sample items and the security and fairness requirements governing exam operation.
 
-[AIES-AECT-EB-01-R01] Every exam item MUST trace to a blueprint domain, and every blueprint domain MUST trace to one or more [AEBOK Knowledge Areas](../AEBOK/README.md) or the [Shared Standards](../Shared/README.md). Items that cannot be traced MUST NOT be used.
+[AIES-AECT-EB-01-R01 — Exam Blueprints, requirement 01] Every exam item MUST trace to a blueprint domain, and every blueprint domain MUST trace to one or more [AEBOK Knowledge Areas](../AEBOK/README.md) or the [Shared Standards](../Shared/README.md). Items that cannot be traced MUST NOT be used.
 
-[AIES-AECT-EB-01-R02] Exam forms MUST match the domain weightings of this blueprint within ±3 percentage points per domain.
+[AIES-AECT-EB-01-R02 — Exam Blueprints, requirement 02] Exam forms MUST match the domain weightings of this blueprint within ±3 percentage points per domain.
 
-[AIES-AECT-EB-01-R03] Exam items MUST be vendor-neutral: no item may depend on knowledge of a specific commercial AI model, product, or provider. Scenario items use fictional, generic systems.
+[AIES-AECT-EB-01-R03 — Exam Blueprints, requirement 03] Exam items MUST be vendor-neutral: no item may depend on knowledge of a specific commercial AI model, product, or provider. Scenario items use fictional, generic systems.
 
 ## 2. Item Formats
 
@@ -50,12 +50,12 @@ Higher tiers weight SB and WPC more heavily, because CL2 and CL3 competency is a
 
 **Sample A-1 (MC, domain A1).** A coding agent is assigned to fix documentation typos across a repository. Under the default AIES risk-tier model, what is the maximum autonomy level this task may run at?
 
-- A. AL1 — the agent may only suggest edits
-- B. AL2 — a human must review every change before it takes effect
-- C. AL3 — the agent works in an envelope with checkpoint approval
-- **D. AL4 — the agent may execute end-to-end within hard guardrails** ✓
+- A. AL1 — Assisted — the agent may only suggest edits
+- B. AL2 — Collaborative — a human must review every change before it takes effect
+- C. AL3 — Delegated — the agent works in an envelope with checkpoint approval
+- **D. AL4 — Autonomous — the agent may execute end-to-end within hard guardrails** ✓
 
-*Rationale:* Documentation typos are RT1 (Minimal) work, and [Taxonomy §4](../Shared/Taxonomy/README.md#4-risk-tiers-rt1rt4) sets the default maximum autonomy for RT1 at AL4. Options A–C describe lower autonomy levels that an organization MAY choose but is not required to.
+*Rationale:* Documentation typos are RT1 — Minimal (Minimal) work, and [Taxonomy §4](../Shared/Taxonomy/README.md#4-risk-tiers-rt1rt4) sets the default maximum autonomy for RT1 — Minimal at AL4 — Autonomous. Options A–C describe lower autonomy levels that an organization MAY choose but is not required to.
 
 **Sample A-2 (MC, domain A3).** Which role in the AIES role model can never be staffed by an AI agent?
 
@@ -95,23 +95,23 @@ Higher tiers weight SB and WPC more heavily, because CL2 and CL3 competency is a
 
 ### 4.1 Sample Items
 
-**Sample P-1 (SB, domain P3).** *Scenario:* Your team runs a coding agent at AL2 on RT2 feature work. A reviewer notices that over the last sprint, review comments on the agent's pull requests have dropped from an average of 6 per PR to 0, while the merge rate has doubled. The agent's evaluation scores have not changed. What is the most important risk to raise first?
+**Sample P-1 (SB, domain P3).** *Scenario:* Your team runs a coding agent at AL2 — Collaborative on RT2 — Moderate feature work. A reviewer notices that over the last sprint, review comments on the agent's pull requests have dropped from an average of 6 per PR to 0, while the merge rate has doubled. The agent's evaluation scores have not changed. What is the most important risk to raise first?
 
-- A. The agent's capability has silently improved, so its autonomy level should be raised to AL3
-- **B. Review may have degraded to rubber-stamping, so AL2's control assumption (human reviews every output) may no longer hold** ✓
+- A. The agent's capability has silently improved, so its autonomy level should be raised to AL3 — Delegated
+- **B. Review may have degraded to rubber-stamping, so AL2 — Collaborative's control assumption (human reviews every output) may no longer hold** ✓
 - C. The agent is producing fewer changes, so throughput reporting is inaccurate
-- D. The team is under-utilizing the agent and should assign it RT3 work
+- D. The team is under-utilizing the agent and should assign it RT3 — Significant work
 
-*Rationale:* AL2 is only a meaningful control if per-item human review actually happens. Zero review findings with unchanged agent capability is a classic rubber-stamping signal (an anti-pattern in KA-05/KA-11); the control may have silently failed. Raising autonomy (A, D) on the basis of absent review evidence inverts the evidence-driven rule.
+*Rationale:* AL2 — Collaborative is only a meaningful control if per-item human review actually happens. Zero review findings with unchanged agent capability is a classic rubber-stamping signal (an anti-pattern in KA-05/KA-11); the control may have silently failed. Raising autonomy (A, D) on the basis of absent review evidence inverts the evidence-driven rule.
 
 **Sample P-2 (MC, domain P5).** A delivery pipeline accepts AI-produced changes to production configuration when tests pass. Under AIES defaults, what is wrong with this design?
 
 - A. Nothing, if the test suite is comprehensive
 - B. AI systems may never touch production configuration
-- **C. Production configuration is RT3, so per-item human review (AL2 or stricter) is required; a green pipeline alone does not satisfy it** ✓
+- **C. Production configuration is RT3 — Significant, so per-item human review (AL2 — Collaborative or stricter) is required; a green pipeline alone does not satisfy it** ✓
 - D. The pipeline should also require the agent to self-assess its confidence
 
-*Rationale:* Production configuration is an RT3 example in the taxonomy, with default maximum autonomy AL2 — a human must review each change before it takes effect. Automated quality gates complement but do not replace the human gate. Option B overstates (review-gated participation is permitted); option D is not a control.
+*Rationale:* Production configuration is an RT3 — Significant example in the taxonomy, with default maximum autonomy AL2 — Collaborative — a human must review each change before it takes effect. Automated quality gates complement but do not replace the human gate. Option B overstates (review-gated participation is permitted); option D is not a control.
 
 **Sample P-3 (WPC, domain P7).** *Work product:* an excerpt of a context asset (ART-13) that embeds a customer's production database connection string as an example, cites a coding convention marked "deprecated 2025-01", and contains no owner or review date. Identify the three most significant defects and state, for each, the practice it violates.
 
@@ -137,63 +137,63 @@ Candidates pursuing a [role-specialization endorsement](certification-framework.
 
 ### 5.1 Sample Items
 
-**Sample PR-1 (SB, domain D1).** *Scenario:* A regulated insurer wants an agent to autonomously remediate dependency vulnerabilities across 200 services. Most bumps are mechanical; some touch authentication libraries. The head of platform proposes "AL3 for the whole program, it's mostly low risk." As the certified professional advising them, what is the correct framing?
+**Sample PR-1 (SB, domain D1).** *Scenario:* A regulated insurer wants an agent to autonomously remediate dependency vulnerabilities across 200 services. Most bumps are mechanical; some touch authentication libraries. The head of platform proposes "AL3 — Delegated for the whole program, it's mostly low risk." As the certified professional advising them, what is the correct framing?
 
-- A. Accept AL3 — the majority risk profile governs the program
-- B. Reject autonomy entirely — security-adjacent work is always RT4
-- **C. Split the task types: mechanical bumps with passing verification are RT2 (up to AL3), while auth-adjacent changes are RT3 (AL2 maximum by default); autonomy is assigned per task type, per risk tier, never program-wide** ✓
-- D. Run at AL4 with a rollback plan, since reversibility eliminates risk
+- A. Accept AL3 — Delegated — the majority risk profile governs the program
+- B. Reject autonomy entirely — security-adjacent work is always RT4 — Critical
+- **C. Split the task types: mechanical bumps with passing verification are RT2 — Moderate (up to AL3 — Delegated), while auth-adjacent changes are RT3 — Significant (AL2 — Collaborative maximum by default); autonomy is assigned per task type, per risk tier, never program-wide** ✓
+- D. Run at AL4 — Autonomous with a rollback plan, since reversibility eliminates risk
 
-*Rationale:* The taxonomy assigns autonomy per task type per risk tier, never globally ([AIES-SHARED-02-R01/R02]). CL3 competency is recognizing that a "program" is a mixture of risk tiers and designing the split. B overcorrects; D confuses mitigation with risk-tier reduction.
+*Rationale:* The taxonomy assigns autonomy per task type per risk tier, never globally ([AIES-SHARED-02-R01 — Taxonomy, requirement 01]). CL3 competency is recognizing that a "program" is a mixture of risk tiers and designing the split. B overcorrects; D confuses mitigation with risk-tier reduction.
 
 **Sample PR-2 (WPC, domain D3).** *Work product:* a pull request produced by a coding agent that implements a requested rate limiter. The diff is functionally correct and well-tested, but it also silently refactors an unrelated logging module, removes a failing flaky test rather than fixing it, and its provenance record omits which context assets were supplied. Write the review verdict and the three findings a CL3 reviewer must raise, mapping each to an evaluation dimension.
 
 *Gold-standard answer outline:* Verdict: request changes — correctness of the primary change (EV1) does not outweigh the findings. (1) Out-of-scope refactoring — scope discipline / reviewability finding (EV4 Maintainability, also EV6: change not traceable to an approved work item); (2) deleting a failing test to achieve green — an integrity anti-pattern that manufactures false quality evidence (EV3, EV1); (3) incomplete provenance — the change cannot be audited to its inputs (EV6). Full credit requires the correct verdict, all three findings, and sensible EV mapping.
 
-**Sample PR-3 (SB, domain D5).** *Scenario:* An organization's approval-gate queue for RT3 changes has grown to a 4-day wait. A director proposes automatically approving anything that waits more than 48 hours. Which response best reflects CL3 oversight design?
+**Sample PR-3 (SB, domain D5).** *Scenario:* An organization's approval-gate queue for RT3 — Significant changes has grown to a 4-day wait. A director proposes automatically approving anything that waits more than 48 hours. Which response best reflects CL3 oversight design?
 
 - A. Agree — stale approvals are worse than no approvals
 - B. Refuse — gate latency is the necessary price of safety and cannot be engineered
-- **C. Treat gate latency as an oversight-design defect: add qualified approvers, tier the queue by risk within RT3, improve review ergonomics (smaller diffs, better provenance summaries) — but timeout-approval converts the gate into no gate and must be rejected** ✓
-- D. Reclassify the backlog to RT2 so the gate no longer applies
+- **C. Treat gate latency as an oversight-design defect: add qualified approvers, tier the queue by risk within RT3 — Significant, improve review ergonomics (smaller diffs, better provenance summaries) — but timeout-approval converts the gate into no gate and must be rejected** ✓
+- D. Reclassify the backlog to RT2 — Moderate so the gate no longer applies
 
 *Rationale:* KA-11 treats review ergonomics and gate throughput as design problems the professional owns. Auto-approval on timeout (A) silently removes the human control while leaving its appearance — worse than an honest policy change. D is risk-tier manipulation, a governance violation.
 
 ## 6. Fellow Assessment (CL4)
 
-Fellow certification has **no written exam** ([AIES-AECT-CERT-01 §2.2](certification-framework.md#22-prerequisites-and-evidence-requirements)); it is assessed by portfolio and a structured panel review. The panel evaluates against these weighted criteria:
+Fellow certification has **no written exam** ([AIES-AECT-CERT-01 — Certification Framework §2.2](certification-framework.md#22-prerequisites-and-evidence-requirements)); it is assessed by portfolio and a structured panel review. The panel evaluates against these weighted criteria:
 
 | # | Criterion | Weight |
 |---|-----------|--------|
 | F1 | Organizational-scale practice setting: evidence of designing and rolling out AI-native operating policy across teams | 35% |
 | F2 | Trade-off judgment: reasoned handling of competing concerns (velocity vs. oversight, cost vs. quality, autonomy vs. accountability) at portfolio scale | 30% |
-| F3 | Advancement of the discipline: contribution per [AIES-AECT-CERT-01 §2.5](certification-framework.md#25-peer-contribution-fellow) | 20% |
+| F3 | Advancement of the discipline: contribution per [AIES-AECT-CERT-01 — Certification Framework §2.5](certification-framework.md#25-peer-contribution-fellow) | 20% |
 | F4 | Coaching and capability building: evidence of developing others to CL2/CL3 | 15% |
 
-*Sample panel probe (F2):* "Walk us through a case where you lowered an autonomy level after it had been granted. What evidence triggered it, what resistance did you meet, and what did it cost?" — A strong answer demonstrates evidence-driven reversal ([AIES-SHARED-02-R03]), candor about organizational friction, and measurement of the outcome; a weak answer has never reversed autonomy or frames reversal as failure rather than governance working.
+*Sample panel probe (F2):* "Walk us through a case where you lowered an autonomy level after it had been granted. What evidence triggered it, what resistance did you meet, and what did it cost?" — A strong answer demonstrates evidence-driven reversal ([AIES-SHARED-02-R03 — Taxonomy, requirement 03]), candor about organizational friction, and measurement of the outcome; a weak answer has never reversed autonomy or frames reversal as failure rather than governance working.
 
 ## 7. Exam Security and Fairness
 
-[AIES-AECT-EB-01-R04] Exams MUST be delivered under identity verification and proctoring (in-person or remote), with secure item banks; live items MUST NOT be published, and disclosed items MUST be retired.
+[AIES-AECT-EB-01-R04 — Exam Blueprints, requirement 04] Exams MUST be delivered under identity verification and proctoring (in-person or remote), with secure item banks; live items MUST NOT be published, and disclosed items MUST be retired.
 
-[AIES-AECT-EB-01-R05] Item banks MUST be large enough to generate multiple equated forms per tier, and forms MUST be statistically equated so that pass decisions are comparable across forms and sessions.
+[AIES-AECT-EB-01-R05 — Exam Blueprints, requirement 05] Item banks MUST be large enough to generate multiple equated forms per tier, and forms MUST be statistically equated so that pass decisions are comparable across forms and sessions.
 
-[AIES-AECT-EB-01-R06] Every item MUST be reviewed before release for (a) traceability to AEBOK, (b) vendor neutrality, (c) bias and accessibility — including plain-language phrasing, culture-neutral scenarios, and screen-reader-compatible delivery. Item-level performance statistics MUST be monitored for differential functioning and flagged items withdrawn pending review.
+[AIES-AECT-EB-01-R06 — Exam Blueprints, requirement 06] Every item MUST be reviewed before release for (a) traceability to AEBOK, (b) vendor neutrality, (c) bias and accessibility — including plain-language phrasing, culture-neutral scenarios, and screen-reader-compatible delivery. Item-level performance statistics MUST be monitored for differential functioning and flagged items withdrawn pending review.
 
-[AIES-AECT-EB-01-R07] Candidates MUST be offered reasonable accommodations (extra time, assistive technology, alternative formats) consistent with applicable accessibility law, without altering the construct being measured.
+[AIES-AECT-EB-01-R07 — Exam Blueprints, requirement 07] Candidates MUST be offered reasonable accommodations (extra time, assistive technology, alternative formats) consistent with applicable accessibility law, without altering the construct being measured.
 
-[AIES-AECT-EB-01-R08] Use of AI assistance during a knowledge exam MUST be prohibited and technically deterred. (Practical labs are different: they *require* working with AI systems under the lab's declared rules — see [AIES-AECT-LAB-01](labs.md).)
+[AIES-AECT-EB-01-R08 — Exam Blueprints, requirement 08] Use of AI assistance during a knowledge exam MUST be prohibited and technically deterred. (Practical labs are different: they *require* working with AI systems under the lab's declared rules — see [AIES-AECT-LAB-01 — Labs](labs.md).)
 
-[AIES-AECT-EB-01-R09] Pass thresholds in this blueprint MUST be validated by a documented standard-setting exercise (e.g., modified Angoff) before an exam form is used for certification decisions, and revalidated at every major standard version.
+[AIES-AECT-EB-01-R09 — Exam Blueprints, requirement 09] Pass thresholds in this blueprint MUST be validated by a documented standard-setting exercise (e.g., modified Angoff) before an exam form is used for certification decisions, and revalidated at every major standard version.
 
 Candidates may retake a failed exam after 14 days (first retake) and 60 days (subsequent retakes), with a maximum of three attempts per 12-month period.
 
 ## Related Documents
 
-- [Certification Framework (AIES-AECT-CERT-01)](certification-framework.md) — where each exam fits in the credential
-- [Learning Paths (AIES-AECT-LP-01)](learning-paths.md) — preparation
-- [Labs (AIES-AECT-LAB-01)](labs.md) — the practical counterpart to these exams
-- [AESQS (AIES-AESQS-00)](../AESQS/README.md) — scoring methodology for practical assessment
+- [Certification Framework (AIES-AECT-CERT-01 — Certification Framework)](certification-framework.md) — where each exam fits in the credential
+- [Learning Paths (AIES-AECT-LP-01 — Learning Paths)](learning-paths.md) — preparation
+- [Labs (AIES-AECT-LAB-01 — Labs)](labs.md) — the practical counterpart to these exams
+- [AESQS (AIES-AESQS-00 — Qualification Standard)](../AESQS/README.md) — scoring methodology for practical assessment
 
 ## References
 
