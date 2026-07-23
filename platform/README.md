@@ -52,7 +52,8 @@ Fit Guidance, and Executive Summary), `transcript`,
 the formal per-area CL/autonomy view), `judge` (available/list/history),
 `assessment` (declarative engineering composition — list/show/validate/result,
 Markdown/JSON/HTML, ADR-0005), `audit` (repository conformance — maturity per
-area, ADR-0004), `corpus` (the platform reviews its **own** assessment corpus —
+area, ADR-0004), `ci audit` (retained advisory-by-default CI evidence with
+explicit opt-in enforcement), `corpus` (the platform reviews its **own** assessment corpus —
 health/coverage/duplicates/review; advisory, multidimensional, no single grade),
 `runs`, `compare`, `index`, `review`, `grant`, `verify`, `journey`,
 `conform`, `runtime`/`profile`/`qualification`, `dashboard`, `plugins`.
@@ -77,6 +78,10 @@ See also [DEPLOYMENTS.md](DEPLOYMENTS.md) (qualify deployments, not models),
 [JOURNEYS.md](JOURNEYS.md) (multi-phase scenarios that test lifecycle depth),
 [SCENARIOS.md](SCENARIOS.md) (how to author competency scenarios), and
 [ASSESSMENTS.md](ASSESSMENTS.md) (declarative qualification composition).
+[CI_INTEGRATION.md](CI_INTEGRATION.md) provides the reusable pinned workflow,
+annotations, retained artifacts, and explicit enforcement sequence.
+[CONTAINER.md](CONTAINER.md) covers the non-root demo/audit/conformance image,
+mounts, network/secrets boundaries, architecture support, and cleanup.
 [REFERENCE.md](REFERENCE.md) is the compact platform reference — vocabulary,
 artifact schemas, and command contracts. [CALIBRATION.md](CALIBRATION.md) covers scenario
 calibration — treating each scenario as a *measurement instrument* — and the
@@ -133,7 +138,7 @@ aies open latest
 ```
 
 The warm-cache full-suite performance budget on the recorded Windows reference
-workstation is **180 seconds**. The current 265-test baseline is **99.91
+workstation is **180 seconds**. The current 270-test baseline is **102.68
 seconds**. A run above budget or a greater-than-25% regression should be
 profiled before merge; use the ranked durations rather than guessing. Scenario
 YAML and suite digests are cached by path, modification time, and size, return

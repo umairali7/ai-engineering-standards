@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Adoption-grade CI, container, and clean-install batch**: added `aies ci
+  audit` and a pinned reusable GitHub workflow that verify decision semantics,
+  calculate repository policy, emit annotations and a step summary, retain
+  JSON/Markdown evidence even on failure, and remain advisory unless
+  enforcement is explicitly selected. Added a non-root OCI-labelled container
+  for offline demo, read-only repository audit, conformance, and deliberately
+  configured networked evaluation. Expanded the installed-wheel
+  Windows/macOS/Linux matrix into a first-run journey with paths containing
+  spaces, a non-default workspace, discovery, bounded offline evaluation,
+  resume, report opening, advisory CI evidence, and uninstall.
 - **Actionable CLI failure diagnostics**: introduced the secret-safe
   `aies-cli-failure-v1` contract with a stable cause category, durable-work
   status, exact recovery command, troubleshooting anchor, and duplicate-cost
@@ -137,7 +147,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   copies. Read-only API tests reuse one immutable module fixture, and the judge
   concurrency test delays only the reviewer behavior it measures. The complete
   suite retains all assertions while removing repeated setup and unrelated
-  sleeps: the expanded 265-test suite completes in 99.91 seconds on the
+  sleeps: the expanded 270-test suite completes in 102.68 seconds on the
   Windows verification host, below the 180-second budget.
 - **Empirical-panel admission preflight**: `aies suites empirical
   --preflight-runs` now checks that real runs use distinct subjects, identical

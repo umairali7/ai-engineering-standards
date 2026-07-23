@@ -98,6 +98,8 @@ tasks as unknown rather than zero.
 - Register real endpoints: [Platform Guide](platform/GUIDE.md)
 - Compare compatible runs: `aies compare RUN_A RUN_B`
 - Analyze repository practice: `aies audit .`
+- Retain advisory repository evidence in CI: `aies ci audit . --rt 2`
+- Use a non-root container: [Container Guide](platform/CONTAINER.md)
 - Import Inspect evidence: `aies bridge inspect-import RUN FILE`
 - Import SARIF findings: `aies bridge sarif-import FILE`
 - Learn what every metric claims: [Measurement Claims](platform/MEASUREMENT_CLAIMS.md)

@@ -54,6 +54,8 @@ evidence breadth instead of hiding both inside one score.
 [see every CLI command](platform/CLI_REFERENCE.md) ·
 [review the public roadmap](ROADMAP.md) ·
 [see the adoption and launch plan](docs/ADOPTION_AND_LAUNCH_PLAN.md) ·
+[adopt it in CI](platform/CI_INTEGRATION.md) ·
+[run it in a container](platform/CONTAINER.md) ·
 [help build it](CONTRIBUTING.md) ·
 [share first-run or report feedback](https://github.com/umairali7/ai-engineering-standards/issues/new/choose)
 
@@ -68,6 +70,8 @@ evidence breadth instead of hiding both inside one score.
 | Check what AIES truly supports | `aies support` | Implemented, experimental, and planned subject kinds with executable entry points and limitations |
 | Choose a first workflow by decision | `aies starter list` | Prerequisites, commands, artifacts, time/cost class, evidence breadth, limitations, and next expansion |
 | Assess repository engineering practice | `aies audit .` | Evidence-backed maturity gaps and ranked remediation |
+| Add advisory repository evidence to CI | `aies ci audit . --rt 2` | Retained JSON/Markdown evidence and annotations without an implicit merge gate |
+| Run without a host Python install | `docker build -f platform/Dockerfile -t aies:local .` | Non-root container for demo, audit, conformance, and networked evaluations |
 | Compare compatible runs | `aies compare RUN_A RUN_B` | Task-by-task observed differences without a fake universal winner |
 | Integrate an evaluation tool | `aies bridge inspect-import …` | Source-bound imported ratings and an explicit loss report |
 | Integrate static analysis | `aies bridge sarif-import …` | Preserved SARIF findings that remain distinct from correctness claims |

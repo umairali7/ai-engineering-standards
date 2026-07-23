@@ -420,6 +420,56 @@ render the Engineering Capability Matrix for an aggregated run/deployment
 | `--format` | optional | ECM output format (default: markdown) | choices: `markdown`, `json`, `html`; default: `markdown` |
 | `--write` | optional | write ECM output beside the run | Writes the default ECM artifact beside the run. |
 
+## `aies ci`
+
+CI evidence integrations; advisory unless enforcement is explicit
+
+**Usage:** `aies ci [-h] [--json] {audit} ...`
+
+**Prerequisites:** AIES is installed in CI and the repository checkout is readable.
+
+**Result and side effects:** Provides retained CI evidence integrations that remain advisory unless enforcement is explicitly selected.
+
+**Recommended next step:** Start with `aies ci audit . --rt 2`; review artifacts before adding `--enforce`.
+
+### Subcommands
+
+| Subcommand | What it does |
+|---|---|
+| `audit` | retain repository-assessment evidence and annotations |
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies ci audit`
+
+retain repository-assessment evidence and annotations
+
+**Usage:** `aies ci audit [-h] [--json] [--rt {1,2,3,4}] [--enforce] [--attest FILE] [--out DIR] [--github-annotations] [repo]`
+
+**Prerequisites:** The repository checkout is readable; optional attestations use the documented evidence-linked JSON shape.
+
+**Result and side effects:** Writes repository-assessment JSON, Markdown, and annotation artifacts; emits GitHub annotations when requested. It exits non-zero for policy gaps only with `--enforce`.
+
+**Recommended next step:** Upload the artifact directory on every run. Enable enforcement only after repository owners approve the selected risk-tier policy.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<REPO>` | optional | repository path to inspect (default: current directory) | default: `.` |
+| `--rt` | optional | risk tier policy to calculate (default: RT2 — Moderate) | choices: `1`, `2`, `3`, `4`; default: `2` |
+| `--enforce` | optional | explicitly fail CI when required evidence is missing; without this flag the command is advisory | — |
+| `--attest` | optional | optional attestation JSON for non-detectable practices | — |
+| `--out` | optional | artifact directory (default: aies-ci) | default: `aies-ci` |
+| `--github-annotations` | optional | emit GitHub Actions notice/warning workflow commands | — |
+
 ## `aies compare`
 
 compare two runs/deployments using compatible observed ECM evidence

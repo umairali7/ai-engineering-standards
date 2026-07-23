@@ -53,12 +53,15 @@ titles; normative detail is linked only after the runnable first step.
 | **Evaluate** | Where does one AI deployment show capability and where is evidence thin? | `aies evaluate SUBJECT --judge REVIEWER --plan-only` | Bounded call plan, then a complete automated Engineering Evaluation and task snapshot | Observed performance is not field performance, qualification, or deployment authority | `aies snapshot latest` |
 | **Compare** | Which compatible observed evidence better fits a scoped coding workload? | `aies starter show compare-coding-deployments` | Two matched evaluations and a task-by-task compatible comparison | No universal winner; incompatible protocols are not compared | Preregister broader evidence before publishing a selection claim |
 | **Audit** | Which repository-practice evidence exists and which gaps come first? | `aies audit .` | CA-01 — AI-Native SDLC Foundations through CA-12 — Governance, Risk & AI Safety maturity, evidence states, and ranked remediation | Repository maturity does not prove source correctness or vulnerability absence | Close gaps, then run `aies audit . --gate --rt 2` |
+| **Automate** | How can repository evidence enter CI without unexpectedly blocking adoption? | `aies ci audit . --rt 2` | Retained evidence, annotations, and a visible calculated policy in advisory mode | A repository audit does not prove source correctness; enforcement requires explicit owner approval | Adopt the pinned reusable workflow, then set `enforce: true` only if approved |
 | **Integrate** | How can an existing evaluator or static-analysis tool feed AIES evidence? | `aies bridge --help` | Source-bound Inspect or SARIF conversion with explicit loss and claim boundaries | Imported findings never silently become correctness, qualification, or authority | Validate the applicable experimental adapter profile |
 | **Govern** | Is a formal human-governed qualification decision actually required? | `aies starter show formal-qualification` | The explicit rater, evidence, decision, record, and verification sequence | Automated scores do not grant; named humans retain consequential authority | Enter only when the formal decision is necessary |
 
 To contribute or independently review the work, read
 [CONTRIBUTING.md](CONTRIBUTING.md) and the
 [Adoption and Launch Plan](docs/ADOPTION_AND_LAUNCH_PLAN.md).
+For automated onboarding, see the [CI Integration](platform/CI_INTEGRATION.md);
+for isolated execution, see the [Container Guide](platform/CONTAINER.md).
 
 ## How the Pieces Fit
 

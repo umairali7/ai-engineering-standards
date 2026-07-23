@@ -63,6 +63,12 @@ Each asset must show real generated output and pass claim review:
 - Issue forms for first-run failure, report comprehension, case-study interest,
   instrument review, and adapter proposals are implemented with explicit
   secret/private-evidence boundaries and a private security-advisory route.
+- A pinned reusable CI workflow and `aies ci audit` now provide retained,
+  advisory-by-default repository evidence, annotations, and explicit opt-in
+  enforcement.
+- A non-root container and cross-platform installed-wheel journey now cover
+  demo, discovery, evaluation, resume, report opening, repository audit, and
+  conformance; hosted CI results and release provenance remain launch gates.
 
 ## Channel plan
 

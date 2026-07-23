@@ -1132,6 +1132,66 @@ def cmd_audit(args) -> int:
     return 0
 
 
+def cmd_ci(args) -> int:
+    """Create retained CI evidence; enforce only when explicitly requested."""
+    from . import ci_integration
+    try:
+        attestations = None
+        if args.attest:
+            attestations = json.loads(
+                Path(args.attest).read_text(encoding="utf-8"))
+        package = ci_integration.build_repository_package(
+            args.repo,
+            risk_tier=f"RT{args.rt}",
+            enforce=args.enforce,
+            attestations=attestations,
+        )
+        paths = ci_integration.write_repository_package(package, args.out)
+        if args.github_annotations:
+            for line in ci_integration.github_annotation_lines(package):
+                print(line)
+        output = {**package, "artifacts": paths}
+        _out(
+            output,
+            args.json,
+            "AIES CI repository assessment\n"
+            f"  mode       : {package['policy']['mode']}\n"
+            f"  risk tier  : {package['policy']['risk_tier_label']}\n"
+            f"  policy     : "
+            f"{'PASS' if package['policy']['passed'] else 'GAPS FOUND'}\n"
+            f"  CI blocking: {'yes' if args.enforce else 'no'}\n"
+            f"  report     : {paths['markdown']}\n"
+            f"  evidence   : {paths['json']}\n"
+            f"  annotations: {paths['annotations']}\n"
+            + (
+                "  next       : enforcement was explicitly selected; close "
+                "required gaps before retrying"
+                if args.enforce and not package["policy"]["passed"]
+                else
+                "  next       : review the retained findings; enable --enforce "
+                "only after repository-owner approval"
+            ),
+        )
+        return package["policy"]["exit_code"]
+    except (OSError, ValueError, json.JSONDecodeError,
+            NotADirectoryError, FileNotFoundError) as error:
+        _emit_failure(
+            error,
+            operation="ci-repository-assessment",
+            args=args,
+            phase="evidence",
+            preserved_work_status="source-unchanged",
+            preserved_work_detail=(
+                "Repository assessment is read-only; source files were not changed."),
+            recovery_command=(
+                f"aies ci audit {args.repo} --rt {args.rt} --out {args.out}"),
+            duplicate_cost_risk="none",
+            duplicate_cost_detail=(
+                "Repository auditing makes no model or paid endpoint calls."),
+        )
+        return 2
+
+
 def cmd_capabilities(args) -> int:
     """Engineering Capability Matrix by default; formal profile explicitly."""
     from . import capabilities, compare, constants as C, ecm
@@ -2146,6 +2206,8 @@ typical workflow:
   # audit a repository's engineering practice against AIES (maturity per area):
   aies audit .                                 scorecard + ranked recommendations
   aies audit . --gate --rt 2                   CI gate: fail if RT2 — Moderate evidence is missing
+  aies ci audit . --rt 2                       retained CI evidence; advisory by default
+  aies ci audit . --rt 2 --enforce             explicit opt-in policy gate
 
   # supply-chain provenance:
   aies deployment verify-artifact <id> --artifact model.bin   check checksum/signature
@@ -2581,6 +2643,26 @@ def build_parser() -> argparse.ArgumentParser:
                     help="output representation (default: markdown)")
     au.set_defaults(func=lambda a: (setattr(a, "rt", a.rt or (2 if a.gate else None)),
                                     cmd_audit(a))[1])
+
+    ci = common(sub.add_parser(
+        "ci", help="CI evidence integrations; advisory unless enforcement is explicit"))
+    cisub = ci.add_subparsers(dest="ci_cmd", required=True)
+    cia = common(cisub.add_parser(
+        "audit", help="retain repository-assessment evidence and annotations"))
+    cia.add_argument("repo", nargs="?", default=".",
+                     help="repository path to inspect (default: current directory)")
+    cia.add_argument("--rt", type=int, choices=(1, 2, 3, 4), default=2,
+                     help="risk tier policy to calculate (default: RT2 — Moderate)")
+    cia.add_argument("--enforce", action="store_true",
+                     help="explicitly fail CI when required evidence is missing; "
+                          "without this flag the command is advisory")
+    cia.add_argument("--attest", metavar="FILE",
+                     help="optional attestation JSON for non-detectable practices")
+    cia.add_argument("--out", default="aies-ci", metavar="DIR",
+                     help="artifact directory (default: aies-ci)")
+    cia.add_argument("--github-annotations", action="store_true",
+                     help="emit GitHub Actions notice/warning workflow commands")
+    cia.set_defaults(func=cmd_ci)
 
     asm = common(sub.add_parser(
         "assessment", help="declarative assessments (ADR-0005): "

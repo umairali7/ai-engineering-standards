@@ -280,7 +280,7 @@ Never use `--break-system-packages`. If `pipx` or `uv` is already installed,
 application install from this checkout.
 
 For local verification, the recorded warm-cache Windows budget is 180 seconds
-for the complete suite; the 2026-07-23 baseline is 265 tests in 99.91 seconds.
+for the complete suite; the 2026-07-23 baseline is 270 tests in 102.68 seconds.
 Treat a budget breach or greater-than-25% regression as a profiling trigger.
 This is a feedback budget, not a reason to skip correctness gates on slower CI
 hardware.
@@ -914,6 +914,27 @@ conformance model:
 ```json
 { "items": [ {"id": "ca10-branch-protection", "evidence": "link or note"} ] }
 ```
+
+#### Adopt the audit in CI without an implicit gate
+
+Start with retained advisory evidence:
+
+```text
+aies ci audit . --rt 2 --out aies-ci
+```
+
+This calculates the same RT2 — Moderate policy, writes JSON/Markdown/annotation
+artifacts, and exits successfully even when gaps exist. Only the explicit
+`--enforce` flag turns policy-required gaps into a non-zero exit. The reusable
+GitHub workflow additionally verifies the pinned evaluator against its golden
+decision corpus, emits annotations, writes a step summary, and uploads the
+evidence even on an enforced failure. See
+[AIES-PLAT-11 — AIES CI Integration](CI_INTEGRATION.md).
+
+For isolated execution, the non-root image supports the offline demo,
+read-only repository mounts, decision conformance, and deliberately configured
+networked evaluation. See
+[AIES-PLAT-12 — AIES Container Guide](CONTAINER.md).
 
 ### 5.9 Run a named assessment (composition as data)
 

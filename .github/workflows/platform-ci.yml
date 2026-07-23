@@ -72,12 +72,36 @@ jobs:
           python -m aies starter show understand-deployment --json
       - name: Validate installed actionable-failure contract
         run: python -c "import json,subprocess,sys; p=subprocess.run([sys.executable,'-m','aies','support','not-a-subject','--json'],text=True,capture_output=True); d=json.loads(p.stderr); assert p.returncode==2; assert d['kind']=='cli-failure-diagnostic'; assert d['category']=='evidence'; assert d['recovery_command']=='aies support'"
-      - name: First-use offline demo from the installed package
-        run: python -m aies demo --workspace "${{ runner.temp }}/aies-demo" --parallel 8
+      - name: Clean-install first-run journey (spaces + non-default workspace)
+        run: python scripts/clean_install_journey.py --repo ..
       - name: Uninstall cleanly
         run: |
           python -m pip uninstall aies-platform -y
           python -c "import importlib.util; assert importlib.util.find_spec('aies') is None"
+
+  container-reproducibility:
+    name: Containerized demo + audit + conformance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build non-root AIES image
+        run: |
+          docker build \
+            --file platform/Dockerfile \
+            --build-arg AIES_REVISION="${GITHUB_SHA}" \
+            --tag aies:test .
+          test "$(docker image inspect aies:test --format '{{.Config.User}}')" = "10001"
+      - name: Run offline demo
+        run: |
+          docker volume create aies-test-workspace
+          trap 'docker volume rm -f aies-test-workspace' EXIT
+          docker run --rm \
+            --volume aies-test-workspace:/workspace/aies-workspace \
+            aies:test demo --workspace /workspace/aies-workspace --parallel 8
+      - name: Audit repository read-only
+        run: docker run --rm --volume "${GITHUB_WORKSPACE}:/target:ro" aies:test audit /target --rt 2
+      - name: Verify decision-engine semantics
+        run: docker run --rm aies:test conform engine --corpus /opt/aies/conformance/corpus
 
   conformance:
     runs-on: ubuntu-latest

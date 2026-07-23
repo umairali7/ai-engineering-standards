@@ -1,0 +1,109 @@
+name: AIES repository evidence
+
+on:
+  workflow_call:
+    inputs:
+      repository-path:
+        description: Repository path inside the caller checkout
+        required: false
+        default: .
+        type: string
+      risk-tier:
+        description: AIES risk-tier policy to calculate (1-4)
+        required: false
+        default: 2
+        type: number
+      enforce:
+        description: Explicitly fail when risk-tier-required evidence is missing
+        required: false
+        default: false
+        type: boolean
+      aies-ref:
+        description: Immutable AIES tag or commit used to install the evaluator
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      repository-path:
+        description: Repository path inside this checkout
+        required: false
+        default: .
+        type: string
+      risk-tier:
+        description: AIES risk tier
+        required: true
+        default: 2
+        type: choice
+        options: ["1", "2", "3", "4"]
+      enforce:
+        description: Explicitly enable the policy gate
+        required: true
+        default: false
+        type: boolean
+      aies-ref:
+        description: AIES tag or commit (use an immutable commit for retained evidence)
+        required: true
+        default: main
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  repository-evidence:
+    name: Repository evidence (${{ inputs.enforce && 'enforced' || 'advisory' }})
+    runs-on: ubuntu-latest
+    env:
+      AIES_REF: ${{ inputs.aies-ref }}
+      AIES_REPOSITORY_PATH: ${{ inputs.repository-path }}
+      AIES_RISK_TIER: ${{ inputs.risk-tier }}
+      AIES_ENFORCE: ${{ inputs.enforce }}
+      AIES_ARTIFACT_DIR: ${{ runner.temp }}/aies-ci
+      AIES_WORKSPACE: ${{ runner.temp }}/aies-workspace
+      AIES_SOURCE: ${{ runner.temp }}/aies-source
+    steps:
+      - name: Check out repository under assessment
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch and install pinned AIES evaluator
+        shell: bash
+        run: |
+          if [[ ! "${AIES_REF}" =~ ^[A-Za-z0-9._/-]+$ ]] || [[ "${AIES_REF}" == -* ]]; then
+            echo "aies-ref must be a tag or commit-like Git ref" >&2
+            exit 2
+          fi
+          git clone --filter=blob:none \
+            https://github.com/umairali7/ai-engineering-standards.git \
+            "${AIES_SOURCE}"
+          git -C "${AIES_SOURCE}" checkout --detach "${AIES_REF}"
+          python -m pip install --upgrade pip
+          python -m pip install "${AIES_SOURCE}/platform"
+
+      - name: Verify evaluator decision semantics
+        run: >-
+          python -m aies conform engine
+          --corpus "${{ runner.temp }}/aies-source/conformance/corpus"
+
+      - name: Collect repository evidence
+        shell: bash
+        run: |
+          args=(ci audit "${AIES_REPOSITORY_PATH}" --rt "${AIES_RISK_TIER}" \
+                --out "${AIES_ARTIFACT_DIR}" --github-annotations)
+          if [[ "${AIES_ENFORCE}" == "true" ]]; then
+            args+=(--enforce)
+          fi
+          python -m aies "${args[@]}"
+
+      - name: Retain AIES evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aies-repository-evidence
+          path: ${{ runner.temp }}/aies-ci
+          if-no-files-found: error
+          retention-days: 30

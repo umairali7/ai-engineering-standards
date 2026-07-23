@@ -75,6 +75,16 @@ GUIDANCE: dict[str, CommandGuidance] = {
         "Prints the complete versioned workflow without executing commands or incurring cost.",
         "Resolve the prerequisites, replace placeholders, and execute the plan-only command before the live workflow.",
     ),
+    "ci": CommandGuidance(
+        "AIES is installed in CI and the repository checkout is readable.",
+        "Provides retained CI evidence integrations that remain advisory unless enforcement is explicitly selected.",
+        "Start with `aies ci audit . --rt 2`; review artifacts before adding `--enforce`.",
+    ),
+    "ci audit": CommandGuidance(
+        "The repository checkout is readable; optional attestations use the documented evidence-linked JSON shape.",
+        "Writes repository-assessment JSON, Markdown, and annotation artifacts; emits GitHub annotations when requested. It exits non-zero for policy gaps only with `--enforce`.",
+        "Upload the artifact directory on every run. Enable enforcement only after repository owners approve the selected risk-tier policy.",
+    ),
     "bridge": CommandGuidance(
         "A version-supported external evidence file is available; Inspect rating import also requires an existing matching AIES run.",
         "Converts supported external evidence with a source digest, converter identity, explicit loss accounting, and no inferred scores or claim inflation.",

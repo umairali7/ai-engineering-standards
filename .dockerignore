@@ -1,0 +1,16 @@
+.git
+.github
+.venv
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/*.pyc
+platform/aies-workspace
+platform/dist
+platform/build
+platform/*.egg-info
+**/.env
+**/.env.*
+**/runs
+docs/assets
+
