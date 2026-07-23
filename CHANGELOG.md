@@ -15,7 +15,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   Qualification, document the ET-01 through ET-15 task taxonomy and current
   platform workflow, distinguish shipped subject executors from planned
   adapters, and state the verified corpus/test baseline without claiming
-  empirical calibration.
+  empirical calibration. Reconciled README and ROADMAP milestone statuses with
+  delivered M1–M4 capabilities, removed the stale duplicated hardening backlog,
+  and made AIES-DOC-14 the single authoritative implementation/cleanup backlog.
+  Clarified why the five modules remain at Review and expanded their approval
+  work into an explicit inventory, conformance, independent-review, finding
+  disposition, public-comment, ratification, and release sequence. Added a
+  measurable adoption-success lane covering ECM validity, a three-subject
+  comparison, local/hosted reproducibility pilots, evaluation-ecosystem
+  interoperability, one-session onboarding, independent reviewer recruitment,
+  five decision-led case studies, a privacy-respecting adoption scorecard, and
+  the Charter targets for organizational adoption and contributor diversity.
+  Added a progressive Try → Evaluate → Understand → Integrate → Govern adoption
+  model and a concrete UX backlog for one-command cross-platform demo, isolated
+  installation, guided initialization, a beginner evaluation command,
+  cost/time planning, decision-oriented starters, actionable recovery, report
+  opening/redaction, CI and container integration, clean-machine testing,
+  intent-layered documentation, and first-run usability studies. Deepened the
+  authoritative backlog through current primary-source research: added explicit
+  build-versus-integrate decisions for Inspect, OpenTelemetry, SARIF, OSCAL,
+  SPDX, SLSA/Sigstore, MCP, external AI standards, and isolated Python
+  distribution; added release, measurement, interoperability, subject-expansion,
+  and selection dependency tracks; and added estimand, judge validation,
+  predictive validity, sensitivity, contamination, and post-deployment
+  monitoring requirements. Added a fourteen-step executable tranche separating
+  work that can proceed immediately from external evidence, independent review,
+  adoption, release-governance, and subject-expansion dependencies.
 - **Non-blocking engineering evaluation across the platform**: named automated
   assessments now produce `COMPLETE/PARTIAL/NOT SCORED` Engineering Assessment
   Results instead of implicitly invoking formal qualification. `qualify

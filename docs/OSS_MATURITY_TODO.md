@@ -63,7 +63,142 @@ remediation, comparison, and selection remain separate products. Subject types
 share identity, provenance, evidence lifecycle, reporting, and human-authority
 boundaries; they do not automatically share instruments or score semantics.
 
-## 2. Vision Delivery Backlog
+## 2. Adoption Success Sequence
+
+Technical completeness alone will not create adoption. AIES needs a narrow
+reason to try it, credible evidence that its outputs predict useful engineering
+differences, compatibility with tools organizations already use, independent
+review, and public proof that adopters can reproduce the result.
+
+The initial adoption wedge is:
+
+> Produce an evidence-backed Engineering Capability Matrix that shows what an
+> AI engineering subject demonstrably does well, how strong the supporting
+> evidence is, where review is appropriate, and what remains unknown.
+
+This wedge leads with Engineering Evaluation, ECM, and Engineering Fit. It does
+not require an adopter to begin with formal qualification or absorb the entire
+five-module standards architecture.
+
+| Sequence | Status | Success item | Acceptance signal |
+|---|---|---|---|
+| S1 | Done | Establish the engineer-facing product wedge | README, CLI, demo, report bundle, and terminology distinguish non-blocking Engineering Evaluation, ECM, Engineering Fit, optional human evaluation, and explicit Formal Qualification; no default workflow stages a missing human as product failure |
+| S2 | In progress | Prove ECM measurement validity | A preregistered multi-subject panel demonstrates task discrimination, reviewer agreement, uncertainty behavior, and stability; direct ET-01 through ET-15 mappings receive independent review; negative and null findings are published rather than hidden |
+| S3 | Open | Publish the first comparative ECM case study | At least three materially different subjects run the same compatible preregistered workload; the public bundle includes prompts/instruments where publishable, hashes, raw and resolved observations, cost/runtime, limitations, ECM, fit guidance, and independent engineering review; it reports scoped differences without declaring a universal winner |
+| S4 | Open | Publish one local and one hosted reproducibility pilot | A third party can reproduce both runs from a clean environment using version-pinned instructions; expected and observed differences, failures, repair steps, environment fingerprints, and lessons learned are retained |
+| S5 | Open | Integrate with the existing evaluation ecosystem | A versioned bridge imports and exports Inspect-compatible evaluation logs or another widely used open evaluation trace without losing subject, instrument, observation, scorer, environment, or provenance identity; AIES remains the evidence/decision layer rather than rebuilding every runner and sandbox |
+| S6 | Open | Make first value reachable in one session | From a clean supported machine, a new user can install AIES, run the offline demo, register a deployment, execute a bounded assessment, and open the linked ECM/report bundle with no undocumented command; setup time, assessment cost estimate, progress/ETA, recovery, and uninstall/cleanup are documented and tested |
+| S7 | Open | Recruit an independent review and contributor cohort | Publish reviewer role descriptions, competency expectations, conflict rules, review packet, finding template, time commitment, module ownership opportunities, scenario contribution path, and office-hours/contact route; recruit enough non-author reviewers to cover every approval candidate and contributors from at least three independent organizations |
+| S8 | Open | Publish adoption-grade examples and decision stories | Five real case studies satisfy Charter SC-5 and cover at least deployment selection, repository assurance, engineering-fit guidance, formal qualification, and reassessment after change; each starts with the decision being made, not the framework vocabulary |
+| S9 | Open | Operate a transparent adoption scorecard | Track reproducible pilots, independent reviewers, external contributors, third-party runs, public organizational references, case studies, issue-to-first-success time, report comprehension feedback, and repeat usage; do not collect mandatory telemetry or private assessment evidence |
+| S10 | Open | Demonstrate durable external adoption | At least ten organizations publicly reference AIES under Charter SC-3, contributions come from at least three independent organizations under SC-6, and no single organization authors a majority of accepted release changes |
+
+### Adoption UX backlog
+
+Adoption is progressive. A user should receive useful engineering evidence
+before learning formal qualification, governance roles, or the full standards
+architecture:
+
+```text
+Try → Evaluate → Understand → Integrate → Govern
+```
+
+| Status | Adoption UX item | Acceptance signal |
+|---|---|---|
+| Open | Ship a one-command cross-platform trial | `aies demo` runs the complete offline killer demo on supported Windows, macOS, and Linux installations without Make, Bash, a model server, API credentials, or manual workspace setup; it prints and opens or links the final Executive Summary and ECM |
+| Open | Publish installation-grade packages | A new user can install and upgrade the CLI in an isolated environment through at least one canonical Python application installer, with signed/versioned release artifacts, supported-Python metadata, dependency integrity, uninstall instructions, and no system-Python mutation |
+| Open | Add guided workspace initialization | `aies init` explains the workspace boundary, detects runtimes and deployments, offers safe starter profiles, previews every file it will create, never stores secrets in tracked files, and ends with the exact next command |
+| Open | Add one canonical beginner evaluation command | A beginner-facing `aies evaluate <subject>` path performs discovery checks, selects or explains a bounded no-repeat starter scope, plans calls, collects, scores, aggregates, and opens the report bundle; advanced `qualify`, `benchmark`, and formal-governance commands remain available without being prerequisites |
+| Open | Make planning precede cost and waiting | Every network/model assessment can show distinct scenario count, candidate calls, judge calls, concurrency, estimated tokens/cost where pricing is declared, expected duration range, evidence limitations, and resumability before execution; no estimate is represented as guaranteed |
+| Open | Supply decision-oriented starter profiles | Versioned starters cover “compare coding deployments,” “understand one deployment,” “audit this repository,” and “try formal qualification”; each states what decision it supports, what it does not prove, time/cost class, evidence breadth, and next expansion step |
+| Open | Make every failure actionable | Errors distinguish environment, dependency, authentication, quota, compatibility, inference, scoring, parsing, evidence, and governance causes; each includes preserved-work status, exact recovery command, documentation link, and whether retry can duplicate cost |
+| Open | Make reports effortless to find and share | Completion output identifies the canonical run ID and all generated artifacts, provides `aies open <run-id>` for the local dashboard/report, emits a portable redacted export, and clearly separates shareable views from sensitive evidence |
+| Open | Add adoption-grade CI integration | A documented reusable CI workflow can run repository audit/conformance, preserve artifacts, annotate findings, and enforce only explicitly selected policies; default onboarding is advisory and never unexpectedly blocks a build |
+| Open | Add containerized reproducibility | A versioned container can run the offline demo, conformance suite, repository audit, and supported non-local assessment workflows with documented mounts, network/secrets boundaries, artifact ownership, and architecture support |
+| Open | Test first-run journeys on every supported platform | Clean-machine tests cover Windows PowerShell, macOS, and Linux from install through demo, discovery, bounded evaluation, resume, report opening, upgrade, and uninstall; tests include paths with spaces and non-default workspace locations |
+| Open | Layer documentation by user intent | The first page offers Try, Evaluate, Compare, Audit, Integrate, and Govern paths; each starts with a decision and runnable command, introduces codes with human-readable titles, and defers normative detail to linked references |
+| Open | Conduct first-run usability studies | At least five people unfamiliar with AIES attempt the clean-machine workflow without live assistance; time to first ECM, failure points, misunderstood terms, abandoned steps, and report comprehension are recorded and drive a published remediation list |
+
+### Adoption guardrails
+
+- Do not market design-reviewed scenarios as empirically calibrated.
+- Do not present ECM differences as predictive until the preregistered study
+  demonstrates that relationship.
+- Do not call Review documents Approved without the independent-review and
+  ratification records.
+- Do not advertise an agent, MCP, RAG, pipeline, platform, or composite
+  assessment as supported until its Subject Assessment Profile, executor,
+  instruments, and report limitations are implemented and discoverable.
+- Do not position AIES as a replacement for NIST AI RMF, ISO/IEC 42001,
+  ISO/IEC 25059, OWASP guidance, Inspect, or engineering toolchains. Maintain
+  crosswalks and evidence bridges so AIES supplies the engineering capability
+  and decision layer around them.
+- Do not launch certification claims before AECT is Approved and the
+  examination, independence, appeal, renewal, and credential-governance
+  controls are operational.
+
+### Research-informed build-versus-integrate decisions
+
+The platform should own the semantics that make AIES distinctive and use
+existing open standards for commodity execution, telemetry, findings, security
+automation, and provenance.
+
+| Domain | External baseline | AIES decision | Detailed acceptance signal |
+|---|---|---|---|
+| Evaluation execution | UK AI Security Institute Inspect: tasks, agents, tools, sandboxes, scorers, retry, logs, and analysis | **Integrate; do not rebuild the whole runner ecosystem** | Import versioned Inspect `EvalLog` data through its supported API/JSON export, preserve task/sample/score/transcript/config identity, record source-log digest and converter version, and export AIES instrument metadata where lossless; round-trip tests disclose fields that cannot be represented |
+| AI/agent telemetry | OpenTelemetry semantic conventions and OTLP | **Use as an optional observation source, not the canonical evidence schema** | An adapter maps version-pinned spans/events/metrics into typed canonical evidence while retaining trace/span IDs, sampling state, source convention version, clock boundaries, and collection gaps; prompts, retrieval content, tool arguments/results, and identities are opt-in, classified, redacted, and never logged by default |
+| Repository findings | OASIS SARIF 2.1.0 | **Import and export standard static-analysis findings** | SARIF adapter preserves tool/rule/version, location, severity, fingerprints, fixes, suppressions, baseline state, and invocation status; an absent tool or incomplete run remains unknown, and SARIF findings never become proof of correctness |
+| Security-control evidence | NIST OSCAL Assessment Results | **Provide a governed bridge for security/compliance consumers** | Optional export maps applicable AIES subjects, observations, findings, risks, evidence links, timestamps, and remediation items into OSCAL without claiming FedRAMP, legal, or control certification; canonical AIES evidence remains authoritative for AIES decisions |
+| Software and AI composition | SPDX 3 AI, Dataset, Build, Security, and Software profiles | **Adopt rather than invent another BOM vocabulary** | Subject descriptors can attach validated SPDX documents; AIES records document digest/profile/version and maps components without flattening models, datasets, prompts, agents, services, and software into one legacy model field |
+| Release provenance | SLSA provenance plus Sigstore/Cosign or equivalent verifiable attestations | **Generate and verify standard provenance** | Release packages, containers, and conformance bundles carry source/build provenance and signatures/attestations; verification is documented and CI-tested, and a valid signature is never represented as evidence that content is safe or correct |
+| MCP assessment | Version-pinned official Model Context Protocol specification | **Test protocol behavior directly** | MCP profiles cover initialization/capability negotiation, prompts/resources/tools, pagination/change notifications, input/output schemas, errors, transport, lifecycle, authorization, audience binding, token passthrough prohibition, human approval, side effects, logging, and version negotiation; unsupported protocol revisions fail explicitly |
+| AI governance and quality | NIST AI RMF/TEVV, ISO/IEC 42001, ISO/IEC 25059, and OWASP GenAI guidance | **Crosswalk and complement; do not claim equivalence or certification** | Every mapping identifies exact AIES evidence, strength (`equivalent`, `supports`, `related`, or `gap`), scope, version, and rationale; no crosswalk converts an AIES result into external certification |
+| Command-line distribution | Python Packaging guidance, pipx, and uv tool isolation | **Publish as an isolated application** | Release documentation offers one canonical install plus supported pipx/`uv tool` alternatives, never requires `pip install --break-system-packages`, and tests install/upgrade/uninstall from built artifacts rather than the source checkout |
+
+### Critical path and dependency order
+
+Work may proceed in parallel within a track, but downstream claims stay blocked
+until their prerequisite evidence exists.
+
+| Track | Ordered dependency | Release/adoption gate |
+|---|---|---|
+| **Measurement credibility (P0)** | Define claim/estimand → preregister panel → validate raters/judges → execute compatible runs → quantify uncertainty/discrimination → independent interpretation → publish limitations | No promotional ECM comparison or AIES Select ranking before completion |
+| **Release trust (P0)** | Ratify license → align versions → lock dependencies → build packages/containers → generate SBOM/AI-BOM and SLSA provenance → sign/attest → verify on clean machines | No public install recommendation before artifacts are legally reusable and verifiable |
+| **First-use adoption (P1)** | Cross-platform `aies demo` → isolated install → `aies init` → preflight/plan → `aies evaluate` → `aies open` → first-run usability study | Target is first useful ECM in one session without governance expertise |
+| **Standards approval (P1)** | Generate approval inventory → automated conformance → assign two independent reviewers → resolve findings → freeze v0.5 candidate → public comment/disposition → Maintainer consensus → status promotion | No `Approved`, “industry standard,” or certification claim before traceable completion |
+| **Evidence interoperability (P1)** | Typed evidence events → adapter contract → Inspect/SARIF/OTel importers → OSCAL/SPDX exports → round-trip and adversarial fixtures → compatibility policy | Imported evidence cannot affect claims until provenance, loss, correlation, and applicability are explicit |
+| **Subject expansion (P2)** | Subject Descriptor → Subject Assessment Profile → executor/evidence adapters → direct instruments → coverage matrix → calibration → report limitations → discovery registry | Never route a new subject kind through deployment scoring by convenience |
+| **Selection and portfolio (P2)** | Validated ECM → workload schema → cost/latency/reliability evidence → compatibility filter → explained fit → sensitivity analysis → human decision record | AIES Select remains a scoped decision aid, never a universal leaderboard |
+
+### Next executable tranche
+
+This is the recommended sequence from the current verified baseline. Work in
+the **Build now** lane can proceed while external review, panel recruitment, and
+license governance are waiting on other people.
+
+| Order | Lane | Status | Work package | Dependency | Exit signal |
+|---:|---|---|---|---|---|
+| 1 | Build now | Open | Define decision-product measurement claims and estimands | Existing ECM/evidence schemas | Versioned specification and fixtures state exactly what every score/confidence value means and does not mean |
+| 2 | Build now | Open | Deliver cross-platform `aies demo` | Existing `demo-full` implementation | Installed CLI runs the offline narrative without Make/Bash and links the final ECM/report |
+| 3 | Build now | Open | Produce installable local release candidates | License is not required for private build testing; publication waits for ADR-0014 | Wheel/sdist install, upgrade, and uninstall successfully through isolated tool environments on Windows, macOS, and Linux |
+| 4 | Build now | Open | Implement `aies init` and safe discovery | Subject/workspace boundaries already defined for deployments | Clean machine reaches a valid workspace and exact next command without editing YAML or exposing secrets |
+| 5 | Build now | Open | Implement preflight planning and `aies evaluate` | `init`, existing qualify/benchmark engine | One beginner command previews calls/time/cost/limitations, then performs a bounded no-repeat automated evaluation and complete report generation |
+| 6 | Build now | Open | Implement `aies open` and redacted sharing | Existing report bundle/dashboard | User opens the canonical local result by run ID and can export a validated share-safe bundle without modifying evidence |
+| 7 | Build now | Open | Define Subject Descriptor, typed evidence events, and Evidence Adapter contract | ADR required if frozen contracts change | Schemas, compatibility policy, loss report, correlation/deduplication semantics, privacy classification, and conformance fixtures are accepted |
+| 8 | Build now | Open | Implement Inspect log bridge | Evidence Adapter contract | Supported Inspect logs import with content hashes, provenance, loss accounting, and no evidence-count inflation |
+| 9 | Build now | Open | Implement SARIF repository bridge | Evidence Adapter contract and repository-analysis ADR | Static-analysis findings round-trip with provenance and remain distinct from correctness/conformance outcomes |
+| 10 | External evidence | In progress | Execute preregistered multi-subject validity panel | Estimand, anchor protocol, compatible subjects, independent human labels | Published analysis covers discrimination, agreement, uncertainty, robustness, null results, and limitations |
+| 11 | External governance | Blocked | Complete two independent reviews per approval candidate | Reviewer recruitment and review packets | Every candidate has two traceable non-author reviews and dispositioned findings |
+| 12 | External adoption | Open | Publish comparative ECM case study and reproducible local/hosted pilots | Validity panel, installation path, independent reviewers, publishable evidence | Independent users reproduce results and report decision usefulness and limitations |
+| 13 | Release governance | In progress | Ratify license and secure the release supply chain | ADR-0014 process, version alignment, package builds | Reusable licenses, SPDX metadata, dependency lock, SBOM/AI-BOM, SLSA provenance, signatures/attestations, and clean-machine verification are published |
+| 14 | Expansion | Open | Promote the first non-deployment Subject Assessment Profile | Subject/evidence contracts and support registry | Choose one narrow profile—recommended first candidate: MCP server or repository engineering analysis—and ship direct instruments, executor, limitations, and discovery before starting another |
+
+Do not start AIES Select, organization portfolio dashboards, certification
+operations, or multiple subject executors ahead of this tranche. Those products
+depend on validated ECM semantics, trustworthy distribution, and at least one
+successful external adoption loop.
+
+## 3. Vision Delivery Backlog
 
 ### P0 — Correctness and qualification integrity
 
@@ -90,6 +225,13 @@ boundaries; they do not automatically share instruments or score semantics.
 |---|---|---|
 | Done | Human-review the new RT2 — Moderate tranche | Umair Ali explicitly accepted all 268 listed instruments as repository owner and maintainer after a zero-gap deterministic preflight. One disclosed human-authorized AI-assisted tranche event records every scenario ID and content hash, does not fabricate separate manual click-through reviews, and automatically reopens changed content. All 484 now have effective design review; external independent review and empirical calibration remain open separately. |
 | In progress | Empirically calibrate a preregistered real-subject panel | The platform now creates a content-addressed plan before runs, freezing owner, subjects/ranks and independent basis, exact instrument/prompt/content/suite hashes, tier, repeats, thresholds, and validated rating protocol. Completed runs must bind exactly to that plan; free-text timestamps and synthetic/manual panels are non-promotional. Four legacy subjects share seven CA-05 scenarios and 21 observations under one provisional protocol, but remain exploratory because no prior plan exists and the scorer is explicitly provisional/uncalibrated. A real study and human promotion decision remain external evidence. |
+| Open | Define the measurement claim and estimand for every decision product | Each metric states the subject, target population of tasks/conditions, sampling frame, unit of analysis, outcome, aggregation, uncertainty, exclusions, and intended decision; performance, reliability, safety, and evidence confidence are not conflated |
+| Open | Separate benchmark, system, and field evidence | Reports identify controlled scenario results, integrated-system behavior, and field/operational observations as different evidence modalities; evidence transfer across levels requires an explicit rationale and never silently raises confidence |
+| Open | Validate automated judges against independent human labels | A frozen, stratified anchor set estimates agreement, systematic bias, severity-specific errors, drift, and uncertainty for every judge/protocol version; failed calibration makes scores advisory but does not discard collected responses |
+| Open | Test predictive and decision validity | Preregister whether task scores should predict held-out engineering outcomes, expert preference, defect/security findings, or workload success; report effect sizes, intervals, null results, and decision errors rather than only rank correlation |
+| Open | Add sensitivity and robustness analysis | ECM and comparison show whether conclusions change under plausible rater resolution, weighting, missingness, scenario-family balance, outliers, and minimum-evidence choices; fragile conclusions are labelled |
+| Open | Govern contamination and evaluation awareness | Public, practice, held-out, and protected instruments have separate identities and rotation rules; similarity, leakage, prompt memorization, benchmark-aware behavior, and evaluator gaming are tested and disclosed |
+| Open | Connect pre-deployment evaluation to ongoing monitoring | Deployment guidance names observable signals, thresholds, sampling, incidents, drift/change triggers, and targeted reassessment; field evidence can invalidate stale fit guidance but cannot retroactively rewrite prior observations |
 | Open | Establish versioned anchor-artifact libraries | Every competency area has human-consensus anchors across scores 0–4, including subtle AI-produced defects and refresh history |
 | Open | Protect held-out evidence | Public examples, behavioral twins, and genuinely protected held-out instruments are distinct; contamination checks and refresh policy are recorded |
 | Open | Grow no-repeat coverage beyond RT2 — Moderate | Each supported tier/area meets its distinct-instrument minimum with genuinely tier-appropriate decision types: current distribution RT1=24, RT2=387, RT3=52, RT4=21 |
@@ -104,6 +246,7 @@ boundaries; they do not automatically share instruments or score semantics.
 | Open | Define a governed Subject Descriptor | Canonical identity supports human, team, repository, AI deployment/system, agent, agent swarm, MCP server, coding assistant, prompt library, RAG system, pipeline, platform, and composite system without a mandatory legacy model block |
 | Open | Separate Subject Executor from Runtime Adapter | Runtime generation remains one executor implementation; evidence collection is not coupled to text-generation APIs |
 | Open | Define typed canonical evidence events | Provenance, subject, instrument, observation, rating, reviewer, environment, and lifecycle events are versioned and replayable across subject types |
+| Open | Define a versioned Evidence Adapter contract | Adapters declare source format/version, subject and observation kinds, trust boundary, collection mode, completeness signal, field mapping, redaction, correlation/deduplication keys, loss report, and supported decision products; contract tests prevent imported evidence from bypassing applicability or admission rules |
 | Open | Define the Subject Assessment Profile contract | Every supported subject kind declares its descriptor schema, fingerprint/change triggers, executor or evidence adapters, applicable instruments, score semantics, minimums, gates, limitations, decision products, and human-review requirements |
 | Open | Model composite subjects and dependencies | A human–AI pair, coding assistant plus repository, agent plus MCP servers, swarm, RAG application, pipeline, or platform can reference component subjects and evidence without transferring one component's qualification or hiding dependency risk |
 | Open | Add subject capability discovery | CLI/API reports which subject kinds, profiles, executors, evidence adapters, instruments, and decision products are implemented, experimental, or planned; unsupported assessment requests fail clearly rather than silently falling back to deployment scoring |
@@ -124,6 +267,7 @@ subject and evidence type.
 | Open | Agent-session assessment | Versioned tasks capture plans, tool calls, tool results, approvals, memory/context use, policy boundaries, side effects, failures, recovery, escalation, cost, latency, and final outcomes; replay and trace redaction are supported |
 | Open | Agent-swarm assessment | Delegation, role separation, coordination, consensus/conflict handling, shared-state integrity, containment, cascading failure, aggregate cost, and accountable human control are assessed in addition to member-agent capability |
 | Open | MCP-server assessment | Discovery and protocol conformance, schema accuracy, tool/resource contracts, authorization, least privilege, isolation, state handling, error behavior, injection resistance, reliability, latency, compatibility, and auditability enter canonical evidence |
+| Open | Build an official-spec MCP conformance executor | A version-pinned executor produces direct protocol evidence for initialization, capabilities, tools/resources/prompts, pagination and notifications, schema behavior, lifecycle/errors, transports, authorization/audience validation, approval boundaries, and malicious/untrusted annotations; it distinguishes protocol conformance, security posture, engineering quality, and agent-level task outcomes |
 | Open | AI coding-assistant assessment | IDE/repository context selection, code edits, diff quality, test behavior, secure defaults, command/tool use, provenance, approval boundaries, rollback, and repository-task outcomes are assessed as a composite assistant–repository subject |
 | Open | Prompt-library assessment | Versioning, ownership, intended use, input/output contracts, regression suites, portability, injection resistance, sensitive-data handling, deprecation, drift, and task-specific effectiveness are assessed without publishing protected prompt content |
 | Open | RAG-system assessment | Retrieval relevance/recall, grounding and citation validity, source integrity/freshness, authorization-aware retrieval, privacy, poisoning/injection resistance, abstention, latency, cost, drift, and failure behavior are directly assessed |
@@ -172,6 +316,7 @@ its own instruments and claim boundaries.
 | Open | Govern the repository-analysis layers | A companion ADR distinguishes (1) conformance audit, (2) static/dynamic repository engineering analysis, and (3) controlled repository-task benchmarking; it defines their score semantics, evidence admissibility, human authority, and prohibited claims |
 | Open | Add a content-addressed Repository Subject Descriptor | Repository identity records commit/tree hash, relevant configuration, languages, build system, dependency state, submodule state, analysis scope, exclusions, environment, and tool versions so results are reproducible and changes trigger reassessment |
 | Open | Define repository evidence adapters | Versioned adapters ingest native test, coverage, mutation, property/contract test, lint, type-check, complexity, duplication, dependency, SAST, secret-scan, SBOM, architecture-rule, and benchmark outputs without converting tool absence into a pass |
+| Open | Add loss-aware SARIF import/export | SARIF 2.1.0 findings retain tool/rule/version, invocation success, artifact location, logical location, fingerprints, severity, baseline state, suppression, fixes, and provenance; unsupported fields produce a machine-readable loss report and imported results remain findings rather than correctness verdicts |
 | Open | Implement evidence-based architecture analysis | Reports dependency/module topology, cycles, layering and boundary violations, coupling/cohesion indicators, architecture fitness-test results, and ADR-to-implementation traceability; every finding identifies affected artifacts and no unsupported “good architecture” verdict is emitted |
 | Open | Implement a code-quality profile | Language-aware adapters report lint/type findings, complexity, duplication, dead-code signals, maintainability trends, documentation and testability evidence with tool/version provenance, confidence/coverage limits, and no cross-language comparison unless the instruments are compatible |
 | Open | Implement correctness-assurance analysis | The platform executes or ingests reproducible tests, coverage, mutation, property/contract tests, static-analysis findings, and failure evidence; it reports demonstrated assurance and untested behavior rather than claiming that repository correctness has been proven |
@@ -191,6 +336,7 @@ its own instruments and claim boundaries.
 | Open | Build a cross-subject Evidence-Linked Remediation Plan | Findings from deployments, repositories, humans/teams, agents, swarms, MCP servers, coding assistants, prompt libraries, RAG systems, pipelines, platforms, and composite systems share a deterministic action schema: priority, impact, evidence, recommendation, acceptance signal, owner/authority, dependency, and reassessment trigger; optional generated narrative is labelled advisory and cannot alter evidence or scores |
 | Open | Build AIES Select | A declared workload mix plus latency, cost, context, tool reliability, availability, and risk constraints produces an explained fit ranking over compatible evidence—never a global best-subject claim |
 | Open | Build organization decision products | Inventory shows approved subjects, demonstrated task fit, qualification scope, conditions, drift, expiry, incidents, and requalification status |
+| Open | Export security assessment evidence through OSCAL | A version-pinned optional OSCAL Assessment Results bridge emits scoped subjects, observations, findings, risks, evidence references, timestamps, and remediation links with a mapping/loss report; it never implies external control authorization or certification |
 | Done | Rebuild `demo-full` as the AIES killer demo | The fully offline one-process CI narrative demonstrates deployment/repository/standard subjects, implicit live task/ETA progress, complete automated Engineering Evaluation, optional human-evaluation status, ECM strengths/gaps, Engineering Fit Guidance, protocol-compatible comparison without invented winners, conformance, corpus health, empirical-panel handoff, and the linked Executive Summary bundle; it does not stage a failed qualification or grant as the product story, and it avoids repeated inference, report computation, and production-timeout probes |
 
 ### P3 — Standards and adoption
@@ -199,12 +345,36 @@ its own instruments and claim boundaries.
 |---|---|---|
 | Open | Reconcile ECM with the five-module architecture | A governed update establishes ECM as a foundational standard and updates dependent documents without weakening vendor neutrality |
 | Open | Complete independent pilots | At least one local and one hosted assessment have independent human rating/review, reproducible artifacts, limitations, and published lessons learned |
-| Open | Complete public comment | Every normative module and ECM has a comment period, disposition log, and Approved decision under governance |
+| In progress | Prepare the v0.5 approval inventory and review packets | One generated inventory identifies every governed document targeted for v1.0, its module/editor, normative status, stable requirement IDs, checklist result, two required independent reviewer slots, review-record links, unresolved findings, disposition state, and promotion readiness; the initial approval scope includes 14 AEBOK, 7 AESQS, 20 AEOS, 13 AEAR, 6 AECT, and 3 Shared documents currently at Review |
+| Open | Close automated conformance gaps before human review | Metadata, structure, RFC 2119 requirement IDs/titles, glossary/taxonomy use, relative links and document-ID citations, arithmetic, vendor neutrality, and status-transition checks pass for every approval candidate; exceptions are recorded rather than hidden |
+| Blocked | Obtain two independent peer reviews for every approval candidate | Each Review document has at least two completed reviews by competent Reviewers who did not substantially author it; reviews are recorded as PR reviews or review issues with reviewer identity, scope, independence/conflict declaration, EV1 — Correctness through EV6 — Traceability findings, and recommendation. The same qualified reviewers may cover multiple documents, but AI review and the author’s own review do not satisfy this gate |
+| Open | Resolve and disposition all review findings | Every independent-review and public-comment finding is fixed or explicitly waived with named reasoning; material changes return through the applicable decision class and affected documents are re-reviewed where necessary |
+| Open | Run the v0.5 public-comment cycle | Publish a frozen review candidate, announce the comment window, retain every submission, classify and respond to substantiated objections, publish a disposition log, and ensure no unresolved Class 3 objection remains |
+| Open | Ratify Review documents as Approved | After the evidence above is complete, Maintainers conduct the required seven-day lazy-consensus decision; the promotion commit links both peer reviews, finding dispositions, public-comment evidence where applicable, decision participants, conflicts/abstentions, and the exact document content hashes |
+| Open | Complete module approval gates | AEBOK, AESQS, AEOS, AEAR, and AECT indexes and their governed child documents are Approved only after every document in that module meets the review protocol; ROADMAP phase statuses are updated from evidence rather than by declaration |
+| Open | Approve Shared and release-governance foundations | Shared Glossary, Shared Taxonomy, Shared index, Governance, documentation standards, stability/compatibility/conformance policies, and other v1.0 normative foundations complete their applicable review and Class 3 processes before the modules depend on them as Approved contracts |
 | In progress | Ratify open repository licenses | Proposed ADR-0014 defines CC BY-SA 4.0 for standards/assessment content and Apache 2.0 for executable software. Complete affiliation disclosures, announce and finish the seven-day Class 3 comment window, resolve objections, record Maintainer acceptance, then install exact license texts, path notices, SPDX/package metadata, and CI verification |
 | Open | Publish a real release | Version story is consistent, a signed tag exists, release artifacts pass hygiene/conformance, and upgrade notes are published |
 | Open | Demonstrate external adoption | Published case studies, third-party conformance runs, and contributors/reviewers from independent organizations satisfy Charter success criteria |
 
-## 3. Cleanup and Debt Backlog
+#### Approval portfolio at the current Review status
+
+| Approval scope | Documents at Review | What is already true | What still blocks Approved |
+|---|---:|---|---|
+| AEBOK — AI Engineering Body of Knowledge | 14 | Content-complete and promoted from Draft | Two independent reviews per document, findings disposition, Maintainer ratification |
+| AESQS — AI Engineering SDLC Qualification Standard | 7 | Content-complete and executable feedback incorporated | Two independent reviews per document, findings disposition, Maintainer ratification |
+| AEOS — AI Engineering Operating System | 20 | Content-complete, including ROLE-01 through ROLE-14 | Two independent reviews per document, findings disposition, Maintainer ratification |
+| AEAR — AI Engineering Architecture Reference | 13 | Core architecture and industry blueprints are content-complete | Two independent architecture-capable reviews per document, findings disposition, Maintainer ratification |
+| AECT — AI Engineering Certification & Training | 6 | Framework, paths, labs, exams, and renewal content are complete | Two independent certification/assessment reviews per document, findings disposition, Maintainer ratification |
+| Shared Standards | 3 | Glossary, Taxonomy, and Shared index are at Review | Independent Maintainer review plus applicable Class 3 governance and ratification |
+| **Module and Shared subtotal** | **63** | Internal content milestone reached | External review evidence and governance decisions remain |
+
+This portfolio count is a planning snapshot, not a waiver of the generated
+release-wide inventory. Root governance, documentation standards, ECM, and
+other governed v1.0 documents have their own lifecycle states and must be
+included before public release.
+
+## 4. Cleanup and Debt Backlog
 
 ### C0 — Correctness-adjacent cleanup
 
@@ -213,7 +383,7 @@ its own instruments and claim boundaries.
 | Done | Resolve duplicate document IDs | This backlog is AIES-DOC-14 and the dated Project Evaluation is AIES-DOC-15; every governed document ID is unique and the affected citation is updated |
 | Open | Replace generic requirement labels | References show code plus meaningful obligation title, not `requirement NN`; a machine-readable registry and CI check cover all governed IDs |
 | Open | Remove stale model-only identity language | Current docs use subject/deployment terminology; historical superseded ADR text remains immutable and clearly historical |
-| Open | Reconcile backlog and Roadmap | ROADMAP contains milestones only and links here; no completed implementation remains listed as Open and no Draft artifact is described as ratified |
+| Done | Reconcile backlog and Roadmap | ROADMAP now contains public phase/milestone status only, links here as the single authoritative implementation backlog, removes stale duplicated work-item statuses, and distinguishes delivered implementations from open governance, empirical-validation, subject-adapter, pilot, and release work |
 | Open | Clarify frozen versus experimental contracts | Draft/Review contracts are not presented as ratified v1; experimental stability and Approved standard stability are labeled separately |
 
 ### C1 — Platform maintainability
@@ -229,7 +399,7 @@ its own instruments and claim boundaries.
 | Open | Generate and test the perspective-coverage registry | One machine-readable registry drives profile applicability, coverage reports, human-readable code labels, documentation, and validation for lifecycle, cross-cutting, competency, task, risk, autonomy, stakeholder, environment, evidence, and operating-condition perspectives |
 | Done | Clarify immutable artifacts and regenerable views | Storage policy classifies append-only records, derived canonical snapshots, mutable workflow state/configuration, and regenerable views; `workspace.write_json` rejects append-only replacement and `workspace.write_view` cannot target evidence paths |
 | Done | Make record identifiers concurrency-safe | Qualification Records atomically claim human-readable IDs through exclusive creation; a 12-decision concurrent regression proves unique issued records and lifecycle events |
-| Done | Improve local verification feedback | The documented command reports ranked durations and uses a 180-second warm-cache Windows budget with a 25% regression trigger. Single-pass report views plus signature-invalidated isolated YAML, expanded-scenario, review-ledger, and suite caches reduce the measured complete run from 216 tests in 491.51 seconds to 225 tests in a repeated 81.23–100.16-second range; cache mutation/invalidation behavior has regression coverage. Read-only API fixtures are shared safely and concurrency tests delay only the phase under test. |
+| Done | Improve local verification feedback | The documented command reports ranked durations and uses a 180-second warm-cache Windows budget with a 25% regression trigger. Single-pass report views plus signature-invalidated isolated YAML, expanded-scenario, review-ledger, and suite caches retain complete coverage while the expanded 228-test suite completes in 104.76 seconds on the latest Windows verification host; cache mutation/invalidation behavior has regression coverage. Read-only API fixtures are shared safely and concurrency tests delay only the phase under test. |
 | Done | Generate exhaustive CLI guidance and shell completion | A parser-derived CLI reference covers every command, subcommand, positional parameter, option, default, choice, prerequisite, interaction, result/side effect, recommended next step, and workflow sequence; CI detects undocumented parser drift, and PowerShell/Bash/Zsh Tab completion is generated from the same live command surface |
 | Done | Remove local workspace archive debris safely | `aies doctor` inventories `.DS_Store`, `Thumbs.db`, `desktop.ini`, `__MACOSX`, Python/pytest caches, and misplaced regenerable views under the runs root; JSON exposes every path and category, readiness is unaffected, and tests prove the diagnostic deletes neither debris nor evidence |
 
@@ -241,13 +411,13 @@ its own instruments and claim boundaries.
 | Done | Test supported Python versions | CI runs the complete platform gate on Python 3.10, 3.11, 3.12, 3.13, and 3.14; installation docs identify that tested range |
 | Open | Add documentation governance checks | CI detects duplicate document/requirement IDs, missing meaningful titles, broken links, invalid metadata/status transitions, and stale references |
 | Open | Add code-quality checks | Formatting, linting, type checking, and coverage thresholds run in CI |
-| Open | Add supply-chain controls | Dependency lock, dependency review, secret scanning/SAST, SBOM/AI-BOM, artifact provenance, and signing are implemented proportionately |
+| Open | Add supply-chain controls | Lock and review dependencies; run secret scanning/SAST; emit SPDX 3 Software/AI/Dataset/Build profiles where applicable; generate SLSA provenance for packages, containers, and conformance bundles; sign or attest release artifacts with Sigstore/Cosign or an equivalently verifiable mechanism; CI verifies identity, digest, source revision, builder, and provenance before publication and states that provenance does not prove safety or correctness |
 | Open | Publish a real security contact | Dedicated email and optional encryption key replace the placeholder fallback; private vulnerability reporting remains preferred |
 | Open | Add ownership and protected-branch evidence | CODEOWNERS and externally attested branch-protection/human-review gates satisfy the repository’s own audit |
 | Open | Align versions | Package version, standards milestone, artifact versions, changelog, tags, and release names answer different versioning questions explicitly and consistently |
 | Done | Correct current CI identity wording | Workflow and active docs say Engineering Assessment Platform rather than Qualification Platform |
 
-## 4. Current Verified Baseline
+## 5. Current Verified Baseline
 
 Last verified on 2026-07-23:
 
@@ -275,3 +445,34 @@ Last verified on 2026-07-23:
 - [Project Charter](PROJECT_CHARTER.md)
 - [Engineering Assessment Platform Specification](PLATFORM.md)
 - [AIES-ECM-01 — Engineering Capability Matrix](../ECM/README.md)
+
+## References
+
+- NIST — [AI Test, Evaluation, Validation and Verification
+  (TEVV)](https://www.nist.gov/ai-test-evaluation-validation-and-verification-tevv)
+- NIST — [Practices for Automated Benchmark Evaluations of Language Models,
+  initial public draft](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.800-2.ipd.pdf)
+- NIST — [Expanding the AI Evaluation Toolbox with Statistical
+  Models](https://www.nist.gov/news-events/news/2026/02/new-report-expanding-ai-evaluation-toolbox-statistical-models)
+- NIST — [ARIA Pilot Evaluation
+  Report](https://www.nist.gov/publications/assessing-risks-and-impacts-ai-aria-pilot-evaluation-report)
+- NIST — [OSCAL Assessment Results Model
+  1.1.2](https://pages.nist.gov/OSCAL-Reference/models/v1.1.2/assessment-results/json-reference/)
+- UK AI Security Institute — [Inspect](https://inspect.aisi.org.uk/) and
+  [Eval Logs](https://inspect.aisi.org.uk/eval-logs.html)
+- OpenTelemetry — [Semantic
+  Conventions](https://opentelemetry.io/docs/specs/semconv/)
+- OASIS — [Static Analysis Results Interchange Format (SARIF)
+  2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/cs01/sarif-v2.1.0-cs01.pdf)
+- Model Context Protocol —
+  [Specification](https://modelcontextprotocol.io/specification/2025-06-18/server/index)
+  and
+  [Authorization](https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization)
+- SPDX — [Specifications](https://spdx.dev/use/specifications/) and
+  [AI profile overview](https://spdx.dev/learn/areas-of-interest/ai/)
+- SLSA — [Specification 1.2](https://slsa.dev/spec/v1.2/) and
+  [Provenance](https://slsa.dev/spec/v1.2/provenance)
+- Sigstore — [Cosign signing and verification
+  quickstart](https://docs.sigstore.dev/quickstart/quickstart-cosign/)
+- Python Packaging Authority — [Installing stand-alone command-line
+  tools](https://packaging.python.org/en/latest/guides/installing-stand-alone-command-line-tools/)

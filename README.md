@@ -264,16 +264,25 @@ underlying AI technology.
 | Phase | Deliverable | Status |
 |-------|-------------|--------|
 | 1 | Repository Foundation | ✅ Complete (v0.3.1) |
-| 2 | AEBOK — Body of Knowledge | 🔍 In Review (v0.4.0) |
-| 3 | AESQS — Qualification Standard | 🔍 In Review (v0.4.0) |
-| 4 | AEOS — Operating System | 🔍 In Review (v0.4.0) |
-| 5 | AEAR — Architecture Reference | 🔍 In Review (v0.4.0) |
-| 6 | AECT — Certification & Training | 🔍 In Review (v0.4.0) |
-| 7 | Reference Implementations | ⏳ Planned (consumes Phase 8) |
-| 8 | Engineering Assessment Platform (`aies` CLI) | 🚧 In Progress ([ADR-0009](adr/ADR-0009-Engineering-Assessment-Platform-Identity.md)) |
+| 2 | AEBOK — Body of Knowledge | 🔍 Content complete; independent approval reviews pending |
+| 3 | AESQS — Qualification Standard | 🔍 Content complete; independent approval reviews pending |
+| 4 | AEOS — Operating System | 🔍 Content complete; independent approval reviews pending |
+| 5 | AEAR — Architecture Reference | 🔍 Content complete; independent approval reviews pending |
+| 6 | AECT — Certification & Training | 🔍 Content complete; independent approval reviews pending |
+| 7 | Reference Implementations | 🚧 Started — platform/conformance references delivered; public pilots outstanding |
+| 8 | Engineering Assessment Platform (`aies` CLI) | ✅ M1–M4 delivered; 🚧 hardening and subject expansion |
 | 9 | Public Release (v1.0) | ⏳ Planned |
 
-Details in [ROADMAP.md](ROADMAP.md).
+Public milestones are maintained in [ROADMAP.md](ROADMAP.md). Detailed
+vision-delivery and cleanup item statuses are maintained in the
+[AIES Vision Execution Backlog](docs/OSS_MATURITY_TODO.md).
+
+`Review` means the document is content-complete but not yet ratified. Promotion
+to `Approved` requires two recorded reviews by independent non-authors,
+resolution or reasoned waiver of every finding, stable IDs for all normative
+requirements, and seven-day Maintainer lazy consensus. The v0.5 public-comment
+cycle and its disposition record are also still required before v1.0. These
+human governance gates cannot be replaced by automated checks or AI review.
 
 ## Engineering Assessment Platform
 
@@ -304,6 +313,17 @@ products without changing the underlying observations.
   Packages through the conformance runner.
 
 ### Typical workflow
+
+Adoption is progressive; users do not need to begin with formal qualification:
+
+| Stage | Goal | Current entry point |
+|---|---|---|
+| **Try** | See the complete product without credentials or model cost | `make demo` |
+| **Evaluate** | Collect and automatically score engineering evidence | `aies qualify … --judge …` or `aies benchmark … --judge …` |
+| **Understand** | Read task strengths, evidence confidence, gaps, and fit | `aies capabilities`, `aies guidance`, `aies transcript` |
+| **Compare** | Compare compatible observed ECM evidence | `aies compare` |
+| **Integrate** | Audit repositories, export evidence, or consume the read-only API | `aies audit`, `aies export`, `aies serve` |
+| **Govern** | Explicitly invoke formal qualification and human authority | `--formal-qualification`, followed by the governed rater and decision workflow |
 
 From `platform/`, create an isolated Python environment and install the CLI:
 
@@ -389,6 +409,9 @@ Individual documents carry a lifecycle status only (Draft → Review → Approve
   suite warnings/errors; 228 platform tests passing at the latest local
   verification. Empirical panel calibration and an independent pilot remain
   open.
+- **ECM standardization:** The ECM implementation and ET-01 through ET-15
+  taxonomy are delivered; formal ratification of AIES-ECM-01 and integration
+  into the five-module standards architecture remain open governance work.
 - **Status:** Active Development.
 
 ## License

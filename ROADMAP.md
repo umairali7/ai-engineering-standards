@@ -6,7 +6,12 @@
 | **Status** | Review |
 | **Audience** | All readers |
 
-The phased delivery plan for the AI Engineering Standards. Phases follow the project's engineering philosophy — *knowledge first, qualification next, operations last* — so modules are sequenced AEBOK → AESQS → AEOS → AEAR → AECT, with foundations before all and implementations after.
+The phased delivery plan for the AI Engineering Standards. Knowledge defines
+the engineering baseline; assessment produces evidence; competency analysis
+turns that evidence into the Engineering Capability Matrix (ECM), engineering
+fit, comparison, and—when explicitly governed—formal qualification. The
+standards modules remain sequenced AEBOK → AESQS → AEOS → AEAR → AECT, with
+foundations before implementation and public release.
 
 > **All dates are milestone-relative, not calendar commitments.** A phase ships when its exit criteria are met, not when a date arrives. Status is updated at each release.
 
@@ -17,13 +22,13 @@ The phased delivery plan for the AI Engineering Standards. Phases follow the pro
 | # | Phase | Status |
 |---|-------|--------|
 | 1 | Repository Foundation | ✅ Complete (v0.3.1) |
-| 2 | AEBOK — Body of Knowledge | 🔍 In Review (v0.4.0) |
-| 3 | AESQS — Qualification Standard | 🔍 In Review (v0.4.0) |
-| 4 | AEOS — Operating System | 🔍 In Review (v0.4.0) |
-| 5 | AEAR — Architecture Reference | 🔍 In Review (v0.4.0) |
-| 6 | AECT — Certification & Training | 🔍 In Review (v0.4.0) |
-| 7 | Reference Implementations | ⏳ Planned (consumes Phase 8 platform) |
-| 8 | Engineering Assessment Platform | 🚧 In progress (pulled forward — ADR-0009) |
+| 2 | AEBOK — Body of Knowledge | 🔍 Content complete; independent approval reviews pending |
+| 3 | AESQS — Qualification Standard | 🔍 Content complete; independent approval reviews pending |
+| 4 | AEOS — Operating System | 🔍 Content complete; independent approval reviews pending |
+| 5 | AEAR — Architecture Reference | 🔍 Content complete; independent approval reviews pending |
+| 6 | AECT — Certification & Training | 🔍 Content complete; independent approval reviews pending |
+| 7 | Reference Implementations | 🚧 Started — platform/conformance references landed; reproducible public pilots outstanding |
+| 8 | Engineering Assessment Platform | ✅ M1–M4 delivered; 🚧 hardening and subject expansion |
 | 9 | v1.0 Public Release | ⏳ Planned |
 
 ---
@@ -44,7 +49,8 @@ Entry criteria: project charter agreed. Exit criteria: all foundation documents 
 
 ## Phase 2 — AEBOK (Body of Knowledge)
 
-**Status: 🔍 In Review (v0.4.0) — content-complete, adversarially reviewed, promoted Draft → Review**
+**Status: 🔍 In Review (v0.4.0) — content-complete; independent non-author
+peer reviews, finding dispositions, and ratification remain**
 
 Deliverables:
 
@@ -57,7 +63,8 @@ Entry criteria: Phase 1 exit; Taxonomy stable enough that KA structure won't chu
 
 ## Phase 3 — AESQS (Qualification Standard)
 
-**Status: 🔍 In Review (v0.4.0) — content-complete, adversarially reviewed, promoted Draft → Review**
+**Status: 🔍 In Review (v0.4.0) — content-complete; independent non-author
+peer reviews, finding dispositions, and ratification remain**
 
 Deliverables:
 
@@ -70,7 +77,8 @@ Entry criteria: AEBOK KA structure frozen (competencies must map to knowledge). 
 
 ## Phase 4 — AEOS (Operating System)
 
-**Status: 🔍 In Review (v0.4.0) — content-complete, adversarially reviewed, promoted Draft → Review**
+**Status: 🔍 In Review (v0.4.0) — content-complete; independent non-author
+peer reviews, finding dispositions, and ratification remain**
 
 Deliverables:
 
@@ -83,7 +91,8 @@ Entry criteria: AESQS scoring method drafted (autonomy increases must be qualifi
 
 ## Phase 5 — AEAR (Architecture Reference)
 
-**Status: 🔍 In Review (v0.4.0) — content-complete, adversarially reviewed, promoted Draft → Review**
+**Status: 🔍 In Review (v0.4.0) — content-complete; independent non-author
+peer reviews, finding dispositions, and ratification remain**
 
 Deliverables:
 
@@ -96,7 +105,8 @@ Entry criteria: AEOS workflows drafted (architecture must support the operating 
 
 ## Phase 6 — AECT (Certification & Training)
 
-**Status: 🔍 In Review (v0.4.0) — content-complete, adversarially reviewed, promoted Draft → Review**
+**Status: 🔍 In Review (v0.4.0) — content-complete; independent non-author
+peer reviews, finding dispositions, and ratification remain**
 
 Deliverables:
 
@@ -109,7 +119,9 @@ Entry criteria: AEBOK and AESQS content-complete (curriculum derives from both).
 
 ## Phase 7 — Reference Implementations
 
-**Status: ⏳ Planned — reframed to consume the Engineering Assessment Platform (Phase 8)**
+**Status: 🚧 Started — reframed to consume the Engineering Assessment Platform
+(Phase 8); platform/conformance references are delivered and reproducible
+public pilot artifacts remain outstanding**
 
 Phase 7 no longer builds evaluation tooling of its own: it produces reference *artifacts* by running the Phase 8 platform, plus reference implementations of the surrounding operating model.
 
@@ -123,41 +135,67 @@ Entry criteria: platform milestone M1 shipped ([PLATFORM.md §10](docs/PLATFORM.
 
 ## Phase 8 — Engineering Assessment Platform
 
-**Status: 🚧 In progress — M1–M4 landed; independent pilot outstanding (per [ADR-0009](adr/ADR-0009-Engineering-Assessment-Platform-Identity.md))**
+**Status: ✅ Core M1–M4 delivered; 🚧 hardening, independent pilots, and
+subject-adapter expansion remain (per
+[ADR-0009](adr/ADR-0009-Engineering-Assessment-Platform-Identity.md))**
 
-The `aies` command-line platform: an executable reference implementation of AESQS that currently runs qualification evidence collection against locally- or remotely-hosted AI deployments and audits repositories. Its canonical evidence architecture is subject-neutral, so future executors can assess agents, MCP servers, RAG systems, pipelines, and platforms without a second identity change. It is specified in [AIES-DOC-06 — Engineering Assessment Platform Specification](docs/PLATFORM.md). Originally gated behind Phase 7, it is pulled forward so that executing the standard hardens AESQS before v1.0; Phase 7 now consumes it.
+The `aies` command-line platform is the executable reference implementation of
+the AIES evidence architecture. It currently performs non-blocking engineering
+evaluation of locally or remotely hosted AI deployments and conformance/practice
+audits of repositories. Automated evidence produces Engineering Assessment
+Results, ECM, Engineering Fit Guidance, comparison, and linked reports without
+requiring human review. Formal qualification is a separate, explicitly
+requested, human-governed path. The canonical evidence contracts are
+subject-neutral so dedicated executors can be added for agents, MCP servers,
+RAG systems, pipelines, platforms, and composite systems without another
+identity change. The platform is specified in
+[AIES-DOC-06 — Engineering Assessment Platform Specification](docs/PLATFORM.md).
+Originally gated behind Phase 7, it was pulled forward so execution could
+harden the standards before v1.0; Phase 7 now consumes it.
 
 Deliverables (milestones per [PLATFORM.md §10](docs/PLATFORM.md)):
 
-- ✅ **M1 — Runnable core:** Python package + CLI; `doctor`, `registry`, single-model `qualify`, Markdown/JSON evidence reports
-- ✅ **M2 — Scoring depth:** competency framework directories (CA-01…CA-12), weighted scoring with profiles (gates immutable), result history and `compare`; plus the runtime/deployment abstraction (D11)
-- ✅ **M3 — Scale & integration:** frozen runtime-adapter contract with out-of-tree example, HTML reports (PDF via print), parallel execution, result index
-- ✅ **M4 — Review & workflow:** multi-model peer review with the calibration gate, human grant workflow and Qualification Records, status model with the environment-change re-qualification trigger, dashboard, CI
+- ✅ **M1 — Runnable core:** Python package and CLI; environment discovery,
+  registry, collection, scoring, and Markdown/JSON evidence reports
+- ✅ **M2 — Scoring depth:** CA-01 through CA-12 suites, profiles, immutable
+  gates for formal qualification, result history, observed ECM comparison, and
+  the runtime/deployment abstraction
+- ✅ **M3 — Scale and integration:** frozen runtime-adapter contract with an
+  out-of-tree example, linked Markdown/JSON/HTML report bundles, parallel
+  execution, durable live progress/ETA, resume, and result index
+- ✅ **M4 — Decision products and workflow:** non-blocking automated
+  Engineering Evaluation, ECM, Engineering Fit Guidance, grounding diagnostics,
+  peer review, optional human evaluation, explicit formal qualification,
+  Qualification Records, generated dashboard, read-only API, conformance
+  runner, and CI
 
-Entry criteria: AESQS at Review status (execution feedback is part of hardening it toward Approved); [ADR-0002](adr/ADR-0002-Qualification-Platform.md) accepted. Exit criteria: platform can execute a full qualification cycle — evidence through human-recorded grant — for at least one role scope ✅; results reproducible on an identical environment fingerprint ✅; conformance tests map enforced behavior to AESQS requirement IDs ✅ (40 tests); **independent pilot on a real hosted/local model — outstanding** (requires a maintainer to run `aies` against an actual deployment).
+Entry criteria: AESQS at Review status (execution feedback is part of hardening
+it toward Approved);
+[ADR-0002](adr/ADR-0002-Qualification-Platform.md) accepted. Core exit criteria:
+the platform executes automated engineering evaluation and the separate full
+formal-qualification cycle through a human-recorded decision ✅; results are
+reproducible on an identical environment fingerprint ✅; conformance and
+platform tests map enforced behavior to AESQS requirement IDs ✅. Actual local
+deployment runs exist; **publication and independent reproduction of one local
+and one hosted pilot remain outstanding**.
 
-### Phase 8 Hardening Backlog — Path to 10/10
+### Phase 8 Delivery Snapshot
 
-| Status | Priority | Work item | Why it matters |
-|--------|----------|-----------|----------------|
-| Open | P0 | Finalize repository license and split code/docs licensing if needed | OSS reuse is blocked while all rights are reserved |
-| Done | P0 | **v1.0 Architecture Freeze + contract governance** ([STABILITY.md](STABILITY.md), [COMPATIBILITY.md](COMPATIBILITY.md), [CONFORMANCE-POLICY.md](CONFORMANCE-POLICY.md)) | Freezes the contracts others build against, each pinned to a version; declares normative-vs-reference and reference-implementation-vs-conformance-suite; additive-only evolution with ADR-for-breaking, enforced by golden-shape CI tests; the "can this be expressed with existing contracts?" discipline is now in the ADR template |
-| Done | P1 | **Versioned artifacts + `make demo`** | Profiles versioned (captured at run time); Evidence Package (`evidence_schema`) and Canonical Result (`result_schema`) envelopes versioned; engine vs decision-semantics version split; full offline end-to-end demo, CI-gated (`tests/test_demo.py`); mock adapter is judge-aware |
-| Done | P1 | **Golden Evidence Package corpus + conformance runner** ([conformance/](conformance/README.md), [CONFORMANCE-POLICY.md](CONFORMANCE-POLICY.md)) | The data-first arbiter: 8 immutable evidence packages + expected outcomes covering every outcome/reason/invariant; `aies conform engine` verifies any decision engine (incl. third-party via a `decide_fn`) against AESQS decision semantics; CI-gated. Decision semantics now normative in [AESQS CS-01 §8](AESQS/capability-scoring.md) (R18–R21) |
-| Done | P2 | **Thin read-only REST API** (`aies serve`) | Serves the canonical artifacts (deployments, runs, evidence, results, conformance) as JSON over stdlib http.server — a consumer, not a decider (no outcome computation; POST refused). Dashboard/UI flows remain future |
-| Open | P2 | Dashboard + UI flows over the canonical result | Consume the same Canonical Assessment Result as every other interface, never bypassing the engine (the "no consumer computes outcomes" invariant is recorded) |
-| Open | P0 | Remove generated artifacts from release archives and add a release hygiene check | Public source packages must not include `.env`, cache, workspace, or build artifacts |
-| Open | P0 | Publish an independent pilot on one local and one hosted deployment | Proves the platform works outside synthetic/mock paths |
-| Done | P1 | Add `aies suites validate` and run it in CI | Prevents scenario schema, ID, rubric, and risk-tier drift |
-| In progress | P1 | `aies audit <repo>` — executable repository conformance assessment ([ADR-0004](adr/ADR-0004-Repository-Conformance-Audit.md)) | Extends AIES from scoring a *model* to scoring the *engineering practice* around it: maturity per competency area, three-state evidence (verified/asserted/gap), CI gate. Design accepted; implementation phased (strong areas first) |
-| In progress | P1 | Assessment-as-Code — declarative competency composition ([ADR-0005](adr/ADR-0005-Assessment-as-Code.md)) | Shipped: `assessments/*.yaml` (enterprise/coder/security/architecture) + strict validator; `qualify --assessment` composes + scores + decides; a frozen Decision Engine emits PASS/FAIL/INCONCLUSIVE/INSUFFICIENT-EVIDENCE (gate-first, no blended score) with structured reasons over a Canonical Assessment Result; `aies assessment list/show/validate/result` (Markdown/JSON/HTML views); shipped assessments gated by `aies suites validate` in CI. Remaining: SARIF renderer, assessment composition/inheritance (`extends`) |
-| In progress | P1 | Grow each CA suite to decisional-ready public and held-out sets | RT2 — Moderate now has at least 30 distinct scenarios per area (484 total corpus) and at least 30 direct mappings for every ET task; human design review and empirical calibration of the 268 new instruments remain, as do full distinct RT3 — Significant / RT4 — Critical sizes and protected held-out sets |
-| Done | P1 | Add connector/tool/memory attack scenarios to CA-07 and governance response scenarios to CA-12 | `SC-CA07-011`, `SC-CA11-011`, and `SC-CA12-011` cover this initial tranche |
-| Open | P2 | Add bridges/exporters for Inspect AI or comparable eval traces | Lets AIES complement the eval ecosystem instead of duplicating it |
-| In progress | P2 | Record model signature and AI-BOM in the deployment manifest (OpenSSF Model Signing; CycloneDX/SPDX) | Aligns deployment provenance (D7) with AI supply-chain standards ([CROSSWALK §3b](docs/CROSSWALK.md)). Declaration + evidence pass-through done; cryptographic verification (Sigstore/OMS) remains |
-| Open | P2 | Add resumable failed-run repair for partial inference failures | Makes long real-model evaluations easier to operate |
-| Open | P2 | Improve reports with sample-readiness, gate-failure, and grant-readiness explanations | Helps adopters interpret evidence correctly |
-| Open | P3 | Publish a contributor guide for writing high-quality scenarios | Makes suite growth community-friendly |
+| Milestone | Status | Remaining boundary |
+|---|---|---|
+| Runtime, canonical artifacts, progress/resume, and contract governance | **Done** | Continue compatibility maintenance |
+| Automated Engineering Evaluation and linked report bundle | **Done** | Continue usability and performance hardening |
+| ECM, grounding diagnostics, fit guidance, and compatible comparison | **Implemented** | Ratify AIES-ECM-01 and validate task mappings empirically |
+| RT2 — Moderate distinct-instrument breadth and human design review | **Done** | Empirical panel calibration, protected hold-outs, and RT1/RT3/RT4 growth remain |
+| Repository conformance/practice audit | **Implemented** | Deeper architecture, code-quality, correctness, and controlled task evidence remain |
+| Subject-neutral architecture | **Defined** | Subject Descriptor, Subject Executor, typed evidence events, and non-deployment adapters remain |
+| Open repository licensing | **In progress** | Complete ADR-0014 governance and install final license artifacts |
+| Independent local/hosted pilots and public adoption | **Open** | Publish reproducible evidence and independent findings |
+
+The single authoritative implementation and cleanup backlog is
+[AIES-DOC-14 — AIES Vision Execution Backlog](docs/OSS_MATURITY_TODO.md).
+Detailed work-item status is maintained there rather than duplicated in this
+milestone roadmap.
 
 ## Phase 9 — v1.0 Public Release
 
