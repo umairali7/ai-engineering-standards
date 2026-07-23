@@ -13,7 +13,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   values by initializing runner-local paths through `GITHUB_ENV`. The main CI
   now triggers on every workflow change and runs a checksum-pinned
   `actionlint` contract gate, preventing invalid workflow files from producing
-  opaque “No jobs were run” failures on subsequent pushes.
+  opaque “No jobs were run” failures on subsequent pushes. The gate invokes
+  the downloaded executable through a shell-quoted runner path so its own
+  workflow also passes the bundled ShellCheck analysis.
 - **Unambiguous roadmap workflow state**: closed the remaining bounded
   implementation work for the local demo, package candidates, container,
   first-use journey, visual foundation, contributor intake, and approval

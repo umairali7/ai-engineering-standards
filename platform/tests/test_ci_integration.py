@@ -98,7 +98,7 @@ def test_main_ci_lints_every_workflow_on_workflow_changes():
     assert "GitHub Actions workflow contracts" in text
     assert "ACTIONLINT_VERSION" in text
     assert "ACTIONLINT_SHA256" in text
-    assert "actionlint -color" in text
+    assert '"${RUNNER_TEMP}/actionlint" -color' in text
 
 
 def test_container_is_non_root_and_excludes_secrets_and_runs():

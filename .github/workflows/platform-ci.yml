@@ -59,7 +59,8 @@ jobs:
           echo "${ACTIONLINT_SHA256}  ${RUNNER_TEMP}/${archive}" | sha256sum --check
           tar -xzf "${RUNNER_TEMP}/${archive}" -C "${RUNNER_TEMP}" actionlint
       - name: Validate every workflow before jobs are scheduled
-        run: "${RUNNER_TEMP}/actionlint -color"
+        run: |
+          "${RUNNER_TEMP}/actionlint" -color
 
   install-and-first-use:
     name: Installed package + first use (${{ matrix.os }})
