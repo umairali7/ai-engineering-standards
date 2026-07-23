@@ -50,6 +50,11 @@ GUIDANCE: dict[str, CommandGuidance] = {
         "Opens or links the primary local result. Optional export includes only allowlisted derived views and a digest manifest, never raw evidence or credentials.",
         "Share the redacted archive with its limitations, or return to the canonical workspace for reproducibility and verification.",
     ),
+    "snapshot": CommandGuidance(
+        "A completed run has an Engineering Capability Matrix; `latest` selects the newest workspace run.",
+        "Prints the responsive Evidence → Capability → Confidence → Engineering Decisions view. It reuses canonical ECM and Engineering Fit facts and creates no new score or authority.",
+        "Open the linked report for detail, inspect `aies capabilities <run>`, or compare only compatible runs.",
+    ),
     "bridge": CommandGuidance(
         "A version-supported external evidence file is available; Inspect rating import also requires an existing matching AIES run.",
         "Converts supported external evidence with a source digest, converter identity, explicit loss accounting, and no inferred scores or claim inflation.",
@@ -289,6 +294,7 @@ OPTION_INTERACTIONS: dict[tuple[str, str], str] = {
     ("evaluate", "judge"): "Required for execution unless AIES_JUDGE is set; automated scoring completes Engineering Evaluation without human review.",
     ("evaluate", "open"): "Launches the Executive Summary after success; without it the same local link and safe-sharing command are printed.",
     ("open", "export_redacted"): "Exports only allowlisted derived views. Raw prompts, responses, ratings, fingerprints, and secrets are excluded.",
+    ("snapshot", "observed_only"): "Hides unassessed task rows from the table; the coverage summary still reports them as unknown rather than zero.",
     ("qualify", "assessment"): "Sets areas and profile; `--rt` and `--repeats` may override the assessment defaults.",
     ("qualify", "area"): "Repeatable. Do not combine conceptually with `--all-areas`; an assessment supplies its own areas.",
     ("qualify", "all_areas"): "Selects all competency areas and replaces the default CA-05 scope.",
@@ -335,6 +341,7 @@ aies doctor
 
 ```text
 aies qualify <deployment> --all-areas --rt 2 --judge <judge>
+  → aies snapshot <run>
   → aies report <run> --format html --write
   → aies capabilities <run> --format html --write
   → aies guidance <run> --write

@@ -28,14 +28,14 @@ Engineering Fit, and linked HTML report pipeline using deterministic mock
 deployments.
 
 ```text
-Engineering Capability Matrix
+AIES  EVIDENCE → CAPABILITY → CONFIDENCE → ENGINEERING DECISIONS
 
-Architecture Design   █████████░  observed — limited confidence
-Code Generation       █████████░  observed — limited confidence
-Refactoring           ██████████  observed — limited confidence
-Testing               █████████░  observed — limited confidence
-Security Review       █████████░  observed — limited confidence
-Unassessed tasks      unknown     no claim made
+TASK                         EVIDENCE  OBSERVED CAPABILITY  EVIDENCE CONFIDENCE
+ET-02 — Architecture Design  2/20      █████████░ 85%       █░░░░░░░░░ 10%
+ET-04 — Code Generation      2/20      █████████░ 92%       █░░░░░░░░░ 10%
+ET-07 — Testing              2/20      █████████░ 90%       █░░░░░░░░░ 10%
+
+Coverage: assessed tasks are observed; unassessed tasks remain unknown, not zero.
 ```
 
 That confidence label matters: AIES separates observed performance from
@@ -55,6 +55,7 @@ evidence breadth instead of hiding both inside one score.
 | See the idea without setup | `aies demo --open` | Executive Summary, ECM, fit guidance, diagnostics, and full report |
 | Understand one registered AI deployment | `aies evaluate DEPLOYMENT --plan-only` | No-cost call plan, limitations, and exact execution path |
 | Evaluate it automatically | `aies evaluate DEPLOYMENT --judge JUDGE` | Completed non-blocking Engineering Evaluation and report bundle |
+| See the decision snapshot in your terminal | `aies snapshot latest` | Task evidence, observed capability, confidence, gaps, and engineering interpretation |
 | Assess repository engineering practice | `aies audit .` | Evidence-backed maturity gaps and ranked remediation |
 | Compare compatible runs | `aies compare RUN_A RUN_B` | Task-by-task observed differences without a fake universal winner |
 | Integrate an evaluation tool | `aies bridge inspect-import …` | Source-bound imported ratings and an explicit loss report |
@@ -376,7 +377,7 @@ Adoption is progressive; users do not need to begin with formal qualification:
 |---|---|---|
 | **Try** | See the complete product without credentials or model cost | `make demo` |
 | **Evaluate** | Collect and automatically score engineering evidence | `aies qualify … --judge …` or `aies benchmark … --judge …` |
-| **Understand** | Read task strengths, evidence confidence, gaps, and fit | `aies capabilities`, `aies guidance`, `aies transcript` |
+| **Understand** | Read task strengths, evidence confidence, gaps, and fit | `aies snapshot`, `aies capabilities`, `aies guidance`, `aies transcript` |
 | **Compare** | Compare compatible observed ECM evidence | `aies compare` |
 | **Integrate** | Audit repositories, export evidence, or consume the read-only API | `aies audit`, `aies export`, `aies serve` |
 | **Govern** | Explicitly invoke formal qualification and human authority | `--formal-qualification`, followed by the governed rater and decision workflow |
@@ -405,6 +406,7 @@ generate the complete report bundle. Human review is optional. Inspect or
 compare the decision products with:
 
 ```powershell
+aies snapshot <run-id>
 aies capabilities <run-id>
 aies guidance <run-id>
 aies compare <run-a> <run-b>
@@ -462,7 +464,7 @@ Individual documents carry a lifecycle status only (Draft → Review → Approve
   expansion remain in progress under
   [ADR-0009](adr/ADR-0009-Engineering-Assessment-Platform-Identity.md).
 - **Verified baseline:** 484 scenarios across 12 competency areas with zero
-  suite warnings/errors; 235 platform tests passing at the latest local
+  suite warnings/errors; 237 platform tests passing at the latest local
   verification. Empirical panel calibration and an independent pilot remain
   open.
 - **ECM standardization:** The ECM implementation and ET-01 through ET-15

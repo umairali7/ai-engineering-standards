@@ -2,9 +2,9 @@
 
 | Field | Value |
 |---|---|
-| Status | Proposed |
+| Status | Accepted |
 | Date | 2026-07-23 |
-| Decision owners | Maintainers |
+| Deciders | Umair Ali (repository owner); Platform Module Editor |
 | Scope | Platform architecture and versioned evidence interoperability |
 
 ## Context
@@ -15,7 +15,7 @@ servers, RAG systems, pipelines, platforms, people, and composite systems must
 not force every subject through a text-generation model adapter or silently
 reuse incompatible score semantics.
 
-## Proposed decision
+## Decision
 
 Adopt three independently versioned contracts:
 
@@ -47,6 +47,9 @@ Adapters must publish source versions, conversion versions, hashes, losses,
 unknowns, and conformance fixtures. Existing deployment manifests remain a
 compatibility envelope until migration is separately accepted.
 
-The contracts and bridges introduced with this ADR remain experimental while
-the ADR is Proposed. They cannot affect normative qualification or claim
-support until the ADR and schemas receive the required Class 3 human review.
+The contracts and bridges introduced with this ADR remain experimental
+integration surfaces until their individual support profiles are promoted.
+Acceptance establishes the architecture and invariants; it does not allow
+imported evidence to affect normative qualification or claim support unless
+the applicable adapter profile, schema, and conformance fixtures explicitly
+admit that use.

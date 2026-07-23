@@ -31,6 +31,7 @@ aies init
 aies discover
 aies evaluate SUBJECT --judge REVIEWER --plan-only --parallel 4
 aies evaluate SUBJECT --judge REVIEWER --parallel 4
+aies snapshot latest
 aies open latest
 ```
 
@@ -116,9 +117,9 @@ Most mutating commands consume evidence created by an earlier stage:
 
 ```text
 doctor → discover/deployment add → qualify or benchmark
-qualify --judge → Engineering Assessment Result + ECM + fit guidance + reports
+qualify --judge → snapshot + Engineering Assessment Result + ECM + fit guidance + reports
 benchmark → complete scoresheet → score (also aggregates/reports)
-aggregated run → capabilities (ECM by default) → guidance (engineering fit)
+aggregated run → snapshot → capabilities (ECM by default) → guidance (engineering fit)
 explicit formal qualification → governed human protocol → grant → verify/history
 repository → audit → remediation → audit --gate
 empirical plan → frozen subject runs → panel analysis → human promotion decision
@@ -259,7 +260,7 @@ aies doctor                 # fingerprint + runtimes + read-only workspace-debri
 ```
 
 For local verification, the recorded warm-cache Windows budget is 180 seconds
-for the complete suite; the 2026-07-23 baseline is 235 tests in 109.82 seconds.
+for the complete suite; the 2026-07-23 baseline is 237 tests in 94.58 seconds.
 Treat a budget breach or greater-than-25% regression as a profiling trigger.
 This is a feedback budget, not a reason to skip correctness gates on slower CI
 hardware.

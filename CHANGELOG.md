@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Evidence-to-decision CLI snapshot**: accepted ADR-0015 and added
+  `aies snapshot [run|latest]`, a responsive terminal projection of canonical
+  ECM and Engineering Fit facts. The same view now appears after `demo`,
+  successful `evaluate`, and `open`, keeping ET code/title, distinct evidence,
+  observed capability, evidence confidence, unassessed tasks, and optional
+  human-evaluation status separate while explicitly creating no authority.
 - **Cross-platform adoption surface and evidence bridges**: added
   `aies demo`, `aies init`, beginner-facing `aies evaluate --plan-only`, and
   `aies open` with immutable anonymized derived-view exports. The installed
@@ -15,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   journeys, calibration ledger, measurement claims, and experimental
   contracts; an isolated Windows wheel install passes suite validation and the
   complete offline demo. Added versioned decision-product measurement claims,
-  proposed ADR-0015, experimental Subject Descriptor and typed Evidence Event
+  accepted ADR-0015, experimental Subject Descriptor and typed Evidence Event
   schemas, and Inspect/SARIF import-export bridges with source hashes, explicit
   loss, duplicate protection, and no claim inflation. Reworked the root README
   and Quickstart around a 60-second proof, concrete outcomes, persona paths,
@@ -95,7 +101,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   copies. Read-only API tests reuse one immutable module fixture, and the judge
   concurrency test delays only the reviewer behavior it measures. The complete
   suite retains all assertions while removing repeated setup and unrelated
-  sleeps: the expanded 235-test suite completes in 109.82 seconds on the
+  sleeps: the expanded 237-test suite completes in 94.58 seconds on the
   Windows verification host, below the 180-second budget.
 - **Empirical-panel admission preflight**: `aies suites empirical
   --preflight-runs` now checks that real runs use distinct subjects, identical

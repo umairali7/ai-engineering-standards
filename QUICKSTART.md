@@ -56,6 +56,7 @@ When the scope looks right:
 
 ```powershell
 aies evaluate SUBJECT --judge REVIEWER --parallel 4
+aies snapshot latest
 aies open latest
 aies open latest --export-redacted
 ```
@@ -64,6 +65,12 @@ Automated scores complete the informational Engineering Evaluation, ECM,
 diagnostics, fit guidance, and reports. Human evaluation is an optional,
 separately visible assurance input. Formal Qualification is a different,
 explicit human-governed workflow and is never forced into ordinary assessment.
+
+`aies snapshot latest` is the fastest terminal view: it keeps observed
+performance, distinct-scenario evidence confidence, unassessed tasks, and the
+informational engineering interpretation in separate columns. Use
+`--observed-only` for a shorter table; the coverage line still records hidden
+tasks as unknown rather than zero.
 
 ## Choose the next path
 

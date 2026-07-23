@@ -105,7 +105,7 @@ def cmd_init(args) -> int:
 
 
 def cmd_open(args) -> int:
-    from . import adoption
+    from . import adoption, snapshot
     try:
         result = adoption.open_result(args.run, launch=not args.no_browser)
         if args.export_redacted is not None:
@@ -113,14 +113,18 @@ def cmd_open(args) -> int:
                            else Path(args.export_redacted))
             result["redacted_export"] = adoption.export_redacted(
                 args.run, destination)
-        _out(
-            result,
-            args.json,
-            f"result: {result['view']}\n"
-            f"link  : {result['uri']}"
-            + (f"\nshare : {result['redacted_export']['archive']}"
-               if result.get("redacted_export") else ""),
-        )
+        if args.json:
+            _out(result, True)
+        else:
+            try:
+                print(snapshot.render(snapshot.build(result["run_id"])))
+                print()
+            except snapshot.SnapshotError:
+                pass
+            print(f"result: {result['view']}")
+            print(f"link  : {result['uri']}")
+            if result.get("redacted_export"):
+                print(f"share : {result['redacted_export']['archive']}")
         return 0
     except adoption.AdoptionError as e:
         print(f"error: {e}", file=sys.stderr)
@@ -264,9 +268,15 @@ def cmd_evaluate(args) -> int:
         with contextlib.redirect_stdout(io.StringIO()):
             code = main(_evaluate_argv(args))
         if code == 0 and not args.json:
-            from . import adoption
+            from . import adoption, snapshot
             opened = adoption.open_result("latest", launch=args.open)
             print("\nYour Engineering Evaluation is ready.")
+            try:
+                print()
+                print(snapshot.render(snapshot.build(opened["run_id"])))
+            except snapshot.SnapshotError as e:
+                print(f"  Snapshot unavailable: {e}")
+                print(f"  Retry: aies snapshot {opened['run_id']}")
             print(f"  Open: {opened['uri']}")
             print(f"  Share safely: aies open {opened['run_id']} --export-redacted")
         return code
@@ -310,23 +320,10 @@ def cmd_demo(args) -> int:
         print("\nDEMO COMPLETE")
         print("  Automated Engineering Evaluation: complete")
         print("  Human evaluation: optional and not required")
-        matrix_path = Path(result["view"]).parent / "engineering-capability-matrix.json"
-        if matrix_path.is_file():
-            matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
-            observed = [
-                task for task in matrix.get("tasks", [])
-                if task.get("observed_performance") is not None
-            ]
-            print("\nENGINEERING CAPABILITY SNAPSHOT  (offline mock evidence)")
-            for task in observed[:6]:
-                performance = round(float(task["observed_performance"]) * 25)
-                confidence = round(float(task["engineering_confidence_percent"]))
-                bars = min(10, max(0, round(performance / 10)))
-                bar = "█" * bars + "░" * (10 - bars)
-                print(f"  {task['task'][:24]:24} {bar} {performance:3}%  "
-                      f"evidence confidence {confidence}%")
-            print("  Unassessed tasks remain unknown; performance and evidence "
-                  "confidence are separate.")
+        from . import snapshot
+        print()
+        print(snapshot.render(
+            snapshot.build(result["run_id"]), observed_only=True))
         print(f"  Executive Summary: {result['view']}")
         print(f"  Open: {result['uri']}")
         print(f"  Share safely: aies open {result['run_id']} --export-redacted")
@@ -339,6 +336,22 @@ def cmd_demo(args) -> int:
             os.environ.pop("AIES_WORKSPACE", None)
         else:
             os.environ["AIES_WORKSPACE"] = old_workspace
+
+
+def cmd_snapshot(args) -> int:
+    """Show the evidence-to-decision view for a completed run."""
+    from . import adoption, snapshot
+    try:
+        result = snapshot.build(args.run)
+        _out(
+            result,
+            args.json,
+            snapshot.render(result, observed_only=args.observed_only),
+        )
+        return 0
+    except (adoption.AdoptionError, snapshot.SnapshotError) as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
 
 
 def cmd_registry(args) -> int:
@@ -1808,11 +1821,12 @@ TRY AIES NOW
   aies evaluate SUBJECT --judge JUDGE --plan-only
                                                preview scope/calls/limits; execute nothing
   aies evaluate SUBJECT --judge JUDGE          automated evaluation -> ECM + fit + reports
+  aies snapshot latest                         evidence -> capability -> confidence -> decisions
   aies open latest                             open the result
 
 commands by stage (each group alphabetical):
   setup & discovery   completion · demo · deployment · discover · doctor · init · runtime
-  engineering eval    assessment · benchmark · capabilities · compare · evaluate · export · import · open · qualify · review · runs · score · transcript
+  engineering eval    assessment · benchmark · capabilities · compare · evaluate · export · import · open · qualify · review · runs · score · snapshot · transcript
   interoperability    bridge inspect-import · bridge sarif-import
   judging             judge available · judge history · judge list   (the judge pool + track record)
   governance & audit  audit · conform · corpus · dashboard · grant · qualification · report · serve · verify
@@ -1842,6 +1856,7 @@ typical workflow:
 
   # profile a deployment across the whole SDLC (planner/coder/security/…):
   aies qualify <deployment> --all-areas --rt 2 --judge <judge-dep>
+  aies snapshot <run>                          compact terminal decision view
   aies capabilities <run>                      Engineering Capability Matrix
 
   # run a declarative assessment -> non-blocking engineering result:
@@ -1992,6 +2007,17 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="ZIP",
         help="also create an immutable redacted ZIP at ZIP or the default exports path")
     opn.set_defaults(func=cmd_open)
+
+    snap = common(sub.add_parser(
+        "snapshot",
+        help="show evidence, capability, confidence, and engineering decisions"))
+    snap.add_argument(
+        "run", nargs="?", default="latest",
+        help="completed run id or 'latest' (default: latest)")
+    snap.add_argument(
+        "--observed-only", action="store_true",
+        help="hide tasks without directly mapped scored evidence")
+    snap.set_defaults(func=cmd_snapshot)
 
     bridge = common(sub.add_parser(
         "bridge", help="import versioned external evidence with provenance and loss reports"))

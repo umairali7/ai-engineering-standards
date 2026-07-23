@@ -53,7 +53,8 @@ Each asset must show real generated output and pass claim review:
   select it as the social image.
 - Root README: problem, 60-second command, expected output, honest maturity,
   supported scope, primary CTA, persona paths, help/contribution links.
-- A 30–60 second terminal recording: install → `aies demo --open` → ECM.
+- A 30–60 second terminal recording: install → `aies demo --open` →
+  Evidence → Capability → Confidence → Engineering Decisions snapshot → ECM.
 - A 5–10 minute narrated trial: plan → evaluate → progress/ETA → report → share.
 - Three report screenshots: Executive Summary, ECM, and evidence traceability.
 - A technical launch article: why benchmarks are insufficient, how AIES
@@ -125,7 +126,7 @@ API endpoints, credentials, or private report content.
 | Phase | Exit gate |
 |---|---|
 | 1. Product proof | Installed offline demo, `init`, plan/evaluate/open, and redacted export pass clean-machine tests |
-| 2. Conversion surface | README, Quickstart, CLI prompts, visual assets, and persona paths all lead to the same verified command |
+| 2. Conversion surface | README, Quickstart, CLI prompts, visual assets, and persona paths lead to the same verified command and terminal decision snapshot |
 | 3. Trust package | License, release artifacts, hashes, SBOM/provenance, security/contact routes, and claim review are complete |
 | 4. Small pilot | At least five unfamiliar users complete the trial; comprehension and failures are published and fixed |
 | 5. Evidence launch | Validity study and first comparative case study are independently reviewed and reproducible |

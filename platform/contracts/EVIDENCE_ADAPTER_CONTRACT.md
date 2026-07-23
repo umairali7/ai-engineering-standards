@@ -1,6 +1,6 @@
 # Experimental Evidence Adapter Contract v1
 
-Status: Draft, governed by proposed ADR-0015.
+Status: Experimental implementation contract, governed by accepted ADR-0015.
 
 An adapter declares its source format and version, adapter profile and version,
 accepted evidence modalities, privacy behavior, and deterministic duplicate

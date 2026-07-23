@@ -23,6 +23,7 @@ aies doctor
 
 ```text
 aies qualify <deployment> --all-areas --rt 2 --judge <judge>
+  → aies snapshot <run>
   → aies report <run> --format html --write
   → aies capabilities <run> --format html --write
   → aies guidance <run> --write
@@ -2257,6 +2258,27 @@ thin read-only REST API over the canonical artifacts (JSON; computes no outcomes
 | `--json` | optional | machine-readable output | — |
 | `--host` | optional | interface to bind (default: 127.0.0.1; use broader binds cautiously) | default: `127.0.0.1` |
 | `--port` | optional | TCP port for the read-only API (default: 8722) | default: `8722` |
+
+## `aies snapshot`
+
+show evidence, capability, confidence, and engineering decisions
+
+**Usage:** `aies snapshot [-h] [--json] [--observed-only] [run]`
+
+**Prerequisites:** A completed run has an Engineering Capability Matrix; `latest` selects the newest workspace run.
+
+**Result and side effects:** Prints the responsive Evidence → Capability → Confidence → Engineering Decisions view. It reuses canonical ECM and Engineering Fit facts and creates no new score or authority.
+
+**Recommended next step:** Open the linked report for detail, inspect `aies capabilities <run>`, or compare only compatible runs.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<RUN>` | optional | completed run id or 'latest' (default: latest) | default: `latest` |
+| `--observed-only` | optional | hide tasks without directly mapped scored evidence | Hides unassessed task rows from the table; the coverage summary still reports them as unknown rather than zero. |
 
 ## `aies suites`
 

@@ -114,15 +114,11 @@ def main() -> int:
     print()
     first_lines(result_md, 26)
 
-    hr("6. Engineering Capability Matrix — observed capability and explicit unknowns")
-    matrix = workspace.read_json(run_dir / "engineering-capability-matrix.json")
-    mapping = matrix["mapping"]
-    print(f"  mapping: {mapping['kind']} v{mapping['version']} ({mapping['status']})")
-    for task in matrix["tasks"]:
-        performance = ("not assessed" if task["observed_performance"] is None else
-                       f"{task['observed_performance'] / 4 * 100:.0f}% observed")
-        print(f"  {task['task_id']} {task['task']:<28} {performance:<16} {task['status']}")
-    print("Observed capability, evidence breadth, and unknowns remain explicit.")
+    hr("6. Evidence → Capability → Confidence → Engineering Decisions")
+    code, snapshot_output, _ = invoke(
+        "snapshot", run_id, "--observed-only", capture=True)
+    require(code, "engineering decision snapshot")
+    first_lines(snapshot_output, 35)
 
     hr("7. Evidence-derived Engineering Fit Guidance")
     code, fit_output, _ = invoke("guidance", run_id, capture=True)

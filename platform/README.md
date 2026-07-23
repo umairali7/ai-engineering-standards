@@ -42,6 +42,7 @@ the full pipeline is runnable end to end:
 `import` (external eval results), `report` (complete linked Markdown/JSON/HTML
 bundle: Engineering Evaluation Report, ECM, Grounding Diagnostics, Engineering
 Fit Guidance, and Executive Summary), `transcript`,
+`snapshot` (responsive terminal evidence-to-decision view),
 `capabilities` (task-mapped ECM by default; `--qualification-profile` selects
 the formal per-area CL/autonomy view), `judge` (available/list/history),
 `assessment` (declarative engineering composition — list/show/validate/result,
@@ -112,11 +113,12 @@ aies init
 aies discover
 aies evaluate <deployment> --judge <reviewer> --plan-only
 aies evaluate <deployment> --judge <reviewer> --parallel 4
+aies snapshot latest
 aies open latest
 ```
 
 The warm-cache full-suite performance budget on the recorded Windows reference
-workstation is **180 seconds**. The current 235-test baseline is **109.82
+workstation is **180 seconds**. The current 237-test baseline is **94.58
 seconds**. A run above budget or a greater-than-25% regression should be
 profiled before merge; use the ranked durations rather than guessing. Scenario
 YAML and suite digests are cached by path, modification time, and size, return
