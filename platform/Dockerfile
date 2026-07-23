@@ -10,6 +10,7 @@ LABEL org.opencontainers.image.title="AIES Engineering Assessment Platform" \
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_ROOT_USER_ACTION=ignore \
     AIES_WORKSPACE=/workspace/aies-workspace
 
 WORKDIR /opt/aies
@@ -18,7 +19,7 @@ COPY conformance /opt/aies/conformance
 
 RUN python -m pip install --no-cache-dir /opt/aies/platform \
     && useradd --create-home --uid 10001 aies \
-    && mkdir -p /workspace \
+    && mkdir -p /workspace/aies-workspace \
     && chown -R aies:aies /workspace
 
 USER 10001
@@ -26,4 +27,3 @@ WORKDIR /workspace
 
 ENTRYPOINT ["aies"]
 CMD ["help"]
-

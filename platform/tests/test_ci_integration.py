@@ -91,6 +91,7 @@ def test_container_is_non_root_and_excludes_secrets_and_runs():
     assert "COPY platform" in dockerfile
     assert "COPY conformance" in dockerfile
     assert "ENTRYPOINT [\"aies\"]" in dockerfile
+    assert "mkdir -p /workspace/aies-workspace" in dockerfile
     assert "**/.env" in dockerignore
     assert "**/runs" in dockerignore
     assert "platform/aies-workspace" in dockerignore
