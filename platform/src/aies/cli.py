@@ -1295,6 +1295,13 @@ def cmd_suites(args) -> int:
         return 0
     if getattr(args, "suites_cmd", None) == "empirical":
         from . import empirical
+        if args.preflight_runs:
+            report = empirical.preflight_runs(
+                [{"run_id": run_id,
+                  "rating_protocol_basis": args.rating_protocol_basis}
+                 for run_id in args.preflight_runs])
+            _out(report, args.json, empirical.render_preflight(report))
+            return 0  # advisory inspection; readiness is explicit in the artifact
         if args.runs:
             specs = []
             for spec in args.runs:
@@ -1302,7 +1309,16 @@ def cmd_suites(args) -> int:
                     print(f"error: --runs expects RUN_ID=ABILITY, got {spec!r}", file=sys.stderr)
                     return 2
                 run_id, ability = spec.rsplit("=", 1)
-                specs.append({"run_id": run_id, "ability": int(ability)})
+                try:
+                    rank = int(ability)
+                except ValueError:
+                    print(f"error: ability must be an integer, got {ability!r}",
+                          file=sys.stderr)
+                    return 2
+                specs.append({"run_id": run_id, "ability": rank,
+                              "ability_basis": args.ability_basis,
+                              "preregistered_at": args.preregistered_at,
+                              "rating_protocol_basis": args.rating_protocol_basis})
             try:
                 panel = empirical.assemble_panel_from_runs(specs)
             except (ValueError, FileNotFoundError) as e:
@@ -1315,7 +1331,8 @@ def cmd_suites(args) -> int:
         elif args.panel:
             panel = json.loads(Path(args.panel).read_text(encoding="utf-8"))
         else:
-            print("error: pass a panel JSON file, or --runs RUN=ABILITY ...", file=sys.stderr)
+            print("error: pass a panel JSON file, --runs RUN=ABILITY ..., or "
+                  "--preflight-runs RUN_ID ...", file=sys.stderr)
             return 2
         report = empirical.analyze_panel(panel, panel_id=args.panel_id)
         _out(report, args.json, empirical.render(report))
@@ -1869,6 +1886,15 @@ def build_parser() -> argparse.ArgumentParser:
     ste.add_argument("--runs", nargs="+", metavar="RUN_ID=ABILITY", default=None,
                      help="assemble the panel from scored qualify runs, e.g. "
                           "--runs run-strong=3 run-mid=2 run-weak=1")
+    ste.add_argument("--preflight-runs", nargs="+", metavar="RUN_ID", default=None,
+                     help="inspect scored runs for panel compatibility without "
+                          "inventing or requiring ability ranks")
+    ste.add_argument("--ability-basis", default=None,
+                     help="independent evidence used to assign every --runs ability rank")
+    ste.add_argument("--preregistered-at", default=None,
+                     help="timestamp showing ability ranks were fixed before analysis")
+    ste.add_argument("--rating-protocol-basis", default=None,
+                     help="evidence that the shared scoring protocol is validated")
     ste.add_argument("--write-panel", default=None,
                      help="also write the assembled panel JSON to this path")
     ste.add_argument("--panel-id", default=None,

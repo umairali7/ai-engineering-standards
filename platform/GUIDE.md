@@ -120,10 +120,11 @@ aies corpus review-pending              # inventory + structural readiness
 aies corpus review SC-CA01-021          # inspect one packed scenario by ID
 ```
 
-The first command is deliberately non-decisional: it exposes a pending
-disposition for every unreviewed instrument but never records human approval.
-See [AIES-PLAT-10 — Assessment Calibration](CALIBRATION.md) for the independent
-review and empirical-calibration boundaries.
+The first command is deliberately non-decisional: it exposes every pending
+disposition and the effective/stale content-bound review ledger but never makes
+a human approval decision. See
+[AIES-PLAT-10 — Assessment Calibration](CALIBRATION.md) for accountable review,
+external independent validation, and empirical-calibration boundaries.
 
 ---
 
@@ -142,7 +143,7 @@ aies doctor                 # environment fingerprint + detected runtimes
 ```
 
 For local verification, the recorded warm-cache Windows budget is 180 seconds
-for the complete suite; the 2026-07-23 baseline is 219 tests in 155.38 seconds.
+for the complete suite; the 2026-07-23 baseline is 224 tests in 81.89 seconds.
 Treat a budget breach or greater-than-25% regression as a profiling trigger.
 This is a feedback budget, not a reason to skip correctness gates on slower CI
 hardware.

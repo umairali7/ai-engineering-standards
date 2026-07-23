@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import datetime
 import re
+from collections import Counter, defaultdict
 from statistics import mean, pstdev
 
 # Versioned like every other normative input (STABILITY/COMPATIBILITY):
@@ -45,6 +46,7 @@ CEILING_MIN = 3.3             # strongest group should reach at least this
 FLOOR_MAX = 2.5               # weakest group should land at or below this (a live floor)
 REPEATABILITY_MAX_STD = 0.75  # per-(model,scenario) score std must be at or below this
 TWIN_GAP_MAX = 1.0            # a model's |scenario - twin| gap above this flags gaming
+PANEL_MIN_SUBJECTS = 3         # weak / middle / strong is the minimum useful shape
 
 
 def _thresholds() -> dict:
@@ -144,11 +146,191 @@ def analyze_panel(panel: dict, panel_id: str | None = None,
     }
     return {"kind": "empirical-calibration-result",
             "metadata": metadata,
+            "panel_preflight": panel.get("preflight"),
+            "promotion_eligible": bool((panel.get("preflight") or {}).get("ready")),
             "panel_size": len(ability),
             "scenarios": len(results),
             "empirically_calibratable": sorted(calibratable),
             "flagged": sorted(s for s in results if s not in calibratable),
             "results": results}
+
+
+def preflight_runs(specs: list[dict]) -> dict:
+    """Check whether scored runs form one comparable empirical panel.
+
+    The preflight is intentionally stricter than merely finding score files. It
+    requires the same scenario/repeat observations, prompt hashes, suite
+    versions, and rating protocol across distinct subjects; exactly one rating
+    observation per response; and a recorded, pre-run basis for supplied ability
+    ranks. It never invents ability from the scores being calibrated.
+    """
+    from . import constants as C
+    from . import workspace
+
+    rows = []
+    blockers: list[str] = []
+    warnings: list[str] = []
+    seen_subjects: set[str] = set()
+    reference_keys = reference_hashes = reference_suites = reference_protocol = None
+    observation_sets: list[set[tuple[str, int]]] = []
+    rating_bases: set[str] = set()
+
+    if len(specs) < PANEL_MIN_SUBJECTS:
+        blockers.append(
+            f"panel has {len(specs)} subject(s); at least {PANEL_MIN_SUBJECTS} are required")
+
+    for spec in specs:
+        run_id = str(spec.get("run_id") or "")
+        rdir = workspace.run_dir(run_id)
+        manifest_path = rdir / "manifest.json"
+        if not run_id or not manifest_path.exists():
+            blockers.append(f"{run_id or '(missing run id)'}: manifest.json is missing")
+            continue
+        manifest = workspace.read_json(manifest_path)
+        subject = (manifest.get("subject") or {}).get("id") or (
+            manifest.get("model") or {}).get("registry_id") or run_id
+        if subject in seen_subjects:
+            blockers.append(f"{run_id}: duplicate panel subject {subject!r}")
+        seen_subjects.add(subject)
+
+        responses = {}
+        for path in sorted((rdir / "responses").glob("*.json")):
+            response = workspace.read_json(path)
+            responses[path.name] = response
+        ratings = []
+        for path in sorted((rdir / "ratings").glob("*.json")):
+            ratings.append(workspace.read_json(path))
+        by_response: dict[str, list[dict]] = defaultdict(list)
+        invalid_ratings = 0
+        protocols = set()
+        for rating in ratings:
+            target = str(rating.get("rates_response") or "")
+            scores = rating.get("scores") or {}
+            if target not in responses or any(
+                    not isinstance(scores.get(dimension), (int, float))
+                    or isinstance(scores.get(dimension), bool)
+                    or not 0 <= float(scores[dimension]) <= 4
+                    for dimension in C.DIMENSIONS):
+                invalid_ratings += 1
+                continue
+            by_response[target].append(rating)
+            provenance = rating.get("provenance") or {}
+            protocols.add((str(provenance.get("rater_kind") or "unknown"),
+                           str(provenance.get("rater") or "unknown")))
+
+        duplicate_observations = sum(
+            len(items) - 1 for items in by_response.values() if len(items) > 1)
+        unrated = sorted(set(responses) - set(by_response))
+        if not responses:
+            blockers.append(f"{run_id}: no response records")
+        if invalid_ratings:
+            blockers.append(f"{run_id}: {invalid_ratings} invalid or orphan rating(s)")
+        if duplicate_observations:
+            blockers.append(
+                f"{run_id}: {duplicate_observations} duplicate/correction rating(s) "
+                "would inflate repeatability")
+        if unrated:
+            blockers.append(f"{run_id}: {len(unrated)} response(s) are unrated")
+        if len(protocols) != 1:
+            blockers.append(
+                f"{run_id}: expected one rating protocol, found {len(protocols)}")
+
+        keys = {(str(rec.get("scenario_id")), int(rec.get("repeat") or 0))
+                for rec in responses.values()}
+        observation_sets.append(keys)
+        hashes = {(str(rec.get("scenario_id")), int(rec.get("repeat") or 0)):
+                  str((rec.get("request") or {}).get("prompt_hash") or "")
+                  for rec in responses.values()}
+        suites = {str(area.get("area")): str(area.get("suite_version"))
+                  for area in manifest.get("areas", []) if isinstance(area, dict)}
+        protocol = next(iter(protocols)) if len(protocols) == 1 else None
+
+        if reference_keys is None:
+            reference_keys, reference_hashes = keys, hashes
+            reference_suites, reference_protocol = suites, protocol
+        else:
+            if keys != reference_keys:
+                blockers.append(
+                    f"{run_id}: scenario/repeat set differs from the panel reference")
+            if hashes != reference_hashes:
+                blockers.append(f"{run_id}: prompt hashes differ from the panel reference")
+            if suites != reference_suites:
+                blockers.append(f"{run_id}: suite versions differ from the panel reference")
+            if protocol != reference_protocol:
+                blockers.append(f"{run_id}: rating protocol differs from the panel reference")
+
+        ability = spec.get("ability")
+        if ability is not None and (not isinstance(ability, int)
+                                    or isinstance(ability, bool) or ability < 1):
+            blockers.append(f"{run_id}: ability rank must be a positive integer")
+        basis = str(spec.get("ability_basis") or "").strip()
+        preregistered_at = str(spec.get("preregistered_at") or "").strip()
+        rating_basis = str(spec.get("rating_protocol_basis") or "").strip()
+        if ability is not None and not basis:
+            blockers.append(f"{run_id}: supplied ability rank has no independent basis")
+        if ability is not None and not preregistered_at:
+            blockers.append(f"{run_id}: supplied ability rank has no preregistration timestamp")
+        elif ability is not None:
+            try:
+                registered = datetime.datetime.fromisoformat(
+                    preregistered_at.replace("Z", "+00:00"))
+                created_text = str(manifest.get("created_at") or "")
+                created = (datetime.datetime.fromisoformat(
+                    created_text.replace("Z", "+00:00")) if created_text else None)
+                if registered.tzinfo is None:
+                    blockers.append(
+                        f"{run_id}: preregistration timestamp needs a timezone")
+                elif created and created.tzinfo is not None and registered >= created:
+                    blockers.append(
+                        f"{run_id}: ability rank was not preregistered before the run")
+            except ValueError:
+                blockers.append(f"{run_id}: preregistration timestamp is not ISO-8601")
+        if not rating_basis:
+            blockers.append(f"{run_id}: rating protocol has no validation basis")
+        else:
+            rating_bases.add(rating_basis)
+        if any(token in rater.lower() for _kind, rater in protocols
+               for token in ("provisional", "uncalibrated")):
+            blockers.append(f"{run_id}: rating protocol is explicitly provisional/uncalibrated")
+
+        rows.append({
+            "run_id": run_id, "subject": subject,
+            "responses": len(responses), "unique_scenarios": len({k[0] for k in keys}),
+            "ratings": len(ratings), "unrated_responses": len(unrated),
+            "duplicate_ratings": duplicate_observations,
+            "rating_protocols": [f"{kind}:{rater}" for kind, rater in sorted(protocols)],
+            "suite_versions": suites, "ability": ability,
+            "ability_basis": basis or None, "preregistered_at": preregistered_at or None,
+            "rating_protocol_basis": rating_basis or None,
+        })
+
+    ranks = {row["ability"] for row in rows if row["ability"] is not None}
+    if ranks and len(ranks) < 2:
+        blockers.append("panel needs at least two independently defined ability ranks")
+    if not ranks:
+        warnings.append(
+            "ability ranks were not supplied; compatibility can be inspected, but "
+            "discrimination analysis cannot be preregistered")
+    if len(rating_bases) > 1:
+        blockers.append("panel declares conflicting rating-protocol validation bases")
+
+    common_keys = (set.intersection(*observation_sets) if observation_sets else set())
+
+    # Keep output deterministic and readable while avoiding duplicate messages.
+    blockers = list(dict.fromkeys(blockers))
+    warnings = list(dict.fromkeys(warnings))
+    return {
+        "kind": "empirical-panel-preflight", "schema_version": 1,
+        "ready": not blockers and bool(ranks),
+        "status": "ready" if not blockers and ranks else "not-ready",
+        "subjects": len(rows),
+        "common_observations": len(common_keys),
+        "common_scenarios": len({key[0] for key in common_keys}),
+        "blockers": blockers, "warnings": warnings, "runs": rows,
+        "authority_boundary": (
+            "Preflight checks comparability only. A named human preregisters ability "
+            "ranks from independent evidence and decides any scenario promotion."),
+    }
 
 
 def assemble_panel_from_runs(specs: list[dict]) -> dict:
@@ -160,6 +342,15 @@ def assemble_panel_from_runs(specs: list[dict]) -> dict:
     registry id."""
     from . import constants as C
     from . import workspace
+
+    preflight = preflight_runs(specs)
+    structural_blockers = [blocker for blocker in preflight["blockers"]
+                           if "ability rank" not in blocker
+                           and "preregistration timestamp" not in blocker
+                           and "independent basis" not in blocker
+                           and "rating protocol has no validation basis" not in blocker]
+    if structural_blockers:
+        raise ValueError("empirical panel preflight failed: " + "; ".join(structural_blockers))
 
     scores: dict[str, dict[str, list[float]]] = {}
     panel: list[dict] = []
@@ -175,7 +366,10 @@ def assemble_panel_from_runs(specs: list[dict]) -> dict:
         # evidence it was assembled from (reproducibility).
         panel.append({"model": model, "ability": int(spec["ability"]),
                       "run_id": spec["run_id"],
-                      "model_checksum": manifest.get("model", {}).get("checksum")})
+                      "model_checksum": manifest.get("model", {}).get("checksum"),
+                      "ability_basis": spec.get("ability_basis"),
+                      "preregistered_at": spec.get("preregistered_at"),
+                      "rating_protocol_basis": spec.get("rating_protocol_basis")})
 
         rating_dir = rdir / "ratings"
         if not rating_dir.is_dir():
@@ -188,7 +382,23 @@ def assemble_panel_from_runs(specs: list[dict]) -> dict:
             if sid and len(vals) == len(C.DIMENSIONS):
                 scores.setdefault(sid, {}).setdefault(model, []).append(round(mean(vals), 4))
 
-    return {"panel": panel, "scores": scores, "twins": _twins_for(scores.keys())}
+    return {"panel": panel, "scores": scores, "twins": _twins_for(scores.keys()),
+            "preflight": preflight}
+
+
+def render_preflight(report: dict) -> str:
+    lines = [
+        f"empirical panel preflight: {report['status'].upper()}",
+        f"  subjects            : {report['subjects']}",
+        f"  common scenarios     : {report['common_scenarios']}",
+        f"  common observations  : {report['common_observations']}",
+        "  authority            : human preregistration + promotion decision",
+    ]
+    for blocker in report["blockers"]:
+        lines.append(f"  BLOCKER: {blocker}")
+    for warning in report["warnings"]:
+        lines.append(f"  warning: {warning}")
+    return "\n".join(lines)
 
 
 def _twins_for(scenario_ids) -> dict[str, str]:
@@ -227,6 +437,7 @@ def render(report: dict) -> str:
              f"  scenarios analyzed : {report['scenarios']}",
              f"  discriminating     : {len(report['empirically_calibratable'])}",
              f"  flagged            : {len(report['flagged'])}",
+             f"  promotion eligible : {'YES' if report.get('promotion_eligible') else 'NO — panel preflight/preregistration incomplete'}",
              ""]
     for sid, r in sorted(report["results"].items()):
         if r["verdict"] == "discriminating":

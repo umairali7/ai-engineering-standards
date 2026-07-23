@@ -84,6 +84,7 @@ def test_result_carries_reproducibility_metadata():
     # the actual cut-offs are recorded, so a threshold change is visible
     assert m["thresholds"]["discrimination_min"] == empirical.DISCRIMINATION_MIN
     assert {p["model"] for p in m["panel"]} == {"strong", "mid", "weak"}
+    assert not report["promotion_eligible"]  # synthetic input has no run preflight
 
 
 def test_insufficient_panel_is_handled():
@@ -122,9 +123,15 @@ def test_assemble_panel_from_scored_runs(tmp_path, monkeypatch):
 
     strong, mid, weak = make_run("strong", 4), make_run("mid", 3), make_run("weak", 2)
     panel = empirical.assemble_panel_from_runs([
-        {"run_id": strong, "ability": 3},
-        {"run_id": mid, "ability": 2},
-        {"run_id": weak, "ability": 1},
+        {"run_id": strong, "ability": 3, "ability_basis": "independent fixture",
+         "preregistered_at": "2026-07-18T00:00:00Z",
+         "rating_protocol_basis": "consensus fixture"},
+        {"run_id": mid, "ability": 2, "ability_basis": "independent fixture",
+         "preregistered_at": "2026-07-18T00:00:00Z",
+         "rating_protocol_basis": "consensus fixture"},
+        {"run_id": weak, "ability": 1, "ability_basis": "independent fixture",
+         "preregistered_at": "2026-07-18T00:00:00Z",
+         "rating_protocol_basis": "consensus fixture"},
     ])
     assert {m["model"] for m in panel["panel"]} == {"strong", "mid", "weak"}
     assert panel["scores"], "no per-scenario scores assembled"
@@ -133,5 +140,39 @@ def test_assemble_panel_from_scored_runs(tmp_path, monkeypatch):
     assert set(some) == {"strong", "mid", "weak"}
     # strong=4, mid=3, weak=2 -> discrimination 2.0, monotonic
     report = empirical.analyze_panel(panel)
+    assert panel["preflight"]["ready"] and report["promotion_eligible"]
     a = report["results"][next(iter(panel["scores"]))]
     assert a["discrimination"] == 2.0 and a["monotonic"]
+
+
+def test_preflight_rejects_duplicate_rating_observations(tmp_path, monkeypatch):
+    import json
+    monkeypatch.setenv("AIES_WORKSPACE", str(tmp_path / "ws"))
+    from aies import empirical, workspace
+
+    specs = []
+    for index, ability in enumerate((1, 2, 3), start=1):
+        run_id = f"run-{index}"
+        rdir = workspace.run_dir(run_id)
+        workspace.write_json(rdir / "manifest.json", {
+            "model": {"registry_id": f"subject-{index}"},
+            "areas": [{"area": "CA-05", "suite_version": "suite-v1"}],
+        })
+        response = {"scenario_id": "SC-CA05-001", "repeat": 1,
+                    "request": {"prompt_hash": "sha256:abc"}}
+        workspace.write_json(rdir / "responses" / "SC-CA05-001-r1.json", response)
+        rating = {"rates_response": "SC-CA05-001-r1.json",
+                  "scenario_id": "SC-CA05-001", "repeat": 1,
+                  "scores": {d: ability for d in ("EV1", "EV2", "EV3", "EV4", "EV5", "EV6")},
+                  "provenance": {"rater_kind": "human", "rater": "R"}}
+        workspace.write_json(rdir / "ratings" / "rating-a.json", rating)
+        if index == 1:
+            workspace.write_json(rdir / "ratings" / "rating-b.json", rating)
+        specs.append({"run_id": run_id, "ability": ability,
+                      "ability_basis": "independent fixture",
+                      "preregistered_at": "2026-07-18T00:00:00Z",
+                      "rating_protocol_basis": "consensus fixture"})
+
+    preflight = empirical.preflight_runs(specs)
+    assert not preflight["ready"]
+    assert any("inflate repeatability" in blocker for blocker in preflight["blockers"])

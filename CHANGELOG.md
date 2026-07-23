@@ -22,8 +22,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   copies. Read-only API tests reuse one immutable module fixture, and the judge
   concurrency test delays only the reviewer behavior it measures. The complete
   suite retains all assertions while removing repeated setup and unrelated
-  sleeps: 223 tests complete in 100.31 seconds on the Windows verification host,
+  sleeps: 224 tests complete in 81.89 seconds on the Windows verification host,
   down from the preceding 219-test 155.38-second baseline.
+- **Empirical-panel admission preflight**: `aies suites empirical
+  --preflight-runs` now checks that real runs use distinct subjects, identical
+  scenario/repeat sets, prompt hashes and suite versions, one shared validated
+  rating protocol, exactly one rating per response, and no duplicate correction
+  records that could inflate repeatability. Auto-assembled panels retain the
+  preflight and independent ability/rating-protocol bases; analysis is explicitly
+  non-promotional until preregistration is complete. The current compatible
+  legacy subset is honestly reported as four subjects over seven CA-05 scenarios
+  and 21 observations, blocked by unregistered ability ranks and its explicitly
+  provisional scoring protocol.
 - **Review-ready RT2 instrument tranche and governed open-license proposal**:
   all 268 new RT2 — Moderate instruments now include competency-specific
   behavioral floor anchors and gaming-resistance rationales. `aies corpus
