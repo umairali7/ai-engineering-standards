@@ -30,6 +30,9 @@ AEBOK / AESQS / AEOS / AEAR / AECT / ECM
              Assessment Plan
                     │
                     ▼
+        Assessment Coverage Matrix
+                    │
+                    ▼
              Subject Descriptor
                     │
                     ▼
@@ -128,6 +131,33 @@ subject and evidence type.
 | Open | AI engineering platform assessment | Tenant and environment isolation, identity/access, policy enforcement, model/tool registry, audit trails, observability, resilience, supply chain, lifecycle governance, developer experience, and operating-model support are assessed against AEAR/AEOS evidence |
 | Open | Composite-system end-to-end assessment | A declared system boundary links repositories, deployments, agents, MCP servers, RAG, pipelines, platforms, humans, and teams; component findings, interface failures, emergent risks, and end-to-end task outcomes remain traceable without averaging away a failed critical component |
 
+### P1 — Cross-cutting multi-perspective assurance
+
+“Comprehensive” means that applicability and evidence gaps are visible across a
+governed set of perspectives; it does not mean that every perspective applies
+to every subject or that missing evidence is silently treated as a pass. The
+coverage model is extensible so a new technical, social, legal, environmental,
+or industry perspective can be added without redesigning every executor.
+
+| Status | Work item | Acceptance signal |
+|---|---|---|
+| Open | Govern an Assessment Coverage Matrix | Every Subject Assessment Profile declares applicable P01 — Business Strategy through P16 — Continuous Improvement lifecycle phases, X01 — Security through X15 — Sustainability cross-cutting domains, CA-01 — AI-Native SDLC Foundations through CA-12 — Governance, Risk & AI Safety competencies, ET-01 — Requirements Analysis through ET-15 — Production Operations tasks, RT1 — Minimal through RT4 — Critical risk tiers, AL0 — Manual through AL4 — Autonomous levels, stakeholders, environments, evidence modalities, operating conditions, and decision products; exclusions require a versioned rationale |
+| Open | Make applicability and unknowns explicit | Every cell resolves to assessed, partially assessed, not assessed, not applicable with rationale, or unsupported; unknown, unavailable, tool-not-installed, redacted, and failed-to-collect evidence remain distinguishable and none can become a pass |
+| Open | Cover nominal, boundary, adversarial, and recovery behavior | Applicable profiles test normal operation, edge and limit conditions, invalid input, misuse/abuse, hostile input, dependency failure, partial outage, rollback/recovery, long-running behavior, drift, and changed-environment behavior rather than relying only on happy paths |
+| Open | Assess functional and engineering quality | Correctness, completeness, safety/security, maintainability, efficiency, traceability, requirements fit, architecture, integration, data quality, testability, usability, and profile-specific quality attributes are supported by direct evidence with declared confidence and limitations |
+| Open | Assess security, safety, and abuse resistance | Threat models cover subject boundary, assets, identities, privileges, tools, data flows, dependencies, supply chain, prompt/context injection, poisoning, exfiltration, unsafe actions, denial of service, misuse, dual use, containment, kill/revoke paths, and incident response at the scoped risk tier |
+| Open | Assess privacy, data, knowledge, and intellectual-property handling | Profiles address lawful/authorized collection, minimization, classification, consent where applicable, access, residency, retention, deletion, redaction, lineage, source integrity, confidentiality, protected prompts/evidence, licensing, copyright, and leakage through logs, embeddings, caches, tools, or outputs |
+| Open | Assess human factors and affected parties | Profiles identify users, operators, reviewers, decision owners, data subjects, and affected non-users; they assess accessibility, workload, automation bias, over-reliance, review effectiveness, skill degradation, informed consent, fairness where consequential, contestability, appeal, accommodations, and protection from covert personnel surveillance |
+| Open | Assess reliability and operational fitness | Evidence covers availability, latency classes, throughput, concurrency, saturation, timeouts, retry/idempotency, state consistency, observability, alerting, degraded modes, failover, backup/restore, rollback, incident learning, SLOs, capacity, change safety, drift detection, and requalification triggers |
+| Open | Assess performance, cost, and resource impact | Reports separate quality from latency, throughput, token/compute, storage/network, energy/resource use, and total cost; declared workload and scale assumptions support trade-off analysis, budget ceilings, runaway-consumption controls, and repeatable cost-performance comparison |
+| Open | Assess interoperability and portability | Protocol/schema conformance, version negotiation, backward compatibility, data/model/prompt portability, vendor substitution, import/export fidelity, configuration reproducibility, extension behavior, and graceful handling of unsupported capabilities are tested where applicable |
+| Open | Assess lifecycle and supply-chain integrity | Evidence spans strategy and requirements through design, build, verification, release, operation, retirement, and improvement; provenance, dependencies, datasets, models, prompts, tools, artifacts, signatures, vulnerabilities, deprecation, ownership transfer, end-of-life, and secure disposal remain traceable |
+| Open | Assess governance, legal, regulatory, and industry context | Profiles map applicable internal policy, qualification authority, segregation of duties, records, exceptions, regulatory obligations, external standards, jurisdiction, contractual constraints, sector hazards, and evidence-retention duties without presenting AIES output as legal certification |
+| Open | Assess adoption and organizational feasibility | Decision products address operating-model fit, required roles and skills, review capacity, integration effort, migration/rollback, supportability, training, process change, developer/operator experience, total ownership cost, vendor/community health, and sustainable maintenance |
+| Open | Validate from independent and diverse perspectives | Profile promotion requires documented technical, security, operations, human-factors, domain, and affected-party review as applicable; conflicts, minority findings, reviewer independence, competence, calibration, and disposition are retained rather than averaged away |
+| Open | Generate coverage and blind-spot reports | Every assessment bundle shows perspective coverage, evidence depth, confidence, exclusions, stale evidence, conflicts, untested operating conditions, dependencies, residual risks, and the exact work required to close material gaps |
+| Open | Prevent evidence reuse from inflating assurance | Canonical evidence may support multiple views but retains one source identity; reports disclose reused evidence, correlated instruments, inherited component evidence, and dependency overlap so counts, confidence, maturity, and comparison are not artificially increased |
+
 ### P1 — Repository engineering intelligence
 
 The existing `aies audit <repo>` is a repository **conformance and practice
@@ -196,6 +226,7 @@ its own instruments and claim boundaries.
 | Open | Replace heuristic repository detection with structured evidence where available | CI, dependency, test, coverage, security, architecture, and governance checks prefer parsed manifests or imported tool results over filename/substring heuristics; heuristic fallbacks are labelled with lower evidence confidence and regression fixtures cover supported stacks |
 | Open | Standardize assessment vocabulary across commands and docs | `audit` means repository/practice conformance, `analysis` means artifact/tool evidence evaluation, `benchmark` means a compatible controlled comparative study, and `qualification` means a governed human decision; help and reports do not use the terms interchangeably |
 | Open | Generate and test the subject-support matrix | One machine-readable registry drives CLI help, API discovery, documentation, and tests for implemented/experimental/planned subject profiles so public claims cannot drift ahead of executable support |
+| Open | Generate and test the perspective-coverage registry | One machine-readable registry drives profile applicability, coverage reports, human-readable code labels, documentation, and validation for lifecycle, cross-cutting, competency, task, risk, autonomy, stakeholder, environment, evidence, and operating-condition perspectives |
 | Done | Clarify immutable artifacts and regenerable views | Storage policy classifies append-only records, derived canonical snapshots, mutable workflow state/configuration, and regenerable views; `workspace.write_json` rejects append-only replacement and `workspace.write_view` cannot target evidence paths |
 | Done | Make record identifiers concurrency-safe | Qualification Records atomically claim human-readable IDs through exclusive creation; a 12-decision concurrent regression proves unique issued records and lifecycle events |
 | Done | Improve local verification feedback | The documented command reports ranked durations and uses a 180-second warm-cache Windows budget with a 25% regression trigger. Single-pass report views plus signature-invalidated isolated YAML, expanded-scenario, review-ledger, and suite caches reduce the measured complete run from 216 tests in 491.51 seconds to 225 tests in a repeated 81.23–100.16-second range; cache mutation/invalidation behavior has regression coverage. Read-only API fixtures are shared safely and concurrency tests delay only the phase under test. |
