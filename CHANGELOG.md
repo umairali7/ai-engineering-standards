@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Unambiguous roadmap workflow state**: closed the remaining bounded
+  implementation work for the local demo, package candidates, container,
+  first-use journey, visual foundation, contributor intake, and approval
+  inventory. Future integrations and expansion are explicitly Open; empirical
+  validation, independent review, and license ratification are explicitly
+  Blocked on named external evidence or governance. No roadmap item remains
+  indefinitely labelled In progress, and no external evidence is claimed as
+  complete.
 - **Cross-subject remediation and monitoring plans**: every completed
   deployment or repository coverage product now emits linked Markdown, JSON,
   and HTML `aies-evidence-linked-remediation-plan/v1` artifacts. Stable

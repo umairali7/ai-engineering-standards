@@ -548,11 +548,12 @@ Individual documents carry a lifecycle status only (Draft → Review → Approve
   AESQS, AEOS, AEAR, and AECT are in Review for v0.4.0.
 - **Platform:** Functional reference implementation with engineering
   evaluation, repository audit, ECM, fit guidance, comparison, reporting,
-  conformance, and optional formal qualification; hardening and subject-adapter
-  expansion remain in progress under
+  conformance, and optional formal qualification; remaining hardening,
+  validation, and subject-adapter expansion are explicitly tracked as Open or
+  Blocked under
   [ADR-0009](adr/ADR-0009-Engineering-Assessment-Platform-Identity.md).
 - **Verified baseline:** 484 scenarios across 12 competency areas with zero
-  suite warnings/errors; 248 platform tests passing at the latest local
+  suite warnings/errors; 353 platform tests passing at the latest local
   verification. Empirical panel calibration and an independent pilot remain
   open.
 - **ECM standardization:** The ECM implementation and ET-01 through ET-15
