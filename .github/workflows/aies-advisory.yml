@@ -58,12 +58,18 @@ jobs:
       AIES_REPOSITORY_PATH: ${{ inputs.repository-path }}
       AIES_RISK_TIER: ${{ inputs.risk-tier }}
       AIES_ENFORCE: ${{ inputs.enforce }}
-      AIES_ARTIFACT_DIR: ${{ runner.temp }}/aies-ci
-      AIES_WORKSPACE: ${{ runner.temp }}/aies-workspace
-      AIES_SOURCE: ${{ runner.temp }}/aies-source
     steps:
       - name: Check out repository under assessment
         uses: actions/checkout@v4
+
+      - name: Initialize runner-local paths
+        shell: bash
+        run: |
+          {
+            echo "AIES_ARTIFACT_DIR=${RUNNER_TEMP}/aies-ci"
+            echo "AIES_WORKSPACE=${RUNNER_TEMP}/aies-workspace"
+            echo "AIES_SOURCE=${RUNNER_TEMP}/aies-source"
+          } >> "${GITHUB_ENV}"
 
       - name: Set up Python
         uses: actions/setup-python@v5

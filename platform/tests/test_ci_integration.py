@@ -77,11 +77,28 @@ def test_reusable_workflow_is_advisory_by_default_and_retains_artifacts():
     workflow = yaml.safe_load(text)
     jobs = workflow["jobs"]
     assert "repository-evidence" in jobs
+    job = jobs["repository-evidence"]
+    assert all(
+        "runner.temp" not in str(value)
+        for value in job.get("env", {}).values())
+    assert "AIES_ARTIFACT_DIR=${RUNNER_TEMP}/aies-ci" in text
+    assert '>> "${GITHUB_ENV}"' in text
     assert "default: false" in text
     assert "required: true" in text
     assert "actions/upload-artifact@v4" in text
     assert "if: always()" in text
     assert "--enforce" in text
+
+
+def test_main_ci_lints_every_workflow_on_workflow_changes():
+    text = (
+        ROOT / ".github" / "workflows" / "platform-ci.yml"
+    ).read_text(encoding="utf-8")
+    assert text.count('".github/workflows/*.yml"') == 2
+    assert "GitHub Actions workflow contracts" in text
+    assert "ACTIONLINT_VERSION" in text
+    assert "ACTIONLINT_SHA256" in text
+    assert "actionlint -color" in text
 
 
 def test_container_is_non_root_and_excludes_secrets_and_runs():

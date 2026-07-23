@@ -23,7 +23,7 @@ on:
       - "docs/**"
       - "templates/**"
       - "*.md"
-      - ".github/workflows/platform-ci.yml"
+      - ".github/workflows/*.yml"
   pull_request:
     paths:
       - "platform/**"
@@ -39,9 +39,28 @@ on:
       - "docs/**"
       - "templates/**"
       - "*.md"
-      - ".github/workflows/platform-ci.yml"
+      - ".github/workflows/*.yml"
 
 jobs:
+  workflow-contracts:
+    name: GitHub Actions workflow contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned actionlint
+        shell: bash
+        env:
+          ACTIONLINT_VERSION: "1.7.12"
+          ACTIONLINT_SHA256: "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
+        run: |
+          archive="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          url="https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/${archive}"
+          curl --fail --silent --show-error --location "${url}" --output "${RUNNER_TEMP}/${archive}"
+          echo "${ACTIONLINT_SHA256}  ${RUNNER_TEMP}/${archive}" | sha256sum --check
+          tar -xzf "${RUNNER_TEMP}/${archive}" -C "${RUNNER_TEMP}" actionlint
+      - name: Validate every workflow before jobs are scheduled
+        run: "${RUNNER_TEMP}/actionlint -color"
+
   install-and-first-use:
     name: Installed package + first use (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
