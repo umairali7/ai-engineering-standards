@@ -120,7 +120,7 @@ def test_engineering_evaluation_summary_is_separately_versioned(ws_run):
 
     summary = evaluation.summarize(ws_run)
     assert summary["kind"] == "engineering-evaluation-summary"
-    assert summary["evaluation_schema"] == evaluation.EVALUATION_SCHEMA == 1
+    assert summary["evaluation_schema"] == evaluation.EVALUATION_SCHEMA == 2
     assert summary["status"] == "complete"
     assert summary["human_evaluation"] == {
         "status": "reviewed", "optional": True, "evaluator": "R"}

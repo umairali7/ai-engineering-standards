@@ -55,7 +55,7 @@ def test_export_carries_prompt_response_and_scores(ws, tmp_path):
     assert set(it["scores"]) == {"EV1", "EV2", "EV3", "EV4", "EV5", "EV6"}
     assert it["grounding_diagnostics"]["grounding_assessed"] is True
     assert it["ratings"] and it["ratings"][0]["rater_kind"] == "human"
-    assert it["ratings"][0]["grounding_diagnostics"]["diagnostic_schema"] == 1
+    assert it["ratings"][0]["grounding_diagnostics"]["diagnostic_schema"] == 2
 
 
 def test_export_roundtrips_through_import(ws, tmp_path):

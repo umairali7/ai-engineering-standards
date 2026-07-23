@@ -151,6 +151,7 @@ def diagnose_debris(workspace_root: Path | None = None) -> dict:
     runs_root = base / "runs"
     for path in sorted(base.rglob("*")):
         category = None
+        recoverability = "regenerable or non-evidence metadata"
         if path.name in ARCHIVE_DEBRIS_NAMES:
             category = "archive-metadata"
         elif path.is_dir() and path.name in CACHE_DIRECTORY_NAMES:
@@ -160,10 +161,17 @@ def diagnose_debris(workspace_root: Path | None = None) -> dict:
         elif (path.is_file() and path.parent == runs_root
               and path.name in REGENERABLE_VIEW_FILES):
             category = "misplaced-regenerable-view"
+        elif (path.is_dir() and path.parent == runs_root
+              and path.name.startswith("run-")
+              and not (path / "manifest.json").is_file()
+              and (path / path.name / "manifest.json").is_file()):
+            category = "nested-run-package"
+            recoverability = (
+                "evidence-bearing; import or flatten without overwriting")
         if category:
             findings.append({"path": path.relative_to(base).as_posix(),
                              "category": category,
-                             "recoverability": "regenerable or non-evidence metadata"})
+                             "recoverability": recoverability})
     counts = {}
     for finding in findings:
         counts[finding["category"]] = counts.get(finding["category"], 0) + 1

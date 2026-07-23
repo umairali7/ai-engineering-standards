@@ -93,6 +93,7 @@ class MockAdapter(RuntimeAdapter):
                 "fabricated_apis_or_entities": 0,
                 "invalid_citations_or_provenance": 0,
                 "false_success_or_test_claims": 0,
+                "abstention_applicable": False,
                 "appropriate_abstention": None,
                 "notes": ["synthetic clean diagnostic for offline pipeline coverage"],
             },

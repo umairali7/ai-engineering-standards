@@ -160,6 +160,23 @@ def render_markdown(
       "evaluation and its ECM decision products. Human evaluation is optional here; "
       "formal qualification and grants use a separate explicit protocol.")
     a("")
+    automated_review = evaluation.get("automated_review") or {}
+    if automated_review.get("reviewer"):
+        a(f"**Automated judge:** `{automated_review['reviewer']}` — "
+          f"{automated_review.get('calibration_status', 'calibration unknown')}. "
+          f"{automated_review.get('interpretation', '')}")
+        if automated_review.get("reason"):
+            a(f"Qualification admission: {automated_review['reason']}.")
+        a("")
+    finding_integrity = evaluation.get("finding_integrity") or {}
+    if finding_integrity.get("status") == "warning":
+        a("> **REVIEWER FINDING METADATA WARNING:** "
+          f"{finding_integrity.get('score_inconsistencies', 0)} of "
+          f"{finding_integrity.get('findings_total', 0)} written findings have "
+          "dimension/score metadata that disagrees with the EV score table. "
+          "The numeric EV scores are retained; do not use those finding labels "
+          "for dimension-level traceability.")
+        a("")
     a("| Area | Automated score coverage | Observed automated mean | Human eval | Evaluation status |")
     a("|---|---|---|---|---|")
     for area, evaluation_area in (evaluation.get("areas") or {}).items():

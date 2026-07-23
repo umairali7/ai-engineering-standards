@@ -26,13 +26,21 @@ def engineering_fit(ref: str, *, matrix: dict | None = None) -> dict:
         percent = round(observed / 4 * 100, 1) if observed is not None else None
         distinct = task.get("distinct_scenarios", 0)
         minimum = task.get("minimum_observations") or 0
-        confidence = round(min(1.0, distinct / minimum) * 100, 1) if minimum else 0.0
+        breadth = round(min(1.0, distinct / minimum) * 100, 1) if minimum else 0.0
+        assurance = task.get("evidence_assurance") or {}
         if percent is None:
             fit = "not-assessed"
             explanation = "no directly mapped scored scenario evidence"
+        elif breadth < 50:
+            fit = "limited-evidence"
+            explanation = (
+                "direct scenario breadth is too limited for a fit label; "
+                "treat the observed score as an early signal")
         elif percent >= 75:
             fit = "strong-observed-fit"
-            explanation = "strong observed performance; validate against the intended workload"
+            explanation = (
+                "strong observed performance with material scenario breadth; "
+                "validate against the intended workload")
         elif percent >= 50:
             fit = "review-recommended"
             explanation = "moderate observed performance; engineering review is recommended"
@@ -44,14 +52,17 @@ def engineering_fit(ref: str, *, matrix: dict | None = None) -> dict:
             "task": task["task"],
             "fit": fit,
             "observed_performance_percent": percent,
-            "evidence_confidence_percent": confidence,
+            "scenario_breadth_percent": breadth,
+            # Compatibility alias for engineering-fit schema 1 readers.
+            "evidence_confidence_percent": breadth,
+            "evidence_assurance": assurance,
             "distinct_scenarios": distinct,
             "rating_observations": task.get("rating_observations", 0),
             "explanation": explanation,
         })
     return {
         "kind": "engineering-fit-guidance",
-        "engineering_fit_schema": 1,
+        "engineering_fit_schema": 2,
         "status": "informational",
         "run_id": matrix["run_id"],
         "subject": matrix["subject"],
@@ -73,6 +84,7 @@ def render_fit_markdown(result: dict) -> str:
         if human.get("status") == "reviewed" else "Not reviewed (optional)")
     sections = (
         ("Strong observed fit", "strong-observed-fit"),
+        ("Observed score, limited evidence", "limited-evidence"),
         ("Use with engineering review", "review-recommended"),
         ("Weak observed fit", "weak-observed-fit"),
         ("Not assessed", "not-assessed"),
@@ -98,8 +110,10 @@ def render_fit_markdown(result: dict) -> str:
                 else f"{row['observed_performance_percent']:.1f}% observed performance")
             lines.append(
                 f"- `{row['task_id']} — {row['task']}`: {performance}; "
-                f"{row['evidence_confidence_percent']:.1f}% evidence confidence "
+                f"{row['scenario_breadth_percent']:.1f}% scenario breadth "
                 f"({row['distinct_scenarios']} distinct scenarios). "
+                f"Evidence assurance: "
+                f"{(row.get('evidence_assurance') or {}).get('status', 'not disclosed')}. "
                 f"{row['explanation']}.")
         lines.append("")
     lines.extend([
@@ -119,6 +133,7 @@ def render_fit_html(result: dict) -> str:
         if human.get("status") == "reviewed" else "Not reviewed (optional)")
     labels = {
         "strong-observed-fit": "Strong observed fit",
+        "limited-evidence": "Observed score, limited evidence",
         "review-recommended": "Use with engineering review",
         "weak-observed-fit": "Weak observed fit",
         "not-assessed": "Not assessed",
@@ -132,8 +147,12 @@ def render_fit_html(result: dict) -> str:
             html.escape(
                 "not assessed" if row["observed_performance_percent"] is None
                 else f"{row['observed_performance_percent']:.1f}% observed performance") +
-            f"; {row['evidence_confidence_percent']:.1f}% evidence confidence "
+            f"; {row['scenario_breadth_percent']:.1f}% scenario breadth "
             f"({row['distinct_scenarios']} distinct scenarios). " +
+            html.escape(
+                "Evidence assurance: " +
+                str((row.get("evidence_assurance") or {}).get(
+                    "status", "not disclosed")) + ". ") +
             html.escape(row["explanation"]) + ".</li>"
             for row in selected) or "<li>None.</li>"
         sections.append(f"<h2>{html.escape(label)}</h2><ul>{items}</ul>")

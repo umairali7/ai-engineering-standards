@@ -121,6 +121,10 @@ def render_markdown(summary: dict) -> str:
     automated_grounding = summary["grounding_diagnostics"]["sources"]["automated"]
     grounding_reliability = automated_grounding[
         "observed_grounding_reliability_percent"]
+    automated_review = summary["engineering_evaluation"].get(
+        "automated_review") or {}
+    finding_integrity = summary["engineering_evaluation"].get(
+        "finding_integrity") or {}
     formal = summary["formal_qualification"]
     fit_mode = summary["guidance_kind"] == "engineering-fit-guidance"
     lines = [
@@ -133,6 +137,10 @@ def render_markdown(summary: dict) -> str:
         f"Human evaluation: {_human_label(summary)}  ",
         f"**Automated grounding diagnostic:** "
         f"{'unavailable' if grounding_reliability is None else f'{grounding_reliability:.1f}% observed reliability'}  ",
+        f"**Automated judge assurance:** "
+        f"{automated_review.get('calibration_status', 'not disclosed')}  ",
+        f"**Written-finding metadata:** "
+        f"{finding_integrity.get('status', 'not disclosed')}  ",
         f"**Formal qualification:** {formal['status'].upper()}", "",
     ]
     if assessment:
@@ -190,6 +198,10 @@ def render_html(summary: dict) -> str:
     reliability = automated["observed_grounding_reliability_percent"]
     grounding = ("unavailable" if reliability is None
                  else f"{reliability:.1f}% observed reliability")
+    automated_review = summary["engineering_evaluation"].get(
+        "automated_review") or {}
+    finding_integrity = summary["engineering_evaluation"].get(
+        "finding_integrity") or {}
     assessment = summary.get("assessment")
     assessment_text = (
         f"{assessment['id']} v{assessment['version']}: {assessment['status']}"
@@ -224,6 +236,8 @@ def render_html(summary: dict) -> str:
 <strong>Scope:</strong> {html.escape(C.risk_tier_label(summary['scope']['risk_tier']))} · {html.escape(summary['scope']['profile'])} profile<br>
 <strong>Human evaluation:</strong> {html.escape(_human_label(summary))}<br>
 <strong>Automated grounding diagnostic:</strong> {html.escape(grounding)}<br>
+<strong>Automated judge assurance:</strong> {html.escape(automated_review.get('calibration_status', 'not disclosed'))}<br>
+<strong>Written-finding metadata:</strong> {html.escape(finding_integrity.get('status', 'not disclosed'))}<br>
 <strong>Formal qualification:</strong> {html.escape(summary['formal_qualification']['status'].upper())}</p>
 <h2>Assessment</h2><p><strong>{html.escape(assessment_text)}</strong></p>
 <h2>Engineering task evidence</h2><table><tr><th>Status</th><th>Tasks</th></tr>{task_rows}</table>

@@ -36,9 +36,9 @@ Engineering Fit, and linked HTML report pipeline using deterministic mock
 deployments.
 
 ```text
-AIES  EVIDENCE → CAPABILITY → CONFIDENCE → ENGINEERING DECISIONS
+AIES  EVIDENCE → CAPABILITY → ASSURANCE → ENGINEERING DECISIONS
 
-TASK                         EVIDENCE  OBSERVED CAPABILITY  EVIDENCE CONFIDENCE
+TASK                         EVIDENCE  OBSERVED CAPABILITY  SCENARIO BREADTH
 ET-02 — Architecture Design  2/20      █████████░ 85%       █░░░░░░░░░ 10%
 ET-04 — Code Generation      2/20      █████████░ 92%       █░░░░░░░░░ 10%
 ET-07 — Testing              2/20      █████████░ 90%       █░░░░░░░░░ 10%
@@ -46,8 +46,10 @@ ET-07 — Testing              2/20      █████████░ 90%     
 Coverage: assessed tasks are observed; unassessed tasks remain unknown, not zero.
 ```
 
-That confidence label matters: AIES separates observed performance from
-evidence breadth instead of hiding both inside one score.
+That separation matters: AIES does not relabel scenario count as confidence.
+It reports observed performance, direct scenario breadth, and evidence
+assurance—including reviewer calibration, mapping review, instrument maturity,
+and optional human evaluation—as different facts.
 
 **Start here:** [60-second offline trial](QUICKSTART.md) ·
 [choose a path by role](GETTING_STARTED.md) ·
@@ -66,7 +68,7 @@ evidence breadth instead of hiding both inside one score.
 | See the idea without setup | `aies demo --open` | Executive Summary, ECM, fit guidance, diagnostics, and full report |
 | Understand one registered AI deployment | `aies evaluate DEPLOYMENT --plan-only` | Non-executing call plan, declared cost/ETA or exact unknowns, limitations, resumability, and execution path |
 | Evaluate it automatically | `aies evaluate DEPLOYMENT --judge JUDGE` | Completed non-blocking Engineering Evaluation and report bundle |
-| See the decision snapshot in your terminal | `aies snapshot latest` | Task evidence, observed capability, confidence, gaps, and engineering interpretation |
+| See the decision snapshot in your terminal | `aies snapshot latest` | Task evidence, observed capability, scenario breadth, assurance gaps, and engineering interpretation |
 | Check what AIES truly supports | `aies support` | Implemented, experimental, and planned subject kinds with executable entry points and limitations |
 | Choose a first workflow by decision | `aies starter list` | Prerequisites, commands, artifacts, time/cost class, evidence breadth, limitations, and next expansion |
 | Assess repository engineering practice | `aies audit .` | Evidence-backed maturity gaps and ranked remediation |
@@ -184,7 +186,8 @@ subject-neutral Engineering Task Taxonomy:
 | ET-05 | Refactoring | ET-10 | Security Review | ET-15 | Production Operations |
 
 For every applicable task, the ECM reports observed performance separately
-from evidence confidence, scenario count, coverage, and provenance. `Not
+from scenario breadth, reviewer assurance, mapping review, instrument maturity,
+optional human evaluation, coverage, and provenance. `Not
 assessed` means **no supported claim can be made**; it is not a zero-capability
 rating. This makes the ECM useful for evidence-compatible subject comparison
 and workload selection without turning AIES into a context-free leaderboard.
@@ -408,7 +411,7 @@ Adoption is progressive; users do not need to begin with formal qualification:
 |---|---|---|
 | **Try** | See the complete product without credentials or model cost | `aies demo --open` |
 | **Evaluate** | Collect and automatically score engineering evidence | `aies qualify … --judge …` or `aies benchmark … --judge …` |
-| **Understand** | Read task strengths, evidence confidence, gaps, and fit | `aies snapshot`, `aies capabilities`, `aies guidance`, `aies transcript` |
+| **Understand** | Read task strengths, scenario breadth, assurance gaps, and fit | `aies snapshot`, `aies capabilities`, `aies guidance`, `aies transcript` |
 | **Compare** | Compare compatible observed ECM evidence | `aies compare` |
 | **Integrate** | Audit repositories, export evidence, or consume shared read-only workspace and run contracts | `aies audit`, `aies export`, `aies overview`, `aies runs show`, `aies serve` |
 | **Govern** | Explicitly invoke formal qualification and human authority | `--formal-qualification`, followed by the governed rater and decision workflow |
@@ -445,6 +448,14 @@ aies guidance <run-id>
 aies compare <run-a> <run-b>
 aies transcript <run-id>
 ```
+
+Task views default to observed performance from strongest to weakest:
+`aies snapshot <run-id> --sort breadth` and
+`aies capabilities <run-id> --sort task --ascending` provide deterministic
+alternatives, while every generated HTML report table can be re-sorted by
+selecting a column heading. Long judge runs distinguish concurrency
+(`--parallel`) from responses per judge call (`--judge-batch-size`), report
+stage versus command elapsed time, and checkpoint every completed batch.
 
 Use formal qualification only when the governed decision is actually required:
 

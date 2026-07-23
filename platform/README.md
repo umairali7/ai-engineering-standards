@@ -199,7 +199,7 @@ aies qualify <deployment> --profile enterprise --rt 2 --all-areas \
 # `benchmark` has the same non-blocking automated path:
 aies benchmark <deployment> --all-areas --judge <judge> --parallel 4
 aies assessment result <run-id>  # COMPLETE/PARTIAL engineering result; exit 0
-aies capabilities <run-id>       # ECM task strengths, gaps, confidence
+aies capabilities <run-id>       # ECM task strengths, gaps, breadth, assurance
 aies guidance <run-id>           # Engineering Fit Guidance
 aies report <run-id> --format html --write
 
@@ -219,7 +219,8 @@ aies suites validate          # validate suite catalog before publishing changes
 ```
 
 Long-running collection and judge-review commands continuously display the
-current stage, completed/total work, percentage, elapsed time, throughput, ETA,
+current stage, completed/total work, percentage, stage and command elapsed
+time, throughput, ETA,
 failure count, and current scenario or batch. The same state is written to the
 run's `progress.json`, so another terminal can inspect it with
 `aies runs progress <run-id>` even if the original CLI is still running.
@@ -230,13 +231,21 @@ The live line identifies the current human-readable scenario family and
 calibrated task objective with its ordinal—for example, `Executing task 2/30:
 Performance Optimization — Remove event-loop blocking […]`. Judge progress
 identifies the task currently being scored across EV1 — Correctness through
-EV6 — Traceability. Parallel execution reports the dynamic active set and the
-effective worker capacity (`active N/<parallelism>`); neither value is
-hard-coded, so the display follows `--parallel N` or the configured default.
+EV6 — Traceability. Judge output distinguishes active **batches** from worker
+capacity: `--parallel N` controls concurrent judge requests, while
+`--judge-batch-size N` controls the maximum responses inside each request
+(default 8 or `AIES_JUDGE_BATCH_SIZE`, then context-bounded). Parallel
+execution reports the dynamic active set and effective capacity; neither value
+is hard-coded. Completed judge batches are saved immediately and reused by a
+later review.
 Interactive terminals receive a one-second heartbeat during long inference
 calls, with a terminal-width-bounded active-task line. ETA is labelled as
 calculating until the first measured completion (or uses an explicitly
 declared deployment estimate), then updates from observed throughput.
+Standalone review/resume/score commands reset `command elapsed`; they do not
+inherit the age of the stored run. Existing work is excluded from the rate,
+and slow throughput is rendered as items/minute rather than a misleading
+rounded items/second value.
 Semantic color highlights stage, progress, ETA state, failures, and active
 capacity without replacing their text labels; `NO_COLOR=1` disables color.
 

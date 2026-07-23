@@ -60,16 +60,21 @@ def _review_prompt(task: str, candidate: str, area: str) -> str:
         f"TASK ({area}):\n{task}\n\nCANDIDATE RESPONSE:\n{candidate}\n\n"
         "Reply with ONLY a JSON object, no prose, of exactly this shape:\n"
         '{"EV1":<int>,"EV2":<int>,"EV3":<int>,"EV4":<int>,"EV5":<int>,'
-        '"EV6":<int>,"findings":["short note for any score <= 2"],'
+        '"EV6":<int>,"findings":[{"dimension":"EV1..EV6",'
+        '"finding":"short evidence for a score <= 2"}],'
         '"grounding_diagnostics":{"grounding_assessed":<bool>,'
         '"unsupported_assertions":<non-negative int>,'
         '"fabricated_apis_or_entities":<non-negative int>,'
         '"invalid_citations_or_provenance":<non-negative int>,'
         '"false_success_or_test_claims":<non-negative int>,'
+        '"abstention_applicable":<true|false>,'
         '"appropriate_abstention":<true|false|null>,"notes":["short evidence"]}}\n'
         "Count only concrete instances supported by the task/response comparison. "
         "If grounding cannot be assessed, set grounding_assessed false; zero counts "
-        "then mean unavailable, not clean."
+        "then mean unavailable, not clean. Set abstention_applicable true only "
+        "when the task requires refusal, escalation, or an explicit limit. When "
+        "it is false, appropriate_abstention MUST be null; when true, record "
+        "whether the candidate handled that boundary appropriately."
     )
 
 
@@ -88,18 +93,57 @@ def _batch_review_prompt(items: list[dict]) -> str:
         + "\n\nReply with ONLY a JSON object, no prose, of exactly this shape:\n"
           '{"items":[{"item_id":"<same id>","EV1":<int>,"EV2":<int>,'
           '"EV3":<int>,"EV4":<int>,"EV5":<int>,"EV6":<int>,'
-          '"findings":["short note for any score <= 2"],'
+          '"findings":[{"dimension":"EV1..EV6",'
+          '"finding":"short evidence for a score <= 2"}],'
           '"grounding_diagnostics":{"grounding_assessed":<bool>,'
           '"unsupported_assertions":<non-negative int>,'
           '"fabricated_apis_or_entities":<non-negative int>,'
           '"invalid_citations_or_provenance":<non-negative int>,'
           '"false_success_or_test_claims":<non-negative int>,'
+          '"abstention_applicable":<true|false>,'
           '"appropriate_abstention":<true|false|null>,"notes":["short evidence"]}}]}\n'
-          "Return exactly one result for every supplied item_id."
+          "Set abstention_applicable true only when that task requires refusal, "
+          "escalation, or an explicit limit. When false, appropriate_abstention "
+          "MUST be null. Return exactly one result for every supplied item_id."
     )
 
 
-def _parse_scores(text: str) -> tuple[dict[str, int], list[str], dict | None] | None:
+def _normalize_findings(value, scores: dict[str, int]) -> list[dict]:
+    """Retain reviewer findings without inventing dimension provenance.
+
+    The current contract uses structured findings. Older reviewers may still
+    return strings; those are preserved as general findings instead of being
+    falsely attributed to EV1 with a fabricated score.
+    """
+    if not value:
+        return []
+    if isinstance(value, (str, dict)):
+        value = [value]
+    if not isinstance(value, list):
+        return []
+    findings = []
+    for item in value:
+        if isinstance(item, dict):
+            dimension = item.get("dimension")
+            finding = item.get("finding", item.get("note"))
+            if dimension not in C.DIMENSIONS:
+                dimension = "general"
+            if finding is None or not str(finding).strip():
+                continue
+        else:
+            dimension = "general"
+            finding = str(item)
+            if not finding.strip():
+                continue
+        findings.append({
+            "dimension": dimension,
+            "score": scores.get(dimension),
+            "finding": str(finding).strip(),
+        })
+    return findings
+
+
+def _parse_scores(text: str) -> tuple[dict[str, int], list[dict], dict | None] | None:
     """Extract the JSON score object from the reviewer's reply. Returns
     (scores, findings, optional grounding diagnostics) or None if it cannot be
     parsed into six 0-4 ints. Missing diagnostics remain unavailable."""
@@ -118,10 +162,7 @@ def _parse_scores(text: str) -> tuple[dict[str, int], list[str], dict | None] | 
         if not isinstance(v, int) or v not in C.VALID_SCORES:
             return None
         scores[d] = v
-    findings = obj.get("findings") or []
-    if isinstance(findings, str):
-        findings = [findings]
-    findings = [{"dimension": "EV1", "score": 0, "finding": str(f)} for f in findings]
+    findings = _normalize_findings(obj.get("findings"), scores)
     try:
         grounding = diagnostics.normalize(obj.get("grounding_diagnostics"))
     except ValueError:
@@ -188,7 +229,8 @@ def _make_batches(recs: list[dict], prompts: dict[str, str], *, max_items: int,
 
 def run_model_review(run_id: str, reviewer_deployment: str,
                      runtime: str | None = None, workers: int = 1,
-                     batch_size: int = 1, progress_callback=None) -> dict:
+                     batch_size: int = 1, progress_callback=None,
+                     reset_progress_clock: bool = False) -> dict:
     """Have a reviewer deployment score every response in a run; ingest the
     parseable ones as model-kind ratings. Returns a summary.
 
@@ -227,6 +269,16 @@ def run_model_review(run_id: str, reviewer_deployment: str,
     catalog = _scenario_catalog({r["area"] for r in recs})
     prompts = {scenario_id: scenario["prompt"]
                for scenario_id, scenario in catalog.items()}
+    context_window = int(entry.get("context_window") or
+                         (adapter.capabilities() or {}).get("max_context") or 8192)
+    # Roughly two characters per advertised token leaves substantial room for
+    # instructions and output even for code-heavy text. Oversized single items
+    # remain single-item requests and rely on the endpoint's normal error path.
+    max_batch_chars = max(8_000, min(120_000, context_window * 2))
+    batches = _make_batches(recs, prompts, max_items=max(1, batch_size),
+                            max_chars=max_batch_chars)
+    batch_ordinals = {id(batch): index
+                      for index, batch in enumerate(batches, start=1)}
 
     record_ordinals = {
         f"{rec['scenario_id']}-r{rec['repeat']}.json": index
@@ -247,10 +299,19 @@ def run_model_review(run_id: str, reviewer_deployment: str,
     progress_failures = 0
     progress_lock = threading.Lock()
     active_review_tasks: dict[str, None] = {}
+    serial_hint = (
+        "; serial review: use --parallel N only when the reviewer endpoint "
+        "supports concurrent inference"
+        if workers == 1 and len(batches) > 1 else "")
     progress.update(run_id, "judge-review", progress_done, len(all_recs),
                     message=(f"reviewer {reviewer_deployment}; {len(existing)} "
-                             "existing ratings reused"),
+                             f"existing ratings reused; {workers} concurrent "
+                             f"batch worker(s); up to {max(1, batch_size)} "
+                             f"items per batch; {len(batches)} batch(es)"
+                             f"{serial_hint}"),
                     parallelism=max(1, workers),
+                    active_unit=("batch" if batch_size > 1 else "task"),
+                    reset_operation=reset_progress_clock,
                     estimated_seconds_per_request=(
                         (entry.get("planning") or {}).get(
                             "estimated_seconds_per_request")),
@@ -266,6 +327,7 @@ def run_model_review(run_id: str, reviewer_deployment: str,
                             current=current, activity="Scored task",
                             active_tasks=list(active_review_tasks),
                             parallelism=max(1, workers), failures=progress_failures,
+                            active_unit=("batch" if batch_size > 1 else "task"),
                             callback=progress_callback)
 
     def _review_started(current: str) -> None:
@@ -276,6 +338,7 @@ def run_model_review(run_id: str, reviewer_deployment: str,
                             activity="Scoring EV1 Correctness through EV6 Traceability",
                             active_tasks=list(active_review_tasks),
                             parallelism=max(1, workers),
+                            active_unit=("batch" if batch_size > 1 else "task"),
                             failures=progress_failures, callback=progress_callback)
 
     def _score_one(rec: dict, announce: bool = True):
@@ -286,19 +349,21 @@ def run_model_review(run_id: str, reviewer_deployment: str,
             prompt=_review_prompt(task, rec["raw_response"], rec["area"])))
         return rec, _parse_scores(reply.text)
 
-    context_window = int(entry.get("context_window") or
-                         (adapter.capabilities() or {}).get("max_context") or 8192)
-    # Roughly two characters per advertised token leaves substantial room for
-    # instructions and output even for code-heavy text. Oversized single items
-    # remain single-item requests and rely on the endpoint's normal error path.
-    max_batch_chars = max(8_000, min(120_000, context_window * 2))
-    batches = _make_batches(recs, prompts, max_items=max(1, batch_size),
-                            max_chars=max_batch_chars)
+    def _batch_label(batch: list[dict]) -> str:
+        ordinal = batch_ordinals.get(id(batch), "?")
+        positions = [
+            record_ordinals.get(item["item_id"], "?") for item in batch]
+        span = (str(positions[0]) if len(positions) == 1
+                else f"{positions[0]}–{positions[-1]}")
+        first = (item_label := _record_label(batch[0]["record"])).split(" · ", 1)
+        detail = first[1] if len(first) > 1 else item_label
+        return (
+            f"Batch {ordinal}/{len(batches)} · {len(batch)} items · "
+            f"Tasks {span}/{len(all_recs)} · {detail}")
 
     def _score_batch(batch: list[dict], announce: bool = True):
         """Score a batch, recursively splitting only if the contract is missed."""
-        labels = [_record_label(item["record"]) for item in batch]
-        batch_label = labels[0] if len(labels) == 1 else f"{labels[0]} + {len(labels) - 1} more"
+        batch_label = _batch_label(batch)
         if announce:
             _review_started(batch_label)
         if len(batch) == 1:
@@ -317,97 +382,100 @@ def run_model_review(run_id: str, reviewer_deployment: str,
     judge_calls = 0
     batch_fallbacks = 0
     scoring_errors: list[str] = []
+    parsed = 0
+    failed = 0
+    written: list[str] = []
+
+    def _persist(rows: list[tuple[dict, tuple | None]]) -> None:
+        """Persist every completed judge batch before starting the next one."""
+        nonlocal parsed, failed
+        items = []
+        for rec, result in rows:
+            if result is None:
+                failed += 1
+                continue
+            scores, findings, grounding = result
+            low = [dimension for dimension in C.DIMENSIONS
+                   if scores[dimension] <= 2]
+            if low and not findings:
+                findings = [{
+                    "dimension": low[0],
+                    "score": scores[low[0]],
+                    "finding": "reviewer model scored low; see critique",
+                }]
+            items.append({
+                "response_record":
+                    f"{rec['scenario_id']}-r{rec['repeat']}.json",
+                "scenario_id": rec["scenario_id"],
+                "repeat": rec["repeat"],
+                "scores": scores,
+                "findings": findings,
+                "grounding_diagnostics": grounding,
+            })
+        if not items:
+            return
+        sheet = {
+            "run_id": run_id,
+            "rater": {"name": reviewer_label, "kind": "model"},
+            "items": items,
+        }
+        # The append-only records are the durable checkpoint. Suppressing the
+        # nested admission renderer keeps the visible stage on judge-review.
+        written.extend(rating.ingest_scores(
+            run_id, sheet, emit_progress=False))
+        parsed += len(items)
+
     if batch_size > 1 and batches:
         if workers and workers > 1:
             from concurrent.futures import ThreadPoolExecutor, as_completed
             with ThreadPoolExecutor(max_workers=workers) as pool:
                 future_batches = {pool.submit(_score_batch, batch): batch for batch in batches}
-                outcomes = []
                 for future in as_completed(future_batches):
                     batch = future_batches[future]
                     ids = [item["item_id"] for item in batch]
                     try:
                         result = future.result()
-                        outcomes.append(result)
-                        labels = [_record_label(item["record"]) for item in batch]
-                        _review_progress(len(result[0]), labels[0] if len(labels) == 1
-                                         else f"{labels[0]} + {len(labels) - 1} more")
+                        _persist(result[0])
+                        judge_calls += result[1]
+                        batch_fallbacks += result[2]
+                        _review_progress(len(result[0]), _batch_label(batch))
                     except Exception as exc:  # successful batches remain ingestible below
                         scoring_errors.append(f"{ids[0]}..{ids[-1]}: {exc}")
-                        labels = [_record_label(item["record"]) for item in batch]
-                        _review_progress(len(batch), labels[0] if len(labels) == 1
-                                         else f"{labels[0]} + {len(labels) - 1} more",
-                                         len(batch))
+                        _review_progress(
+                            len(batch), _batch_label(batch), len(batch))
         else:
-            outcomes = []
             for batch in batches:
                 ids = [item["item_id"] for item in batch]
                 try:
                     result = _score_batch(batch)
-                    outcomes.append(result)
-                    labels = [_record_label(item["record"]) for item in batch]
-                    _review_progress(len(result[0]), labels[0] if len(labels) == 1
-                                     else f"{labels[0]} + {len(labels) - 1} more")
+                    _persist(result[0])
+                    judge_calls += result[1]
+                    batch_fallbacks += result[2]
+                    _review_progress(len(result[0]), _batch_label(batch))
                 except Exception as exc:
                     scoring_errors.append(f"{ids[0]}..{ids[-1]}: {exc}")
-                    labels = [_record_label(item["record"]) for item in batch]
-                    _review_progress(len(batch), labels[0] if len(labels) == 1
-                                     else f"{labels[0]} + {len(labels) - 1} more",
-                                     len(batch))
-        scored = []
-        for rows, calls, fallbacks in outcomes:
-            scored.extend(rows)
-            judge_calls += calls
-            batch_fallbacks += fallbacks
+                    _review_progress(
+                        len(batch), _batch_label(batch), len(batch))
     elif workers and workers > 1 and recs:
         from concurrent.futures import ThreadPoolExecutor
         with ThreadPoolExecutor(max_workers=workers) as pool:
-            scored = []
             for row in pool.map(_score_one, recs):  # preserves recs order
-                scored.append(row)
+                _persist([row])
                 rec = row[0]
                 _review_progress(1, _record_label(rec))
         judge_calls = len(recs)
     else:
-        scored = []
         for rec in recs:
             row = _score_one(rec)
-            scored.append(row)
+            _persist([row])
             _review_progress(1, _record_label(rec))
         judge_calls = len(recs)
 
-    scored.sort(key=lambda pair: (pair[0]["scenario_id"], int(pair[0]["repeat"])))
-    items, parsed, failed = [], 0, 0
-    for rec, result in scored:
-        if result is None:
-            failed += 1
-            continue
-        scores, findings, grounding = result
-        # Ensure a finding exists for any low score (AIES-AESQS-ER-01).
-        low = [d for d in C.DIMENSIONS if scores[d] <= 2]
-        if low and not findings:
-            findings = [{"dimension": low[0], "score": scores[low[0]],
-                         "finding": "reviewer model scored low; see critique"}]
-        items.append({
-            "response_record": f"{rec['scenario_id']}-r{rec['repeat']}.json",
-            "scenario_id": rec["scenario_id"], "repeat": rec["repeat"],
-            "scores": scores, "findings": findings,
-            "grounding_diagnostics": grounding,
-        })
-        parsed += 1
-
-    if not items and not existing:
+    if not written and not existing:
         raise ModelReviewError(
             f"reviewer {reviewer_deployment!r} produced no parseable scores "
             f"across {len(all_recs)} responses; its ratings cannot be recorded")
 
-    written = []
-    if items:
-        sheet = {"run_id": run_id,
-                 "rater": {"name": reviewer_label, "kind": "model"},
-                 "items": items}
-        written = rating.ingest_scores(run_id, sheet,
-                                       progress_callback=progress_callback)
     if scoring_errors:
         progress.update(run_id, "judge-review", progress_done, len(all_recs),
                         status="partial", failures=progress_failures,

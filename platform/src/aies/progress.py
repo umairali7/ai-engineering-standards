@@ -35,10 +35,21 @@ def format_duration(seconds: float | int | None) -> str:
     return f"{secs}s"
 
 
+def format_rate(per_second: float | int | None) -> str:
+    """Render throughput in a useful unit and make the unit explicit."""
+    rate = max(0.0, float(per_second or 0.0))
+    if rate <= 0:
+        return "calculating"
+    if rate < 0.1:
+        return f"{rate * 60:.2f} items/min"
+    return f"{rate:.2f} items/s"
+
+
 def update(run_id: str, stage: str, completed: int, total: int, *,
            status: str = "running", current: str = "", failures: int = 0,
            activity: str = "", current_index: int | None = None, message: str = "",
            active_tasks: list[str] | None = None, parallelism: int | None = None,
+           active_unit: str = "task", reset_operation: bool = False,
            estimated_seconds_per_request: float | None = None,
            callback: ProgressCallback | None = None) -> dict:
     """Persist one current-state progress snapshot and optionally render it."""
@@ -49,15 +60,23 @@ def update(run_id: str, stage: str, completed: int, total: int, *,
     if estimated_seconds_per_request is None:
         estimated_seconds_per_request = previous.get(
             "estimated_seconds_per_request")
-    started_at = previous.get("started_at") or _now()
-    started_epoch = previous.get("started_epoch") or time.time()
     now_epoch = time.time()
-    same_stage = previous.get("stage") == stage
+    if reset_operation:
+        started_at, started_epoch = _now(), now_epoch
+    else:
+        started_at = previous.get("started_at") or _now()
+        started_epoch = previous.get("started_epoch") or now_epoch
+    same_stage = not reset_operation and previous.get("stage") == stage
     stage_started_at = (previous.get("stage_started_at") if same_stage else None) or _now()
     stage_started_epoch = (previous.get("stage_started_epoch") if same_stage else None) or now_epoch
+    stage_initial_completed = (
+        int(previous.get("stage_initial_completed", 0))
+        if same_stage else int(completed)
+    )
     elapsed = max(0.0, now_epoch - float(stage_started_epoch))
     total_elapsed = max(0.0, now_epoch - float(started_epoch))
-    rate = completed / elapsed if completed and elapsed > 0 else 0.0
+    measured_completed = max(0, int(completed) - stage_initial_completed)
+    rate = measured_completed / elapsed if measured_completed and elapsed > 0 else 0.0
     remaining = max(0, total - completed)
     if status != "running" or completed >= total:
         eta_seconds = 0.0
@@ -90,6 +109,7 @@ def update(run_id: str, stage: str, completed: int, total: int, *,
         "current_index": current_index,
         "active_tasks": list(active_tasks or []),
         "active_count": len(active_tasks or []),
+        "active_unit": active_unit,
         "parallelism": parallelism,
         "estimated_seconds_per_request": estimated_seconds_per_request,
         "message": message,
@@ -99,6 +119,8 @@ def update(run_id: str, stage: str, completed: int, total: int, *,
         # canonical assessment evidence.
         "started_epoch": started_epoch,
         "stage_started_epoch": stage_started_epoch,
+        "stage_initial_completed": stage_initial_completed,
+        "measured_completed": measured_completed,
         "updated_at": _now(),
         "elapsed_seconds": round(elapsed, 1),
         "total_elapsed_seconds": round(total_elapsed, 1),
@@ -133,6 +155,7 @@ class CliProgress:
         self._received_monotonic = time.monotonic()
         self._lock = threading.RLock()
         self._heartbeat: threading.Thread | None = None
+        self._slow_judge_tip_shown = False
 
     def _is_tty(self) -> bool:
         return bool(getattr(self.stream, "isatty", lambda: False)())
@@ -161,7 +184,10 @@ class CliProgress:
             or 0.0) + delta
         completed = int(event.get("completed") or 0)
         total = int(event.get("total") or 0)
-        rate = completed / elapsed if completed and elapsed > 0 else 0.0
+        measured = max(
+            0, completed - int(event.get("stage_initial_completed") or 0))
+        rate = measured / elapsed if measured and elapsed > 0 else 0.0
+        event["measured_completed"] = measured
         event["elapsed_seconds"] = elapsed
         event["total_elapsed_seconds"] = total_elapsed
         event["throughput_per_second"] = rate
@@ -179,19 +205,25 @@ class CliProgress:
         active_tasks = event.get("active_tasks") or []
         if active_tasks:
             capacity = event.get("parallelism") or len(active_tasks)
+            unit = event.get("active_unit") or "task"
+            label = "batches" if unit == "batch" else "tasks"
             # Rotate the visible task on every heartbeat. Parallel activity
             # stays observable without creating an unbounded terminal line.
             tick = int(float(event.get("total_elapsed_seconds") or 0.0)
                        / self.refresh_interval)
             selected = active_tasks[tick % len(active_tasks)]
             more = f" (+{len(active_tasks) - 1} more)" if len(active_tasks) > 1 else ""
-            return f" · Active {len(active_tasks)}/{capacity}: {selected}{more}"
+            return (
+                f" · Active {label} {len(active_tasks)}/{capacity}: "
+                f"{selected}{more}")
         if event.get("current"):
             action = event.get("activity") or "Current task"
             total = event.get("total") or 0
             position = (f" {event['current_index']}/{total}"
                         if event.get("current_index") is not None and total else "")
             return f" · {action}{position}: {event['current']}"
+        if event.get("message"):
+            return f" · {event['message']}"
         return ""
 
     def _format(self, event: dict) -> str:
@@ -210,8 +242,8 @@ class CliProgress:
         line = (
             f"[{event['stage']}] {completed}/{total} ({event['percent']:.1f}%) "
             f"· stage elapsed {format_duration(event['elapsed_seconds'])} · "
-            f"total elapsed {format_duration(total_elapsed)} · "
-            f"rate {event['throughput_per_second']:.2f}/s · ETA {eta}"
+            f"command elapsed {format_duration(total_elapsed)} · "
+            f"rate {format_rate(event['throughput_per_second'])} · ETA {eta}"
             f"{failures}{self._active_detail(event)}")
         if self._is_tty() and len(line) > self._width() - 1:
             line = line[:max(1, self._width() - 2)].rstrip() + "…"
@@ -256,7 +288,9 @@ class CliProgress:
         active_tasks = event.get("active_tasks") or []
         if active_tasks:
             capacity = event.get("parallelism") or len(active_tasks)
-            active_text = f"Active {len(active_tasks)}/{capacity}"
+            unit = event.get("active_unit") or "task"
+            label = "batches" if unit == "batch" else "tasks"
+            active_text = f"Active {label} {len(active_tasks)}/{capacity}"
             line = line.replace(
                 active_text, f"{magenta}{active_text}{reset}", 1)
         return line
@@ -270,6 +304,24 @@ class CliProgress:
                   file=self.stream, flush=True)
         else:
             print(line, file=self.stream, flush=True)
+
+    def _show_slow_judge_tip(self, event: dict) -> None:
+        """Emit one actionable, non-blocking warning for a long serial judge."""
+        if (self._slow_judge_tip_shown
+                or event.get("stage") != "judge-review"
+                or int(event.get("parallelism") or 1) != 1
+                or int(event.get("measured_completed") or 0) < 1
+                or float(event.get("eta_seconds") or 0) < 3600):
+            return
+        self._slow_judge_tip_shown = True
+        prefix = "\n" if self._is_tty() else ""
+        print(
+            prefix
+            + "  tip: projected serial judge time exceeds 1 hour. Completed "
+              "batches are checkpointed; resume with --parallel N if the "
+              "endpoint supports concurrent inference, or use a faster "
+              "reviewer.",
+            file=self.stream, flush=True)
 
     def _heartbeat_loop(self) -> None:
         while True:
@@ -305,4 +357,5 @@ class CliProgress:
             self._last_event = dict(event)
             self._received_monotonic = time.monotonic()
             self._render(self._last_event, terminal=terminal)
+            self._show_slow_judge_tip(self._last_event)
             self._ensure_heartbeat()

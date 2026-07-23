@@ -401,7 +401,7 @@ normalize SARIF 2.1.0 findings without claim inflation
 
 render the Engineering Capability Matrix for an aggregated run/deployment
 
-**Usage:** `aies capabilities [-h] [--json] [--ecm] [--qualification-profile] [--format {markdown,json,html}] [--write] ref`
+**Usage:** `aies capabilities [-h] [--json] [--ecm] [--qualification-profile] [--format {markdown,json,html}] [--sort {task,performance,breadth,evidence,status}] [--ascending] [--write] ref`
 
 **Prerequisites:** An aggregated run exists; deployment ids resolve to their latest aggregated run.
 
@@ -419,6 +419,8 @@ render the Engineering Capability Matrix for an aggregated run/deployment
 | `--ecm` | optional | compatibility alias; ECM is now the default capability view | — |
 | `--qualification-profile` | optional | render the separate formal per-area CL/autonomy qualification view | Switches from the default ECM to the separate formal CL/autonomy qualification view. |
 | `--format` | optional | ECM output format (default: markdown) | choices: `markdown`, `json`, `html`; default: `markdown` |
+| `--sort` | optional | sort task rows (default: performance) | choices: `task`, `performance`, `breadth`, `evidence`, `status`; default: `performance`; Orders ECM task rows; generated HTML can also be re-sorted by selecting any column heading. |
+| `--ascending` | optional | sort from low to high; unassessed tasks remain last | Reverses the selected ECM sort while keeping unassessed tasks separate at the end. |
 | `--write` | optional | write ECM output beside the run | Writes the default ECM artifact beside the run. |
 
 ## `aies ci`
@@ -2187,8 +2189,8 @@ assemble a multi-deployment peer-review package
 | `--reviewer` | optional | label for the reviewer model | default: `reviewer-model` |
 | `--model-reviewer` | optional | drive this reviewer deployment to score the responses before assembling the package | Required for live reviewer inference; without it the command assembles from existing review evidence. |
 | `--reviewer-runtime` | optional | disambiguate the reviewer deployment's runtime | — |
-| `--parallel` | optional | concurrent reviewer calls when using --model-reviewer (default 1, or $AIES_PARALLEL) | — |
-| `--judge-batch-size` | optional | responses per reviewer request (default 8, or $AIES_JUDGE_BATCH_SIZE; automatically bounded by context) | — |
+| `--parallel` | optional | concurrent reviewer calls when using --model-reviewer (default 1, or $AIES_PARALLEL) | Controls concurrent reviewer requests. It is independent of judge batch size; `--parallel 1` means one active batch request. |
+| `--judge-batch-size` | optional | responses per reviewer request (default 8, or $AIES_JUDGE_BATCH_SIZE; automatically bounded by context) | Controls the maximum responses inside each reviewer request (default 8 or AIES_JUDGE_BATCH_SIZE, then bounded by context). |
 | `--reviewer-qualified` | optional | the reviewer holds a current review-class (CA-06) qualification | A declaration that must be supported by a current CA-06 — Testing, Quality & Evaluation Engineering qualification. |
 | `--calibration` | optional | JSON {model:[...], human_anchor:[...]} for bootstrap calibration | Bootstrap evidence for an otherwise unqualified reviewer; does not make model ratings human qualification evidence. |
 | `--consider-advisory-review` | optional | record that a human considered the advisory automated-review scores | — |
@@ -2390,9 +2392,9 @@ thin read-only REST API over versioned views and stored canonical artifacts (JSO
 
 ## `aies snapshot`
 
-show evidence, capability, confidence, and engineering decisions
+show evidence, capability, scenario breadth, assurance, and engineering decisions
 
-**Usage:** `aies snapshot [-h] [--json] [--observed-only] [run]`
+**Usage:** `aies snapshot [-h] [--json] [--observed-only] [--sort {task,performance,breadth,evidence,status}] [--ascending] [run]`
 
 **Prerequisites:** A completed run has an Engineering Capability Matrix; `latest` selects the newest workspace run.
 
@@ -2408,6 +2410,8 @@ show evidence, capability, confidence, and engineering decisions
 | `--json` | optional | machine-readable output | — |
 | `<RUN>` | optional | completed run id or 'latest' (default: latest) | default: `latest` |
 | `--observed-only` | optional | hide tasks without directly mapped scored evidence | Hides unassessed task rows from the table; the coverage summary still reports them as unknown rather than zero. |
+| `--sort` | optional | sort task rows (default: performance) | choices: `task`, `performance`, `breadth`, `evidence`, `status`; default: `performance`; Orders task rows by task, observed performance, scenario breadth, distinct evidence, or engineering status; default is strongest observed performance first. |
+| `--ascending` | optional | sort from low to high; unknown tasks remain last | Reverses the selected sort while keeping unassessed tasks at the end instead of misrepresenting unknown as a low score. |
 
 ## `aies starter`
 

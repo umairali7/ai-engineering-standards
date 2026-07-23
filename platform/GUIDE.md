@@ -152,7 +152,11 @@ Useful operating habits:
 - Interactive progress heartbeats once per second while a model call is in
   flight. ETA is labelled as calculating until the first completion, uses a
   declared deployment estimate when one exists, and then updates from observed
-  throughput. Interactive terminals use semantic color while retaining text
+  throughput. `stage elapsed` is the current stage; `command elapsed` resets
+  for a standalone resume/review/score invocation and never means the age of
+  the stored run. Reused responses or ratings are excluded from measured
+  throughput. Slow rates switch to the readable `items/min` unit. Interactive
+  terminals use semantic color while retaining text
   labels; set `NO_COLOR=1` or `AIES_COLOR=never` to disable it. Redirected CI
   output remains plain and throttled.
 - `--parallel N` sets concurrent calls. Lower it for rate limiting; it cannot
@@ -489,7 +493,11 @@ declared context window. A malformed batch is split recursively so valid
 per-response ratings are never fabricated or lost. Set
 `--judge-batch-size N` (or `AIES_JUDGE_BATCH_SIZE`) to tune the maximum. This
 changes request overhead only; AIES still validates and persists one rating
-record per candidate response.
+record per candidate response. `--parallel 1` means one active judge request;
+it does not change the up-to-eight items inside that request. Live output says
+`Active batches 1/1` and identifies the batch/task span so the two controls
+cannot be mistaken for each other. Each completed batch is persisted
+immediately, making a later resume reuse completed scores.
 
 **If the judge step fails (e.g. a TLS or auth error), you do not re-collect.**
 Responses are written as they are collected, so they survive a later failure.
@@ -588,7 +596,12 @@ signature you didn't check is reported as such — never a false pass.
 **Slow run?** Cap output length with `export AIES_MAX_TOKENS=1024` (often the
 biggest candidate-side speedup). On a single local GPU, more `--parallel`
 mostly queues on the model. Judge requests are batched automatically; tune
-`--judge-batch-size` only to match the judge context and throughput. Use an
+`--judge-batch-size` only to match the judge context and throughput. A serial
+judge can take approximately `remaining batches × observed batch latency`;
+raise `--parallel` only if the serving endpoint actually performs concurrent
+inference. Completed judge batches are durable, so a resumed review does not
+pay for them again. Once measured, a serial judge projected above one hour
+emits a single non-blocking speed-up tip; work continues automatically. Use an
 explicit `--repeats` only for a separate stability study. See
 [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for timeout, TLS, auth, and judge
 issues.
@@ -781,12 +794,18 @@ collection intent only, not successful responses or admitted ratings.
 
 In an Engineering Capability Matrix, **not assessed** means no mapped scored
 scenario evidence was collected for that task. It is unknown, not a failure or
-a low score. ADR-0013 task decisions count one resolved admitted item per
+a low score. The reader-facing **scenario breadth** percentage is only distinct
+directly mapped scenarios divided by the task target. It is not a confidence
+score. Evidence assurance is disclosed separately through reviewer calibration,
+mapping review, empirical instrument maturity, and optional human evaluation.
+ADR-0013 task decisions count one resolved admitted item per
 distinct mapped scenario, apply task-specific RT minimums, lower 90% confidence
 bounds, risk-tier gates, mapping review, parent-area outcomes, and the human
 rater protocol. **Demonstrated** means all formal controls pass. By default,
 `aies guidance <run>` renders Engineering Fit Guidance from observed evidence
-with strong-fit, engineering-review, weak-fit, and not-assessed categories.
+with strong-fit, limited-evidence, engineering-review, weak-fit, and
+not-assessed categories. A high observed score with thin direct breadth remains
+`limited-evidence`; it cannot receive a strong-fit label.
 This needs no human review and creates no deployment authority. Supply an active
 matching human record with `aies guidance <run> --qualification <QUAL-id>` only
 to switch to qualification-bounded Deployment Guidance.

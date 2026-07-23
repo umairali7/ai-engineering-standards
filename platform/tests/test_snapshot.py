@@ -77,17 +77,23 @@ def test_snapshot_keeps_performance_confidence_and_authority_separate(
     result = snapshot.build("latest")
     assert result["kind"] == "engineering-decision-snapshot"
     assert result["tasks"][0]["observed_performance_percent"] == 90
+    assert result["tasks"][0]["scenario_breadth_percent"] == 50
     assert result["tasks"][0]["evidence_confidence_percent"] == 50
     assert result["human_evaluation"] == "not reviewed (optional)"
 
     rendered = snapshot.render(result, width=130)
-    assert "EVIDENCE → CAPABILITY → CONFIDENCE → ENGINEERING DECISIONS" in rendered
+    assert "EVIDENCE → CAPABILITY → ASSURANCE → ENGINEERING DECISIONS" in rendered
     assert "ET-03 — API Design" in rendered
     assert "15/30" in rendered
     assert "90.0%" in rendered
     assert "50.0%" in rendered
     assert "1 not assessed (unknown, not zero)" in rendered
     assert "no qualification, grant, deployment recommendation" in rendered
+    assert "Order: performance (descending)" in rendered
+
+    task_order = snapshot.render(
+        result, width=130, sort_by="task", descending=False)
+    assert task_order.index("ET-03 — API Design") < task_order.index("ET-09 —")
 
 
 def test_snapshot_has_readable_narrow_and_observed_only_modes(
@@ -98,7 +104,7 @@ def test_snapshot_has_readable_narrow_and_observed_only_modes(
     result = snapshot.build("run-snapshot")
     narrow = snapshot.render(result, width=80)
     assert "capability █████████░ 90.0%" in narrow
-    assert "confidence █████░░░░░ 50.0%" in narrow
+    assert "breadth    █████░░░░░ 50.0%" in narrow
 
     observed = snapshot.render(result, width=80, observed_only=True)
     assert "ET-03 — API Design" in observed

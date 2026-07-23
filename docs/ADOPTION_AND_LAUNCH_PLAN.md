@@ -24,7 +24,7 @@ third is a shared, reproducible case study or contribution.
 2. **Product:** AIES turns versioned assessment evidence into an Engineering
    Capability Matrix, Engineering Fit guidance, diagnostics, and traceable
    reports.
-3. **Difference:** observed performance and evidence confidence stay separate;
+3. **Difference:** observed performance, scenario breadth, and evidence assurance stay separate;
    unassessed remains unknown; compatible comparison is task-specific; formal
    qualification remains a separate human-governed process.
 4. **Proof:** anyone can run the complete deterministic product path offline,
@@ -49,7 +49,7 @@ third is a shared, reproducible case study or contribution.
 Each asset must show real generated output and pass claim review:
 
 - GitHub social preview: `docs/assets/aies-social-preview.png` now visualizes
-  evidence → ECM → confidence → decision; repository settings still need to
+  evidence → ECM → assurance → decision; repository settings still need to
   select it as the social image.
 - Root README: problem, 60-second command, expected output, honest maturity,
   supported scope, primary CTA, persona paths, help/contribution links.

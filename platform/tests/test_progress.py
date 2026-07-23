@@ -48,6 +48,36 @@ def test_progress_rate_resets_for_each_stage(tmp_path, monkeypatch):
     assert second["elapsed_seconds"] <= second["total_elapsed_seconds"]
 
 
+def test_standalone_operation_resets_clocks_and_excludes_reused_work(
+        tmp_path, monkeypatch):
+    monkeypatch.setenv("AIES_WORKSPACE", str(tmp_path / "ws"))
+    from aies import progress
+
+    epochs = iter((100.0, 500.0, 510.0))
+    monkeypatch.setattr(progress.time, "time", lambda: next(epochs))
+    progress.update("run-1", "response-collection", 147, 147)
+    started = progress.update(
+        "run-1", "judge-review", 14, 147, reset_operation=True)
+    advanced = progress.update("run-1", "judge-review", 21, 147)
+
+    assert started["elapsed_seconds"] == 0
+    assert started["total_elapsed_seconds"] == 0
+    assert started["stage_initial_completed"] == 14
+    assert started["throughput_per_second"] == 0
+    assert advanced["elapsed_seconds"] == 10
+    assert advanced["total_elapsed_seconds"] == 10
+    assert advanced["measured_completed"] == 7
+    assert advanced["throughput_per_second"] == 0.7
+
+
+def test_slow_rate_uses_items_per_minute():
+    from aies.progress import format_rate
+
+    assert format_rate(0) == "calculating"
+    assert format_rate(0.01) == "0.60 items/min"
+    assert format_rate(0.5) == "0.50 items/s"
+
+
 def test_runs_progress_cli_exposes_durable_detail(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("AIES_WORKSPACE", str(tmp_path / "ws"))
     from aies import cli, progress
@@ -55,7 +85,7 @@ def test_runs_progress_cli_exposes_durable_detail(tmp_path, monkeypatch, capsys)
     progress.update("run-1", "judge-review", 3, 10, current="batch-3")
     assert cli.cmd_runs(Namespace(runs_cmd="progress", run="run-1", json=False)) == 0
     output = capsys.readouterr().out
-    for label in ("stage", "progress", "stage time", "total time", "throughput",
+    for label in ("stage", "progress", "stage time", "command time", "throughput",
                   "ETA", "failures", "current", "resumable"):
         assert label in output
 
@@ -77,7 +107,7 @@ def test_cli_progress_is_detailed_and_throttles_redirected_logs():
             "status": "completed", "eta_seconds": 0.0})
     output = stream.getvalue()
     assert output.count("[judge-review]") == 3
-    assert "stage elapsed" in output and "total elapsed" in output
+    assert "stage elapsed" in output and "command elapsed" in output
     assert "rate" in output and "ETA" in output
     assert "Scoring task 1/100: batch-1" in output
     assert "batch-2" in output
@@ -97,9 +127,33 @@ def test_cli_progress_renders_dynamic_parallel_active_tasks():
             "active_count": 2,
             "active_tasks": ["Task 4/30 · API Design", "Task 5/30 · Testing"]})
     output = stream.getvalue()
-    assert "Active 2/8" in output
+    assert "Active tasks 2/8" in output
     assert "Task 4/30 · API Design" in output
     assert "(+1 more)" in output
+
+
+def test_cli_progress_distinguishes_batches_from_workers():
+    from aies.progress import CliProgress
+
+    stream = io.StringIO()
+    render = CliProgress(stream)
+    render({
+        "stage": "judge-review", "status": "running",
+        "completed": 14, "total": 147, "percent": 9.5,
+        "elapsed_seconds": 1263.0, "total_elapsed_seconds": 1263.0,
+        "throughput_per_second": 0.011, "eta_seconds": 12000.0,
+        "eta_basis": "observed-throughput", "failures": 0,
+        "measured_completed": 14,
+        "current": "", "current_index": None, "parallelism": 1,
+        "active_unit": "batch",
+        "active_tasks": [
+            "Batch 3/21 · 7 items · Tasks 15–21/147 · API Design"],
+    })
+    output = stream.getvalue()
+    assert "rate 0.66 items/min" in output
+    assert "Active batches 1/1" in output
+    assert "Batch 3/21 · 7 items · Tasks 15–21/147" in output
+    assert output.count("projected serial judge time exceeds 1 hour") == 1
 
 
 def test_cli_progress_heartbeat_refreshes_elapsed_time_during_long_call():
@@ -203,7 +257,7 @@ def test_interactive_progress_uses_semantic_color(monkeypatch):
     output = stream.getvalue()
     assert "\033[36m[judge-review]\033[0m" in output
     assert "\033[31mfailures 1\033[0m" in output
-    assert "\033[35mActive 1/4\033[0m" in output
+    assert "\033[35mActive tasks 1/4\033[0m" in output
 
 
 def test_interactive_progress_respects_no_color(monkeypatch):

@@ -652,7 +652,12 @@ def cmd_snapshot(args) -> int:
         _out(
             result,
             args.json,
-            snapshot.render(result, observed_only=args.observed_only),
+            snapshot.render(
+                result,
+                observed_only=args.observed_only,
+                sort_by=getattr(args, "sort", "performance"),
+                descending=not getattr(args, "ascending", False),
+            ),
         )
         return 0
     except (adoption.AdoptionError, snapshot.SnapshotError) as e:
@@ -792,15 +797,18 @@ def cmd_qualify(args) -> int:
                 jdep = manifest["model"]["registry_id"] if judge == "self" else judge
                 reviewer_id = jdep
                 workers = getattr(args, "parallel", None) or config.default_parallel()
+                batch_size = (getattr(args, "judge_batch_size", None)
+                              or config.judge_batch_size())
                 if not args.json:
-                    print(f"scoring existing responses with judge '{jdep}' across "
-                          f"{workers} worker(s)…", file=sys.stderr)
+                    print(f"scoring existing responses with judge '{jdep}' using "
+                          f"{workers} concurrent batch worker(s), up to "
+                          f"{batch_size} response(s) per judge call…",
+                          file=sys.stderr)
                 scoring = model_review.run_model_review(
                     args.resume, jdep,
                     runtime=getattr(args, "reviewer_runtime", None), workers=workers,
-                    batch_size=(getattr(args, "judge_batch_size", None)
-                                or config.judge_batch_size()),
-                    progress_callback=live_progress)
+                    batch_size=batch_size, progress_callback=live_progress,
+                    reset_progress_clock=True)
                 review_pkg = review.assemble_review_package(
                     args.resume, reviewer_label=f"model:{jdep}",
                     consider_advisory_review=getattr(args, "consider_advisory_review", False),
@@ -913,15 +921,17 @@ def cmd_qualify(args) -> int:
             reviewer_id = jdep
             self_judged = jdep == manifest["model"]["registry_id"]
             n_resp = len(list((workspace.run_dir(run_id) / "responses").glob("*.json")))
+            batch_size = (getattr(args, "judge_batch_size", None)
+                          or config.judge_batch_size())
             if not args.json:
-                print(f"scoring {n_resp} responses with judge '{jdep}' across "
-                      f"{workers} worker(s)…", file=sys.stderr)
+                print(f"scoring {n_resp} responses with judge '{jdep}' using "
+                      f"{workers} concurrent batch worker(s), up to "
+                      f"{batch_size} response(s) per judge call…",
+                      file=sys.stderr)
             try:
                 summary = model_review.run_model_review(
                     run_id, jdep, runtime=getattr(args, "reviewer_runtime", None),
-                    workers=workers,
-                    batch_size=(getattr(args, "judge_batch_size", None)
-                                or config.judge_batch_size()),
+                    workers=workers, batch_size=batch_size,
                     progress_callback=live_progress)
             except Exception as e:
                 _emit_failure(
@@ -1172,7 +1182,8 @@ def cmd_score(args) -> int:
         source = Path(args.file) if args.file else workspace.run_dir(args.run) / "scoresheet.json"
         sheet = json.loads(source.read_text(encoding="utf-8"))
         written = rating.ingest_scores(args.run, sheet,
-                                       progress_callback=_live_progress(args))
+                                       progress_callback=_live_progress(args),
+                                       reset_progress_clock=True)
         package = engine.aggregate(args.run)
         paths = report.write_reports(args.run)
         result = _assessment_result(args.run)
@@ -1575,15 +1586,28 @@ def cmd_capabilities(args) -> int:
             )
             return 2
         if args.write:
-            path = ecm.write_matrix(matrix, args.format)
+            path = ecm.write_matrix(
+                matrix, args.format,
+                sort_by=getattr(args, "sort", "performance"),
+                descending=not getattr(args, "ascending", False))
             _out({"engineering_capability_matrix": str(path)}, args.json,
                  f"wrote {path}")
         elif args.json or args.format == "json":
-            _out(matrix, True)
+            ordered = {
+                **matrix,
+                "tasks": ecm.sorted_tasks(
+                    matrix, getattr(args, "sort", "performance"),
+                    not getattr(args, "ascending", False)),
+            }
+            _out(ordered, True)
         elif args.format == "html":
-            print(ecm.render_html(matrix))
+            print(ecm.render_html(
+                matrix, sort_by=getattr(args, "sort", "performance"),
+                descending=not getattr(args, "ascending", False)))
         else:
-            print(ecm.render_markdown(matrix))
+            print(ecm.render_markdown(
+                matrix, sort_by=getattr(args, "sort", "performance"),
+                descending=not getattr(args, "ascending", False)))
         return 0
     try:
         prof = capabilities.capability_profile(args.ref)
@@ -1928,7 +1952,7 @@ def cmd_runs(args) -> int:
                 recovery_command="aies runs list",
             )
         event = workspace.read_json(path)
-        from .progress import format_duration
+        from .progress import format_duration, format_rate
         if event.get("eta_seconds") is None:
             eta = "calculating (waiting for first completion)"
         elif event.get("eta_basis") == "deployment-declaration":
@@ -1949,17 +1973,19 @@ def cmd_runs(args) -> int:
                                f"{position}: {event['current']}")
         else:
             current_display = "—"
+        active_unit = event.get("active_unit") or "task"
+        active_label = "batches" if active_unit == "batch" else "tasks"
         _out(event, args.json,
              f"{event['run_id']}\n"
              f"  stage      : {event['stage']} ({event['status']})\n"
              f"  progress   : {event['completed']}/{event['total']} "
              f"({event['percent']:.1f}%)\n"
              f"  stage time : {format_duration(event['elapsed_seconds'])}\n"
-             f"  total time : {format_duration(event.get('total_elapsed_seconds', event['elapsed_seconds']))}\n"
-             f"  throughput : {event['throughput_per_second']:.2f}/s\n"
+             f"  command time: {format_duration(event.get('total_elapsed_seconds', event['elapsed_seconds']))}\n"
+             f"  throughput : {format_rate(event['throughput_per_second'])}\n"
              f"  ETA        : {eta}\n"
              f"  failures   : {event['failures']}\n"
-             f"  active     : {event.get('active_count', 0)}/"
+             f"  active {active_label}: {event.get('active_count', 0)}/"
              f"{event.get('parallelism') or max(1, event.get('active_count', 0))}\n"
              f"  current    : {current_display}\n"
              f"  resumable  : {'yes' if event.get('resumable') else 'no'}")
@@ -1983,15 +2009,18 @@ def cmd_review(args) -> int:
         if getattr(args, "model_reviewer", None):
             from . import config, engine, model_review, report
             workers = getattr(args, "parallel", None) or config.default_parallel()
+            batch_size = (getattr(args, "judge_batch_size", None)
+                          or config.judge_batch_size())
             if not args.json:
                 print(f"scoring responses with reviewer '{args.model_reviewer}' "
-                      f"across {workers} worker(s)…", file=sys.stderr)
+                      f"using {workers} concurrent batch worker(s), up to "
+                      f"{batch_size} response(s) per judge call…",
+                      file=sys.stderr)
             scoring = model_review.run_model_review(
                 args.run, args.model_reviewer,
                 runtime=getattr(args, "reviewer_runtime", None), workers=workers,
-                batch_size=(getattr(args, "judge_batch_size", None)
-                            or config.judge_batch_size()),
-                progress_callback=live_progress)
+                batch_size=batch_size, progress_callback=live_progress,
+                reset_progress_clock=True)
             if not (args.json):
                 print(f"reviewer model {scoring['reviewer']}: scored "
                       f"{scoring['scored']}/{scoring['responses']} responses "
@@ -2023,6 +2052,7 @@ def cmd_review(args) -> int:
         if rating.collect_ratings(args.run):
             from . import engine, evaluation, progress, report
             progress.update(args.run, "aggregation", 0, 1,
+                            reset_operation=not bool(scoring),
                             callback=live_progress)
             engine.aggregate(args.run)
             progress.update(args.run, "aggregation", 1, 1, status="completed",
@@ -2995,13 +3025,20 @@ def build_parser() -> argparse.ArgumentParser:
 
     snap = common(sub.add_parser(
         "snapshot",
-        help="show evidence, capability, confidence, and engineering decisions"))
+        help="show evidence, capability, scenario breadth, assurance, and engineering decisions"))
     snap.add_argument(
         "run", nargs="?", default="latest",
         help="completed run id or 'latest' (default: latest)")
     snap.add_argument(
         "--observed-only", action="store_true",
         help="hide tasks without directly mapped scored evidence")
+    snap.add_argument(
+        "--sort", choices=("task", "performance", "breadth", "evidence", "status"),
+        default="performance",
+        help="sort task rows (default: performance)")
+    snap.add_argument(
+        "--ascending", action="store_true",
+        help="sort from low to high; unknown tasks remain last")
     snap.set_defaults(func=cmd_snapshot)
 
     support = common(sub.add_parser(
@@ -3279,6 +3316,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--qualification-profile", action="store_true",
         help="render the separate formal per-area CL/autonomy qualification view")
     cap.add_argument("--format", choices=("markdown", "json", "html"), default="markdown", help="ECM output format (default: markdown)")
+    cap.add_argument(
+        "--sort", choices=("task", "performance", "breadth", "evidence", "status"),
+        default="performance",
+        help="sort task rows (default: performance)")
+    cap.add_argument(
+        "--ascending", action="store_true",
+        help="sort from low to high; unassessed tasks remain last")
     cap.add_argument("--write", action="store_true",
                      help="write ECM output beside the run")
     cap.set_defaults(func=cmd_capabilities)

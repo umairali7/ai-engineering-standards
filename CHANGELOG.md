@@ -8,6 +8,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Truthful command progress, durable judge checkpoints, and sortable
+  decision views**: standalone `review`, collection resume, and manual scoring
+  now reset their own command clock instead of inheriting the age of the run.
+  Stage throughput excludes ratings reused from an earlier invocation and is
+  displayed adaptively as explicit items/second or items/minute; ETA uses only
+  those measured completions. Judge progress now distinguishes concurrent
+  batch workers (`--parallel`) from responses per call
+  (`--judge-batch-size`, defaulted through `AIES_JUDGE_BATCH_SIZE`), identifies
+  each active batch and its task span, and discloses the batch count. Every
+  completed judge batch is admitted immediately as append-only ratings, so a
+  later failure no longer discards completed scoring. ECM and snapshot output
+  default to observed-performance order, accept `--sort`/`--ascending`, keep
+  unassessed tasks separate rather than treating them as low scores, and
+  generated HTML reports can be re-sorted by selecting any column heading.
+  A serial judge projected above one hour emits one non-blocking suggestion to
+  use supported endpoint concurrency or a faster reviewer.
+- **Real-run evidence-assurance and reviewer-integrity corrections**: ECM,
+  report, guidance, snapshot, and executive views now name distinct mapped
+  coverage `scenario breadth` instead of presenting it as evidence confidence.
+  A separate structured assurance disclosure reports mapping review,
+  instrument maturity, rater basis, and optional human evaluation; tasks below
+  50% breadth cannot receive a strong-fit label. ECM/report views now surface
+  the lowest observed dimension and scenario-family slices as bounded
+  improvement signals. Reviewer findings now request
+  structured EV attribution and derive the finding score from the canonical EV
+  table instead of fabricating EV1/0 metadata. Reports detect legacy
+  finding/score inconsistencies. Grounding diagnostic schema 2 makes
+  abstention applicability explicit and discloses ambiguous legacy false
+  values without counting them as proven failures.
 - **Shared per-run factual report contract**: Markdown, HTML, the additive
   `aies-run-report-view` JSON artifact, bundle index, run inventory, safe
   export, and `GET /runs/{id}/report-view` now consume one report context

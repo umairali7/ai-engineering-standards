@@ -20,19 +20,20 @@ class SnapshotError(RuntimeError):
 
 _FIT_LABELS = {
     "strong-observed-fit": "strong observed fit",
+    "limited-evidence": "observed score; limited evidence",
     "review-recommended": "engineering review advised",
     "weak-observed-fit": "weak observed fit",
     "not-assessed": "not assessed",
 }
 
 
-def _confidence_label(percent: float) -> str:
+def _breadth_label(percent: float) -> str:
     if percent >= 100:
         return "target met"
     if percent >= 50:
-        return "moderate evidence"
+        return "partial breadth"
     if percent > 0:
-        return "limited evidence"
+        return "limited breadth"
     return "no direct evidence"
 
 
@@ -90,22 +91,27 @@ def build(reference: str) -> dict:
             or 0
         )
         distinct = int(task.get("distinct_scenarios") or 0)
-        confidence = float(
-            task.get("engineering_confidence_percent")
+        breadth = float(
+            task.get("scenario_breadth_percent")
+            if task.get("scenario_breadth_percent") is not None
+            else task.get("engineering_confidence_percent")
             if task.get("engineering_confidence_percent") is not None
-            else fit_row.get("evidence_confidence_percent") or 0
+            else fit_row.get("scenario_breadth_percent",
+                             fit_row.get("evidence_confidence_percent", 0))
         )
         fit_code = fit_row.get(
             "fit", "not-assessed" if observed is None else "review-recommended")
         interpretation = _FIT_LABELS.get(
             fit_code, fit_code.replace("-", " "))
         if fit_code != "not-assessed":
-            interpretation += f" · {_confidence_label(confidence)}"
+            interpretation += f" · {_breadth_label(breadth)}"
         tasks.append({
             "task_id": task["task_id"],
             "task": task["task"],
             "observed_performance_percent": performance,
-            "evidence_confidence_percent": round(confidence, 1),
+            "scenario_breadth_percent": round(breadth, 1),
+            "evidence_confidence_percent": round(breadth, 1),
+            "evidence_assurance": task.get("evidence_assurance") or {},
             "distinct_scenarios": distinct,
             "target_scenarios": int(minimum),
             "fit": fit_code,
@@ -139,7 +145,8 @@ def build(reference: str) -> dict:
         "unassessed_tasks": len(tasks) - assessed,
         "tasks": tasks,
         "authority_boundary": (
-            "Observed performance and evidence confidence are separate. "
+            "Observed performance, scenario breadth, and evidence assurance "
+            "are separate. "
             "This view is informational and creates no qualification, grant, "
             "deployment recommendation, or authority."
         ),
@@ -157,6 +164,8 @@ def render(
     snapshot: dict,
     *,
     observed_only: bool = False,
+    sort_by: str = "performance",
+    descending: bool = True,
     width: int | None = None,
 ) -> str:
     """Render a responsive terminal table from a snapshot display model."""
@@ -167,19 +176,40 @@ def render(
             row for row in tasks
             if row["observed_performance_percent"] is not None
         ]
+    sort_values = {
+        "task": lambda row: row["task_id"],
+        "performance": lambda row: row["observed_performance_percent"],
+        "breadth": lambda row: row["scenario_breadth_percent"],
+        "evidence": lambda row: row["distinct_scenarios"],
+        "status": lambda row: row["engineering_interpretation"],
+    }
+    if sort_by not in sort_values:
+        raise SnapshotError(f"unsupported task sort: {sort_by}")
+    if sort_by == "task":
+        tasks = sorted(tasks, key=sort_values[sort_by], reverse=descending)
+    else:
+        assessed = [row for row in tasks
+                    if row["observed_performance_percent"] is not None]
+        unassessed = [row for row in tasks
+                      if row["observed_performance_percent"] is None]
+        assessed.sort(
+            key=lambda row: (sort_values[sort_by](row), row["task_id"]),
+            reverse=descending)
+        tasks = assessed + sorted(unassessed, key=lambda row: row["task_id"])
 
     lines = [
-        "AIES  EVIDENCE → CAPABILITY → CONFIDENCE → ENGINEERING DECISIONS",
+        "AIES  EVIDENCE → CAPABILITY → ASSURANCE → ENGINEERING DECISIONS",
         f"Run: {snapshot['run_id']}",
         f"Subject: {snapshot['subject']} · "
         f"{snapshot['risk_tier_label']} · {snapshot['profile']} profile",
         f"Human evaluation: {snapshot['human_evaluation']}",
+        f"Order: {sort_by} ({'descending' if descending else 'ascending'})",
         "",
     ]
     if width >= 108:
         lines.extend([
             f"{'TASK':30} {'EVIDENCE':9} {'OBSERVED CAPABILITY':22} "
-            f"{'EVIDENCE CONFIDENCE':22} {'INTERPRETATION'}",
+            f"{'SCENARIO BREADTH':22} {'INTERPRETATION'}",
             "─" * min(width, 132),
         ])
         for row in tasks:
@@ -188,9 +218,9 @@ def render(
                 f"{_bar(perf)} {perf:5.1f}%"
                 if perf is not None else "not assessed"
             )
-            confidence = (
-                f"{_bar(row['evidence_confidence_percent'])} "
-                f"{row['evidence_confidence_percent']:5.1f}%"
+            breadth = (
+                f"{_bar(row['scenario_breadth_percent'])} "
+                f"{row['scenario_breadth_percent']:5.1f}%"
             )
             target = row["target_scenarios"]
             evidence = (
@@ -200,7 +230,7 @@ def render(
             task = f"{row['task_id']} — {row['task']}"
             lines.append(
                 f"{task[:30]:30} {evidence:9} {capability:22} "
-                f"{confidence:22} {row['engineering_interpretation']}"
+                f"{breadth:22} {row['engineering_interpretation']}"
             )
     else:
         for row in tasks:
@@ -214,15 +244,15 @@ def render(
                 f"{_bar(perf)} {perf:.1f}%"
                 if perf is not None else "not assessed"
             )
-            confidence = (
-                f"{_bar(row['evidence_confidence_percent'])} "
-                f"{row['evidence_confidence_percent']:.1f}%"
+            breadth = (
+                f"{_bar(row['scenario_breadth_percent'])} "
+                f"{row['scenario_breadth_percent']:.1f}%"
             )
             lines.extend([
                 f"{row['task_id']} — {row['task']}",
                 f"  evidence   {evidence}",
                 f"  capability {capability}",
-                f"  confidence {confidence}",
+                f"  breadth    {breadth}",
                 f"  meaning    {row['engineering_interpretation']}",
             ])
 
@@ -230,8 +260,9 @@ def render(
         "",
         f"Coverage: {snapshot['assessed_tasks']} assessed · "
         f"{snapshot['unassessed_tasks']} not assessed (unknown, not zero)",
-        "Capability = normalized observed EV score. Confidence = distinct "
-        "directly mapped scenarios / task target.",
+        "Capability = normalized observed EV score. Scenario breadth = distinct "
+        "directly mapped scenarios / task target; it is not reviewer or "
+        "instrument assurance.",
         "INFORMATIONAL — no qualification, grant, deployment recommendation, "
         "or authority.",
     ])

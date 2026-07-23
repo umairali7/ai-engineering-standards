@@ -329,7 +329,8 @@ def resume_collection(run_id: str, workers: int | None = None,
     active_resume_tasks: dict[str, None] = {}
     progress.update(run_id, "response-collection", before, planned,
                     message="resuming missing responses",
-                    parallelism=max(1, workers), callback=progress_callback)
+                    parallelism=max(1, workers), reset_operation=True,
+                    callback=progress_callback)
 
     def _resume_progress(_done, _total, current, status):
         nonlocal filled, failed

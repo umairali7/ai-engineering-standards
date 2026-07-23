@@ -54,7 +54,7 @@ Every artifact carries a schema version; envelopes are field-append-only
 | Human Rater Record | `rater_schema` | `1` | `rater register` |
 | Qualification Record | `qualification_schema` | `2` | `grant` (human authority) |
 | Qualification Lifecycle Event | `event_schema` | `1` | `qualifications event` / `verify` |
-| Engineering Evaluation Summary | `evaluation_schema` | `1` | every complete report bundle (`engineering-evaluation.json`) |
+| Engineering Evaluation Summary | `evaluation_schema` | `2` | every complete report bundle (`engineering-evaluation.json`) |
 | Engineering Assessment Result | `engineering_assessment_schema` | `1` | default named engineering assessment |
 | Canonical Formal Assessment Result | `result_schema` | `1` | explicit formal decision engine |
 | Decision semantics | `decision_semantics_version` | `1.0` (AESQS CS-01 §8) | the standard |
@@ -62,9 +62,9 @@ Every artifact carries a schema version; envelopes are field-append-only
 | Engineering Capability Matrix *(review-stage)* | `ecm_schema` | `2` | `capabilities` / report bundle |
 | ECM task-decision semantics *(review-stage)* | `task_decision_semantics_version` | `1.0` | ADR-0013 |
 | Deployment Guidance *(review-stage)* | `guidance_schema` | `2` | `guidance` |
-| Engineering Fit Guidance | `engineering_fit_schema` | `1` | default `guidance` / report bundle |
+| Engineering Fit Guidance | `engineering_fit_schema` | `2` | default `guidance` / report bundle |
 | Executive Summary | `executive_summary_schema` | `2` | complete report bundle |
-| Grounding Diagnostics | `diagnostic_schema` | `1` | complete report bundle; structured reviewer observations |
+| Grounding Diagnostics | `diagnostic_schema` | `2` | complete report bundle; structured reviewer observations with explicit abstention applicability |
 | Report Bundle Index | `report_bundle_schema` | `1` | complete report bundle |
 | Workspace Overview | `schema_version` | `1` | `aies overview` / `GET /overview` / dashboard |
 | Run Detail View | `schema_version` | `1` | `aies runs show` / `GET /runs/{id}` |
@@ -119,13 +119,13 @@ append-only records. Grouped as in `aies --help`.
 | `rater` | Register/list/show durable human identity, competency/risk scope, qualification, and calibration | `aies rater register --id alice --name "Alice" --area CA-05 --rt 2 ...` |
 | `resolve` | Append a named, reasoned human disposition for a materially divergent evidence item | `aies resolve run-2031 SC-CA05-001-r1.json --scores 4 4 3 4 3 4 ...` |
 | `import` / `export` | Import external EV results plus aggregate/report in one command / round-trip out | `aies import run-2031 eval.json` |
-| `capabilities` | ECM task performance/evidence/confidence by default; `--qualification-profile` selects formal CL/autonomy/gates | `aies capabilities run-2031 --format html --write` |
-| `snapshot` | Responsive terminal Evidence → Capability → Confidence → Engineering Decisions projection over canonical ECM/Fit facts | `aies snapshot latest` |
+| `capabilities` | ECM task performance, scenario breadth, and assurance disclosures by default; `--sort`/`--ascending` control row order, HTML headings re-sort interactively, and `--qualification-profile` selects formal CL/autonomy/gates | `aies capabilities run-2031 --sort breadth --format html --write` |
+| `snapshot` | Responsive terminal Evidence → Capability → Assurance → Engineering Decisions projection over canonical ECM/Fit facts; supports `--sort task\|performance\|breadth\|evidence\|status` and `--ascending` | `aies snapshot latest --sort performance` |
 | `assessment` | `result <run>` renders non-blocking engineering status; `--formal-qualification` selects the formal outcome | `aies assessment result run-2031` |
 | `review` | Automated review, optional human-evaluation record, implicit live progress, and refreshed report bundle | `aies review run-2031 --model-reviewer rev` |
 | `compare` | Compatible observed ECM scores compare by default without human review; `--formal-qualification` additionally requires demonstrated status/protocol before a winner claim; `--area-summary` selects the legacy aggregate | `aies compare run-a run-b` |
 | `guidance` | Engineering Fit Guidance by default; `--qualification QUAL-id` selects qualification-bounded Deployment Guidance | `aies guidance run-2031 --write` |
-| `runs list` / `runs show` / `runs progress` / `transcript` | List runs, inspect one versioned read-only run/artifact view, optionally observe another command's durable progress from a second terminal, or render a whole run. The originating command already shows stage and total timing, ETA, plus the current human-readable task and task ordinal. | `aies runs show run-2031 --json` |
+| `runs list` / `runs show` / `runs progress` / `transcript` | List runs, inspect one versioned read-only run/artifact view, optionally observe another command's durable progress from a second terminal, or render a whole run. The originating command shows stage and command timing, measured item rate, ETA, and the current task or judge batch/task span. | `aies runs show run-2031 --json` |
 
 ### Judging
 

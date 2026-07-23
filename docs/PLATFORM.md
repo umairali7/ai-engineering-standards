@@ -18,7 +18,7 @@ AESQS defines *how* to determine, with evidence, what an AI system may be truste
 
 The platform answers a practical question the standard alone cannot: *given
 this subject and its exact operating context, what engineering capabilities
-were observed, what is the evidence confidence, and how should that evidence be
+were observed, what scenario breadth exists, what assurance limits apply, and how should that evidence be
 used?* It drives evidence generation, rubric scoring, statistics, competency
 analysis, the Engineering Capability Matrix, and decision products. Formal
 qualification is one explicit governed use of that evidence; it is not the
@@ -76,8 +76,8 @@ The `aies` command exposes the pipeline as composable verbs:
 | `score` / `import` / `export` | `score` and `import` ingest rating observations, aggregate engineering results, and refresh the complete report bundle in one command; `export` writes a generic round-trippable eval log. Human evaluation is optional unless formal qualification was explicitly requested. | `aies export run-2031 --write` |
 | `rater` / `resolve` | `rater` manages durable human identity, qualification scope, and current calibration; `resolve` appends a named, reasoned human disposition for a materially divergent evidence item. | `aies rater list`; `aies resolve run-2031 SC-CA05-001-r1.json …` |
 | `qualify --resume-collection` | Fill only the **missing** responses of a partially-collected run (e.g. after an endpoint failure), then rebuild the scoresheet — no re-collecting what succeeded. | `aies qualify --resume-collection run-2031` |
-| `capabilities` | Render the task-mapped Engineering Capability Matrix by default, including observed performance, direct evidence, confidence, status, gaps, and optional human evaluation. `--qualification-profile` selects the separate formal CL/autonomy view. | `aies capabilities run-2031 --write` |
-| `snapshot` | Project canonical ECM and Engineering Fit facts into a responsive terminal view that keeps evidence, observed capability, confidence, unknowns, and informational interpretation separate. | `aies snapshot latest` |
+| `capabilities` | Render the task-mapped Engineering Capability Matrix by default, including observed performance, direct scenario breadth, reviewer/mapping/instrument assurance, status, gaps, and optional human evaluation. `--qualification-profile` selects the separate formal CL/autonomy view. | `aies capabilities run-2031 --write` |
+| `snapshot` | Project canonical ECM and Engineering Fit facts into a responsive terminal view that keeps evidence, observed capability, scenario breadth, assurance, unknowns, and informational interpretation separate. | `aies snapshot latest` |
 | `guidance` | Render evidence-derived Engineering Fit Guidance by default. Supplying `--qualification QUAL-id` switches to separately governed Deployment Guidance bounded by that active record. | `aies guidance run-2031 --write` |
 | `assessment` | Declarative engineering composition ([ADR-0005](../adr/ADR-0005-Assessment-as-Code.md)). `result <run>` renders non-blocking `COMPLETE/PARTIAL/NOT SCORED` engineering status by default. `--formal-qualification` explicitly invokes the gate-first formal `PASS/FAIL/INCONCLUSIVE/INSUFFICIENT EVIDENCE` result. | `aies qualify local-qwen --assessment enterprise --judge gpt-oss` |
 | `audit` | Audit a **repository's** conformance to AIES engineering practices ([ADR-0004](../adr/ADR-0004-Repository-Conformance-Audit.md)) — a different subject from `qualify`. Scores maturity ML0–ML4 per competency area with three-state evidence (verified/asserted/gap, never false-green); ranked recommendations; `--gate --rt N` for CI; `--attest` for non-detectable practices. | `aies audit . --gate --rt 2` |

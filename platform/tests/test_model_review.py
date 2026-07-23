@@ -35,7 +35,18 @@ def test_parse_scores_robust():
     assert ok is not None
     scores, findings, grounding = ok
     assert scores["EV1"] == 3 and scores["EV6"] == 4 and findings
+    assert findings == [{
+        "dimension": "general", "score": None, "finding": "ev2 thin"}]
     assert grounding is None
+    structured = _parse_scores(
+        '{"EV1":3,"EV2":2,"EV3":3,"EV4":3,"EV5":2,"EV6":4,'
+        '"findings":[{"dimension":"EV2","score":0,"finding":"missing edge case"},'
+        '{"dimension":"EV5","finding":"unbounded work"}]}')
+    assert structured is not None
+    assert structured[1] == [
+        {"dimension": "EV2", "score": 2, "finding": "missing edge case"},
+        {"dimension": "EV5", "score": 2, "finding": "unbounded work"},
+    ]
     grounded = _parse_scores(
         '{"EV1":3,"EV2":3,"EV3":3,"EV4":3,"EV5":3,"EV6":3,"findings":[],'
         '"grounding_diagnostics":{"grounding_assessed":true,'
@@ -47,6 +58,39 @@ def test_parse_scores_robust():
     assert _parse_scores("I cannot score this.") is None      # no JSON
     assert _parse_scores('{"EV1":5,"EV2":3,"EV3":3,"EV4":3,"EV5":3,"EV6":3}') is None  # out of range
     assert _parse_scores('{"EV1":3}') is None                  # missing dims
+
+
+def test_finding_integrity_detects_legacy_misattribution():
+    from aies.evaluation import _finding_integrity
+    scores = {f"EV{i}": 3 for i in range(1, 7)}
+    result = _finding_integrity([{
+        "scores": scores,
+        "findings": [{
+            "dimension": "EV1", "score": 0,
+            "finding": "actually describes traceability",
+        }],
+    }])
+    assert result["status"] == "warning"
+    assert result["score_inconsistencies"] == 1
+    assert result["usable_for_dimension_traceability"] is False
+
+
+def test_legacy_false_abstention_is_ambiguous_not_a_proven_issue():
+    from aies.diagnostics import _source_view
+    view = _source_view([{
+        "rates_response": "one.json",
+        "grounding_diagnostics": {
+            "grounding_assessed": True,
+            "unsupported_assertions": 0,
+            "fabricated_apis_or_entities": 0,
+            "invalid_citations_or_provenance": 0,
+            "false_success_or_test_claims": 0,
+            "appropriate_abstention": False,
+        },
+    }], 1)
+    assert view["observations_with_issues"] == 0
+    assert view["observed_grounding_reliability_percent"] == 100.0
+    assert view["abstention"]["ambiguous_legacy"] == 1
 
 
 def test_mock_reviewer_is_judge_aware_and_emits_parseable_scores(ws, tmp_path):
@@ -77,12 +121,51 @@ def test_batched_judge_reduces_calls_but_records_every_response(ws, tmp_path):
     _register(tmp_path, "reviewer")
     run = engine.start_qualification(
         "candidate", "research", "RT2", ["CA-05"], repeats=1, workers=4)
+    events = []
     summary = model_review.run_model_review(
-        run["run_id"], "reviewer", workers=4, batch_size=8)
+        run["run_id"], "reviewer", workers=4, batch_size=8,
+        progress_callback=events.append, reset_progress_clock=True)
     assert summary["scored"] == summary["responses"]
     assert summary["ratings_written"] == summary["responses"]
     assert summary["judge_calls"] < summary["responses"]
     assert summary["batch_fallbacks"] == 0
+    started = [event for event in events
+               if event.get("active_tasks") and event["status"] == "running"]
+    assert started
+    assert all(event["active_unit"] == "batch" for event in started)
+    assert any("Batch " in task and " items · Tasks " in task
+               for event in started for task in event["active_tasks"])
+    assert events[0]["total_elapsed_seconds"] == 0
+
+
+def test_completed_judge_batches_are_durable_before_later_failure(
+        ws, tmp_path, monkeypatch):
+    import pytest
+    from aies import engine, model_review, workspace
+    from aies.adapters import mock as mockmod
+
+    _register(tmp_path, "candidate")
+    _register(tmp_path, "reviewer")
+    run = engine.start_qualification(
+        "candidate", "research", "RT2", ["CA-05"], repeats=1)
+    original = mockmod.MockAdapter.generate
+    calls = 0
+
+    def fail_second_batch(self, request):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise RuntimeError("later batch failed")
+        return original(self, request)
+
+    monkeypatch.setattr(mockmod.MockAdapter, "generate", fail_second_batch)
+    with pytest.raises(model_review.ModelReviewError, match="batch"):
+        model_review.run_model_review(
+            run["run_id"], "reviewer", workers=1, batch_size=4)
+
+    ratings = list(
+        (workspace.run_dir(run["run_id"]) / "ratings").glob("*.json"))
+    assert ratings, "the first completed batch must survive a later failure"
 
 
 def test_mock_scores_are_deterministic_and_in_range():

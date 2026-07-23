@@ -41,7 +41,9 @@ def test_ecm_groups_existing_families_and_labels_small_samples(tmp_path, monkeyp
     assert code_generation["status"] == "observed"
     assert code_generation["decision_semantics"] == "1.0"
     assert code_generation["coverage_percent"] == 0
+    assert code_generation["scenario_breadth_percent"] > 0
     assert code_generation["engineering_confidence_percent"] > 0
+    assert code_generation["evidence_assurance"]["status"] == "provisional"
     assert code_generation["engineering_status"].startswith("observed")
     assert code_generation["qualification_status"] == "observed"
     assert code_generation["task_decision"]["mapping_review_satisfied"] is False
@@ -74,10 +76,27 @@ def test_ecm_writer_emits_json_markdown_and_html(tmp_path, monkeypatch):
         assert path.exists()
         assert marker in path.read_text(encoding="utf-8")
     html = ecm.render_html(matrix)
-    assert "Evidence confidence" in html
+    assert "Scenario breadth" in html
+    assert "Evidence assurance" in html
+    assert "Observed improvement signals" in html
     assert "Engineering status" in html
     assert "Scenario-family evidence and traceability" in html
     assert "Task Capability Profile" in ecm.render_capability_summary_html(matrix)
+    assert "table class='sortable'" in html
+    assert "Sort by this column" in html
+
+    by_task = ecm.sorted_tasks(matrix, "task", descending=False)
+    assert [task["task_id"] for task in by_task] == sorted(
+        task["task_id"] for task in matrix["tasks"])
+    by_performance = ecm.sorted_tasks(
+        matrix, "performance", descending=True)
+    observed = [task for task in by_performance
+                if task["observed_performance"] is not None]
+    unknown = [task for task in by_performance
+               if task["observed_performance"] is None]
+    assert observed + unknown == by_performance
+    assert [task["observed_performance"] for task in observed] == sorted(
+        (task["observed_performance"] for task in observed), reverse=True)
 
 
 def test_deployment_guidance_is_bounded_to_ecm_evidence(tmp_path, monkeypatch):

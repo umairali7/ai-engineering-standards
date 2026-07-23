@@ -109,7 +109,8 @@ def test_offline_end_to_end_demo(demo_ws, monkeypatch):
         (runs[-1] / "engineering-fit-guidance.json").read_text(
             encoding="utf-8"))
     assert fit["kind"] == "engineering-fit-guidance"
-    assert any(row["fit"] == "strong-observed-fit" for row in fit["tasks"])
+    assert any(row["fit"] == "limited-evidence" for row in fit["tasks"])
+    assert not any(row["fit"] == "strong-observed-fit" for row in fit["tasks"])
     from aies import compare
     observed_comparison = compare.compare_ecm(run_id, run_id)
     assert observed_comparison["comparison_mode"] == "engineering-observed"

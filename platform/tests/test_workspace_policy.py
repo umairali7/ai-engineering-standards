@@ -63,9 +63,19 @@ def test_workspace_debris_diagnostic_is_read_only_and_evidence_aware(tmp_path):
     metadata.write_text("finder", encoding="utf-8")
     cache = root / "runs" / "__pycache__"
     cache.mkdir()
+    nested = root / "runs" / "run-copied" / "run-copied"
+    nested.mkdir(parents=True)
+    (nested / "manifest.json").write_text("{}", encoding="utf-8")
 
     report = workspace.diagnose_debris(root)
     paths = {item["path"] for item in report["findings"]}
-    assert report["count"] == 3 and not report["clean"] and report["advisory"]
-    assert paths == {".DS_Store", "runs/__pycache__", "runs/report.html"}
+    assert report["count"] == 4 and not report["clean"] and report["advisory"]
+    assert paths == {
+        ".DS_Store", "runs/__pycache__", "runs/report.html",
+        "runs/run-copied",
+    }
+    nested_finding = next(
+        item for item in report["findings"]
+        if item["category"] == "nested-run-package")
+    assert "evidence-bearing" in nested_finding["recoverability"]
     assert evidence.exists() and misplaced.exists() and metadata.exists() and cache.exists()

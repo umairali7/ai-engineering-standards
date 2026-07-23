@@ -11,7 +11,7 @@ import json
 
 from . import constants as C, workspace
 
-DIAGNOSTIC_SCHEMA = 1
+DIAGNOSTIC_SCHEMA = 2
 CATEGORIES = {
     "unsupported_assertions": {
         "title": "Unsupported assertions", "maps_to": ["EV1", "EV6"]},
@@ -39,9 +39,19 @@ def normalize(value) -> dict | None:
         if not isinstance(count, int) or isinstance(count, bool) or count < 0:
             raise ValueError(f"grounding diagnostic {category} must be a non-negative integer")
         out[category] = count
+    applicability = value.get("abstention_applicable")
+    if applicability is not None and not isinstance(applicability, bool):
+        raise ValueError("abstention_applicable must be true, false, or null")
     abstention = value.get("appropriate_abstention")
     if abstention is not None and not isinstance(abstention, bool):
         raise ValueError("appropriate_abstention must be true, false, or null")
+    if applicability is True and abstention is None:
+        raise ValueError(
+            "appropriate_abstention must be true or false when abstention applies")
+    if applicability is False and abstention is not None:
+        raise ValueError(
+            "appropriate_abstention must be null when abstention does not apply")
+    out["abstention_applicable"] = applicability
     out["appropriate_abstention"] = abstention
     notes = value.get("notes") or []
     if isinstance(notes, str):
@@ -61,6 +71,7 @@ def _source_view(records: list[dict], total_responses: int) -> dict:
     issue_observations = 0
     totals = {category: 0 for category in CATEGORIES}
     abstention_evaluated = appropriate_abstentions = 0
+    abstention_not_applicable = abstention_ambiguous_legacy = 0
     response_names = set()
     for record, diagnostic in observations:
         response_names.add(record.get("rates_response"))
@@ -68,12 +79,25 @@ def _source_view(records: list[dict], total_responses: int) -> dict:
         for category in CATEGORIES:
             totals[category] += diagnostic[category]
             issue = issue or diagnostic[category] > 0
-        if diagnostic.get("appropriate_abstention") is not None:
+        applicability = diagnostic.get("abstention_applicable")
+        abstention = diagnostic.get("appropriate_abstention")
+        if applicability is True:
             abstention_evaluated += 1
-            if diagnostic["appropriate_abstention"]:
+            if abstention:
                 appropriate_abstentions += 1
             else:
                 issue = True
+        elif applicability is False:
+            abstention_not_applicable += 1
+        elif abstention is True:
+            # A legacy true value still unambiguously records an appropriate
+            # abstention. A legacy false value cannot distinguish "not
+            # applicable" from "inappropriate" and therefore cannot prove an
+            # issue.
+            abstention_evaluated += 1
+            appropriate_abstentions += 1
+        elif abstention is False:
+            abstention_ambiguous_legacy += 1
         issue_observations += int(issue)
     n = len(observations)
     return {
@@ -91,6 +115,8 @@ def _source_view(records: list[dict], total_responses: int) -> dict:
             "evaluated": abstention_evaluated,
             "appropriate": appropriate_abstentions,
             "inappropriate": abstention_evaluated - appropriate_abstentions,
+            "not_applicable": abstention_not_applicable,
+            "ambiguous_legacy": abstention_ambiguous_legacy,
         },
         "raters": sorted({
             str((record.get("provenance") or {}).get("rater"))
@@ -127,6 +153,7 @@ def summarize(run_id: str) -> dict:
             "Counts are structured reviewer observations, not independently verified ground truth.",
             "Automated and human observations are never blended into one score.",
             "Unavailable means the reviewer did not perform the structured check; it never means zero hallucinations.",
+            "Legacy appropriate_abstention=false values without an applicability field are ambiguous and are disclosed but not counted as proven issues.",
             "Observed grounding reliability is descriptive and cannot authorize deployment or offset an EV gate.",
         ],
     }
@@ -155,6 +182,18 @@ def render_markdown(summary: dict) -> str:
             f"{summary['sources']['automated']['category_counts'][category]} | "
             f"{summary['sources']['human']['category_counts'][category]} | "
             f"{', '.join(definition['maps_to'])} |")
+    lines.extend([
+        "", "## Abstention observations", "",
+        "| Source | Applicable/evaluated | Appropriate | Inappropriate | Not applicable | Legacy ambiguous |",
+        "|---|---:|---:|---:|---:|---:|",
+    ])
+    for source, view in summary["sources"].items():
+        abstention = view["abstention"]
+        lines.append(
+            f"| {source} | {abstention['evaluated']} | "
+            f"{abstention['appropriate']} | {abstention['inappropriate']} | "
+            f"{abstention['not_applicable']} | "
+            f"{abstention['ambiguous_legacy']} |")
     lines.extend(["", "## Limitations", ""])
     lines.extend(f"- {item}" for item in summary["limitations"])
     return "\n".join(lines) + "\n"
@@ -174,11 +213,20 @@ def render_html(summary: dict) -> str:
         f"<td>{summary['sources']['human']['category_counts'][category]}</td>"
         f"<td>{html.escape(', '.join(definition['maps_to']))}</td></tr>"
         for category, definition in summary["category_definitions"].items())
+    abstention_rows = "".join(
+        f"<tr><td>{html.escape(source)}</td>"
+        f"<td>{view['abstention']['evaluated']}</td>"
+        f"<td>{view['abstention']['appropriate']}</td>"
+        f"<td>{view['abstention']['inappropriate']}</td>"
+        f"<td>{view['abstention']['not_applicable']}</td>"
+        f"<td>{view['abstention']['ambiguous_legacy']}</td></tr>"
+        for source, view in summary["sources"].items())
     return f"""<!doctype html><html><head><meta charset='utf-8'><title>Grounding Diagnostics</title>
 <style>body{{font:16px system-ui;max-width:960px;margin:40px auto;padding:0 24px}}table{{border-collapse:collapse}}th,td{{border:1px solid #ccd4dd;padding:8px 12px}}.banner{{padding:12px;background:#fff3cd;border-left:5px solid #d99b00}}</style></head><body>
 <h1>Grounding, Hallucination &amp; Fabrication Diagnostics</h1><p class='banner'><strong>INFORMATIONAL REVIEWER OBSERVATIONS — NOT A QUALIFICATION SCORE OR GATE.</strong></p>
 <table><tr><th>Source</th><th>Coverage</th><th>Observed grounding reliability</th><th>Observations with issues</th></tr>{source_rows}</table>
 <h2>Observed issue counts</h2><table><tr><th>Category</th><th>Automated</th><th>Human</th><th>Existing EV mapping</th></tr>{category_rows}</table>
+<h2>Abstention observations</h2><table><tr><th>Source</th><th>Applicable/evaluated</th><th>Appropriate</th><th>Inappropriate</th><th>Not applicable</th><th>Legacy ambiguous</th></tr>{abstention_rows}</table>
 <h2>Limitations</h2><ul>{''.join(f'<li>{html.escape(item)}</li>' for item in summary['limitations'])}</ul>
 <p><a href='executive-summary.html'>Executive Summary</a> · <a href='report.html'>Qualification Evidence Package</a></p></body></html>"""
 
