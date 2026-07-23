@@ -16,7 +16,7 @@ from . import config
 
 APPEND_ONLY_DIRECTORIES = frozenset({
     "responses", "ratings", "resolutions", "events", "raters", "audits",
-    "comparisons",
+    "comparisons", "run-imports", "import-sources",
 })
 MUTABLE_WORKING_FILES = frozenset({
     "manifest.json", "scoresheet.json", "progress.json", "latest.json",

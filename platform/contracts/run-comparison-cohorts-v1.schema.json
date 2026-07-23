@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aies.dev/contracts/run-comparison-cohorts-v1.schema.json",
+  "title": "AIES Run Comparison Cohorts v1",
+  "type": "object",
+  "required": [
+    "kind",
+    "schema",
+    "filters",
+    "candidate_runs",
+    "cohorts",
+    "excluded",
+    "claim_boundary"
+  ],
+  "properties": {
+    "kind": {"const": "aies-run-comparison-cohorts"},
+    "schema": {"const": "aies-run-comparison-cohorts/v1"},
+    "filters": {"type": "object"},
+    "candidate_runs": {"type": "integer", "minimum": 0},
+    "cohorts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "cohort_id",
+          "signature",
+          "runs",
+          "run_count",
+          "comparison_ready",
+          "comparison_batches"
+        ],
+        "properties": {
+          "cohort_id": {
+            "type": "string",
+            "pattern": "^cohort-[0-9a-f]{16}$"
+          },
+          "signature": {"type": "object"},
+          "runs": {"type": "array", "items": {"type": "object"}},
+          "run_count": {"type": "integer", "minimum": 1},
+          "comparison_ready": {"type": "boolean"},
+          "comparison_batches": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["batch", "run_ids", "command"],
+              "properties": {
+                "batch": {"type": "integer", "minimum": 1},
+                "run_ids": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 5,
+                  "items": {"type": "string"}
+                },
+                "command": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        }
+      }
+    },
+    "excluded": {"type": "array", "items": {"type": "object"}},
+    "claim_boundary": {"type": "string", "minLength": 1}
+  }
+}

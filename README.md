@@ -74,6 +74,7 @@ and optional human evaluation—as different facts.
 | Assess a repository from multiple engineering perspectives | `aies audit . --out aies-repository-report` | Separate practice maturity, architecture, code-quality, correctness-assurance, security, dependency, confidence, limitation, and evidence-linked remediation views |
 | Add advisory repository evidence to CI | `aies ci audit . --rt 2` | Retained JSON/Markdown evidence and annotations without an implicit merge gate |
 | Run without a host Python install | `docker build -f platform/Dockerfile -t aies:local .` | Non-root container for demo, audit, conformance, and networked evaluations |
+| Bring a run from another machine | `aies runs import RUN.zip --dry-run` | Traversal-safe validation, byte/digest verification, non-overwriting import, and an append-only receipt |
 | Compare 2–5 compatible deployment runs or repository snapshots | `aies compare REF_A REF_B [REF_C ...] --sort spread --out comparison` | Adaptive pair/matrix evidence in Markdown, JSON, and sortable HTML without a fake universal winner |
 | Integrate an evaluation tool | `aies bridge inspect-import …` | Source-bound imported ratings and an explicit loss report |
 | Integrate static analysis | `aies bridge sarif-import …` | Preserved SARIF findings that remain distinct from correctness claims |
@@ -347,6 +348,15 @@ largest supported differences or `--only-comparable` to hide evidence gaps.
 coverage gaps, caveats, and evidence-driven next actions. They remain selection
 inputs rather than selection, qualification, deployment, or authorization
 decisions.
+
+For cross-machine work, run `aies runs import PATH --dry-run` before importing
+a run directory or ZIP. AIES accepts exactly one run, rejects unsafe archive
+paths, symlinks, collisions, and overwrite, verifies the complete admitted
+tree, and retains a source-bound receipt. `aies runs cohorts` then discovers
+groups that share the exact ECM comparison protocol and prints connected
+2–5-run commands. Compatibility does not imply independent or representative
+evidence.
+
 AIES defines **engineering standards** that remain applicable regardless of the
 underlying AI technology.
 

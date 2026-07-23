@@ -146,6 +146,49 @@ def test_multi_run_ecm_comparison_aligns_tasks_and_exposes_confidence(
     assert Path(paths["html"]).is_file()
 
 
+def test_multi_run_self_comparison_never_emits_a_sole_task_leader(
+        ws, tmp_path):
+    """The demo's protocol self-check must remain compatible with schema v2."""
+    from aies import compare
+
+    _register(tmp_path, "model-a")
+    run = _qualified_run(tmp_path, "model-a", 3)
+    result = compare.compare_ecm_many([run, run])
+
+    assert result["schema"] == "aies-engineering-comparison/v2"
+    assert result["compatible"] is True
+    assert any(row["comparable"] for row in result["tasks"])
+    assert sum(result["summary"]["sole_leads"].values()) == 0
+    assert all(
+        len(row["leaders"]) != 1
+        for row in result["tasks"] if row["comparable"])
+
+
+def test_cohort_discovery_emits_exact_compatibility_groups_and_safe_batches(
+        ws, tmp_path):
+    from aies import compare
+
+    runs = []
+    for model_id in ("model-a", "model-b", "model-c"):
+        _register(tmp_path, model_id)
+        runs.append(_qualified_run(tmp_path, model_id, 3))
+
+    result = compare.discover_run_cohorts(minimum_runs=2)
+    assert result["kind"] == "aies-run-comparison-cohorts"
+    assert result["candidate_runs"] == 3
+    assert len(result["cohorts"]) == 1
+    cohort = result["cohorts"][0]
+    assert cohort["run_count"] == 3
+    assert cohort["comparison_ready"] is True
+    assert set(cohort["comparison_batches"][0]["run_ids"]) == set(runs)
+    assert cohort["comparison_batches"][0]["command"].startswith(
+        "aies compare ")
+    assert compare.discover_run_cohorts(
+        model="model-a", minimum_runs=2)["cohorts"] == []
+    assert [len(batch) for batch in compare._comparison_batches(
+        [f"run-{index}" for index in range(10)])] == [5, 5, 2]
+
+
 def test_comparison_accepts_two_through_five_references_and_rejects_more(
         ws, tmp_path, capsys):
     from aies import cli, compare

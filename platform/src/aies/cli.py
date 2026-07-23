@@ -2010,6 +2010,92 @@ def cmd_discover(args) -> int:
 
 def cmd_runs(args) -> int:
     from . import compare, workspace
+    if args.runs_cmd == "import":
+        from . import run_transfer
+        try:
+            result = run_transfer.import_package(
+                args.source, dry_run=args.dry_run)
+        except (OSError, ValueError) as error:
+            return _command_failure(
+                error,
+                operation="run-import",
+                args=args,
+                preserved_work_status="existing-evidence-preserved",
+                preserved_work_detail=(
+                    "Run import never overwrites a canonical run or an "
+                    "append-only source record."),
+                recovery_command=(
+                    f"aies runs import {args.source} --dry-run"),
+            )
+        action = "DRY RUN" if args.dry_run else result.get(
+            "status", "imported").upper()
+        excluded = len(result.get("excluded") or [])
+        next_step = (
+            f"aies runs show {result['run_id']}"
+            if not args.dry_run else
+            f"aies runs import {args.source}")
+        _out(
+            result, args.json,
+            f"run import: {action}\n"
+            f"  run id       : {result['run_id']}\n"
+            f"  source       : {result['source']['kind']} "
+            f"({result['source']['name']})\n"
+            f"  files        : {result['file_count']}\n"
+            f"  bytes        : {result['bytes']}\n"
+            f"  tree digest  : {result['package_tree_digest']}\n"
+            f"  destination  : {result['destination']}\n"
+            f"  excluded     : {excluded} disposable metadata item(s)\n"
+            f"  source records: byte-preserved; no overwrite\n"
+            f"  next         : {next_step}")
+        return 0
+    if args.runs_cmd == "imports":
+        from . import run_transfer
+        rows = run_transfer.list_receipts()
+        _out(
+            {"kind": "aies-run-import-index",
+             "schema": "aies-run-import-index/v1",
+             "imports": rows},
+            args.json,
+            "\n".join(
+                f"{row['receipt_id']:28} {row['run_id']:45} "
+                f"{row['status']:18} {row.get('file_count') or 0} files"
+                for row in rows) or "(no run imports)")
+        return 0
+    if args.runs_cmd == "cohorts":
+        try:
+            result = compare.discover_run_cohorts(
+                model=args.model,
+                profile=args.profile,
+                risk_tier=args.rt,
+                minimum_runs=args.minimum_runs)
+        except ValueError as error:
+            return _command_failure(
+                error,
+                operation="run-cohort-discovery",
+                args=args,
+                preserved_work_status="workspace-unchanged",
+                preserved_work_detail=(
+                    "Cohort discovery is read-only and creates no comparison."),
+                recovery_command="aies runs list",
+            )
+        lines = [
+            f"compatible comparison cohorts: {len(result['cohorts'])} "
+            f"({result['candidate_runs']} candidate run(s))",
+        ]
+        for cohort in result["cohorts"]:
+            signature = cohort["signature"]
+            lines += [
+                "",
+                f"{cohort['cohort_id']} · {cohort['run_count']} run(s) · "
+                f"{C.risk_tier_label(signature['risk_tier'])} · "
+                f"{signature['profile']} profile",
+            ]
+            for batch in cohort["comparison_batches"]:
+                lines.append(
+                    f"  batch {batch['batch']}: {batch['command']}")
+        lines += ["", result["claim_boundary"]]
+        _out(result, args.json, "\n".join(lines))
+        return 0
     if args.runs_cmd == "events":
         from . import evidence_events
         try:
@@ -3640,6 +3726,38 @@ def build_parser() -> argparse.ArgumentParser:
         help="append typed projections of legacy records; never rewrites source evidence")
     revents.add_argument("--json", action="store_true",
                          help="emit events and deterministic replay as JSON")
+    rimport = rnsub.add_parser(
+        "import",
+        help="verify and immutably import one run directory or ZIP package")
+    rimport.add_argument(
+        "source",
+        help="run directory, archive wrapper directory, or ZIP package")
+    rimport.add_argument(
+        "--dry-run", action="store_true",
+        help="validate identity, safety, digests, and destination without writing")
+    rimport.add_argument("--json", action="store_true",
+                         help="emit the import plan or receipt as JSON")
+    rimports = rnsub.add_parser(
+        "imports", help="list append-only cross-machine import receipts")
+    rimports.add_argument("--json", action="store_true",
+                          help="emit the import-receipt index as JSON")
+    rcohorts = rnsub.add_parser(
+        "cohorts",
+        help="discover exact protocol-compatible deployment-run cohorts")
+    rcohorts.add_argument(
+        "--model", default=None,
+        help="filter by deployment id or model identifier")
+    rcohorts.add_argument(
+        "--profile", default=None,
+        help="filter by assessment profile id")
+    rcohorts.add_argument(
+        "--rt", type=int, choices=(1, 2, 3, 4), default=None,
+        help="filter by risk tier: 1 Minimal, 2 Moderate, 3 Significant, 4 Critical")
+    rcohorts.add_argument(
+        "--minimum-runs", type=int, default=2, metavar="N",
+        help="minimum compatible runs per returned cohort (default: 2)")
+    rcohorts.add_argument("--json", action="store_true",
+                          help="emit machine-readable cohorts and commands")
     rn.set_defaults(func=cmd_runs)
 
     rv = common(sub.add_parser("review", help="assemble a multi-deployment peer-review package"))

@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Verified cross-machine run portability and compatible cohort discovery**:
+  accepted ADR-0017 establishes the non-overwriting transfer boundary.
+  `aies runs import DIRECTORY-OR-ZIP [--dry-run]` accepts exactly one valid run,
+  bounds and validates ZIP extraction, rejects traversal, symlinks, path/case
+  collisions, and overwrite, excludes declared disposable archive metadata,
+  verifies every admitted file by size and SHA-256, and records an append-only
+  package-tree receipt. Common `runs/RUN/RUN` copies are atomically normalized
+  while preserving the original wrapper under append-only `import-sources`.
+  `aies runs imports` and read-only `/run-imports` expose transfer provenance.
+  `aies runs cohorts` and `/run-cohorts` group aggregated deployment runs by the
+  exact ECM comparison protocol and emit connected two-to-five-run commands
+  without claiming independence, representativeness, qualification, or a
+  universal winner.
 - **Adaptive 2–5 subject comparison reports**: `aies compare` now uses one
   compatibility engine for two through five deployment/model runs and a
   parallel perspective-native engine for two through five repository

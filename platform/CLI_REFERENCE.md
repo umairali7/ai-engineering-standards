@@ -2207,19 +2207,22 @@ assemble a multi-deployment peer-review package
 
 list runs or inspect one run and its durable progress
 
-**Usage:** `aies runs [-h] [--json] {list,show,progress,events} ...`
+**Usage:** `aies runs [-h] [--json] {list,show,progress,events,import,imports,cohorts} ...`
 
-**Prerequisites:** The workspace contains runs; progress requires durable `progress.json`, while event migration requires a retained manifest and source records.
+**Prerequisites:** The workspace contains runs, or `runs import` is given a readable run directory/ZIP; progress requires durable `progress.json`, while event migration requires retained source records.
 
-**Result and side effects:** Lists history, shows a versioned run summary, displays progress, or validates/replays typed evidence events. `events --migrate` appends projections but never rewrites legacy source evidence.
+**Result and side effects:** Lists history and imports, shows a versioned run summary or progress, discovers comparison-compatible cohorts, and validates/replays typed evidence events.
 
-**Recommended next step:** Use `runs show RUN` to discover available products, then open, compare, inspect, or resume the run.
+**Recommended next step:** Import with `--dry-run` first, then use `runs show RUN` and `runs cohorts` to discover safe next actions.
 
 ### Subcommands
 
 | Subcommand | What it does |
 |---|---|
+| `cohorts` | discover exact protocol-compatible deployment-run cohorts |
 | `events` | validate and replay typed events, or append a legacy-run projection |
+| `import` | verify and immutably import one run directory or ZIP package |
+| `imports` | list append-only cross-machine import receipts |
 | `list` | list recorded runs |
 | `progress` | show detailed durable progress for a run |
 | `show` | show one versioned read-only run summary and artifact index |
@@ -2231,17 +2234,40 @@ list runs or inspect one run and its durable progress
 | `-h`, `--help` | optional | show this help message and exit | — |
 | `--json` | optional | machine-readable output | — |
 
+## `aies runs cohorts`
+
+discover exact protocol-compatible deployment-run cohorts
+
+**Usage:** `aies runs cohorts [-h] [--model MODEL] [--profile PROFILE] [--rt {1,2,3,4}] [--minimum-runs N] [--json]`
+
+**Prerequisites:** Aggregated deployment runs exist; optional model, profile, and risk-tier filters narrow discovery.
+
+**Result and side effects:** Groups runs by the exact subject, risk, profile, suite, mapping, scoring, rater, repeat, and Evidence Adapter compatibility signature and emits connected 2–5-run comparison commands.
+
+**Recommended next step:** Run a printed `aies compare` command; separately verify independence and decision relevance because protocol compatibility is not representativeness.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--model` | optional | filter by deployment id or model identifier | — |
+| `--profile` | optional | filter by assessment profile id | — |
+| `--rt` | optional | filter by risk tier: 1 Minimal, 2 Moderate, 3 Significant, 4 Critical | choices: `1`, `2`, `3`, `4` |
+| `--minimum-runs` | optional | minimum compatible runs per returned cohort (default: 2) | default: `2` |
+| `--json` | optional | emit machine-readable cohorts and commands | — |
+
 ## `aies runs events`
 
 validate and replay typed events, or append a legacy-run projection
 
 **Usage:** `aies runs events [-h] [--migrate] [--json] run`
 
-**Prerequisites:** The workspace contains runs; progress requires durable `progress.json`, while event migration requires a retained manifest and source records.
+**Prerequisites:** The workspace contains runs, or `runs import` is given a readable run directory/ZIP; progress requires durable `progress.json`, while event migration requires retained source records.
 
-**Result and side effects:** Lists history, shows a versioned run summary, displays progress, or validates/replays typed evidence events. `events --migrate` appends projections but never rewrites legacy source evidence.
+**Result and side effects:** Lists history and imports, shows a versioned run summary or progress, discovers comparison-compatible cohorts, and validates/replays typed evidence events.
 
-**Recommended next step:** Use `runs show RUN` to discover available products, then open, compare, inspect, or resume the run.
+**Recommended next step:** Import with `--dry-run` first, then use `runs show RUN` and `runs cohorts` to discover safe next actions.
 
 ### Parameters and options
 
@@ -2252,17 +2278,57 @@ validate and replay typed events, or append a legacy-run projection
 | `--migrate` | optional | append typed projections of legacy records; never rewrites source evidence | — |
 | `--json` | optional | emit events and deterministic replay as JSON | — |
 
+## `aies runs import`
+
+verify and immutably import one run directory or ZIP package
+
+**Usage:** `aies runs import [-h] [--dry-run] [--json] source`
+
+**Prerequisites:** A readable directory or ZIP contains exactly one valid AIES `manifest.json`; the destination workspace is writable.
+
+**Result and side effects:** Bounds and validates archive extraction, rejects traversal/symlinks/collisions, excludes disposable archive metadata, verifies every admitted byte, never overwrites an existing run, and appends a source-bound receipt.
+
+**Recommended next step:** Start with `aies runs import PATH --dry-run`; after import use `aies runs show RUN` and retain the receipt exposed by `aies runs imports`.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<SOURCE>` | required | run directory, archive wrapper directory, or ZIP package | — |
+| `--dry-run` | optional | validate identity, safety, digests, and destination without writing | — |
+| `--json` | optional | emit the import plan or receipt as JSON | — |
+
+## `aies runs imports`
+
+list append-only cross-machine import receipts
+
+**Usage:** `aies runs imports [-h] [--json]`
+
+**Prerequisites:** The workspace may contain append-only run-import receipts.
+
+**Result and side effects:** Lists source-bound import receipts with run identity, status, file count, timestamp, and package-tree digest; it changes no state.
+
+**Recommended next step:** Inspect the imported run with `aies runs show RUN` or retrieve a receipt through `GET /run-imports/{id}`.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | emit the import-receipt index as JSON | — |
+
 ## `aies runs list`
 
 list recorded runs
 
 **Usage:** `aies runs list [-h] [--model MODEL] [--json]`
 
-**Prerequisites:** The workspace contains runs; progress requires durable `progress.json`, while event migration requires a retained manifest and source records.
+**Prerequisites:** The workspace contains runs, or `runs import` is given a readable run directory/ZIP; progress requires durable `progress.json`, while event migration requires retained source records.
 
-**Result and side effects:** Lists history, shows a versioned run summary, displays progress, or validates/replays typed evidence events. `events --migrate` appends projections but never rewrites legacy source evidence.
+**Result and side effects:** Lists history and imports, shows a versioned run summary or progress, discovers comparison-compatible cohorts, and validates/replays typed evidence events.
 
-**Recommended next step:** Use `runs show RUN` to discover available products, then open, compare, inspect, or resume the run.
+**Recommended next step:** Import with `--dry-run` first, then use `runs show RUN` and `runs cohorts` to discover safe next actions.
 
 ### Parameters and options
 
@@ -2278,11 +2344,11 @@ show detailed durable progress for a run
 
 **Usage:** `aies runs progress [-h] [--json] run`
 
-**Prerequisites:** The workspace contains runs; progress requires durable `progress.json`, while event migration requires a retained manifest and source records.
+**Prerequisites:** The workspace contains runs, or `runs import` is given a readable run directory/ZIP; progress requires durable `progress.json`, while event migration requires retained source records.
 
-**Result and side effects:** Lists history, shows a versioned run summary, displays progress, or validates/replays typed evidence events. `events --migrate` appends projections but never rewrites legacy source evidence.
+**Result and side effects:** Lists history and imports, shows a versioned run summary or progress, discovers comparison-compatible cohorts, and validates/replays typed evidence events.
 
-**Recommended next step:** Use `runs show RUN` to discover available products, then open, compare, inspect, or resume the run.
+**Recommended next step:** Import with `--dry-run` first, then use `runs show RUN` and `runs cohorts` to discover safe next actions.
 
 ### Parameters and options
 
@@ -2298,11 +2364,11 @@ show one versioned read-only run summary and artifact index
 
 **Usage:** `aies runs show [-h] [--json] run`
 
-**Prerequisites:** The workspace contains runs; progress requires durable `progress.json`, while event migration requires a retained manifest and source records.
+**Prerequisites:** The workspace contains runs, or `runs import` is given a readable run directory/ZIP; progress requires durable `progress.json`, while event migration requires retained source records.
 
-**Result and side effects:** Lists history, shows a versioned run summary, displays progress, or validates/replays typed evidence events. `events --migrate` appends projections but never rewrites legacy source evidence.
+**Result and side effects:** Lists history and imports, shows a versioned run summary or progress, discovers comparison-compatible cohorts, and validates/replays typed evidence events.
 
-**Recommended next step:** Use `runs show RUN` to discover available products, then open, compare, inspect, or resume the run.
+**Recommended next step:** Import with `--dry-run` first, then use `runs show RUN` and `runs cohorts` to discover safe next actions.
 
 ### Parameters and options
 

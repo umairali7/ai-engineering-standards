@@ -141,7 +141,14 @@ def main() -> int:
     print("  global protocol compatible:", comparison["compatible"])
     print("  comparable observed task rows:",
           sum(1 for task in comparison["tasks"] if task["comparable"]))
-    print("  winners emitted:", sum(1 for task in comparison["tasks"] if task["winner"]))
+    # Multi-subject comparison v2 reports evidence-bounded task leaders. A
+    # repeated-reference self-check must tie, so it cannot emit a sole leader.
+    sole_leads = sum(comparison["summary"]["sole_leads"].values())
+    print("  sole task leaders emitted:", sole_leads)
+    if sole_leads:
+        raise SystemExit(
+            "demo failed: a repeated-reference protocol self-check emitted "
+            "a sole task leader")
 
     hr("10. Linked audience-specific decision products")
     bundle = workspace.read_json(run_dir / "report-bundle.json")

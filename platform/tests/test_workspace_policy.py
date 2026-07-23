@@ -67,7 +67,11 @@ def test_nested_copied_run_package_is_readable_without_being_moved(
     package = wrapper / run_id
     package.mkdir(parents=True)
     manifest = package / "manifest.json"
-    manifest.write_text('{"run_id":"run-copied"}', encoding="utf-8")
+    manifest.write_text(
+        '{"run_id":"run-copied","model":{"registry_id":"copied-model"},'
+        '"profile":"coder","risk_tier":"RT2","areas":[]}',
+        encoding="utf-8")
+    (package / "evidence-package.json").write_text("{}", encoding="utf-8")
 
     assert workspace.run_dir(run_id) == package
     assert manifest.is_file()
@@ -77,6 +81,10 @@ def test_nested_copied_run_package_is_readable_without_being_moved(
         if item["category"] == "nested-run-package")
     assert finding["path"] == f"runs/{run_id}"
     assert "evidence-bearing" in finding["recoverability"]
+    from aies import compare
+    listed = compare.list_runs()
+    assert listed[0]["run_id"] == run_id
+    assert listed[0]["aggregated"] is True
 
 
 def test_workspace_debris_diagnostic_is_read_only_and_evidence_aware(tmp_path):

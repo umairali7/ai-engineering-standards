@@ -60,6 +60,8 @@ def test_health_and_index():
     assert "/overview" in body["endpoints"]
     assert "/audits" in body["endpoints"]
     assert "/comparisons" in body["endpoints"]
+    assert "/run-imports" in body["endpoints"]
+    assert "/run-cohorts" in body["endpoints"]
 
 
 def test_collections_are_served(api_ws):
@@ -83,6 +85,13 @@ def test_collections_are_served(api_ws):
     assert body["counts"]["aggregated_runs"] == 1
     assert body["runs"][0]["href"] == f"/runs/{api_ws}"
     assert body["links"]["run"] == "/runs/{id}"
+
+    status, imports = api.route("/run-imports")
+    assert status == 200
+    assert imports["kind"] == "aies-run-import-index"
+    status, cohorts = api.route("/run-cohorts")
+    assert status == 200
+    assert cohorts["kind"] == "aies-run-comparison-cohorts"
 
 
 def test_result_endpoint_serves_stored_result_verbatim(api_ws):

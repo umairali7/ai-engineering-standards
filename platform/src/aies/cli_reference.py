@@ -261,9 +261,24 @@ GUIDANCE: dict[str, CommandGuidance] = {
         "Prefer the canonical `aies profile` surface in new workflows.",
     ),
     "runs": CommandGuidance(
-        "The workspace contains runs; progress requires durable `progress.json`, while event migration requires a retained manifest and source records.",
-        "Lists history, shows a versioned run summary, displays progress, or validates/replays typed evidence events. `events --migrate` appends projections but never rewrites legacy source evidence.",
-        "Use `runs show RUN` to discover available products, then open, compare, inspect, or resume the run.",
+        "The workspace contains runs, or `runs import` is given a readable run directory/ZIP; progress requires durable `progress.json`, while event migration requires retained source records.",
+        "Lists history and imports, shows a versioned run summary or progress, discovers comparison-compatible cohorts, and validates/replays typed evidence events.",
+        "Import with `--dry-run` first, then use `runs show RUN` and `runs cohorts` to discover safe next actions.",
+    ),
+    "runs import": CommandGuidance(
+        "A readable directory or ZIP contains exactly one valid AIES `manifest.json`; the destination workspace is writable.",
+        "Bounds and validates archive extraction, rejects traversal/symlinks/collisions, excludes disposable archive metadata, verifies every admitted byte, never overwrites an existing run, and appends a source-bound receipt.",
+        "Start with `aies runs import PATH --dry-run`; after import use `aies runs show RUN` and retain the receipt exposed by `aies runs imports`.",
+    ),
+    "runs imports": CommandGuidance(
+        "The workspace may contain append-only run-import receipts.",
+        "Lists source-bound import receipts with run identity, status, file count, timestamp, and package-tree digest; it changes no state.",
+        "Inspect the imported run with `aies runs show RUN` or retrieve a receipt through `GET /run-imports/{id}`.",
+    ),
+    "runs cohorts": CommandGuidance(
+        "Aggregated deployment runs exist; optional model, profile, and risk-tier filters narrow discovery.",
+        "Groups runs by the exact subject, risk, profile, suite, mapping, scoring, rater, repeat, and Evidence Adapter compatibility signature and emits connected 2–5-run comparison commands.",
+        "Run a printed `aies compare` command; separately verify independence and decision relevance because protocol compatibility is not representativeness.",
     ),
     "judge": CommandGuidance(
         "Deployments may declare the judge role; history requires prior automated scoring.",

@@ -74,6 +74,8 @@ Every artifact carries a schema version; envelopes are field-append-only
 | Repository Assessment Bundle | `schema` | `1` | `aies audit --out DIRECTORY` |
 | Comparison Report | `schema` | `aies-engineering-comparison/v2`, `aies-repository-comparison/v2`, or `aies-area-comparison/v2` | `aies compare` |
 | Comparison Bundle Index | `schema` | `1` | `aies compare --out DIRECTORY` |
+| Verified Run Import | `schema` | `aies-run-import/v1` | `aies runs import` / `GET /run-imports/{id}` |
+| Run Comparison Cohorts | `schema` | `aies-run-comparison-cohorts/v1` | `aies runs cohorts` / `GET /run-cohorts` |
 | API Error | `schema_version` | `1` | failed read-only REST requests |
 
 The result's `metadata` records both `decision_engine_version` (which software)
@@ -88,7 +90,7 @@ not imply one universal mutation rule.
 
 | Class | Examples | Mutation contract |
 |---|---|---|
-| Append-only record | responses, rating observations, resolutions, human-rater records, Qualification Records and lifecycle events, audit records, explicitly saved comparison records | Created once; replacement is rejected. Corrections are new records or events. |
+| Append-only record | responses, rating observations, resolutions, human-rater records, Qualification Records and lifecycle events, audit records, explicitly saved comparison records, run-import receipts, preserved source wrappers | Created once; replacement is rejected. Corrections are new records or events. |
 | Derived canonical snapshot | `evidence-package.json`, `assessment-result.json`, `review-package.json` | Recomputed only when its recorded source evidence changes; the schema and source provenance remain explicit. |
 | Mutable working state | `manifest.json`, `scoresheet.json`, `progress.json`, latest fingerprint | May be replaced by its owning workflow while work progresses. |
 | Regenerable view | Markdown/JSON/HTML reports, `report-view.json`, Engineering Assessment Result, ECM, Engineering Fit/Deployment Guidance, Executive Summary, Grounding Diagnostics, dashboard, bundle index | May be replaced at any time from canonical records; never treated as source evidence. |
@@ -186,6 +188,9 @@ GET /audits                    repository assessment history
 GET /audits/{id}               stored repository assessment, served verbatim
 GET /comparisons               explicitly saved comparison history
 GET /comparisons/{id}          stored comparison, served verbatim
+GET /run-imports               verified cross-machine import receipts
+GET /run-imports/{id}          stored import receipt, served verbatim
+GET /run-cohorts               exact protocol-compatible run groups
 GET /runs/{id}                 versioned read-only run + artifact summary
 GET /runs/{id}/evidence        the Evidence Package
 GET /runs/{id}/result          primary Engineering or legacy Formal Result

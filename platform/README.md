@@ -216,6 +216,11 @@ aies assessment result <run-id> --formal-qualification
 aies runs list                # result history
 aies runs show <run-id>       # versioned run summary + artifact index
 aies runs progress <run-id>   # durable live stage, %, elapsed, rate, ETA, failures
+aies runs import RUN.zip --dry-run
+                              # validate identity, safety, and all file digests
+aies runs import RUN.zip      # verified, non-overwriting cross-machine import
+aies runs imports             # append-only import receipts
+aies runs cohorts             # exact protocol-compatible comparison groups
 aies runs events <run-id>     # validate and replay typed evidence events
 aies runs events <legacy-run> --migrate
                               # append typed projections; never rewrite source records

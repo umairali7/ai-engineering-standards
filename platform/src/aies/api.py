@@ -36,6 +36,7 @@ _RUN_DIAGNOSTICS = re.compile(r"^/runs/([^/]+)/diagnostics$")
 _RUN_DETAIL = re.compile(r"^/runs/([^/]+)$")
 _AUDIT_DETAIL = re.compile(r"^/audits/([^/]+)$")
 _COMPARISON_DETAIL = re.compile(r"^/comparisons/([^/]+)$")
+_RUN_IMPORT_DETAIL = re.compile(r"^/run-imports/([^/]+)$")
 
 
 def _error(status: int, code: str, message: str, *,
@@ -71,6 +72,8 @@ def route(path: str) -> tuple[int, dict]:
                                    "/runs/{id}/diagnostics",
                                    "/audits", "/audits/{id}",
                                    "/comparisons", "/comparisons/{id}",
+                                   "/run-imports", "/run-imports/{id}",
+                                   "/run-cohorts",
                                    "/assessments", "/qualifications", "/conformance"]}
     if path == "/overview":
         from . import overview
@@ -106,6 +109,16 @@ def route(path: str) -> tuple[int, dict]:
     if path == "/comparisons":
         from . import comparison_report
         return 200, {"comparisons": comparison_report.list_records()}
+    if path == "/run-imports":
+        from . import run_transfer
+        return 200, {
+            "kind": "aies-run-import-index",
+            "schema": "aies-run-import-index/v1",
+            "imports": run_transfer.list_receipts(),
+        }
+    if path == "/run-cohorts":
+        from . import compare
+        return 200, compare.discover_run_cohorts()
     if path == "/assessments":
         from . import assessments
         return 200, {"assessments": assessments.list_assessments()}
@@ -207,6 +220,21 @@ def route(path: str) -> tuple[int, dict]:
                 404, "comparison-not-found",
                 f"comparison {comparison_id!r} was not found",
                 hint="list saved comparisons with GET /comparisons")
+        return 200, workspace.read_json(artifact)
+    m = _RUN_IMPORT_DETAIL.match(path)
+    if m:
+        receipt_id = m.group(1)
+        try:
+            workspace.validate_run_id(receipt_id)
+        except ValueError as error:
+            return _error(400, "invalid-run-import-id", str(error))
+        artifact = (
+            workspace.root() / "run-imports" / f"{receipt_id}.json")
+        if not artifact.exists():
+            return _error(
+                404, "run-import-not-found",
+                f"run import {receipt_id!r} was not found",
+                hint="list retained import receipts with GET /run-imports")
         return 200, workspace.read_json(artifact)
 
     return _error(

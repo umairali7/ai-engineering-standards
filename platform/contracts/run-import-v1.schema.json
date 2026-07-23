@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aies.dev/contracts/run-import-v1.schema.json",
+  "title": "AIES Verified Run Import v1",
+  "type": "object",
+  "required": [
+    "kind",
+    "schema",
+    "receipt_id",
+    "run_id",
+    "source",
+    "package_tree_digest",
+    "files",
+    "file_count",
+    "bytes",
+    "excluded",
+    "loss_accounting",
+    "verification",
+    "destination",
+    "would_write",
+    "claim_boundary"
+  ],
+  "properties": {
+    "kind": {
+      "enum": ["aies-run-import-plan", "aies-run-import-receipt"]
+    },
+    "schema": {"const": "aies-run-import/v1"},
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^run-import-[0-9a-f]{16}$"
+    },
+    "run_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["imported", "already-imported"]},
+    "source": {
+      "type": "object",
+      "required": ["kind", "name", "source_digest"],
+      "properties": {
+        "kind": {"enum": ["directory", "zip"]},
+        "name": {"type": "string"},
+        "source_digest": {
+          "type": ["string", "null"],
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
+    "package_tree_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "bytes", "sha256"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "bytes": {"type": "integer", "minimum": 0},
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "file_count": {"type": "integer", "minimum": 1},
+    "bytes": {"type": "integer", "minimum": 1},
+    "excluded": {"type": "array", "items": {"type": "object"}},
+    "loss_accounting": {
+      "type": "object",
+      "required": [
+        "admitted_files",
+        "admitted_bytes",
+        "excluded_disposable_items",
+        "evidence_files_removed",
+        "lossy"
+      ]
+    },
+    "verification": {
+      "type": "object",
+      "required": [
+        "algorithm",
+        "scope",
+        "exact_tree_required",
+        "byte_preservation_required"
+      ]
+    },
+    "destination": {"type": "string", "minLength": 1},
+    "would_write": {"type": "boolean"},
+    "verified_after_import": {"type": "boolean"},
+    "claim_boundary": {"type": "string", "minLength": 1}
+  }
+}

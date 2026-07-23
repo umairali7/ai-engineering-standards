@@ -1048,12 +1048,37 @@ caveats, and deterministic next actions. `--out` writes immutable
 record available through `GET /comparisons/{id}`. Without `--save`, comparison
 remains a read-only derivation over existing evidence.
 
-When a copied run arrives as `runs/RUN/RUN/manifest.json`, commands resolve the
-inner package in place so inspection and comparison can continue without
-moving or overwriting evidence. `aies doctor` still reports the wrapper as an
-evidence-bearing nested package. The canonical `runs/RUN/manifest.json` layout
-remains preferred; a future verified run-import workflow will normalize
-cross-machine transfers explicitly.
+For a run produced on another machine, validate before writing:
+
+```text
+aies runs import /path/to/RUN-or-RUN.zip --dry-run
+aies runs import /path/to/RUN-or-RUN.zip
+aies runs imports
+```
+
+The import accepts one manifest, bounds ZIP expansion, rejects path traversal,
+drive-qualified paths, symlinks, case collisions, and overwrite, excludes only
+declared disposable archive/cache metadata, and verifies every admitted file by
+size and SHA-256 before and after placement. An exact repeated import is
+idempotent. A conflicting destination is preserved and rejected. The common
+`runs/RUN/RUN/manifest.json` wrapper is normalized atomically, with its original
+wrapper retained under append-only `import-sources/`. Import records identity
+and byte preservation only; it does not validate scores, recompute evidence,
+qualify a subject, or grant authority.
+
+Discover exact protocol-compatible comparison groups after transfer:
+
+```text
+aies runs cohorts
+aies runs cohorts --profile coder --rt 2
+```
+
+Each cohort shares the subject, risk, profile, suite, mapping, scoring, rater,
+repeat, and Evidence Adapter signature used by ECM comparison. The CLI prints
+connected 2–5-run commands when a group is larger than one report can present.
+This proves protocol compatibility, not independence, representativeness, or a
+universal winner. See accepted
+[ADR-0017](../adr/ADR-0017-Verified-Run-Portability-and-Comparison-Cohorts.md).
 
 #### Adopt the audit in CI without an implicit gate
 

@@ -8,6 +8,9 @@ same evidence — a comparison makes no additional claims.
 
 from __future__ import annotations
 
+import hashlib
+import json
+
 from . import constants as C
 from . import workspace
 
@@ -369,19 +372,149 @@ def list_runs(model: str | None = None) -> list[dict]:
         if not d.is_dir() or not manifest_path.exists():
             continue
         m = workspace.read_json(manifest_path)
-        if model and m["model"]["registry_id"] != model:
+        model_id = (
+            (m.get("model") or {}).get("registry_id")
+            or (m.get("subject") or {}).get("id")
+            or "unknown-subject")
+        if model and model_id != model:
             continue
         out.append({
             "run_id": m["run_id"],
-            "model": m["model"]["registry_id"],
+            "model": model_id,
             "profile": m["profile"],
             "risk_tier": m["risk_tier"],
             "areas": [a["area"] for a in m["areas"]],
             "status": m.get("status", "unknown"),
             "created_at": m.get("created_at"),
-            "aggregated": (d / "evidence-package.json").exists(),
+            "aggregated": (
+                manifest_path.parent / "evidence-package.json").exists(),
         })
     return out
+
+
+def _comparison_batches(run_ids: list[str]) -> list[list[str]]:
+    """Create connected 2–5 run batches without duplicating model calls."""
+    if len(run_ids) < MIN_COMPARISON_SUBJECTS:
+        return []
+    batches = [run_ids[:MAX_COMPARISON_SUBJECTS]]
+    anchor = run_ids[0]
+    offset = MAX_COMPARISON_SUBJECTS
+    while offset < len(run_ids):
+        batch = [anchor, *run_ids[offset:offset + MAX_COMPARISON_SUBJECTS - 1]]
+        batches.append(batch)
+        offset += MAX_COMPARISON_SUBJECTS - 1
+    return batches
+
+
+def discover_run_cohorts(
+    *,
+    model: str | None = None,
+    profile: str | None = None,
+    risk_tier: str | None = None,
+    minimum_runs: int = MIN_COMPARISON_SUBJECTS,
+) -> dict:
+    """Group aggregated deployment runs by the exact ECM protocol signature.
+
+    Discovery is read-only and does not claim that compatible runs are
+    representative, independent, or suitable for a particular decision.
+    """
+    if minimum_runs < 1:
+        raise CompareError("minimum cohort size must be at least 1")
+    if risk_tier is not None and not str(risk_tier).startswith("RT"):
+        risk_tier = f"RT{risk_tier}"
+    candidates = [
+        row for row in list_runs(model=model)
+        if row["aggregated"]
+        and (profile is None or row["profile"] == profile)
+        and (risk_tier is None or row["risk_tier"] == risk_tier)
+    ]
+    from . import ecm
+
+    groups: dict[str, dict] = {}
+    excluded = []
+    for row in candidates:
+        run_id = row["run_id"]
+        try:
+            matrix = ecm.engineering_capability_matrix(run_id)
+            package = _resolve_package(run_id)
+            manifest = workspace.read_json(
+                workspace.run_dir(run_id) / "manifest.json")
+            signature = {
+                "subject_kind": package.get("subject_kind", "ai"),
+                "risk_tier": matrix["risk_tier"],
+                "profile": matrix["profile"],
+                "mapping_version": matrix["mapping"]["version"],
+                "mapping_schema": matrix["mapping"]["schema"],
+                "task_decision_semantics": (
+                    matrix["task_decision_semantics_version"]),
+                "rater_protocol": matrix["rater_kinds"],
+                "suite_versions": package["suite_versions"],
+                "repeat_structure": manifest.get("repeats"),
+                "evidence_adapter_profiles": _adapter_profiles(run_id),
+            }
+        except (FileNotFoundError, KeyError, TypeError, ValueError) as error:
+            excluded.append({
+                "run_id": run_id,
+                "reason": f"comparison signature unavailable: {error}",
+            })
+            continue
+        material = json.dumps(
+            signature, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        cohort_id = "cohort-" + hashlib.sha256(material).hexdigest()[:16]
+        group = groups.setdefault(cohort_id, {
+            "cohort_id": cohort_id,
+            "signature": signature,
+            "runs": [],
+        })
+        group["runs"].append({
+            "run_id": run_id,
+            "model": row["model"],
+            "created_at": row["created_at"],
+            "status": row["status"],
+        })
+    cohorts = []
+    for cohort_id, group in sorted(groups.items()):
+        group["runs"].sort(
+            key=lambda item: item.get("created_at") or "", reverse=True)
+        if len(group["runs"]) < minimum_runs:
+            continue
+        run_ids = [item["run_id"] for item in group["runs"]]
+        batches = _comparison_batches(run_ids)
+        cohorts.append({
+            **group,
+            "run_count": len(run_ids),
+            "comparison_ready": len(run_ids) >= MIN_COMPARISON_SUBJECTS,
+            "comparison_batches": [
+                {
+                    "batch": index,
+                    "run_ids": batch,
+                    "command": "aies compare " + " ".join(batch),
+                }
+                for index, batch in enumerate(batches, 1)
+            ],
+        })
+    cohorts.sort(
+        key=lambda item: (
+            item["run_count"],
+            item["runs"][0].get("created_at") or ""),
+        reverse=True)
+    return {
+        "kind": "aies-run-comparison-cohorts",
+        "schema": "aies-run-comparison-cohorts/v1",
+        "filters": {
+            "model": model,
+            "profile": profile,
+            "risk_tier": risk_tier,
+            "minimum_runs": minimum_runs,
+        },
+        "candidate_runs": len(candidates),
+        "cohorts": cohorts,
+        "excluded": excluded,
+        "claim_boundary": (
+            "Cohorts share the comparison protocol signature only. Discovery "
+            "does not establish independence, representativeness, engineering "
+            "superiority, qualification, or deployment authority."),
+    }
 
 
 def _resolve_package(ref: str) -> dict:
