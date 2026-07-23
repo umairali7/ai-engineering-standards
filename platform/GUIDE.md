@@ -12,6 +12,93 @@ Specification: [AIES-DOC-06 — Engineering Assessment Platform Specification](.
 
 ---
 
+## 0. Navigate the CLI
+
+Use the three levels of built-in and generated help:
+
+```text
+aies help                    # complete command tree and typical workflow
+aies <command> --help        # every parameter for one command
+aies <group> <command> --help
+```
+
+The generated [CLI Reference](CLI_REFERENCE.md) is the exhaustive guide. It
+documents every live command and parameter, prerequisites, option interactions,
+outputs/side effects, recommended next commands, and end-to-end command
+sequences. CI compares it with the live parser so a new option cannot be added
+without documentation.
+
+### Enable Tab completion
+
+PowerShell, current session:
+
+```powershell
+aies completion powershell | Out-String | Invoke-Expression
+```
+
+Bash, current session:
+
+```bash
+source <(aies completion bash)
+```
+
+Zsh, current session:
+
+```zsh
+source <(aies completion zsh)
+```
+
+Inspect the generated script before adding it to a persistent shell profile:
+
+```text
+aies completion powershell
+aies completion bash
+aies completion zsh
+```
+
+After activation, Tab completes commands, subcommands, option names, and
+enumerated values such as output formats and risk-tier numbers. Filesystem
+paths continue to use normal shell path completion. The completion definition
+is generated from the same parser as `aies --help`, so it follows the installed
+AIES version.
+
+Try:
+
+```text
+aies dep<Tab>                         # completes deployment
+aies deployment <Tab>                # lists its subcommands
+aies report run-123 --format <Tab>    # lists html/json/markdown
+```
+
+Useful operating habits:
+
+- `--json` selects machine-readable output for automation.
+- `--write` persists a regenerable view where the command supports it.
+- `aies runs progress <run>` observes durable progress from a second terminal;
+  the originating long-running command already shows task, elapsed time,
+  throughput, failures, and ETA.
+- `--parallel N` sets concurrent calls. Lower it for rate limiting; it cannot
+  repair an API project with insufficient quota.
+- Use `--resume-collection` after interrupted inference and `--resume` after
+  scoring so completed work is not repeated.
+
+### Read commands as a sequence
+
+Most mutating commands consume evidence created by an earlier stage:
+
+```text
+doctor → discover/deployment add → qualify or benchmark
+benchmark → complete scoresheet → score → resolve if needed → report
+aggregated run → capabilities/ECM → guidance
+decisional human-rated evidence → grant → qualification verify/history
+repository → audit → remediation → audit --gate
+empirical plan → frozen subject runs → panel analysis → human promotion decision
+```
+
+The CLI Reference repeats the exact prerequisites and next step beside every
+command. Automated Engineering Evaluation and formal human qualification remain
+separate workflows.
+
 ## 1. The whole system, in one picture
 
 The **standard** defines what to measure and how; the **platform** executes

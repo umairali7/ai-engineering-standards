@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Exhaustive parser-derived CLI guidance and shell completion**: added a
+  generated CLI reference covering every command, subcommand, positional
+  parameter, option, default, choice, prerequisite, interaction, side effect,
+  next step, and recommended workflow sequence. Built-in help now explains every
+  parameter. `aies completion powershell|bash|zsh` generates sourceable Tab
+  completion from the same live parser, and tests prevent the checked-in guide
+  or completion metadata from drifting behind the executable command surface.
 - **Content-bound human design-review ledger**: recorded Umair Ali's explicit
   acceptance of the 268-instrument RT2 — Moderate tranche as one disclosed
   human-authorized, AI-assisted decision. The append-only event enumerates every

@@ -7,8 +7,10 @@
 | **Audience** | Engineers · Integrators · Contributors |
 | **Scope** | The vocabulary, the artifacts (with versions), and every `aies` command |
 
-The single "explain everything" reference for the platform. For architecture and
-setup see [GUIDE.md](GUIDE.md); for the specification see
+The compact "explain the contracts" reference for the platform. For architecture
+and setup see [GUIDE.md](GUIDE.md); for exhaustive command syntax,
+prerequisites, parameter interactions, side effects, and sequences see the
+generated [CLI Reference](CLI_REFERENCE.md); for the specification see
 [docs/PLATFORM.md](../docs/PLATFORM.md); for the contract freeze see
 [STABILITY.md](../STABILITY.md).
 
@@ -149,7 +151,8 @@ append-only records. Grouped as in `aies --help`.
 | `corpus review` | Review one scenario as a measurement instrument — deterministic structural checks always, plus an **opt-in model critique** (`--reviewer <deployment>`). Critique only: never rewrites, approves, or scores | `aies corpus review SC-CA07-015 --reviewer gpt-oss` |
 | `journey` | Inspect multi-phase lifecycle scenarios | `aies journey list` |
 | `index` | Rebuildable SQLite index over the append-only records | `aies index` |
-| `plugins` | Installed runtime adapters + declared capabilities | `aies plugins list` |
+| `plugins` | Installed runtime adapters + declared capabilities | `aies plugins` |
+| `completion` | Generate parser-derived Tab completion for PowerShell, Bash, or Zsh | `aies completion powershell` |
 
 ## 4. REST API (read-only)
 

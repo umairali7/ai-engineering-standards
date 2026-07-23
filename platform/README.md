@@ -42,6 +42,7 @@ area, ADR-0004), `corpus` (the platform reviews its **own** assessment corpus �
 health/coverage/duplicates/review; advisory, multidimensional, no single grade),
 `runs`, `compare`, `index`, `review`, `grant`, `verify`, `journey`,
 `conform`, `runtime`/`profile`/`qualification`, `dashboard`, `plugins`.
+`completion` generates parser-derived PowerShell, Bash, and Zsh Tab completion.
 All twelve competency areas
 (CA-01…CA-12) ship demonstration suites; six weighting profiles; a
 frozen v1.0 runtime-adapter contract with an
@@ -50,14 +51,18 @@ conformance tests run in CI.
 
 **New here?** [GUIDE.md](GUIDE.md) has the whole-system architecture diagram,
 component wiring, and step-by-step setup + real-model run instructions.
+[CLI_REFERENCE.md](CLI_REFERENCE.md) is generated from the live parser and
+documents every command, subcommand, positional parameter, option, default,
+choice, prerequisite, interaction, result/side effect, recommended next step,
+and common command sequence.
 See also [DEPLOYMENTS.md](DEPLOYMENTS.md) (qualify deployments, not models),
 [PROFILES.md](PROFILES.md) (the weighting presets),
 [RUNTIMES.md](RUNTIMES.md) (the runtime interface and shipped adapters), and
 [JOURNEYS.md](JOURNEYS.md) (multi-phase scenarios that test lifecycle depth),
 [SCENARIOS.md](SCENARIOS.md) (how to author competency scenarios), and
 [ASSESSMENTS.md](ASSESSMENTS.md) (declarative qualification composition).
-[REFERENCE.md](REFERENCE.md) is the complete reference — vocabulary, artifact
-schemas, and every command. [CALIBRATION.md](CALIBRATION.md) covers scenario
+[REFERENCE.md](REFERENCE.md) is the compact platform reference — vocabulary,
+artifact schemas, and command contracts. [CALIBRATION.md](CALIBRATION.md) covers scenario
 calibration — treating each scenario as a *measurement instrument* — and the
 platform reviews its **own** corpus for calibration, coverage, behavioral
 diversity, duplication, and empirical maturity via `aies corpus`

@@ -1,0 +1,2185 @@
+# AIES CLI Reference
+
+> Generated from the live `argparse` command surface. Do not edit the
+> command tables manually; run `python platform/scripts/generate_cli_reference.py`.
+
+This is the exhaustive syntax and prerequisite reference. See
+[GUIDE.md](GUIDE.md) for explanatory workflows and
+[TROUBLESHOOTING.md](TROUBLESHOOTING.md) for failures.
+
+## Recommended command sequences
+
+### Initial setup
+
+```text
+aies doctor
+  → aies discover
+  → aies deployment list
+  → aies deployment inspect <deployment>
+  → aies judge available
+```
+
+### Automated engineering evaluation
+
+```text
+aies qualify <deployment> --all-areas --rt 2 --judge <judge>
+  → aies report <run> --format html --write
+  → aies capabilities <run> --ecm --format html --write
+  → aies guidance <run> --write
+```
+
+Automated ratings can complete an informational Engineering Evaluation. They
+cannot by themselves become formal qualification evidence.
+
+### Human-rated qualification
+
+```text
+aies benchmark <deployment> ...
+  → aies rater register ...                 # each qualified human rater
+  → complete scoresheet.json
+  → aies score <run>
+  → independent second rating as required
+  → aies resolve <run> <response> ...       # only for material divergence
+  → aies report <run> --write
+  → aies grant <run> ...                    # named humans decide
+  → aies qualification verify <record>
+```
+
+### Repository conformance
+
+```text
+aies audit <repo>
+  → close ranked evidence gaps
+  → aies audit <repo> --gate --rt 2
+```
+
+### Empirical scenario calibration
+
+```text
+aies suites empirical --create-plan <plan.json> ...
+  → run every frozen subject/protocol combination
+  → aies suites empirical --panel-plan <plan.json> --planned-runs ...
+  → independent human promotion decision
+```
+
+### Shell completion and the Tab key
+
+PowerShell, current session:
+
+```powershell
+aies completion powershell | Out-String | Invoke-Expression
+```
+
+Bash, current session:
+
+```bash
+source <(aies completion bash)
+```
+
+Zsh, current session:
+
+```zsh
+source <(aies completion zsh)
+```
+
+After activation, press Tab to complete commands, subcommands, option names,
+and enumerated option values. Filesystem paths continue to use the shell's
+normal path completion.
+
+Examples:
+
+```text
+aies dep<Tab>                         # deployment
+aies deployment <Tab>                # add, inspect, list, remove, …
+aies report run-123 --format <Tab>    # html, json, markdown
+```
+
+### Practical CLI habits
+
+- Use `--json` for scripts and stable machine-readable consumption.
+- Use `--write` when you want a regenerable artifact instead of terminal output.
+- Use `aies runs progress <run>` from a second terminal; long-running commands
+  already show their own live task, elapsed time, throughput, and ETA.
+- Treat `--parallel N` as a concurrency ceiling, not a quality setting. Reduce
+  it for endpoint rate limits; insufficient API quota is not fixed by reducing it.
+- Prefer `--resume-collection` after interrupted collection and `--resume` after
+  scoring; neither requires repeating successful inference.
+- Run `aies <command> --help` before a consequential or unfamiliar mutation.
+
+# Complete command reference
+
+## Global options
+
+| Option | Details |
+|---|---|
+| `-h`, `--help` | show this help message and exit |
+| `--version` | show program's version number and exit |
+
+## `aies assessment`
+
+declarative assessments (ADR-0005): list/show/validate, and decide a run's outcome (PASS/FAIL/INCONCLUSIVE/INSUFFICIENT EVIDENCE)
+
+**Usage:** `aies assessment [-h] [--json] {list,show,validate,result} ...`
+
+**Prerequisites:** Shipped or supplied assessment YAML is available; result rendering additionally requires an aggregated assessment run.
+
+**Result and side effects:** Lists, shows, validates, or applies declarative assessment composition.
+
+**Recommended next step:** Use a valid assessment with `aies qualify --assessment <name>` or inspect its canonical result.
+
+### Subcommands
+
+| Subcommand | What it does |
+|---|---|
+| `list` | list shipped assessments and their validity |
+| `result` | decide the outcome of an aggregated run composed under an assessment (no inference) |
+| `show` | print a validated assessment |
+| `validate` | validate an assessment (name or path) |
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies assessment list`
+
+list shipped assessments and their validity
+
+**Usage:** `aies assessment list [-h] [--json]`
+
+**Prerequisites:** Shipped or supplied assessment YAML is available; result rendering additionally requires an aggregated assessment run.
+
+**Result and side effects:** Lists, shows, validates, or applies declarative assessment composition.
+
+**Recommended next step:** Use a valid assessment with `aies qualify --assessment <name>` or inspect its canonical result.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies assessment result`
+
+decide the outcome of an aggregated run composed under an assessment (no inference)
+
+**Usage:** `aies assessment result [-h] [--format {markdown,html}] [--out OUT] [--json] run`
+
+**Prerequisites:** The run was composed under a validated declarative assessment and has aggregated evidence.
+
+**Result and side effects:** Computes the canonical PASS / FAIL / INCONCLUSIVE / INSUFFICIENT EVIDENCE result over mandatory competencies.
+
+**Recommended next step:** Address structured reasons; a PASS still does not create a qualification grant.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<RUN>` | required | aggregated run composed under an assessment | — |
+| `--format` | optional | render the canonical result as markdown (default) or HTML | choices: `markdown`, `html`; default: `markdown` |
+| `--out` | optional | write HTML to this file instead of stdout | Applies to HTML output; JSON is selected independently with `--json`. |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies assessment show`
+
+print a validated assessment
+
+**Usage:** `aies assessment show [-h] [--json] name`
+
+**Prerequisites:** Shipped or supplied assessment YAML is available; result rendering additionally requires an aggregated assessment run.
+
+**Result and side effects:** Lists, shows, validates, or applies declarative assessment composition.
+
+**Recommended next step:** Use a valid assessment with `aies qualify --assessment <name>` or inspect its canonical result.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<NAME>` | required | assessment name | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies assessment validate`
+
+validate an assessment (name or path)
+
+**Usage:** `aies assessment validate [-h] [--json] name`
+
+**Prerequisites:** Shipped or supplied assessment YAML is available; result rendering additionally requires an aggregated assessment run.
+
+**Result and side effects:** Lists, shows, validates, or applies declarative assessment composition.
+
+**Recommended next step:** Use a valid assessment with `aies qualify --assessment <name>` or inspect its canonical result.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<NAME>` | required | assessment name or YAML path | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies audit`
+
+audit a repository's conformance to AIES engineering practices (maturity per area; verified/asserted/gap; ADR-0004)
+
+**Usage:** `aies audit [-h] [--json] [--rt {1,2,3,4}] [--gate] [--attest FILE] [--format {markdown,json}] repo`
+
+**Prerequisites:** The repository path is readable. Attestation files may support only genuinely non-detectable controls.
+
+**Result and side effects:** Produces ML0–ML4 repository-practice maturity, verified/asserted/gap evidence, and ranked recommendations; `--gate` returns non-zero on required gaps.
+
+**Recommended next step:** Close evidence gaps, rerun the audit, and record any human conformance decision separately.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<REPO>` | required | path to the repository to audit | — |
+| `--rt` | optional | evaluate against this risk tier's required evidence | choices: `1`, `2`, `3`, `4` |
+| `--gate` | optional | CI mode: non-zero exit if RT-required evidence is missing (implies the given --rt, default RT2 — Moderate) | Implies RT2 — Moderate when `--rt` is omitted. |
+| `--attest` | optional | attestation JSON for non-detectable practices ({items:[{id, evidence}]}) | — |
+| `--format` | optional | output representation (default: markdown) | choices: `markdown`, `json`; default: `markdown` |
+
+## `aies benchmark`
+
+execute scenario suites only (stage 4)
+
+**Usage:** `aies benchmark [-h] [--json] [--profile PROFILE] [--rt {1,2,3,4}] [--area AREA] [--all-areas] [--repeats REPEATS] [--parallel N] [--runtime RUNTIME] model`
+
+**Prerequisites:** The target deployment is registered and reachable; suites and the selected profile are valid.
+
+**Result and side effects:** Collects scenario responses and creates a run plus scoresheet; it does not score or aggregate.
+
+**Recommended next step:** Complete the scoresheet and run `aies score`, or use `aies qualify --judge` for an automated one-command evaluation.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<MODEL>` | required | deployment id, or model name when unambiguous | — |
+| `--profile` | optional | EV weighting profile (default: enterprise) | default: `enterprise` |
+| `--rt` | optional | scoped risk tier number (default: 2 for RT2 — Moderate) | choices: `1`, `2`, `3`, `4`; default: `2` |
+| `--area` | optional | competency area code such as CA-05; repeat for more areas | repeatable |
+| `--all-areas` | optional | benchmark across ALL competency areas CA-01…CA-12 | — |
+| `--repeats` | optional | repeat each scenario for a stability study; repeats do not add breadth | — |
+| `--parallel` | optional | maximum concurrent inference calls (default: 1 or AIES_PARALLEL) | — |
+| `--runtime` | optional | runtime name used to disambiguate the deployment | — |
+
+## `aies capabilities`
+
+per-area capability profile of an aggregated run/deployment (planner/coder/security…, one CL + autonomy level per area)
+
+**Usage:** `aies capabilities [-h] [--json] [--ecm] [--format {markdown,json,html}] [--write] ref`
+
+**Prerequisites:** An aggregated run exists; deployment ids resolve to their latest aggregated run.
+
+**Result and side effects:** Renders per-area capability or, with `--ecm`, the informational Engineering Capability Matrix.
+
+**Recommended next step:** Use `aies guidance` for bounded use advice or `aies compare --ecm` for compatible task comparison.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<REF>` | required | run id, or deployment id (its latest aggregated run) | — |
+| `--ecm` | optional | render the informational Engineering Capability Matrix with mapped engineering tasks | — |
+| `--format` | optional | ECM output format (default: markdown) | choices: `markdown`, `json`, `html`; default: `markdown` |
+| `--write` | optional | write ECM output beside the run (use with --ecm) | Meaningful with `--ecm`; writes the ECM artifacts beside the run. |
+
+## `aies compare`
+
+compare two runs/deployments on identical suite versions
+
+**Usage:** `aies compare [-h] [--json] [--format {markdown,json}] [--ecm] a b`
+
+**Prerequisites:** Both references resolve to aggregated runs with compatible protocols; ECM comparison requires compatible task mappings and evidence semantics.
+
+**Result and side effects:** Reports only valid comparisons and withholds winners for incompatible evidence.
+
+**Recommended next step:** Use the evidence in a scoped human selection decision; do not treat it as a global leaderboard.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<A>` | required | run id or model registry id (latest aggregated run) | — |
+| `<B>` | required | run id or model registry id (latest aggregated run) | — |
+| `--format` | optional | output representation (default: markdown) | choices: `markdown`, `json`; default: `markdown` |
+| `--ecm` | optional | compare task-level ECM evidence only when protocols match | — |
+
+## `aies completion`
+
+generate Tab completion for PowerShell, Bash, or Zsh
+
+**Usage:** `aies completion [-h] {powershell,bash,zsh}`
+
+**Prerequisites:** AIES is installed in the shell environment.
+
+**Result and side effects:** Prints a sourceable completion definition generated from the live parser; it changes nothing until sourced or added to the shell profile.
+
+**Recommended next step:** Source it for the current session or add the documented command to the shell profile, then press Tab after `aies`, subcommands, options, or enumerated values.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<SHELL>` | required | shell whose sourceable completion definition will be printed | choices: `powershell`, `bash`, `zsh` |
+
+## `aies conform`
+
+declare/check conformance to AIES
+
+**Usage:** `aies conform [-h] [--json] {template,check,requirements,engine} ...`
+
+**Prerequisites:** Template generation has no evidence prerequisite; checks require a statement, while engine verification requires the golden corpus and optionally a compatible foreign engine command.
+
+**Result and side effects:** Scaffolds/checks conformance claims or verifies decision-engine semantics; it does not issue certification.
+
+**Recommended next step:** Resolve unsupported claims or engine mismatches, then record any human conformance decision separately.
+
+### Subcommands
+
+| Subcommand | What it does |
+|---|---|
+| `check` | check a conformance statement and its evidence |
+| `engine` | verify a decision engine against the golden Evidence Package corpus (CONFORMANCE-POLICY.md). Defaults to the reference engine; --engine verifies a FOREIGN engine so independent implementations can self-check |
+| `requirements` | list conformance requirements |
+| `template` | create a conformance statement template |
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies conform check`
+
+check a conformance statement and its evidence
+
+**Usage:** `aies conform check [-h] [--write] [--json] file`
+
+**Prerequisites:** Template generation has no evidence prerequisite; checks require a statement, while engine verification requires the golden corpus and optionally a compatible foreign engine command.
+
+**Result and side effects:** Scaffolds/checks conformance claims or verifies decision-engine semantics; it does not issue certification.
+
+**Recommended next step:** Resolve unsupported claims or engine mismatches, then record any human conformance decision separately.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<FILE>` | required | conformance statement YAML or JSON file | — |
+| `--write` | optional | write the conformance report beside the input | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies conform engine`
+
+verify a decision engine against the golden Evidence Package corpus (CONFORMANCE-POLICY.md). Defaults to the reference engine; --engine verifies a FOREIGN engine so independent implementations can self-check
+
+**Usage:** `aies conform engine [-h] [--corpus CORPUS] [--engine ENGINE] [--json]`
+
+**Prerequisites:** Template generation has no evidence prerequisite; checks require a statement, while engine verification requires the golden corpus and optionally a compatible foreign engine command.
+
+**Result and side effects:** Scaffolds/checks conformance claims or verifies decision-engine semantics; it does not issue certification.
+
+**Recommended next step:** Resolve unsupported claims or engine mismatches, then record any human conformance decision separately.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--corpus` | optional | path to conformance/corpus (default: auto-discover) | — |
+| `--engine` | optional | a foreign engine command: reads {evidence,assessment} JSON on stdin, prints the Canonical Assessment Result JSON on stdout | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies conform requirements`
+
+list conformance requirements
+
+**Usage:** `aies conform requirements [-h] [--json]`
+
+**Prerequisites:** Template generation has no evidence prerequisite; checks require a statement, while engine verification requires the golden corpus and optionally a compatible foreign engine command.
+
+**Result and side effects:** Scaffolds/checks conformance claims or verifies decision-engine semantics; it does not issue certification.
+
+**Recommended next step:** Resolve unsupported claims or engine mismatches, then record any human conformance decision separately.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies conform template`
+
+create a conformance statement template
+
+**Usage:** `aies conform template [-h] [--class {adopter,implementation}] [--out OUT] [--json]`
+
+**Prerequisites:** Template generation has no evidence prerequisite; checks require a statement, while engine verification requires the golden corpus and optionally a compatible foreign engine command.
+
+**Result and side effects:** Scaffolds/checks conformance claims or verifies decision-engine semantics; it does not issue certification.
+
+**Recommended next step:** Resolve unsupported claims or engine mismatches, then record any human conformance decision separately.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--class` | optional | conformance class to scaffold (default: adopter) | choices: `adopter`, `implementation`; default: `adopter` |
+| `--out` | optional | destination file; omit to print the template | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies corpus`
+
+advisory quality review of the assessment corpus itself (calibration, coverage, behavioral diversity, empirical maturity); multidimensional, never a single grade, never a gate
+
+**Usage:** `aies corpus [-h] [--json] {health,coverage,duplicates,review-pending,review} ...`
+
+**Prerequisites:** The shipped or selected competencies directory is readable; semantic review additionally requires a reviewer deployment.
+
+**Result and side effects:** Produces advisory corpus health, coverage, duplication, pending-review, or single-instrument critique evidence.
+
+**Recommended next step:** Apply deterministic fixes and human review; corpus tools never approve instruments automatically.
+
+### Subcommands
+
+| Subcommand | What it does |
+|---|---|
+| `coverage` | the coverage dimension only — RT distribution per area and per-assessment tier depth |
+| `duplicates` | near-duplicate scenario pairs (prompt/ceiling overlap), twin-aware — flags redundancy candidates for human review |
+| `health` | full multidimensional corpus-health report + ranked advisory recommendations |
+| `review` | review one scenario as a measurement instrument: deterministic structural checks always, plus an opt-in model critique with --reviewer (critique only — never rewrites/approves) |
+| `review-pending` | inventory pending scenario design reviews, run deterministic structural preflight, and expose human disposition fields |
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies corpus coverage`
+
+the coverage dimension only — RT distribution per area and per-assessment tier depth
+
+**Usage:** `aies corpus coverage [-h] [--root ROOT] [--json]`
+
+**Prerequisites:** The shipped or selected competencies directory is readable; semantic review additionally requires a reviewer deployment.
+
+**Result and side effects:** Produces advisory corpus health, coverage, duplication, pending-review, or single-instrument critique evidence.
+
+**Recommended next step:** Apply deterministic fixes and human review; corpus tools never approve instruments automatically.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--root` | optional | competencies directory (default: shipped suites) | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies corpus duplicates`
+
+near-duplicate scenario pairs (prompt/ceiling overlap), twin-aware — flags redundancy candidates for human review
+
+**Usage:** `aies corpus duplicates [-h] [--root ROOT] [--json]`
+
+**Prerequisites:** The shipped or selected competencies directory is readable; semantic review additionally requires a reviewer deployment.
+
+**Result and side effects:** Produces advisory corpus health, coverage, duplication, pending-review, or single-instrument critique evidence.
+
+**Recommended next step:** Apply deterministic fixes and human review; corpus tools never approve instruments automatically.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--root` | optional | competencies directory (default: shipped suites) | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies corpus health`
+
+full multidimensional corpus-health report + ranked advisory recommendations
+
+**Usage:** `aies corpus health [-h] [--root ROOT] [--json]`
+
+**Prerequisites:** The shipped or selected competencies directory is readable; semantic review additionally requires a reviewer deployment.
+
+**Result and side effects:** Produces advisory corpus health, coverage, duplication, pending-review, or single-instrument critique evidence.
+
+**Recommended next step:** Apply deterministic fixes and human review; corpus tools never approve instruments automatically.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--root` | optional | competencies directory (default: shipped suites) | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies corpus review`
+
+review one scenario as a measurement instrument: deterministic structural checks always, plus an opt-in model critique with --reviewer (critique only — never rewrites/approves)
+
+**Usage:** `aies corpus review [-h] [--reviewer REVIEWER] [--runtime RUNTIME] [--json] scenario`
+
+**Prerequisites:** The shipped or selected competencies directory is readable; semantic review additionally requires a reviewer deployment.
+
+**Result and side effects:** Produces advisory corpus health, coverage, duplication, pending-review, or single-instrument critique evidence.
+
+**Recommended next step:** Apply deterministic fixes and human review; corpus tools never approve instruments automatically.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<SCENARIO>` | required | scenario id (SC-CA##-###) or a YAML path | — |
+| `--reviewer` | optional | a deployment id to critique semantically (omit for structural only) | — |
+| `--runtime` | optional | runtime name used to disambiguate the reviewer deployment | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies corpus review-pending`
+
+inventory pending scenario design reviews, run deterministic structural preflight, and expose human disposition fields
+
+**Usage:** `aies corpus review-pending [-h] [--root ROOT] [--json]`
+
+**Prerequisites:** The shipped or selected competencies directory is readable; semantic review additionally requires a reviewer deployment.
+
+**Result and side effects:** Produces advisory corpus health, coverage, duplication, pending-review, or single-instrument critique evidence.
+
+**Recommended next step:** Apply deterministic fixes and human review; corpus tools never approve instruments automatically.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--root` | optional | competencies directory (default: shipped suites) | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies dashboard`
+
+render an HTML dashboard over runs and grants
+
+**Usage:** `aies dashboard [-h] [--json] [--write]`
+
+**Prerequisites:** The workspace contains runs or qualification records.
+
+**Result and side effects:** Renders a read-only HTML overview; `--write` persists the view and computes no decisions.
+
+**Recommended next step:** Open the dashboard and follow links to canonical evidence products.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `--write` | optional | write dashboard.html into the workspace instead of only printing its path | — |
+
+## `aies deployment`
+
+manage deployments (AI deployment × runtime × config × endpoint)
+
+**Usage:** `aies deployment [-h] [--json] {list,inspect,add,update,remove,retire,verify-artifact} ...`
+
+**Prerequisites:** AIES has a writable workspace; mutating subcommands additionally require valid deployment YAML or an existing id as documented.
+
+**Result and side effects:** Lists, inspects, registers, updates, retires, removes, or verifies deployment entries.
+
+**Recommended next step:** Inspect the resulting deployment before using it in evaluation.
+
+### Subcommands
+
+| Subcommand | What it does |
+|---|---|
+| `add` | register a new deployment |
+| `inspect` | inspect one deployment |
+| `list` | list active deployments |
+| `remove` | hard-delete an entry so its id can be reused (vs retire, which reserves it for audit) |
+| `retire` | retire a deployment without deleting history |
+| `update` | overwrite an EXISTING deployment in place (same id) — for config/key/roles fixes |
+| `verify-artifact` | verify a local artifact against the deployment's declared checksum/signature |
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies deployment add`
+
+register a new deployment
+
+**Usage:** `aies deployment add [-h] [--json] file`
+
+**Prerequisites:** A valid deployment YAML exists and its id is not already registered.
+
+**Result and side effects:** Creates a deployment registry entry.
+
+**Recommended next step:** Inspect it, then use it with `benchmark`, `qualify`, `review`, or `corpus review`.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<FILE>` | required | deployment YAML file | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies deployment inspect`
+
+inspect one deployment
+
+**Usage:** `aies deployment inspect [-h] [--json] name`
+
+**Prerequisites:** AIES has a writable workspace; mutating subcommands additionally require valid deployment YAML or an existing id as documented.
+
+**Result and side effects:** Lists, inspects, registers, updates, retires, removes, or verifies deployment entries.
+
+**Recommended next step:** Inspect the resulting deployment before using it in evaluation.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<NAME>` | required | deployment id, or an unambiguous model name | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies deployment list`
+
+list active deployments
+
+**Usage:** `aies deployment list [-h] [--all] [--json]`
+
+**Prerequisites:** AIES has a writable workspace; mutating subcommands additionally require valid deployment YAML or an existing id as documented.
+
+**Result and side effects:** Lists, inspects, registers, updates, retires, removes, or verifies deployment entries.
+
+**Recommended next step:** Inspect the resulting deployment before using it in evaluation.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--all` | optional | include retired deployment entries | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies deployment remove`
+
+hard-delete an entry so its id can be reused (vs retire, which reserves it for audit)
+
+**Usage:** `aies deployment remove [-h] [--json] name`
+
+**Prerequisites:** AIES has a writable workspace; mutating subcommands additionally require valid deployment YAML or an existing id as documented.
+
+**Result and side effects:** Lists, inspects, registers, updates, retires, removes, or verifies deployment entries.
+
+**Recommended next step:** Inspect the resulting deployment before using it in evaluation.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<NAME>` | required | deployment id to remove | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies deployment retire`
+
+retire a deployment without deleting history
+
+**Usage:** `aies deployment retire [-h] [--json] name`
+
+**Prerequisites:** AIES has a writable workspace; mutating subcommands additionally require valid deployment YAML or an existing id as documented.
+
+**Result and side effects:** Lists, inspects, registers, updates, retires, removes, or verifies deployment entries.
+
+**Recommended next step:** Inspect the resulting deployment before using it in evaluation.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<NAME>` | required | deployment id, or an unambiguous model name | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies deployment update`
+
+overwrite an EXISTING deployment in place (same id) — for config/key/roles fixes
+
+**Usage:** `aies deployment update [-h] [--json] file`
+
+**Prerequisites:** The deployment id already exists and a replacement YAML is available.
+
+**Result and side effects:** Updates mutable deployment configuration while preserving the deployment id.
+
+**Recommended next step:** Inspect and re-run affected evaluations; material fingerprint changes trigger reassessment.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<FILE>` | required | deployment YAML file with the existing id | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies deployment verify-artifact`
+
+verify a local artifact against the deployment's declared checksum/signature
+
+**Usage:** `aies deployment verify-artifact [-h] --artifact ARTIFACT [--pubkey PUBKEY] [--signature SIGNATURE] [--runtime RUNTIME] [--json] name`
+
+**Prerequisites:** The deployment declares artifact provenance; the local artifact is accessible. Signature verification additionally needs the crypto extra and key/signature inputs.
+
+**Result and side effects:** Verifies checksum and, when supplied, detached signature evidence.
+
+**Recommended next step:** Correct provenance failures before using the artifact for trusted assessment.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<NAME>` | required | deployment id, or an unambiguous model name | — |
+| `--artifact` | required | path to the model artifact file | — |
+| `--pubkey` | optional | PEM public key for signature verification | Use with `--signature`; checksum verification remains available without either. |
+| `--signature` | optional | detached signature file | Use with `--pubkey`; both are needed for detached-signature verification. |
+| `--runtime` | optional | disambiguate the deployment's runtime | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies discover`
+
+scan runtimes and register the deployments they serve
+
+**Usage:** `aies discover [-h] [--json]`
+
+**Prerequisites:** At least one supported local runtime is installed and reachable.
+
+**Result and side effects:** Discovers served deployments and registers new entries.
+
+**Recommended next step:** Inspect with `aies deployment list` and `aies deployment inspect <id>`.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies doctor`
+
+validate the environment and detect runtimes
+
+**Usage:** `aies doctor [-h] [--json]`
+
+**Prerequisites:** AIES is installed.
+
+**Result and side effects:** Checks the environment, workspace, TLS/runtime availability, fingerprint, and advisory debris without deleting anything.
+
+**Recommended next step:** Resolve blocking findings, then run `aies discover` or `aies deployment add`.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies export`
+
+export a run's responses+scores to a generic eval-log JSON (round-trips with import)
+
+**Usage:** `aies export [-h] [--json] [--write] run`
+
+**Prerequisites:** A run with response records exists.
+
+**Result and side effects:** Prints a portable eval-log JSON or writes `eval-log.json` with `--write`.
+
+**Recommended next step:** Use the file with another evaluation tool or round-trip it through `aies import`.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<RUN>` | required | run id to export | — |
+| `--write` | optional | write eval-log.json into the run directory (else stdout) | — |
+
+## `aies grant`
+
+record a human qualification decision
+
+**Usage:** `aies grant [-h] [--json] --decision {grant,grant-with-conditions,deny} --authority AUTHORITY [--assessor ASSESSOR] [--assessor-id ASSESSOR_ID] [--peer-reviewer PEER_REVIEWER] [--peer-reviewer-id PEER_REVIEWER_ID] [--assessor-conflict-free] [--peer-conflict-free] [--role {ROLE-01,ROLE-02,ROLE-03,ROLE-04,ROLE-05,ROLE-06,ROLE-07,ROLE-08,ROLE-09,ROLE-10,ROLE-11,ROLE-12,ROLE-13,ROLE-14}] [--phase {P01,P02,P03,P04,P05,P06,P07,P08,P09,P10,P11,P12,P13,P14,P15,P16}] [--sponsor SPONSOR] [--framework-version FRAMEWORK_VERSION] [--agent-definition-version AGENT_DEFINITION_VERSION] [--valid-from ISO-8601] [--valid-until ISO-8601] [--second SECOND] [--condition CONDITION] [--rationale RATIONALE] [--consider-advisory-review] [--human-evaluation NAME] run`
+
+**Prerequisites:** The run is decisional and gate-passing for a grant, required human ratings and divergence dispositions are complete, and assessor/peer identities and conflict declarations satisfy the protocol.
+
+**Result and side effects:** Appends a human qualification decision and immutable Qualification Record; the platform itself does not decide the grant.
+
+**Recommended next step:** Verify the record and monitor conditions, expiry, incidents, drift, and requalification triggers.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<RUN>` | required | decisional, gate-passing run used as qualification evidence | — |
+| `--decision` | required | human authority's recorded qualification decision | choices: `grant`, `grant-with-conditions`, `deny` |
+| `--authority` | required | named human authority (ROLE-13) | — |
+| `--assessor` | optional | named human assessor (defaults to authority) | — |
+| `--assessor-id` | optional | durable assessor id from `aies rater register` | — |
+| `--peer-reviewer` | optional | named independent human peer reviewer | — |
+| `--peer-reviewer-id` | optional | durable peer id from `aies rater register` | — |
+| `--assessor-conflict-free` | optional | assessor declares no conflict with the subject | — |
+| `--peer-conflict-free` | optional | peer reviewer declares no conflict with the subject | — |
+| `--role` | optional | qualified engineering role, for example ROLE-06 | choices: `ROLE-01`, `ROLE-02`, `ROLE-03`, `ROLE-04`, `ROLE-05`, `ROLE-06`, `ROLE-07`, `ROLE-08`, `ROLE-09`, `ROLE-10`, `ROLE-11`, `ROLE-12`, `ROLE-13`, `ROLE-14` |
+| `--phase` | optional | SDLC phase in scope; repeat for additional phases | choices: `P01`, `P02`, `P03`, `P04`, `P05`, `P06`, `P07`, `P08`, `P09`, `P10`, `P11`, `P12`, `P13`, `P14`, `P15`, `P16`; repeatable |
+| `--sponsor` | optional | named accountable qualification sponsor | — |
+| `--framework-version` | optional | applied AIES-AESQS-CF-01 competency-framework version | — |
+| `--agent-definition-version` | optional | applicable ART-14 agent-definition version | — |
+| `--valid-from` | optional | start of the qualification validity window | — |
+| `--valid-until` | optional | end of the qualification validity window | — |
+| `--second` | optional | deprecated peer-reviewer name alias for legacy v4 records | — |
+| `--condition` | optional | condition (repeatable; required for grant-with-conditions) | repeatable; Repeatable and required when `--decision grant-with-conditions` is selected. |
+| `--rationale` | optional | human authority's reasoned decision rationale | — |
+| `--consider-advisory-review` | optional | attest that the authority considered available advisory model-review scores | — |
+| `--human-evaluation` | optional | named human evaluator whose qualitative or scored review was considered | — |
+
+## `aies guidance`
+
+render bounded deployment guidance from ECM evidence
+
+**Usage:** `aies guidance [-h] [--json] [--qualification QUAL-ID] [--role {ROLE-01,ROLE-02,ROLE-03,ROLE-04,ROLE-05,ROLE-06,ROLE-07,ROLE-08,ROLE-09,ROLE-10,ROLE-11,ROLE-12,ROLE-13,ROLE-14}] [--phase {P01,P02,P03,P04,P05,P06,P07,P08,P09,P10,P11,P12,P13,P14,P15,P16}] [--autonomy {0,1,2,3,4}] [--write] ref`
+
+**Prerequisites:** An aggregated ECM-capable run exists. A `Use` recommendation requires a current matching human Qualification Record.
+
+**Result and side effects:** Renders bounded Use / Use with human review / No recommendation / Avoid guidance and its constraints.
+
+**Recommended next step:** Apply the recorded human decision and reassess when scope, fingerprint, conditions, or validity changes.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<REF>` | required | aggregated run id, or deployment id | — |
+| `--qualification` | optional | active human Qualification Record that bounds any Use recommendation | Required before any evidence can become an operational `Use` recommendation. |
+| `--role` | optional | requested engineering role; must match the qualification scope | choices: `ROLE-01`, `ROLE-02`, `ROLE-03`, `ROLE-04`, `ROLE-05`, `ROLE-06`, `ROLE-07`, `ROLE-08`, `ROLE-09`, `ROLE-10`, `ROLE-11`, `ROLE-12`, `ROLE-13`, `ROLE-14` |
+| `--phase` | optional | requested SDLC phase; repeat for additional phases | choices: `P01`, `P02`, `P03`, `P04`, `P05`, `P06`, `P07`, `P08`, `P09`, `P10`, `P11`, `P12`, `P13`, `P14`, `P15`, `P16`; repeatable |
+| `--autonomy` | optional | requested autonomy level number (for example 2 for AL2 — Collaborative) | choices: `0`, `1`, `2`, `3`, `4` |
+| `--write` | optional | write Deployment Guidance Markdown, JSON, and HTML beside the run | — |
+
+## `aies help`
+
+show this help and the typical workflow
+
+**Usage:** `aies help [-h]`
+
+**Prerequisites:** AIES is installed.
+
+**Result and side effects:** Prints the grouped workflow and complete command tree; it changes no state.
+
+**Recommended next step:** Run `aies <command> --help` or open this CLI Reference for parameter-level detail.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+
+## `aies import`
+
+import external eval results (EV1–EV6 JSON) into a run as automated ratings
+
+**Usage:** `aies import [-h] [--json] [--source SOURCE] run file`
+
+**Prerequisites:** A collected run exists and the external eval JSON follows the documented EV1–EV6 schema.
+
+**Result and side effects:** Appends parseable external automated-rating observations; invalid items are reported rather than fabricated.
+
+**Recommended next step:** Aggregate/report the run and review the imported evidence limitations.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<RUN>` | required | run id that will receive the imported rating observations | — |
+| `<FILE>` | required | eval file: JSON {source?, items:[{scenario_id, repeat?, scores:{EV1..EV6}, findings?}]} | — |
+| `--source` | optional | label for the rater (default: the file's `source` field) | — |
+
+## `aies index`
+
+rebuild the result index from run files
+
+**Usage:** `aies index [-h] [--json]`
+
+**Prerequisites:** The workspace contains append-only run and qualification records.
+
+**Result and side effects:** Rebuilds the disposable result index from canonical files.
+
+**Recommended next step:** Use `runs`, `dashboard`, or the read-only API to consume the rebuilt index.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies journey`
+
+multi-phase journeys (chained scenarios across the SDLC)
+
+**Usage:** `aies journey [-h] [--json] {list,show} ...`
+
+**Prerequisites:** Shipped journey definitions are available.
+
+**Result and side effects:** Lists or shows multi-phase journey definitions without executing them.
+
+**Recommended next step:** Run a journey with `aies qualify <deployment> --journey <id>`.
+
+### Subcommands
+
+| Subcommand | What it does |
+|---|---|
+| `list` | list available multi-phase journeys |
+| `show` | show one multi-phase journey |
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies journey list`
+
+list available multi-phase journeys
+
+**Usage:** `aies journey list [-h] [--json]`
+
+**Prerequisites:** Shipped journey definitions are available.
+
+**Result and side effects:** Lists or shows multi-phase journey definitions without executing them.
+
+**Recommended next step:** Run a journey with `aies qualify <deployment> --journey <id>`.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies journey show`
+
+show one multi-phase journey
+
+**Usage:** `aies journey show [-h] [--json] id`
+
+**Prerequisites:** Shipped journey definitions are available.
+
+**Result and side effects:** Lists or shows multi-phase journey definitions without executing them.
+
+**Recommended next step:** Run a journey with `aies qualify <deployment> --journey <id>`.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<ID>` | required | journey id | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies judge`
+
+judge track record — which deployments have scored runs, and how reliably
+
+**Usage:** `aies judge [-h] [--json] {available,list,history} ...`
+
+**Prerequisites:** Deployments may declare the judge role; history requires prior automated scoring.
+
+**Result and side effects:** Shows the available reviewer pool and evidence-backed judge usage/parse history.
+
+**Recommended next step:** Select a suitable independent judge, then use `qualify --judge` or `review --model-reviewer`.
+
+### Subcommands
+
+| Subcommand | What it does |
+|---|---|
+| `available` | the judge pool: deployments registered with roles:[judge], and how many |
+| `history` | one row per judged run, newest first |
+| `list` | judges used across all runs, with runs judged, responses scored, and parse rate |
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies judge available`
+
+the judge pool: deployments registered with roles:[judge], and how many
+
+**Usage:** `aies judge available [-h] [--json]`
+
+**Prerequisites:** Deployments may declare the judge role; history requires prior automated scoring.
+
+**Result and side effects:** Shows the available reviewer pool and evidence-backed judge usage/parse history.
+
+**Recommended next step:** Select a suitable independent judge, then use `qualify --judge` or `review --model-reviewer`.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies judge history`
+
+one row per judged run, newest first
+
+**Usage:** `aies judge history [-h] [--judge DEPLOYMENT] [--json]`
+
+**Prerequisites:** Deployments may declare the judge role; history requires prior automated scoring.
+
+**Result and side effects:** Shows the available reviewer pool and evidence-backed judge usage/parse history.
+
+**Recommended next step:** Select a suitable independent judge, then use `qualify --judge` or `review --model-reviewer`.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--judge` | optional | filter to a single judge deployment id | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies judge list`
+
+judges used across all runs, with runs judged, responses scored, and parse rate
+
+**Usage:** `aies judge list [-h] [--json]`
+
+**Prerequisites:** Deployments may declare the judge role; history requires prior automated scoring.
+
+**Result and side effects:** Shows the available reviewer pool and evidence-backed judge usage/parse history.
+
+**Recommended next step:** Select a suitable independent judge, then use `qualify --judge` or `review --model-reviewer`.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies plugins`
+
+list installed runtime adapters
+
+**Usage:** `aies plugins [-h] [--json]`
+
+**Prerequisites:** AIES and any out-of-tree adapter packages are installed.
+
+**Result and side effects:** Lists discovered runtime-adapter plugins and their versions; it changes no state.
+
+**Recommended next step:** Inspect runtimes or register/discover deployments that use the adapters.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies profile`
+
+weighting profiles (enterprise, coder, security, …)
+
+**Usage:** `aies profile [-h] [--json] {list,show,validate} ...`
+
+**Prerequisites:** Shipped or supplied weighting profile YAML is available.
+
+**Result and side effects:** Lists, shows, or validates EV weighting profiles; profiles cannot relax gates.
+
+**Recommended next step:** Use a valid profile with `benchmark` or `qualify`.
+
+### Subcommands
+
+| Subcommand | What it does |
+|---|---|
+| `list` | list available weighting profiles |
+| `show` | show one weighting profile |
+| `validate` | validate one weighting profile |
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies profile list`
+
+list available weighting profiles
+
+**Usage:** `aies profile list [-h] [--json]`
+
+**Prerequisites:** Shipped or supplied weighting profile YAML is available.
+
+**Result and side effects:** Lists, shows, or validates EV weighting profiles; profiles cannot relax gates.
+
+**Recommended next step:** Use a valid profile with `benchmark` or `qualify`.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies profile show`
+
+show one weighting profile
+
+**Usage:** `aies profile show [-h] [--json] name`
+
+**Prerequisites:** Shipped or supplied weighting profile YAML is available.
+
+**Result and side effects:** Lists, shows, or validates EV weighting profiles; profiles cannot relax gates.
+
+**Recommended next step:** Use a valid profile with `benchmark` or `qualify`.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<NAME>` | required | profile name | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies profile validate`
+
+validate one weighting profile
+
+**Usage:** `aies profile validate [-h] [--json] name`
+
+**Prerequisites:** Shipped or supplied weighting profile YAML is available.
+
+**Result and side effects:** Lists, shows, or validates EV weighting profiles; profiles cannot relax gates.
+
+**Recommended next step:** Use a valid profile with `benchmark` or `qualify`.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<NAME>` | required | profile name or YAML path | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies profiles`
+
+list/show/validate weighting profiles
+
+**Usage:** `aies profiles [-h] [--json] {list,show,validate} ...`
+
+**Prerequisites:** Shipped or supplied weighting profile YAML is available.
+
+**Result and side effects:** Legacy alias for listing, showing, or validating weighting profiles.
+
+**Recommended next step:** Prefer the canonical `aies profile` surface in new workflows.
+
+### Subcommands
+
+| Subcommand | What it does |
+|---|---|
+| `list` | list available weighting profiles |
+| `show` | show one weighting profile |
+| `validate` | validate one weighting profile |
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies profiles list`
+
+list available weighting profiles
+
+**Usage:** `aies profiles list [-h] [--json]`
+
+**Prerequisites:** Shipped or supplied weighting profile YAML is available.
+
+**Result and side effects:** Legacy alias for listing, showing, or validating weighting profiles.
+
+**Recommended next step:** Prefer the canonical `aies profile` surface in new workflows.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies profiles show`
+
+show one weighting profile
+
+**Usage:** `aies profiles show [-h] [--json] name`
+
+**Prerequisites:** Shipped or supplied weighting profile YAML is available.
+
+**Result and side effects:** Legacy alias for listing, showing, or validating weighting profiles.
+
+**Recommended next step:** Prefer the canonical `aies profile` surface in new workflows.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<NAME>` | required | profile name | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies profiles validate`
+
+validate one weighting profile
+
+**Usage:** `aies profiles validate [-h] [--json] name`
+
+**Prerequisites:** Shipped or supplied weighting profile YAML is available.
+
+**Result and side effects:** Legacy alias for listing, showing, or validating weighting profiles.
+
+**Recommended next step:** Prefer the canonical `aies profile` surface in new workflows.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<NAME>` | required | profile name or YAML path | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies qualification`
+
+qualification records (the QUAL-… manifests) and their history
+
+**Usage:** `aies qualification [-h] [--json] {list,show,history,verify,revoke} ...`
+
+**Prerequisites:** Qualification Records exist for read operations; revoke requires a named human authority and reason.
+
+**Result and side effects:** Reads records/history, verifies current validity, or appends an immutable revocation event.
+
+**Recommended next step:** Monitor expiry and conditions or begin reassessment when the record is no longer current.
+
+### Subcommands
+
+| Subcommand | What it does |
+|---|---|
+| `history` | show immutable qualification lifecycle events |
+| `list` | list qualification records |
+| `revoke` | append a revocation lifecycle event |
+| `show` | show one qualification record |
+| `verify` | verify one qualification against current state |
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies qualification history`
+
+show immutable qualification lifecycle events
+
+**Usage:** `aies qualification history [-h] [--deployment DEPLOYMENT] [--json]`
+
+**Prerequisites:** Qualification Records exist for read operations; revoke requires a named human authority and reason.
+
+**Result and side effects:** Reads records/history, verifies current validity, or appends an immutable revocation event.
+
+**Recommended next step:** Monitor expiry and conditions or begin reassessment when the record is no longer current.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--deployment` | optional | filter by deployment id | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies qualification list`
+
+list qualification records
+
+**Usage:** `aies qualification list [-h] [--json]`
+
+**Prerequisites:** Qualification Records exist for read operations; revoke requires a named human authority and reason.
+
+**Result and side effects:** Reads records/history, verifies current validity, or appends an immutable revocation event.
+
+**Recommended next step:** Monitor expiry and conditions or begin reassessment when the record is no longer current.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies qualification revoke`
+
+append a revocation lifecycle event
+
+**Usage:** `aies qualification revoke [-h] --authority AUTHORITY --reason REASON [--json] record`
+
+**Prerequisites:** Qualification Records exist for read operations; revoke requires a named human authority and reason.
+
+**Result and side effects:** Reads records/history, verifies current validity, or appends an immutable revocation event.
+
+**Recommended next step:** Monitor expiry and conditions or begin reassessment when the record is no longer current.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<RECORD>` | required | qualification record id | — |
+| `--authority` | required | named human authority recording the revocation | — |
+| `--reason` | required | reason for revocation | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies qualification show`
+
+show one qualification record
+
+**Usage:** `aies qualification show [-h] [--json] record`
+
+**Prerequisites:** Qualification Records exist for read operations; revoke requires a named human authority and reason.
+
+**Result and side effects:** Reads records/history, verifies current validity, or appends an immutable revocation event.
+
+**Recommended next step:** Monitor expiry and conditions or begin reassessment when the record is no longer current.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<RECORD>` | required | qualification record id | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies qualification verify`
+
+verify one qualification against current state
+
+**Usage:** `aies qualification verify [-h] [--json] record`
+
+**Prerequisites:** Qualification Records exist for read operations; revoke requires a named human authority and reason.
+
+**Result and side effects:** Reads records/history, verifies current validity, or appends an immutable revocation event.
+
+**Recommended next step:** Monitor expiry and conditions or begin reassessment when the record is no longer current.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<RECORD>` | required | qualification record id | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies qualifications`
+
+list/show qualification records or append governed lifecycle events
+
+**Usage:** `aies qualifications [-h] [--json] {list,show,revoke,event} ...`
+
+**Prerequisites:** Qualification Records exist; lifecycle mutations require a named human authority and event-specific evidence.
+
+**Result and side effects:** Lists/shows records or appends immutable qualification lifecycle events.
+
+**Recommended next step:** Verify the resulting current state and retain any required peer/reassessment evidence.
+
+### Subcommands
+
+| Subcommand | What it does |
+|---|---|
+| `event` | append an immutable lifecycle event |
+| `list` | list qualification records |
+| `revoke` | append a revocation lifecycle event |
+| `show` | show one qualification record |
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies qualifications event`
+
+append an immutable lifecycle event
+
+**Usage:** `aies qualifications event [-h] --event {condition-changed,renewed,suspended,invalidated,revoked,superseded} --authority AUTHORITY --reason REASON [--condition CONDITION] [--valid-until ISO-8601] [--superseded-by SUPERSEDED_BY] [--evidence-run EVIDENCE_RUN] [--peer-reviewer PEER_REVIEWER] [--peer-reviewer-id PEER_REVIEWER_ID] [--peer-conflict-free] [--json] record`
+
+**Prerequisites:** Qualification Records exist; lifecycle mutations require a named human authority and event-specific evidence.
+
+**Result and side effects:** Lists/shows records or appends immutable qualification lifecycle events.
+
+**Recommended next step:** Verify the resulting current state and retain any required peer/reassessment evidence.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<RECORD>` | required | qualification record id | — |
+| `--event` | required | immutable lifecycle transition to append | choices: `condition-changed`, `renewed`, `suspended`, `invalidated`, `revoked`, `superseded` |
+| `--authority` | required | named human authority recording the event | — |
+| `--reason` | required | reason for the lifecycle transition | — |
+| `--condition` | optional | replacement condition; repeat for multiple conditions | repeatable |
+| `--valid-until` | optional | new validity end for a renewal | — |
+| `--superseded-by` | optional | replacement qualification record id | Used with the `superseded` event to identify the replacement record. |
+| `--evidence-run` | optional | decisional, gate-passing re-evaluation run for renewal | Required for evidence-backed renewal and must identify a decisional, gate-passing reassessment. |
+| `--peer-reviewer` | optional | named independent human peer reviewer for renewal | — |
+| `--peer-reviewer-id` | optional | durable peer id from `aies rater register` | — |
+| `--peer-conflict-free` | optional | peer reviewer declares no conflict with the subject | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies qualifications list`
+
+list qualification records
+
+**Usage:** `aies qualifications list [-h] [--json]`
+
+**Prerequisites:** Qualification Records exist; lifecycle mutations require a named human authority and event-specific evidence.
+
+**Result and side effects:** Lists/shows records or appends immutable qualification lifecycle events.
+
+**Recommended next step:** Verify the resulting current state and retain any required peer/reassessment evidence.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies qualifications revoke`
+
+append a revocation lifecycle event
+
+**Usage:** `aies qualifications revoke [-h] --authority AUTHORITY --reason REASON [--json] record`
+
+**Prerequisites:** Qualification Records exist; lifecycle mutations require a named human authority and event-specific evidence.
+
+**Result and side effects:** Lists/shows records or appends immutable qualification lifecycle events.
+
+**Recommended next step:** Verify the resulting current state and retain any required peer/reassessment evidence.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<RECORD>` | required | qualification record id | — |
+| `--authority` | required | named human authority recording the revocation | — |
+| `--reason` | required | reason for revocation | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies qualifications show`
+
+show one qualification record
+
+**Usage:** `aies qualifications show [-h] [--json] record`
+
+**Prerequisites:** Qualification Records exist; lifecycle mutations require a named human authority and event-specific evidence.
+
+**Result and side effects:** Lists/shows records or appends immutable qualification lifecycle events.
+
+**Recommended next step:** Verify the resulting current state and retain any required peer/reassessment evidence.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<RECORD>` | required | qualification record id | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies qualify`
+
+run qualification evidence collection for one deployment
+
+**Usage:** `aies qualify [-h] [--json] [--runtime RUNTIME] [--assessment NAME] [--profile PROFILE] [--rt {1,2,3,4}] [--area AREA] [--all-areas] [--decisional] [--journey JOURNEY_ID] [--judge DEPLOYMENT] [--judge-batch-size N] [--consider-advisory-review] [--human-evaluation NAME] [--reviewer-runtime REVIEWER_RUNTIME] [--repeats REPEATS] [--parallel N] [--resume RUN_ID] [--resume-collection RUN_ID] [model]`
+
+**Prerequisites:** For a new run, the target deployment is registered and reachable. `--judge` requires a reachable reviewer deployment. `--resume` requires scored evidence; `--resume-collection` requires an existing partial run.
+
+**Result and side effects:** Plans and collects evidence; with a judge it also scores, aggregates, and writes the complete evaluation/report bundle.
+
+**Recommended next step:** Inspect `report.html`, run `aies capabilities <run> --ecm`, or begin the separate human qualification workflow.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<MODEL>` | optional | deployment id, or model name | — |
+| `--runtime` | optional | disambiguate when a model has several deployments | — |
+| `--assessment` | optional | run a declarative assessment (assessments/NAME.yaml): its competency set, profile, risk tier, and sampling (ADR-0005). Authoritative — sets --area/--profile; --rt/--repeats override it | Sets areas and profile; `--rt` and `--repeats` may override the assessment defaults. |
+| `--profile` | optional | EV weighting profile (default: enterprise; overridden by --assessment) | default: `enterprise` |
+| `--rt` | optional | scoped risk tier (default RT2 — Moderate, or the assessment's tier) | choices: `1`, `2`, `3`, `4` |
+| `--area` | optional | competency area (repeatable); default CA-05 | repeatable; Repeatable. Do not combine conceptually with `--all-areas`; an assessment supplies its own areas. |
+| `--all-areas` | optional | qualify across ALL competency areas CA-01…CA-12 (a full SDLC capability profile; see `aies capabilities`) | Selects all competency areas and replaces the default CA-05 scope. |
+| `--decisional` | optional | require the distinct-scenario plan for every selected area to meet the AESQS sample minimum when admitted ratings are available | Requires enough distinct scenarios; repeats never satisfy breadth. |
+| `--journey` | optional | run a multi-phase journey instead of area suites | — |
+| `--judge` | optional | auto-score responses with this judge deployment (or 'self') and print the report directly — no manual scoring. Defaults to $AIES_JUDGE. | Enables automated scoring and complete report generation; automated evidence remains informational for qualification. |
+| `--judge-batch-size` | optional | responses per automated judge request (default 8, or $AIES_JUDGE_BATCH_SIZE; automatically bounded by context) | — |
+| `--consider-advisory-review` | optional | record that a human considered the automated reviewer scores in the generated report | — |
+| `--human-evaluation` | optional | record a named qualitative or scored human evaluation in the generated report | — |
+| `--reviewer-runtime` | optional | disambiguate the judge deployment's runtime | — |
+| `--repeats` | optional | explicit repeats for a separate stability study; repeats do not substitute for distinct scenario breadth | — |
+| `--parallel` | optional | concurrent inference calls for BOTH response collection and judge scoring (default 1, or $AIES_PARALLEL; records are written in canonical order regardless) | — |
+| `--resume` | optional | aggregate a scored run into the evidence package | Uses an existing scored run; the model positional argument is not required. |
+| `--resume-collection` | optional | fill only the missing responses of a partially-collected run (e.g. after an endpoint failure), then rebuild the scoresheet | Uses an existing partial run and collects only missing responses; the model positional argument is not required. |
+
+## `aies rater`
+
+manage durable human-rater qualification/calibration records
+
+**Usage:** `aies rater [-h] [--json] {register,list,show} ...`
+
+**Prerequisites:** AIES has a writable workspace. Registration requires evidence-backed human qualification, scope, calibration, expiry, and a named registry authority.
+
+**Result and side effects:** Creates or reads durable human-rater qualification/calibration records.
+
+**Recommended next step:** Use registered rater ids in scoresheets, divergence resolution, peer review, and formal qualification.
+
+### Subcommands
+
+| Subcommand | What it does |
+|---|---|
+| `list` | list registered human raters |
+| `register` | register one qualified human rater |
+| `show` | show one human-rater record |
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies rater list`
+
+list registered human raters
+
+**Usage:** `aies rater list [-h] [--json]`
+
+**Prerequisites:** AIES has a writable workspace. Registration requires evidence-backed human qualification, scope, calibration, expiry, and a named registry authority.
+
+**Result and side effects:** Creates or reads durable human-rater qualification/calibration records.
+
+**Recommended next step:** Use registered rater ids in scoresheets, divergence resolution, peer review, and formal qualification.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies rater register`
+
+register one qualified human rater
+
+**Usage:** `aies rater register [-h] --id ID --name NAME --area CA-NN --rt {1,2,3,4} --qualified-until ISO-8601 --calibration-valid-until ISO-8601 --anchor-version ANCHOR_VERSION [--calibration-method CALIBRATION_METHOD] --registered-by REGISTERED_BY [--json]`
+
+**Prerequisites:** AIES has a writable workspace. Registration requires evidence-backed human qualification, scope, calibration, expiry, and a named registry authority.
+
+**Result and side effects:** Creates or reads durable human-rater qualification/calibration records.
+
+**Recommended next step:** Use registered rater ids in scoresheets, divergence resolution, peer review, and formal qualification.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--id` | required | durable human-rater identifier | — |
+| `--name` | required | human rater's display name | — |
+| `--area` | required | qualified competency area; repeat for additional areas | repeatable |
+| `--rt` | required | qualified risk-tier number; repeat for additional tiers | choices: `1`, `2`, `3`, `4`; repeatable |
+| `--qualified-until` | required | qualification expiry timestamp | — |
+| `--calibration-valid-until` | required | rating-calibration expiry timestamp | — |
+| `--anchor-version` | required | version of the anchor-artifact set used for calibration | — |
+| `--calibration-method` | optional | documented calibration method | default: `human-consensus-anchor-session` |
+| `--registered-by` | required | named human registry authority | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies rater show`
+
+show one human-rater record
+
+**Usage:** `aies rater show [-h] [--json] id`
+
+**Prerequisites:** AIES has a writable workspace. Registration requires evidence-backed human qualification, scope, calibration, expiry, and a named registry authority.
+
+**Result and side effects:** Creates or reads durable human-rater qualification/calibration records.
+
+**Recommended next step:** Use registered rater ids in scoresheets, divergence resolution, peer review, and formal qualification.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<ID>` | required | durable human-rater identifier | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies registry`
+
+manage candidate deployment entries
+
+**Usage:** `aies registry [-h] [--json] {add,list,show,retire} ...`
+
+**Prerequisites:** AIES has a writable workspace; `add` requires valid deployment YAML.
+
+**Result and side effects:** Provides the legacy candidate-deployment registry surface.
+
+**Recommended next step:** Prefer the canonical `aies deployment` commands for new workflows.
+
+### Subcommands
+
+| Subcommand | What it does |
+|---|---|
+| `add` | register a candidate deployment from YAML |
+| `list` | list active candidate deployments |
+| `retire` | retire a deployment without deleting history |
+| `show` | show one candidate deployment |
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies registry add`
+
+register a candidate deployment from YAML
+
+**Usage:** `aies registry add [-h] [--json] file`
+
+**Prerequisites:** AIES has a writable workspace; `add` requires valid deployment YAML.
+
+**Result and side effects:** Provides the legacy candidate-deployment registry surface.
+
+**Recommended next step:** Prefer the canonical `aies deployment` commands for new workflows.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<FILE>` | required | deployment YAML file to register | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies registry list`
+
+list active candidate deployments
+
+**Usage:** `aies registry list [-h] [--all] [--json]`
+
+**Prerequisites:** AIES has a writable workspace; `add` requires valid deployment YAML.
+
+**Result and side effects:** Provides the legacy candidate-deployment registry surface.
+
+**Recommended next step:** Prefer the canonical `aies deployment` commands for new workflows.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--all` | optional | include retired deployment entries | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies registry retire`
+
+retire a deployment without deleting history
+
+**Usage:** `aies registry retire [-h] [--json] model`
+
+**Prerequisites:** AIES has a writable workspace; `add` requires valid deployment YAML.
+
+**Result and side effects:** Provides the legacy candidate-deployment registry surface.
+
+**Recommended next step:** Prefer the canonical `aies deployment` commands for new workflows.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<MODEL>` | required | deployment id, or an unambiguous model name | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies registry show`
+
+show one candidate deployment
+
+**Usage:** `aies registry show [-h] [--json] model`
+
+**Prerequisites:** AIES has a writable workspace; `add` requires valid deployment YAML.
+
+**Result and side effects:** Provides the legacy candidate-deployment registry surface.
+
+**Recommended next step:** Prefer the canonical `aies deployment` commands for new workflows.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<MODEL>` | required | deployment id, or an unambiguous model name | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies report`
+
+render an evidence package
+
+**Usage:** `aies report [-h] [--json] [--format {markdown,json,html}] [--write] run`
+
+**Prerequisites:** The run has been aggregated into an evidence package.
+
+**Result and side effects:** Renders the evidence package; `--write` stores the chosen view beside the run.
+
+**Recommended next step:** Use ECM/guidance for engineering decisions or the governed grant workflow for qualification.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<RUN>` | required | aggregated run id whose evidence package will be rendered | — |
+| `--format` | optional | output representation (default: markdown) | choices: `markdown`, `json`, `html`; default: `markdown` |
+| `--write` | optional | write the report into the run directory instead of stdout | — |
+
+## `aies resolve`
+
+record an immutable human disposition for a divergent item
+
+**Usage:** `aies resolve [-h] [--json] --scores EV1 EV2 EV3 EV4 EV5 EV6 --resolver RESOLVER --resolver-id RESOLVER_ID --rationale RATIONALE --conflict-free run response`
+
+**Prerequisites:** The response has a material rater divergence and the named resolver is a registered, qualified, conflict-free human.
+
+**Result and side effects:** Appends an immutable resolved disposition; it does not overwrite the original ratings.
+
+**Recommended next step:** Re-run report/assessment rendering and complete any remaining protocol gaps.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<RUN>` | required | run id containing the divergent response | — |
+| `<RESPONSE>` | required | response record filename, for example SC-CA05-001-r1.json | — |
+| `--scores` | required | six resolved integer ratings in EV1 through EV6 order | choices: `0`, `1`, `2`, `3`, `4`; values: 6 |
+| `--resolver` | required | named human resolver | — |
+| `--resolver-id` | required | durable id from `aies rater register` | — |
+| `--rationale` | required | reasoned human disposition explaining the resolution | — |
+| `--conflict-free` | required | declare independence from the assessed subject | — |
+
+## `aies review`
+
+assemble a multi-deployment peer-review package
+
+**Usage:** `aies review [-h] [--json] [--reviewer REVIEWER] [--model-reviewer DEPLOYMENT] [--reviewer-runtime REVIEWER_RUNTIME] [--parallel N] [--judge-batch-size N] [--reviewer-qualified] [--calibration CALIBRATION] [--consider-advisory-review] [--human-evaluation NAME] run`
+
+**Prerequisites:** A collected run exists. `--model-reviewer` requires a registered reviewer deployment; qualification/calibration flags must be evidence-backed.
+
+**Result and side effects:** Adds advisory model-review observations and refreshes the report bundle; optional human evaluation remains separately visible.
+
+**Recommended next step:** Resolve material findings with humans; advisory review alone cannot support a qualification grant.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<RUN>` | required | run id whose responses will be reviewed | — |
+| `--reviewer` | optional | label for the reviewer model | default: `reviewer-model` |
+| `--model-reviewer` | optional | drive this reviewer deployment to score the responses before assembling the package | Required for live reviewer inference; without it the command assembles from existing review evidence. |
+| `--reviewer-runtime` | optional | disambiguate the reviewer deployment's runtime | — |
+| `--parallel` | optional | concurrent reviewer calls when using --model-reviewer (default 1, or $AIES_PARALLEL) | — |
+| `--judge-batch-size` | optional | responses per reviewer request (default 8, or $AIES_JUDGE_BATCH_SIZE; automatically bounded by context) | — |
+| `--reviewer-qualified` | optional | the reviewer holds a current review-class (CA-06) qualification | A declaration that must be supported by a current CA-06 — Testing, Quality & Evaluation Engineering qualification. |
+| `--calibration` | optional | JSON {model:[...], human_anchor:[...]} for bootstrap calibration | Bootstrap evidence for an otherwise unqualified reviewer; does not make model ratings human qualification evidence. |
+| `--consider-advisory-review` | optional | record that a human considered the advisory automated-review scores | — |
+| `--human-evaluation` | optional | record a named qualitative or scored human evaluation; no grant required | — |
+
+## `aies runs`
+
+result history: list runs
+
+**Usage:** `aies runs [-h] [--json] {list,progress} ...`
+
+**Prerequisites:** The workspace contains runs; progress requires a run with durable `progress.json` state.
+
+**Result and side effects:** Lists run history or displays live/durable run progress without mutating evidence.
+
+**Recommended next step:** Open the run transcript/report or resume incomplete work.
+
+### Subcommands
+
+| Subcommand | What it does |
+|---|---|
+| `list` | list recorded runs |
+| `progress` | show detailed durable progress for a run |
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies runs list`
+
+list recorded runs
+
+**Usage:** `aies runs list [-h] [--model MODEL] [--json]`
+
+**Prerequisites:** The workspace contains runs; progress requires a run with durable `progress.json` state.
+
+**Result and side effects:** Lists run history or displays live/durable run progress without mutating evidence.
+
+**Recommended next step:** Open the run transcript/report or resume incomplete work.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--model` | optional | filter by deployment id or model identifier | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies runs progress`
+
+show detailed durable progress for a run
+
+**Usage:** `aies runs progress [-h] [--json] run`
+
+**Prerequisites:** The workspace contains runs; progress requires a run with durable `progress.json` state.
+
+**Result and side effects:** Lists run history or displays live/durable run progress without mutating evidence.
+
+**Recommended next step:** Open the run transcript/report or resume incomplete work.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<RUN>` | required | run id whose durable progress will be shown | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies runtime`
+
+inspect runtime adapters and the runtimes behind them
+
+**Usage:** `aies runtime [-h] [--json] {list,inspect} ...`
+
+**Prerequisites:** AIES is installed; runtime inspection may depend on locally installed runtime software.
+
+**Result and side effects:** Lists or inspects runtime adapters without changing assessment evidence.
+
+**Recommended next step:** Use `aies discover` to register deployments served by available runtimes.
+
+### Subcommands
+
+| Subcommand | What it does |
+|---|---|
+| `inspect` | inspect one runtime adapter |
+| `list` | list installed runtime adapters |
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies runtime inspect`
+
+inspect one runtime adapter
+
+**Usage:** `aies runtime inspect [-h] [--json] name`
+
+**Prerequisites:** AIES is installed; runtime inspection may depend on locally installed runtime software.
+
+**Result and side effects:** Lists or inspects runtime adapters without changing assessment evidence.
+
+**Recommended next step:** Use `aies discover` to register deployments served by available runtimes.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<NAME>` | required | runtime adapter name | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies runtime list`
+
+list installed runtime adapters
+
+**Usage:** `aies runtime list [-h] [--json]`
+
+**Prerequisites:** AIES is installed; runtime inspection may depend on locally installed runtime software.
+
+**Result and side effects:** Lists or inspects runtime adapters without changing assessment evidence.
+
+**Recommended next step:** Use `aies discover` to register deployments served by available runtimes.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies score`
+
+ingest a filled scoresheet (human or model rater)
+
+**Usage:** `aies score [-h] [--json] [--file FILE] run`
+
+**Prerequisites:** A collected run and completed scoresheet exist; human qualification ratings require registered, in-scope, currently calibrated rater metadata.
+
+**Result and side effects:** Ingests rating observations, resolves eligible evidence items, aggregates when possible, and refreshes reports.
+
+**Recommended next step:** Add the required independent rating, resolve divergences, then generate the final report or proceed to human qualification.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<RUN>` | required | run id whose completed scoresheet will be ingested | — |
+| `--file` | optional | scoresheet path (default: the run's scoresheet.json) | — |
+
+## `aies serve`
+
+thin read-only REST API over the canonical artifacts (JSON; computes no outcomes)
+
+**Usage:** `aies serve [-h] [--json] [--host HOST] [--port PORT]`
+
+**Prerequisites:** The workspace contains artifacts to expose; choose a safe bind address.
+
+**Result and side effects:** Starts a read-only API that exposes canonical artifacts and computes no new decisions.
+
+**Recommended next step:** Stop the process when finished; use an authenticated reverse proxy before any non-local exposure.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `--host` | optional | interface to bind (default: 127.0.0.1; use broader binds cautiously) | default: `127.0.0.1` |
+| `--port` | optional | TCP port for the read-only API (default: 8722) | default: `8722` |
+
+## `aies suites`
+
+inspect and validate competency suites
+
+**Usage:** `aies suites [-h] [--json] {validate,calibrate,empirical} ...`
+
+**Prerequisites:** The shipped or selected competencies directory is readable.
+
+**Result and side effects:** Validates suite structure or reports design/empirical calibration maturity.
+
+**Recommended next step:** Fix validation errors before runs; use a preregistered panel for empirical promotion evidence.
+
+### Subcommands
+
+| Subcommand | What it does |
+|---|---|
+| `calibrate` | calibration-coverage report — how far each scenario has progressed as a measurement instrument (CALIBRATION.md); advisory, never fails |
+| `empirical` | analyze a model panel for per-scenario discrimination/repeatability/twin-robustness (CALIBRATION.md Phase 2). Give a panel JSON, or assemble one from scored runs with --runs |
+| `validate` | validate suite YAML structure and coverage |
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies suites calibrate`
+
+calibration-coverage report — how far each scenario has progressed as a measurement instrument (CALIBRATION.md); advisory, never fails
+
+**Usage:** `aies suites calibrate [-h] [--root ROOT] [--json]`
+
+**Prerequisites:** The shipped or selected competencies directory is readable.
+
+**Result and side effects:** Validates suite structure or reports design/empirical calibration maturity.
+
+**Recommended next step:** Fix validation errors before runs; use a preregistered panel for empirical promotion evidence.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--root` | optional | competencies directory to inspect (default: shipped suites) | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies suites empirical`
+
+analyze a model panel for per-scenario discrimination/repeatability/twin-robustness (CALIBRATION.md Phase 2). Give a panel JSON, or assemble one from scored runs with --runs
+
+**Usage:** `aies suites empirical [-h] [--runs RUN_ID=ABILITY [RUN_ID=ABILITY ...]] [--preflight-runs RUN_ID [RUN_ID ...]] [--ability-basis ABILITY_BASIS] [--preregistered-at PREREGISTERED_AT] [--rating-protocol-basis RATING_PROTOCOL_BASIS] [--create-plan PATH] [--panel-plan PATH] [--plan-subjects SUBJECT=ABILITY [SUBJECT=ABILITY ...]] [--planned-runs SUBJECT=RUN_ID [SUBJECT=RUN_ID ...]] [--plan-owner PLAN_OWNER] [--plan-areas CA-## [CA-## ...]] [--plan-rt {1,2,3,4}] [--plan-repeats PLAN_REPEATS] [--rating-protocol-id RATING_PROTOCOL_ID] [--write-panel WRITE_PANEL] [--panel-id PANEL_ID] [--json] [panel]`
+
+**Prerequisites:** For promotion-capable analysis, create a frozen plan before runs, use independent subject ability ranks, bind completed compatible runs, and use a validated shared rating protocol.
+
+**Result and side effects:** Analyzes scenario discrimination, repeatability, and twin robustness; exploratory inputs remain non-promotional.
+
+**Recommended next step:** Have a human review the result and record any instrument-promotion decision.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<PANEL>` | optional | panel-results JSON (panel + per-model scores) | — |
+| `--runs` | optional | assemble the panel from scored qualify runs, e.g. --runs run-strong=3 run-mid=2 run-weak=1 | values: + |
+| `--preflight-runs` | optional | inspect scored runs for panel compatibility without inventing or requiring ability ranks | values: + |
+| `--ability-basis` | optional | independent evidence used to assign every --runs ability rank | — |
+| `--preregistered-at` | optional | timestamp showing ability ranks were fixed before analysis | — |
+| `--rating-protocol-basis` | optional | evidence that the shared scoring protocol is validated | — |
+| `--create-plan` | optional | write a frozen empirical panel plan before running subjects | Planning mode; use before subject runs with `--plan-subjects`, owner, areas, tier, repeats, and rating protocol. |
+| `--panel-plan` | optional | frozen panel plan to bind to completed --planned-runs | Analysis mode; bind the frozen plan to completed runs with `--planned-runs`. |
+| `--plan-subjects` | optional | subjects and independent ability ranks to freeze | values: + |
+| `--planned-runs` | optional | bind every planned subject to its completed run | values: + |
+| `--plan-owner` | optional | named human accountable for the frozen study design | — |
+| `--plan-areas` | optional | competency areas whose exact instruments are frozen | values: + |
+| `--plan-rt` | optional | risk tier frozen in a new plan (default: 2) | choices: `1`, `2`, `3`, `4`; default: `2` |
+| `--plan-repeats` | optional | repeat observations per instrument for stability (default: 3) | default: `3` |
+| `--rating-protocol-id` | optional | expected rating protocol as KIND:RATER | — |
+| `--write-panel` | optional | also write the assembled panel JSON to this path | — |
+| `--panel-id` | optional | name this panel for traceability (recorded in the result metadata) | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies suites validate`
+
+validate suite YAML structure and coverage
+
+**Usage:** `aies suites validate [-h] [--root ROOT] [--json]`
+
+**Prerequisites:** The shipped or selected competencies directory is readable.
+
+**Result and side effects:** Validates suite structure or reports design/empirical calibration maturity.
+
+**Recommended next step:** Fix validation errors before runs; use a preregistered panel for empirical promotion evidence.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--root` | optional | competencies directory to validate (default: shipped suites) | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies transcript`
+
+read a whole run in one view: task + answer + scores per item
+
+**Usage:** `aies transcript [-h] [--json] [--area AREA] [--format {markdown,json}] [--write] run`
+
+**Prerequisites:** The run contains response records; scores are shown when available.
+
+**Result and side effects:** Renders task, response, scores, and findings together for review.
+
+**Recommended next step:** Use findings to complete ratings, resolve divergence, or plan remediation.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<RUN>` | required | run id to render as a task/answer/score transcript | — |
+| `--area` | optional | only this competency area | — |
+| `--format` | optional | output representation (default: markdown) | choices: `markdown`, `json`; default: `markdown` |
+| `--write` | optional | write transcript.md into the run directory | — |
+
+## `aies verify`
+
+verify a grant against the current environment (D7); invalidates on fingerprint change
+
+**Usage:** `aies verify [-h] [--json] record`
+
+**Prerequisites:** A Qualification Record exists.
+
+**Result and side effects:** Checks current validity, lifecycle status, and deployment-fingerprint continuity; it does not mutate the record.
+
+**Recommended next step:** Requalify or append the appropriate governed lifecycle event when verification fails.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<RECORD>` | required | qualification record id to verify | — |

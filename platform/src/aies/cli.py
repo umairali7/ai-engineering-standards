@@ -1,7 +1,7 @@
 """aies — the AIES Engineering Assessment Platform CLI.
 
 Verb dispatch and output rendering only; no qualification logic lives
-here (PLATFORM.md §4). Every verb supports --json.
+here (PLATFORM.md §4). Data-producing verbs support --json where applicable.
 """
 
 from __future__ import annotations
@@ -737,6 +737,13 @@ def cmd_plugins(args) -> int:
     return 0
 
 
+def cmd_completion(args) -> int:
+    """Print a sourceable completion definition derived from the live parser."""
+    from .cli_completion import render_completion
+    print(render_completion(build_parser(), args.shell), end="")
+    return 0
+
+
 def cmd_benchmark(args) -> int:
     # Stage-4-only execution: identical to qualify without the scoring hook.
     args.resume = None
@@ -1449,7 +1456,7 @@ def _not_yet(milestone: str):
 
 _EPILOG = """\
 commands by stage (each group alphabetical):
-  setup & discovery   deployment · discover · doctor · runtime
+  setup & discovery   completion · deployment · discover · doctor · runtime
   qualification       assessment · benchmark · capabilities · compare · export · import · qualify · review · runs · score · transcript
   judging             judge available · judge history · judge list   (the judge pool + track record)
   decision & audit    audit · conform · corpus · dashboard · grant · qualification · report · serve · verify
@@ -1512,8 +1519,14 @@ typical workflow:
 
   aies qualify <deployment> --journey JOURNEY-01   run a multi-phase journey instead
 
-Run `aies <command> --help` for a command's options. The platform prepares
-evidence; a human records every grant. Docs: platform/GUIDE.md.
+CLI discovery:
+  aies help                                    full command tree + workflow
+  aies <command> --help                        detailed parameters for one command
+  aies completion powershell                   enable Tab completion (also bash/zsh)
+  platform/CLI_REFERENCE.md                    every command, parameter, prerequisite,
+                                               interaction, result, and next step
+
+The platform prepares evidence; a human records every grant. Docs: platform/GUIDE.md.
 Stuck (timeout, TLS, auth, slow run, judge)? platform/TROUBLESHOOTING.md.
 """
 
@@ -1544,12 +1557,18 @@ def build_parser() -> argparse.ArgumentParser:
 
     reg = common(sub.add_parser("registry", help="manage candidate deployment entries"))
     regsub = reg.add_subparsers(dest="registry_cmd", required=True)
-    radd = regsub.add_parser("add"); radd.add_argument("file")
-    rlist = regsub.add_parser("list"); rlist.add_argument("--all", action="store_true")
-    rshow = regsub.add_parser("show"); rshow.add_argument("model")
-    rret = regsub.add_parser("retire"); rret.add_argument("model")
+    radd = regsub.add_parser("add", help="register a candidate deployment from YAML")
+    radd.add_argument("file", help="deployment YAML file to register")
+    rlist = regsub.add_parser("list", help="list active candidate deployments")
+    rlist.add_argument("--all", action="store_true",
+                       help="include retired deployment entries")
+    rshow = regsub.add_parser("show", help="show one candidate deployment")
+    rshow.add_argument("model", help="deployment id, or an unambiguous model name")
+    rret = regsub.add_parser("retire", help="retire a deployment without deleting history")
+    rret.add_argument("model", help="deployment id, or an unambiguous model name")
     for x in (radd, rlist, rshow, rret):
-        x.add_argument("--json", action="store_true")
+        x.add_argument("--json", action="store_true",
+                       help="emit machine-readable JSON")
     reg.set_defaults(func=cmd_registry)
 
     q = common(sub.add_parser("qualify", help="run qualification evidence collection for one deployment"))
@@ -1560,7 +1579,8 @@ def build_parser() -> argparse.ArgumentParser:
                    help="run a declarative assessment (assessments/NAME.yaml): its "
                         "competency set, profile, risk tier, and sampling (ADR-0005). "
                         "Authoritative — sets --area/--profile; --rt/--repeats override it")
-    q.add_argument("--profile", default="enterprise")
+    q.add_argument("--profile", default="enterprise",
+                   help="EV weighting profile (default: enterprise; overridden by --assessment)")
     q.add_argument("--rt", type=int, choices=(1, 2, 3, 4), default=None,
                    help="scoped risk tier (default RT2 — Moderate, or the assessment's tier)")
     q.add_argument("--area", action="append", default=None,
@@ -1601,19 +1621,25 @@ def build_parser() -> argparse.ArgumentParser:
     q.set_defaults(func=lambda a: (_qualify_defaults(a), cmd_qualify(a))[1])
 
     b = common(sub.add_parser("benchmark", help="execute scenario suites only (stage 4)"))
-    b.add_argument("model")
-    b.add_argument("--profile", default="enterprise")
-    b.add_argument("--rt", type=int, choices=(1, 2, 3, 4), default=2)
-    b.add_argument("--area", action="append", default=None)
+    b.add_argument("model", help="deployment id, or model name when unambiguous")
+    b.add_argument("--profile", default="enterprise",
+                   help="EV weighting profile (default: enterprise)")
+    b.add_argument("--rt", type=int, choices=(1, 2, 3, 4), default=2,
+                   help="scoped risk tier number (default: 2 for RT2 — Moderate)")
+    b.add_argument("--area", action="append", default=None,
+                   help="competency area code such as CA-05; repeat for more areas")
     b.add_argument("--all-areas", action="store_true",
                    help="benchmark across ALL competency areas CA-01…CA-12")
-    b.add_argument("--repeats", type=int, default=None)
-    b.add_argument("--parallel", type=int, default=None, metavar="N")
-    b.add_argument("--runtime", default=None)
+    b.add_argument("--repeats", type=int, default=None,
+                   help="repeat each scenario for a stability study; repeats do not add breadth")
+    b.add_argument("--parallel", type=int, default=None, metavar="N",
+                   help="maximum concurrent inference calls (default: 1 or AIES_PARALLEL)")
+    b.add_argument("--runtime", default=None,
+                   help="runtime name used to disambiguate the deployment")
     b.set_defaults(func=lambda a: (_qualify_defaults(a), cmd_benchmark(a))[1])
 
     s = common(sub.add_parser("score", help="ingest a filled scoresheet (human or model rater)"))
-    s.add_argument("run")
+    s.add_argument("run", help="run id whose completed scoresheet will be ingested")
     s.add_argument("--file", help="scoresheet path (default: the run's scoresheet.json)")
     s.set_defaults(func=cmd_score)
 
@@ -1621,45 +1647,59 @@ def build_parser() -> argparse.ArgumentParser:
         "rater", help="manage durable human-rater qualification/calibration records"))
     rrsub = rr.add_subparsers(dest="rater_cmd", required=True)
     rreg = rrsub.add_parser("register", help="register one qualified human rater")
-    rreg.add_argument("--id", required=True)
-    rreg.add_argument("--name", required=True)
-    rreg.add_argument("--area", action="append", required=True, metavar="CA-NN")
+    rreg.add_argument("--id", required=True,
+                      help="durable human-rater identifier")
+    rreg.add_argument("--name", required=True,
+                      help="human rater's display name")
+    rreg.add_argument("--area", action="append", required=True, metavar="CA-NN",
+                      help="qualified competency area; repeat for additional areas")
     rreg.add_argument("--rt", action="append", required=True, type=int,
-                      choices=(1, 2, 3, 4))
-    rreg.add_argument("--qualified-until", required=True, metavar="ISO-8601")
-    rreg.add_argument("--calibration-valid-until", required=True, metavar="ISO-8601")
-    rreg.add_argument("--anchor-version", required=True)
+                      choices=(1, 2, 3, 4),
+                      help="qualified risk-tier number; repeat for additional tiers")
+    rreg.add_argument("--qualified-until", required=True, metavar="ISO-8601",
+                      help="qualification expiry timestamp")
+    rreg.add_argument("--calibration-valid-until", required=True, metavar="ISO-8601",
+                      help="rating-calibration expiry timestamp")
+    rreg.add_argument("--anchor-version", required=True,
+                      help="version of the anchor-artifact set used for calibration")
     rreg.add_argument("--calibration-method",
-                      default="human-consensus-anchor-session")
+                      default="human-consensus-anchor-session",
+                      help="documented calibration method")
     rreg.add_argument("--registered-by", required=True,
                       help="named human registry authority")
-    rreg.add_argument("--json", action="store_true")
+    rreg.add_argument("--json", action="store_true",
+                      help="emit machine-readable JSON")
     rreg.set_defaults(func=cmd_rater)
     rlist = rrsub.add_parser("list", help="list registered human raters")
-    rlist.add_argument("--json", action="store_true")
+    rlist.add_argument("--json", action="store_true",
+                       help="emit machine-readable JSON")
     rlist.set_defaults(func=cmd_rater)
     rshow = rrsub.add_parser("show", help="show one human-rater record")
-    rshow.add_argument("id")
-    rshow.add_argument("--json", action="store_true")
+    rshow.add_argument("id", help="durable human-rater identifier")
+    rshow.add_argument("--json", action="store_true",
+                       help="emit machine-readable JSON")
     rshow.set_defaults(func=cmd_rater)
 
     rs = common(sub.add_parser(
         "resolve", help="record an immutable human disposition for a divergent item"))
-    rs.add_argument("run")
+    rs.add_argument("run", help="run id containing the divergent response")
     rs.add_argument("response", help="response record filename, for example SC-CA05-001-r1.json")
     rs.add_argument("--scores", required=True, nargs=6, type=int,
-                    choices=(0, 1, 2, 3, 4), metavar=("EV1", "EV2", "EV3", "EV4", "EV5", "EV6"))
+                    choices=(0, 1, 2, 3, 4),
+                    metavar=("EV1", "EV2", "EV3", "EV4", "EV5", "EV6"),
+                    help="six resolved integer ratings in EV1 through EV6 order")
     rs.add_argument("--resolver", required=True, help="named human resolver")
     rs.add_argument("--resolver-id", required=True,
                     help="durable id from `aies rater register`")
-    rs.add_argument("--rationale", required=True)
+    rs.add_argument("--rationale", required=True,
+                    help="reasoned human disposition explaining the resolution")
     rs.add_argument("--conflict-free", action="store_true", required=True,
                     help="declare independence from the assessed subject")
     rs.set_defaults(func=cmd_resolve)
 
     im = common(sub.add_parser("import", help="import external eval results "
                                "(EV1–EV6 JSON) into a run as automated ratings"))
-    im.add_argument("run")
+    im.add_argument("run", help="run id that will receive the imported rating observations")
     im.add_argument("file", help="eval file: JSON {source?, items:[{scenario_id, "
                     "repeat?, scores:{EV1..EV6}, findings?}]}")
     im.add_argument("--source", default=None,
@@ -1668,14 +1708,15 @@ def build_parser() -> argparse.ArgumentParser:
 
     ex = common(sub.add_parser("export", help="export a run's responses+scores to "
                                "a generic eval-log JSON (round-trips with import)"))
-    ex.add_argument("run")
+    ex.add_argument("run", help="run id to export")
     ex.add_argument("--write", action="store_true",
                     help="write eval-log.json into the run directory (else stdout)")
     ex.set_defaults(func=cmd_export)
 
     r = common(sub.add_parser("report", help="render an evidence package"))
-    r.add_argument("run")
-    r.add_argument("--format", choices=("markdown", "json", "html"), default="markdown")
+    r.add_argument("run", help="aggregated run id whose evidence package will be rendered")
+    r.add_argument("--format", choices=("markdown", "json", "html"), default="markdown",
+                   help="output representation (default: markdown)")
     r.add_argument("--write", action="store_true",
                    help="write the report into the run directory instead of stdout")
     r.set_defaults(func=cmd_report)
@@ -1685,9 +1726,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     tr = common(sub.add_parser("transcript", help="read a whole run in one view: "
                                "task + answer + scores per item"))
-    tr.add_argument("run")
+    tr.add_argument("run", help="run id to render as a task/answer/score transcript")
     tr.add_argument("--area", default=None, help="only this competency area")
-    tr.add_argument("--format", choices=("markdown", "json"), default="markdown")
+    tr.add_argument("--format", choices=("markdown", "json"), default="markdown",
+                    help="output representation (default: markdown)")
     tr.add_argument("--write", action="store_true",
                     help="write transcript.md into the run directory")
     tr.set_defaults(func=cmd_transcript)
@@ -1726,7 +1768,8 @@ def build_parser() -> argparse.ArgumentParser:
     au.add_argument("--attest", default=None, metavar="FILE",
                     help="attestation JSON for non-detectable practices "
                          "({items:[{id, evidence}]})")
-    au.add_argument("--format", choices=("markdown", "json"), default="markdown")
+    au.add_argument("--format", choices=("markdown", "json"), default="markdown",
+                    help="output representation (default: markdown)")
     au.set_defaults(func=lambda a: (setattr(a, "rt", a.rt or (2 if a.gate else None)),
                                     cmd_audit(a))[1])
 
@@ -1734,53 +1777,71 @@ def build_parser() -> argparse.ArgumentParser:
                                 "(ADR-0005): list/show/validate, and decide a run's "
                                 "outcome (PASS/FAIL/INCONCLUSIVE/INSUFFICIENT EVIDENCE)"))
     asmsub = asm.add_subparsers(dest="assessment_cmd", required=True)
-    asmsub.add_parser("list", help="the shipped assessments and their validity")
-    asm_show = asmsub.add_parser("show", help="print a validated assessment"); asm_show.add_argument("name")
+    asmsub.add_parser("list", help="list shipped assessments and their validity")
+    asm_show = asmsub.add_parser("show", help="print a validated assessment")
+    asm_show.add_argument("name", help="assessment name")
     asm_val = asmsub.add_parser("validate", help="validate an assessment (name or path)")
-    asm_val.add_argument("name")
+    asm_val.add_argument("name", help="assessment name or YAML path")
     asm_res = asmsub.add_parser("result", help="decide the outcome of an aggregated "
                                "run composed under an assessment (no inference)")
-    asm_res.add_argument("run")
+    asm_res.add_argument("run", help="aggregated run composed under an assessment")
     asm_res.add_argument("--format", choices=("markdown", "html"), default="markdown",
                          help="render the canonical result as markdown (default) or HTML")
     asm_res.add_argument("--out", help="write HTML to this file instead of stdout")
     for x in (asm_show, asm_val, asm_res):
-        x.add_argument("--json", action="store_true")
-    asmsub.choices["list"].add_argument("--json", action="store_true")
+        x.add_argument("--json", action="store_true",
+                       help="emit machine-readable JSON")
+    asmsub.choices["list"].add_argument("--json", action="store_true",
+                                        help="emit machine-readable JSON")
     asm.set_defaults(func=cmd_assessment)
 
     pr = common(sub.add_parser("profiles", help="list/show/validate weighting profiles"))
     prsub = pr.add_subparsers(dest="profiles_cmd", required=True)
-    prsub.add_parser("list").add_argument("--json", action="store_true")
-    prs = prsub.add_parser("show"); prs.add_argument("name")
-    prs.add_argument("--json", action="store_true")
-    prv = prsub.add_parser("validate"); prv.add_argument("name")
-    prv.add_argument("--json", action="store_true")
+    prsub.add_parser("list", help="list available weighting profiles").add_argument(
+        "--json", action="store_true", help="emit machine-readable JSON")
+    prs = prsub.add_parser("show", help="show one weighting profile")
+    prs.add_argument("name", help="profile name")
+    prs.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    prv = prsub.add_parser("validate", help="validate one weighting profile")
+    prv.add_argument("name", help="profile name or YAML path")
+    prv.add_argument("--json", action="store_true", help="emit machine-readable JSON")
     pr.set_defaults(func=cmd_profiles)
 
     common(sub.add_parser("plugins", help="list installed runtime adapters")
            ).set_defaults(func=cmd_plugins)
 
+    comp = sub.add_parser(
+        "completion",
+        help="generate Tab completion for PowerShell, Bash, or Zsh")
+    comp.add_argument(
+        "shell", choices=("powershell", "bash", "zsh"),
+        help="shell whose sourceable completion definition will be printed")
+    comp.set_defaults(func=cmd_completion)
+
     cp = common(sub.add_parser(
         "compare", help="compare two runs/deployments on identical suite versions"))
     cp.add_argument("a", help="run id or model registry id (latest aggregated run)")
     cp.add_argument("b", help="run id or model registry id (latest aggregated run)")
-    cp.add_argument("--format", choices=("markdown", "json"), default="markdown")
+    cp.add_argument("--format", choices=("markdown", "json"), default="markdown",
+                    help="output representation (default: markdown)")
     cp.add_argument("--ecm", action="store_true", help="compare task-level ECM evidence only when protocols match")
     cp.set_defaults(func=cmd_compare)
 
     rn = common(sub.add_parser("runs", help="result history: list runs"))
     rnsub = rn.add_subparsers(dest="runs_cmd", required=True)
-    rl = rnsub.add_parser("list")
-    rl.add_argument("--model", default=None)
-    rl.add_argument("--json", action="store_true")
+    rl = rnsub.add_parser("list", help="list recorded runs")
+    rl.add_argument("--model", default=None,
+                    help="filter by deployment id or model identifier")
+    rl.add_argument("--json", action="store_true",
+                    help="emit machine-readable JSON")
     rp = rnsub.add_parser("progress", help="show detailed durable progress for a run")
-    rp.add_argument("run")
-    rp.add_argument("--json", action="store_true")
+    rp.add_argument("run", help="run id whose durable progress will be shown")
+    rp.add_argument("--json", action="store_true",
+                    help="emit machine-readable JSON")
     rn.set_defaults(func=cmd_runs)
 
     rv = common(sub.add_parser("review", help="assemble a multi-deployment peer-review package"))
-    rv.add_argument("run")
+    rv.add_argument("run", help="run id whose responses will be reviewed")
     rv.add_argument("--reviewer", default="reviewer-model",
                     help="label for the reviewer model")
     rv.add_argument("--model-reviewer", default=None, metavar="DEPLOYMENT",
@@ -1805,9 +1866,10 @@ def build_parser() -> argparse.ArgumentParser:
     rv.set_defaults(func=cmd_review)
 
     gr = common(sub.add_parser("grant", help="record a human qualification decision"))
-    gr.add_argument("run")
+    gr.add_argument("run", help="decisional, gate-passing run used as qualification evidence")
     gr.add_argument("--decision", choices=("grant", "grant-with-conditions", "deny"),
-                    required=True)
+                    required=True,
+                    help="human authority's recorded qualification decision")
     gr.add_argument("--authority", required=True, help="named human authority (ROLE-13)")
     gr.add_argument("--assessor", default=None,
                     help="named human assessor (defaults to authority)")
@@ -1830,13 +1892,16 @@ def build_parser() -> argparse.ArgumentParser:
                     help="applied AIES-AESQS-CF-01 competency-framework version")
     gr.add_argument("--agent-definition-version",
                     help="applicable ART-14 agent-definition version")
-    gr.add_argument("--valid-from", metavar="ISO-8601")
-    gr.add_argument("--valid-until", metavar="ISO-8601")
+    gr.add_argument("--valid-from", metavar="ISO-8601",
+                    help="start of the qualification validity window")
+    gr.add_argument("--valid-until", metavar="ISO-8601",
+                    help="end of the qualification validity window")
     gr.add_argument("--second", default=None,
                     help="deprecated peer-reviewer name alias for legacy v4 records")
     gr.add_argument("--condition", action="append", default=None,
                     help="condition (repeatable; required for grant-with-conditions)")
-    gr.add_argument("--rationale", default=None)
+    gr.add_argument("--rationale", default=None,
+                    help="human authority's reasoned decision rationale")
     gr.add_argument("--consider-advisory-review", action="store_true",
                     help="attest that the authority considered available advisory model-review scores")
     gr.add_argument("--human-evaluation", default=None, metavar="NAME",
@@ -1845,28 +1910,41 @@ def build_parser() -> argparse.ArgumentParser:
 
     vf = common(sub.add_parser("verify", help="verify a grant against the current "
                                "environment (D7); invalidates on fingerprint change"))
-    vf.add_argument("record")
+    vf.add_argument("record", help="qualification record id to verify")
     vf.set_defaults(func=cmd_verify)
 
     qz = common(sub.add_parser(
         "qualifications",
         help="list/show qualification records or append governed lifecycle events"))
     qzsub = qz.add_subparsers(dest="q_cmd", required=True)
-    qzsub.add_parser("list").add_argument("--json", action="store_true")
-    qzs = qzsub.add_parser("show"); qzs.add_argument("record"); qzs.add_argument("--json", action="store_true")
-    qzr = qzsub.add_parser("revoke"); qzr.add_argument("record")
-    qzr.add_argument("--authority", required=True); qzr.add_argument("--reason", required=True)
-    qzr.add_argument("--json", action="store_true")
+    qzsub.add_parser("list", help="list qualification records").add_argument(
+        "--json", action="store_true", help="emit machine-readable JSON")
+    qzs = qzsub.add_parser("show", help="show one qualification record")
+    qzs.add_argument("record", help="qualification record id")
+    qzs.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    qzr = qzsub.add_parser("revoke", help="append a revocation lifecycle event")
+    qzr.add_argument("record", help="qualification record id")
+    qzr.add_argument("--authority", required=True,
+                     help="named human authority recording the revocation")
+    qzr.add_argument("--reason", required=True,
+                     help="reason for revocation")
+    qzr.add_argument("--json", action="store_true", help="emit machine-readable JSON")
     qze = qzsub.add_parser("event", help="append an immutable lifecycle event")
-    qze.add_argument("record")
+    qze.add_argument("record", help="qualification record id")
     qze.add_argument("--event", required=True,
                      choices=("condition-changed", "renewed", "suspended",
-                              "invalidated", "revoked", "superseded"))
-    qze.add_argument("--authority", required=True)
-    qze.add_argument("--reason", required=True)
-    qze.add_argument("--condition", action="append", default=None)
-    qze.add_argument("--valid-until", default=None, metavar="ISO-8601")
-    qze.add_argument("--superseded-by", default=None)
+                              "invalidated", "revoked", "superseded"),
+                     help="immutable lifecycle transition to append")
+    qze.add_argument("--authority", required=True,
+                     help="named human authority recording the event")
+    qze.add_argument("--reason", required=True,
+                     help="reason for the lifecycle transition")
+    qze.add_argument("--condition", action="append", default=None,
+                     help="replacement condition; repeat for multiple conditions")
+    qze.add_argument("--valid-until", default=None, metavar="ISO-8601",
+                     help="new validity end for a renewal")
+    qze.add_argument("--superseded-by", default=None,
+                     help="replacement qualification record id")
     qze.add_argument("--evidence-run", default=None,
                      help="decisional, gate-passing re-evaluation run for renewal")
     qze.add_argument("--peer-reviewer", default=None,
@@ -1875,17 +1953,21 @@ def build_parser() -> argparse.ArgumentParser:
                      help="durable peer id from `aies rater register`")
     qze.add_argument("--peer-conflict-free", action="store_true",
                      help="peer reviewer declares no conflict with the subject")
-    qze.add_argument("--json", action="store_true")
+    qze.add_argument("--json", action="store_true",
+                     help="emit machine-readable JSON")
     qz.set_defaults(func=cmd_qualifications)
 
     db = common(sub.add_parser("dashboard", help="render an HTML dashboard over runs and grants"))
-    db.add_argument("--write", action="store_true")
+    db.add_argument("--write", action="store_true",
+                    help="write dashboard.html into the workspace instead of only printing its path")
     db.set_defaults(func=cmd_dashboard)
 
     sv = common(sub.add_parser("serve", help="thin read-only REST API over the "
                                "canonical artifacts (JSON; computes no outcomes)"))
-    sv.add_argument("--host", default="127.0.0.1")
-    sv.add_argument("--port", type=int, default=8722)
+    sv.add_argument("--host", default="127.0.0.1",
+                    help="interface to bind (default: 127.0.0.1; use broader binds cautiously)")
+    sv.add_argument("--port", type=int, default=8722,
+                    help="TCP port for the read-only API (default: 8722)")
     sv.set_defaults(func=cmd_serve)
 
     cp = common(sub.add_parser("corpus", help="advisory quality review of the "
@@ -1904,35 +1986,49 @@ def build_parser() -> argparse.ArgumentParser:
         sc = cpsub.add_parser(name, help=h)
         sc.add_argument("--root", default=None,
                         help="competencies directory (default: shipped suites)")
-        sc.add_argument("--json", action="store_true")
+        sc.add_argument("--json", action="store_true",
+                        help="emit machine-readable JSON")
     cr = cpsub.add_parser("review", help="review one scenario as a measurement instrument: "
                           "deterministic structural checks always, plus an opt-in model "
                           "critique with --reviewer (critique only — never rewrites/approves)")
     cr.add_argument("scenario", help="scenario id (SC-CA##-###) or a YAML path")
     cr.add_argument("--reviewer", default=None,
                     help="a deployment id to critique semantically (omit for structural only)")
-    cr.add_argument("--runtime", default=None)
-    cr.add_argument("--json", action="store_true")
+    cr.add_argument("--runtime", default=None,
+                    help="runtime name used to disambiguate the reviewer deployment")
+    cr.add_argument("--json", action="store_true",
+                    help="emit machine-readable JSON")
     cp.set_defaults(func=cmd_corpus)
 
     # --- resource-model noun commands (primary surface) ---------------------
     rt = common(sub.add_parser("runtime", help="inspect runtime adapters and "
                                "the runtimes behind them"))
     rtsub = rt.add_subparsers(dest="rt_cmd", required=True)
-    rtsub.add_parser("list").add_argument("--json", action="store_true")
-    rti = rtsub.add_parser("inspect"); rti.add_argument("name")
-    rti.add_argument("--json", action="store_true")
+    rtsub.add_parser("list", help="list installed runtime adapters").add_argument(
+        "--json", action="store_true", help="emit machine-readable JSON")
+    rti = rtsub.add_parser("inspect", help="inspect one runtime adapter")
+    rti.add_argument("name", help="runtime adapter name")
+    rti.add_argument("--json", action="store_true", help="emit machine-readable JSON")
     rt.set_defaults(func=cmd_runtime)
 
     cf = common(sub.add_parser("conform", help="declare/check conformance to AIES"))
     cfsub = cf.add_subparsers(dest="conform_cmd", required=True)
-    cft = cfsub.add_parser("template")
+    cft = cfsub.add_parser("template", help="create a conformance statement template")
     cft.add_argument("--class", dest="klass", choices=("adopter", "implementation"),
-                     default="adopter")
-    cft.add_argument("--out", default=None); cft.add_argument("--json", action="store_true")
-    cfc = cfsub.add_parser("check"); cfc.add_argument("file")
-    cfc.add_argument("--write", action="store_true"); cfc.add_argument("--json", action="store_true")
-    cfsub.add_parser("requirements").add_argument("--json", action="store_true")
+                     default="adopter",
+                     help="conformance class to scaffold (default: adopter)")
+    cft.add_argument("--out", default=None,
+                     help="destination file; omit to print the template")
+    cft.add_argument("--json", action="store_true",
+                     help="emit machine-readable JSON")
+    cfc = cfsub.add_parser("check", help="check a conformance statement and its evidence")
+    cfc.add_argument("file", help="conformance statement YAML or JSON file")
+    cfc.add_argument("--write", action="store_true",
+                     help="write the conformance report beside the input")
+    cfc.add_argument("--json", action="store_true",
+                     help="emit machine-readable JSON")
+    cfsub.add_parser("requirements", help="list conformance requirements").add_argument(
+        "--json", action="store_true", help="emit machine-readable JSON")
     cfe = cfsub.add_parser("engine", help="verify a decision engine against the "
                            "golden Evidence Package corpus (CONFORMANCE-POLICY.md). "
                            "Defaults to the reference engine; --engine verifies a "
@@ -1942,15 +2038,18 @@ def build_parser() -> argparse.ArgumentParser:
     cfe.add_argument("--engine", default=None,
                      help="a foreign engine command: reads {evidence,assessment} JSON on "
                           "stdin, prints the Canonical Assessment Result JSON on stdout")
-    cfe.add_argument("--json", action="store_true")
+    cfe.add_argument("--json", action="store_true",
+                     help="emit machine-readable JSON")
     cf.set_defaults(func=cmd_conform)
 
     jn = common(sub.add_parser("journey", help="multi-phase journeys "
                                "(chained scenarios across the SDLC)"))
     jnsub = jn.add_subparsers(dest="journey_cmd", required=True)
-    jnsub.add_parser("list").add_argument("--json", action="store_true")
-    jns = jnsub.add_parser("show"); jns.add_argument("id")
-    jns.add_argument("--json", action="store_true")
+    jnsub.add_parser("list", help="list available multi-phase journeys").add_argument(
+        "--json", action="store_true", help="emit machine-readable JSON")
+    jns = jnsub.add_parser("show", help="show one multi-phase journey")
+    jns.add_argument("id", help="journey id")
+    jns.add_argument("--json", action="store_true", help="emit machine-readable JSON")
     jn.set_defaults(func=cmd_journey)
 
     st = common(sub.add_parser("suites", help="inspect and validate competency suites"))
@@ -1958,12 +2057,15 @@ def build_parser() -> argparse.ArgumentParser:
     stv = stsub.add_parser("validate", help="validate suite YAML structure and coverage")
     stv.add_argument("--root", default=None,
                      help="competencies directory to validate (default: shipped suites)")
-    stv.add_argument("--json", action="store_true")
+    stv.add_argument("--json", action="store_true",
+                     help="emit machine-readable JSON")
     stc = stsub.add_parser("calibrate", help="calibration-coverage report — how far "
                            "each scenario has progressed as a measurement instrument "
                            "(CALIBRATION.md); advisory, never fails")
-    stc.add_argument("--root", default=None)
-    stc.add_argument("--json", action="store_true")
+    stc.add_argument("--root", default=None,
+                     help="competencies directory to inspect (default: shipped suites)")
+    stc.add_argument("--json", action="store_true",
+                     help="emit machine-readable JSON")
     ste = stsub.add_parser("empirical", help="analyze a model panel for per-scenario "
                            "discrimination/repeatability/twin-robustness (CALIBRATION.md "
                            "Phase 2). Give a panel JSON, or assemble one from scored runs "
@@ -2004,31 +2106,38 @@ def build_parser() -> argparse.ArgumentParser:
                      help="also write the assembled panel JSON to this path")
     ste.add_argument("--panel-id", default=None,
                      help="name this panel for traceability (recorded in the result metadata)")
-    ste.add_argument("--json", action="store_true")
+    ste.add_argument("--json", action="store_true",
+                     help="emit machine-readable JSON")
     st.set_defaults(func=cmd_suites)
 
     dep = common(sub.add_parser("deployment", help="manage deployments "
                                 "(AI deployment × runtime × config × endpoint)"))
     depsub = dep.add_subparsers(dest="dep_cmd", required=True)
-    dl = depsub.add_parser("list"); dl.add_argument("--all", action="store_true")
-    di = depsub.add_parser("inspect"); di.add_argument("name")
-    da = depsub.add_parser("add", help="register a NEW deployment"); da.add_argument("file")
+    dl = depsub.add_parser("list", help="list active deployments")
+    dl.add_argument("--all", action="store_true",
+                    help="include retired deployment entries")
+    di = depsub.add_parser("inspect", help="inspect one deployment")
+    di.add_argument("name", help="deployment id, or an unambiguous model name")
+    da = depsub.add_parser("add", help="register a new deployment")
+    da.add_argument("file", help="deployment YAML file")
     du = depsub.add_parser("update", help="overwrite an EXISTING deployment in "
                            "place (same id) — for config/key/roles fixes")
-    du.add_argument("file")
+    du.add_argument("file", help="deployment YAML file with the existing id")
     drm = depsub.add_parser("remove", help="hard-delete an entry so its id can be "
                             "reused (vs retire, which reserves it for audit)")
-    drm.add_argument("name")
-    dr = depsub.add_parser("retire"); dr.add_argument("name")
+    drm.add_argument("name", help="deployment id to remove")
+    dr = depsub.add_parser("retire", help="retire a deployment without deleting history")
+    dr.add_argument("name", help="deployment id, or an unambiguous model name")
     dva = depsub.add_parser("verify-artifact", help="verify a local artifact "
                             "against the deployment's declared checksum/signature")
-    dva.add_argument("name")
+    dva.add_argument("name", help="deployment id, or an unambiguous model name")
     dva.add_argument("--artifact", required=True, help="path to the model artifact file")
     dva.add_argument("--pubkey", default=None, help="PEM public key for signature verification")
     dva.add_argument("--signature", default=None, help="detached signature file")
     dva.add_argument("--runtime", default=None, help="disambiguate the deployment's runtime")
     for x in (dl, di, da, du, drm, dr, dva):
-        x.add_argument("--json", action="store_true")
+        x.add_argument("--json", action="store_true",
+                       help="emit machine-readable JSON")
     dep.set_defaults(func=cmd_deployment)
 
     jg = common(sub.add_parser("judge", help="judge track record — which "
@@ -2042,30 +2151,49 @@ def build_parser() -> argparse.ArgumentParser:
     jgh.add_argument("--judge", default=None, metavar="DEPLOYMENT",
                      help="filter to a single judge deployment id")
     for x in (jga, jgl, jgh):
-        x.add_argument("--json", action="store_true")
+        x.add_argument("--json", action="store_true",
+                       help="emit machine-readable JSON")
     jg.set_defaults(func=cmd_judge)
 
     prof = common(sub.add_parser("profile", help="weighting profiles (enterprise, "
                                  "coder, security, …)"))
     profsub = prof.add_subparsers(dest="prof_cmd", required=True)
-    profsub.add_parser("list").add_argument("--json", action="store_true")
-    pfs = profsub.add_parser("show"); pfs.add_argument("name"); pfs.add_argument("--json", action="store_true")
-    pfv = profsub.add_parser("validate"); pfv.add_argument("name"); pfv.add_argument("--json", action="store_true")
+    profsub.add_parser("list", help="list available weighting profiles").add_argument(
+        "--json", action="store_true", help="emit machine-readable JSON")
+    pfs = profsub.add_parser("show", help="show one weighting profile")
+    pfs.add_argument("name", help="profile name")
+    pfs.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    pfv = profsub.add_parser("validate", help="validate one weighting profile")
+    pfv.add_argument("name", help="profile name or YAML path")
+    pfv.add_argument("--json", action="store_true", help="emit machine-readable JSON")
     prof.set_defaults(func=cmd_profile)
 
     qual = common(sub.add_parser("qualification", help="qualification records "
                                  "(the QUAL-… manifests) and their history"))
     qualsub = qual.add_subparsers(dest="qual_cmd", required=True)
-    qualsub.add_parser("list").add_argument("--json", action="store_true")
-    qcs = qualsub.add_parser("show"); qcs.add_argument("record"); qcs.add_argument("--json", action="store_true")
-    qch = qualsub.add_parser("history"); qch.add_argument("--deployment", default=None)
-    qch.add_argument("--json", action="store_true")
-    qcv = qualsub.add_parser("verify"); qcv.add_argument("record"); qcv.add_argument("--json", action="store_true")
-    qcr = qualsub.add_parser("revoke"); qcr.add_argument("record")
-    qcr.add_argument("--authority", required=True); qcr.add_argument("--reason", required=True)
-    qcr.add_argument("--json", action="store_true")
+    qualsub.add_parser("list", help="list qualification records").add_argument(
+        "--json", action="store_true", help="emit machine-readable JSON")
+    qcs = qualsub.add_parser("show", help="show one qualification record")
+    qcs.add_argument("record", help="qualification record id")
+    qcs.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    qch = qualsub.add_parser("history", help="show immutable qualification lifecycle events")
+    qch.add_argument("--deployment", default=None,
+                     help="filter by deployment id")
+    qch.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    qcv = qualsub.add_parser("verify", help="verify one qualification against current state")
+    qcv.add_argument("record", help="qualification record id")
+    qcv.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    qcr = qualsub.add_parser("revoke", help="append a revocation lifecycle event")
+    qcr.add_argument("record", help="qualification record id")
+    qcr.add_argument("--authority", required=True,
+                     help="named human authority recording the revocation")
+    qcr.add_argument("--reason", required=True,
+                     help="reason for revocation")
+    qcr.add_argument("--json", action="store_true", help="emit machine-readable JSON")
     qual.set_defaults(func=cmd_qualification)
 
+    from .cli_reference import apply_guidance
+    apply_guidance(p)
     return p
 
 
