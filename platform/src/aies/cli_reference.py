@@ -241,9 +241,9 @@ GUIDANCE: dict[str, CommandGuidance] = {
         "Close evidence gaps, rerun the audit, and record any human conformance decision separately.",
     ),
     "compare": CommandGuidance(
-        "Both references resolve to aggregated runs with compatible protocols; ECM comparison requires compatible task mappings and evidence semantics.",
-        "Compares compatible observed engineering scores without human review. It identifies the higher observation but reserves a formal winner claim for explicit `--formal-qualification` comparison.",
-        "Use the observed comparison as a scoped selection input; do not treat it as a qualification or global leaderboard.",
+        "At least two references resolve to aggregated runs. Task leaders require matching subject/risk/profile, mapping and scoring semantics, rater and suite protocols, repeat structure, adapter profiles, and direct instruments.",
+        "Builds a two-or-more-subject ECM table with observed performance, direct scenario breadth, compatibility reasons, ties or higher observations, and optional task/confidence/spread/leader sorting.",
+        "Use `--only-comparable --sort spread` for the strongest scoped selection signals; do not treat them as a qualification, authorization, or global leaderboard.",
     ),
     "assessment": CommandGuidance(
         "Shipped or supplied assessment YAML is available; result rendering additionally requires an aggregated assessment run.",
@@ -261,8 +261,8 @@ GUIDANCE: dict[str, CommandGuidance] = {
         "Prefer the canonical `aies profile` surface in new workflows.",
     ),
     "runs": CommandGuidance(
-        "The workspace contains runs; progress requires a run with durable `progress.json` state.",
-        "Lists run history, shows a versioned read-only run and artifact summary, or displays live/durable progress without mutating evidence.",
+        "The workspace contains runs; progress requires durable `progress.json`, while event migration requires a retained manifest and source records.",
+        "Lists history, shows a versioned run summary, displays progress, or validates/replays typed evidence events. `events --migrate` appends projections but never rewrites legacy source evidence.",
         "Use `runs show RUN` to discover available products, then open, compare, inspect, or resume the run.",
     ),
     "judge": CommandGuidance(

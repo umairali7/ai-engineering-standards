@@ -13,8 +13,8 @@ import uuid
 
 from . import config
 from . import constants as C
-from . import doctor, profiles, progress, registry, runner, rating, scoring, workspace
-from .adapters import resolve
+from . import (doctor, evidence_events, executors, profiles, progress, registry,
+               runner, rating, scoring, subjects, workspace)
 
 
 class EngineError(Exception):
@@ -114,9 +114,8 @@ def start_qualification(
         raise EngineError(f"risk tier must be one of {C.RISK_TIERS}")
     entry = registry.resolve(model_id, runtime=runtime)
     profile = profiles.load(profile_name)
-    adapter_cls = resolve(entry["runtime"])
-    adapter = adapter_cls()
-    adapter.load(entry)
+    executor = executors.RuntimeGenerationExecutor(entry)
+    executor.load()
 
     # Generation parameters: env/.env defaults, overridden by the
     # deployment manifest's parameters_default. Nothing hard-coded.
@@ -133,21 +132,22 @@ def start_qualification(
     smoke_params = {**gen_params,
                     "timeout_s": min(float(gen_params.get("timeout_s", 300)), 30.0)}
     try:
-        smoke = adapter.generate(runner.GenerationRequest(
+        smoke = executor.generate(runner.GenerationRequest(
             prompt="Reply with the single word: ready", parameters=smoke_params))
     except Exception as e:
         raise EngineError(
             f"deployment {entry['id']!r} did not respond to a liveness probe: {e}"
         ) from e
     discovery = {
-        "adapter_declared": adapter.capabilities(),
+        "adapter_declared": executor.capabilities(),
+        "subject_executor": executor.declaration(),
         "registry_claims": entry.get("capabilities", {}),
         "claims_verified": False,  # full probe suites arrive with M2 suites
         "smoke_probe_ok": bool(smoke.text.strip()),
     }
 
     # Stage 3 — environment validation.
-    fp = doctor.fingerprint(adapter.fingerprint())
+    fp = doctor.fingerprint(executor.fingerprint())
 
     plan = plan_qualification(risk_tier, areas, subject_kind=subject_kind, repeats=repeats)
     if decisional:
@@ -178,19 +178,14 @@ def start_qualification(
         _model_block["signature"] = _prov["signature"]
     if _prov.get("ai_bom"):
         _model_block["ai_bom"] = _prov["ai_bom"]
-    # `model` remains a compatibility envelope for the current deployment
-    # executor. `subject` is the canonical, subject-neutral identity used by
-    # new decision products. Future executors can populate it without
-    # redefining the evidence architecture.
-    _subject_block = {
-        "id": entry["id"],
-        "kind": "ai_deployment",
-        "display_name": entry.get("model") or entry.get("family") or entry["id"],
-        "executor_kind": "deployment",
-    }
+    execution = executor.declaration()
+    _subject_block = subjects.deployment_descriptor(
+        entry, fp, executor=execution)
     manifest = {
+        "schema": subjects.RUN_MANIFEST_SCHEMA,
         "run_id": run_id,
         "subject": _subject_block,
+        "execution": execution,
         "model": _model_block,
         "profile": profile["name"],
         # Capture the profile VERSION as used at run time (immutable). A later
@@ -227,6 +222,7 @@ def start_qualification(
         "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     }
     workspace.write_json(workspace.run_dir(run_id) / "manifest.json", manifest, overwrite=True)
+    evidence_events.record_manifest(run_id, manifest)
 
     # Stage 4 — benchmark execution.
     total_items = plan["planned_items"]
@@ -271,13 +267,15 @@ def start_qualification(
                 current = _global_task_label(current, _offset, total_items)
                 _collection_progress(done, total, current, status)
 
-            runner.execute_suite(run_id, entry, adapter, scenarios, suite_version, fp,
-                                 repeats=repeats, parameters=gen_params, workers=workers,
-                                 progress_callback=_suite_progress)
+            runner.execute_suite(
+                run_id, entry, executor, scenarios, suite_version, fp,
+                repeats=repeats, parameters=gen_params, workers=workers,
+                progress_callback=_suite_progress)
             suite_offset += suite_items
     except Exception as exc:
         manifest["status"] = "collection-partial" if completed_items > failures else "collection-failed"
         workspace.write_json(workspace.run_dir(run_id) / "manifest.json", manifest, overwrite=True)
+        evidence_events.record_manifest(run_id, manifest)
         progress.update(run_id, "response-collection", completed_items, total_items,
                         status="partial" if completed_items > failures else "failed",
                         failures=failures, message="collection stopped; run is resumable",
@@ -288,6 +286,7 @@ def start_qualification(
     rating.build_scoresheet(run_id)
     manifest["status"] = "responses-collected"
     workspace.write_json(workspace.run_dir(run_id) / "manifest.json", manifest, overwrite=True)
+    evidence_events.record_manifest(run_id, manifest)
     progress.update(run_id, "response-collection", total_items, total_items,
                     status="completed", message="responses collected; scoresheet ready",
                     callback=progress_callback)
@@ -309,8 +308,8 @@ def resume_collection(run_id: str, workers: int | None = None,
         raise EngineError(f"no run {run_id!r} in this workspace")
     manifest = workspace.read_json(mpath)
     entry = registry.get(manifest["model"]["registry_id"])
-    adapter = resolve(entry["runtime"])()
-    adapter.load(entry)
+    executor = executors.RuntimeGenerationExecutor(entry)
+    executor.load()
     if workers is None:
         workers = config.default_parallel()
 
@@ -359,7 +358,7 @@ def resume_collection(run_id: str, workers: int | None = None,
                     f"({recorded_sv[code]} -> {suite_version}); cannot resume — "
                     "start a fresh run")
             in_scope = [s for s in scenarios if s["risk_tier"] == risk_tier] or scenarios
-            runner.execute_suite(run_id, entry, adapter, in_scope, suite_version,
+            runner.execute_suite(run_id, entry, executor, in_scope, suite_version,
                                  fp, repeats=repeats, parameters=gen_params,
                                  workers=workers, skip_existing=True,
                                  progress_callback=_resume_progress)
@@ -367,6 +366,7 @@ def resume_collection(run_id: str, workers: int | None = None,
         after = len(list((rdir / "responses").glob("*.json")))
         manifest["status"] = "collection-partial" if after else "collection-failed"
         workspace.write_json(mpath, manifest, overwrite=True)
+        evidence_events.record_manifest(run_id, manifest)
         progress.update(run_id, "response-collection", after, planned,
                         status="partial" if after else "failed", failures=failed,
                         message="resume stopped; successful responses were preserved",
@@ -377,6 +377,7 @@ def resume_collection(run_id: str, workers: int | None = None,
     after = len(list((rdir / "responses").glob("*.json")))
     manifest["status"] = "responses-collected"
     workspace.write_json(mpath, manifest, overwrite=True)
+    evidence_events.record_manifest(run_id, manifest)
     progress.update(run_id, "response-collection", after, planned,
                     status="completed", failures=failed,
                     message="resume complete; scoresheet ready",
@@ -407,18 +408,18 @@ def start_journey(
     entry = registry.resolve(model_id, runtime=runtime)
     profile = profiles.load(profile_name)
     journey, jversion = journeys.load_journey(journey_id)
-    adapter_cls = resolve(entry["runtime"])
-    adapter = adapter_cls()
-    adapter.load(entry)
+    executor = executors.RuntimeGenerationExecutor(entry)
+    executor.load()
 
     gen_params = {**config.generation_defaults(),
                   **(entry.get("parameters_default") or {})}
-    fp = doctor.fingerprint(adapter.fingerprint())
+    fp = doctor.fingerprint(executor.fingerprint())
     run_id = _new_run_id(model_id)
     rt = journey["risk_tier"]
 
     areas = sorted({s["area"] for s in journey["steps"]})
     manifest = {
+        "schema": subjects.RUN_MANIFEST_SCHEMA,
         "run_id": run_id,
         "kind": "journey",
         "run_purpose": run_purpose,
@@ -428,9 +429,9 @@ def start_journey(
                                "phase": s.get("phase", "")} for s in journey["steps"]]},
         "model": {"registry_id": entry["id"],
                   "checksum": (entry.get("provenance") or {}).get("checksum", "unknown")},
-        "subject": {"id": entry["id"], "kind": "ai_deployment",
-                    "display_name": entry.get("model") or entry.get("family") or entry["id"],
-                    "executor_kind": "deployment"},
+        "subject": subjects.deployment_descriptor(
+            entry, fp, executor=executor.declaration()),
+        "execution": executor.declaration(),
         "profile": profile["name"],
         "profile_version": profiles.profile_version(profile),
         "risk_tier": rt,
@@ -450,6 +451,7 @@ def start_journey(
         "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     }
     workspace.write_json(workspace.run_dir(run_id) / "manifest.json", manifest, overwrite=True)
+    evidence_events.record_manifest(run_id, manifest)
     total_steps = (repeats or 1) * len(journey["steps"])
     progress.update(run_id, "journey-collection", 0, total_steps,
                     parallelism=1, callback=progress_callback)
@@ -466,7 +468,7 @@ def start_journey(
                         callback=progress_callback)
 
     try:
-        runner.execute_journey(run_id, entry, adapter, journey, jversion, fp,
+        runner.execute_journey(run_id, entry, executor, journey, jversion, fp,
                                repeats=repeats, parameters=gen_params,
                                progress_callback=_journey_progress)
     except Exception:
@@ -474,6 +476,7 @@ def start_journey(
         manifest["status"] = "collection-partial" if collected else "collection-failed"
         workspace.write_json(workspace.run_dir(run_id) / "manifest.json", manifest,
                              overwrite=True)
+        evidence_events.record_manifest(run_id, manifest)
         progress.update(run_id, "journey-collection", collected, total_steps,
                         status="partial" if collected else "failed", failures=1,
                         message="journey stopped; successful steps were preserved",
@@ -482,6 +485,7 @@ def start_journey(
     rating.build_scoresheet(run_id)
     manifest["status"] = "responses-collected"
     workspace.write_json(workspace.run_dir(run_id) / "manifest.json", manifest, overwrite=True)
+    evidence_events.record_manifest(run_id, manifest)
     progress.update(run_id, "journey-collection", total_steps, total_steps,
                     status="completed", callback=progress_callback)
     return manifest
@@ -650,12 +654,8 @@ def aggregate(run_id: str) -> dict:
         "evidence_schema": C.EVIDENCE_SCHEMA,
         "grant_status": "no grant — evidence only; a human qualification "
                         "authority records any grant (PLATFORM.md D8)",
-        "subject": manifest.get("subject") or {
-            "id": manifest["model"]["registry_id"],
-            "kind": "ai_deployment",
-            "display_name": manifest["model"]["registry_id"],
-            "executor_kind": "deployment",
-        },
+        "subject": subjects.from_manifest(manifest),
+        "execution": subjects.execution_from_manifest(manifest),
         # Legacy deployment/model envelope retained for existing consumers.
         "model": manifest["model"],
         "profile": manifest["profile"],
@@ -703,4 +703,5 @@ def aggregate(run_id: str) -> dict:
     workspace.write_json(rdir / "evidence-package.json", package, overwrite=True)
     manifest["status"] = "aggregated"
     workspace.write_json(rdir / "manifest.json", manifest, overwrite=True)
+    evidence_events.record_manifest(run_id, manifest)
     return package

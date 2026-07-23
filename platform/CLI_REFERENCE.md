@@ -380,7 +380,7 @@ export normalized repository findings as SARIF 2.1.0
 
 normalize SARIF 2.1.0 findings without claim inflation
 
-**Usage:** `aies bridge sarif-import [-h] [--out OUT] [--json] file`
+**Usage:** `aies bridge sarif-import [-h] [--out OUT] [--subject SUBJECT] [--classification {public,internal,confidential,restricted}] [--json] file`
 
 **Prerequisites:** A SARIF 2.1.0 JSON file from a completed static-analysis invocation is available.
 
@@ -395,6 +395,8 @@ normalize SARIF 2.1.0 findings without claim inflation
 | `-h`, `--help` | optional | show this help message and exit | — |
 | `<FILE>` | required | SARIF 2.1.0 JSON file | — |
 | `--out` | optional | output artifact (default: workspace imports) | — |
+| `--subject` | optional | repository subject id for correlation (default: explicit unbound identity) | — |
+| `--classification` | optional | evidence classification recorded on every typed event | choices: `public`, `internal`, `confidential`, `restricted`; default: `internal` |
 | `--json` | optional | emit machine-readable JSON | — |
 
 ## `aies capabilities`
@@ -475,15 +477,15 @@ retain repository-assessment evidence and annotations
 
 ## `aies compare`
 
-compare two runs/deployments using compatible observed ECM evidence
+compare two or more runs/deployments using compatible observed ECM evidence
 
-**Usage:** `aies compare [-h] [--json] [--format {markdown,json}] [--ecm] [--area-summary] [--formal-qualification] a b`
+**Usage:** `aies compare [-h] [--json] [--format {markdown,json}] [--ecm] [--area-summary] [--formal-qualification] [--sort {task,confidence,spread,leader}] [--only-comparable] refs [refs ...]`
 
-**Prerequisites:** Both references resolve to aggregated runs with compatible protocols; ECM comparison requires compatible task mappings and evidence semantics.
+**Prerequisites:** At least two references resolve to aggregated runs. Task leaders require matching subject/risk/profile, mapping and scoring semantics, rater and suite protocols, repeat structure, adapter profiles, and direct instruments.
 
-**Result and side effects:** Compares compatible observed engineering scores without human review. It identifies the higher observation but reserves a formal winner claim for explicit `--formal-qualification` comparison.
+**Result and side effects:** Builds a two-or-more-subject ECM table with observed performance, direct scenario breadth, compatibility reasons, ties or higher observations, and optional task/confidence/spread/leader sorting.
 
-**Recommended next step:** Use the observed comparison as a scoped selection input; do not treat it as a qualification or global leaderboard.
+**Recommended next step:** Use `--only-comparable --sort spread` for the strongest scoped selection signals; do not treat them as a qualification, authorization, or global leaderboard.
 
 ### Parameters and options
 
@@ -491,12 +493,13 @@ compare two runs/deployments using compatible observed ECM evidence
 |---|---|---|---|
 | `-h`, `--help` | optional | show this help message and exit | — |
 | `--json` | optional | machine-readable output | — |
-| `<A>` | required | run id or model registry id (latest aggregated run) | — |
-| `<B>` | required | run id or model registry id (latest aggregated run) | — |
+| `<REFS>` | required | two or more run ids or deployment ids (a deployment selects its latest aggregated run) | values: + |
 | `--format` | optional | output representation (default: markdown) | choices: `markdown`, `json`; default: `markdown` |
 | `--ecm` | optional | compatibility alias; task-level ECM comparison is now the default | Compatibility alias; ECM comparison is the default. |
 | `--area-summary` | optional | render the legacy competency-area aggregate comparison instead of ECM | Selects the legacy competency-area aggregate instead of the default ECM comparison. |
 | `--formal-qualification` | optional | require demonstrated tasks and the human-rater protocol; default ECM comparison uses compatible observed engineering evidence | Switches from compatible observed-score comparison to demonstrated, human-protocol-qualified comparison; it cannot be combined with `--area-summary`. |
+| `--sort` | optional | multi-run task ordering (default: stable task taxonomy order) | choices: `task`, `confidence`, `spread`, `leader`; default: `task` |
+| `--only-comparable` | optional | hide tasks that cannot support a like-for-like comparison | — |
 
 ## `aies completion`
 
@@ -2200,11 +2203,11 @@ assemble a multi-deployment peer-review package
 
 list runs or inspect one run and its durable progress
 
-**Usage:** `aies runs [-h] [--json] {list,show,progress} ...`
+**Usage:** `aies runs [-h] [--json] {list,show,progress,events} ...`
 
-**Prerequisites:** The workspace contains runs; progress requires a run with durable `progress.json` state.
+**Prerequisites:** The workspace contains runs; progress requires durable `progress.json`, while event migration requires a retained manifest and source records.
 
-**Result and side effects:** Lists run history, shows a versioned read-only run and artifact summary, or displays live/durable progress without mutating evidence.
+**Result and side effects:** Lists history, shows a versioned run summary, displays progress, or validates/replays typed evidence events. `events --migrate` appends projections but never rewrites legacy source evidence.
 
 **Recommended next step:** Use `runs show RUN` to discover available products, then open, compare, inspect, or resume the run.
 
@@ -2212,6 +2215,7 @@ list runs or inspect one run and its durable progress
 
 | Subcommand | What it does |
 |---|---|
+| `events` | validate and replay typed events, or append a legacy-run projection |
 | `list` | list recorded runs |
 | `progress` | show detailed durable progress for a run |
 | `show` | show one versioned read-only run summary and artifact index |
@@ -2223,15 +2227,36 @@ list runs or inspect one run and its durable progress
 | `-h`, `--help` | optional | show this help message and exit | — |
 | `--json` | optional | machine-readable output | — |
 
+## `aies runs events`
+
+validate and replay typed events, or append a legacy-run projection
+
+**Usage:** `aies runs events [-h] [--migrate] [--json] run`
+
+**Prerequisites:** The workspace contains runs; progress requires durable `progress.json`, while event migration requires a retained manifest and source records.
+
+**Result and side effects:** Lists history, shows a versioned run summary, displays progress, or validates/replays typed evidence events. `events --migrate` appends projections but never rewrites legacy source evidence.
+
+**Recommended next step:** Use `runs show RUN` to discover available products, then open, compare, inspect, or resume the run.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<RUN>` | required | run id whose evidence events will be replayed | — |
+| `--migrate` | optional | append typed projections of legacy records; never rewrites source evidence | — |
+| `--json` | optional | emit events and deterministic replay as JSON | — |
+
 ## `aies runs list`
 
 list recorded runs
 
 **Usage:** `aies runs list [-h] [--model MODEL] [--json]`
 
-**Prerequisites:** The workspace contains runs; progress requires a run with durable `progress.json` state.
+**Prerequisites:** The workspace contains runs; progress requires durable `progress.json`, while event migration requires a retained manifest and source records.
 
-**Result and side effects:** Lists run history, shows a versioned read-only run and artifact summary, or displays live/durable progress without mutating evidence.
+**Result and side effects:** Lists history, shows a versioned run summary, displays progress, or validates/replays typed evidence events. `events --migrate` appends projections but never rewrites legacy source evidence.
 
 **Recommended next step:** Use `runs show RUN` to discover available products, then open, compare, inspect, or resume the run.
 
@@ -2249,9 +2274,9 @@ show detailed durable progress for a run
 
 **Usage:** `aies runs progress [-h] [--json] run`
 
-**Prerequisites:** The workspace contains runs; progress requires a run with durable `progress.json` state.
+**Prerequisites:** The workspace contains runs; progress requires durable `progress.json`, while event migration requires a retained manifest and source records.
 
-**Result and side effects:** Lists run history, shows a versioned read-only run and artifact summary, or displays live/durable progress without mutating evidence.
+**Result and side effects:** Lists history, shows a versioned run summary, displays progress, or validates/replays typed evidence events. `events --migrate` appends projections but never rewrites legacy source evidence.
 
 **Recommended next step:** Use `runs show RUN` to discover available products, then open, compare, inspect, or resume the run.
 
@@ -2269,9 +2294,9 @@ show one versioned read-only run summary and artifact index
 
 **Usage:** `aies runs show [-h] [--json] run`
 
-**Prerequisites:** The workspace contains runs; progress requires a run with durable `progress.json` state.
+**Prerequisites:** The workspace contains runs; progress requires durable `progress.json`, while event migration requires a retained manifest and source records.
 
-**Result and side effects:** Lists run history, shows a versioned read-only run and artifact summary, or displays live/durable progress without mutating evidence.
+**Result and side effects:** Lists history, shows a versioned run summary, displays progress, or validates/replays typed evidence events. `events --migrate` appends projections but never rewrites legacy source evidence.
 
 **Recommended next step:** Use `runs show RUN` to discover available products, then open, compare, inspect, or resume the run.
 

@@ -214,7 +214,13 @@ aies assessment result <run-id> --formal-qualification
 aies runs list                # result history
 aies runs show <run-id>       # versioned run summary + artifact index
 aies runs progress <run-id>   # durable live stage, %, elapsed, rate, ETA, failures
-aies compare <dep-a> <dep-b>  # compatible observed ECM task comparison
+aies runs events <run-id>     # validate and replay typed evidence events
+aies runs events <legacy-run> --migrate
+                              # append typed projections; never rewrite source records
+aies compare <run-a> <run-b> <run-c>
+                              # compatible multi-subject ECM comparison
+aies compare <run-a> <run-b> <run-c> --sort spread --only-comparable
+                              # focus on the largest defensible differences
 aies suites validate          # validate suite catalog before publishing changes
 ```
 

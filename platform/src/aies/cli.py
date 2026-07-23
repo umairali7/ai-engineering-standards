@@ -68,6 +68,16 @@ def _emit_failure(error, *, operation: str, recovery_command: str,
         diagnostic, as_json=bool(getattr(args, "json", False)))
 
 
+def _write_review_package(run_id: str, package: dict) -> Path:
+    """Write the review view and bind it into the typed event stream."""
+    from . import evidence_events, workspace
+
+    path = workspace.run_dir(run_id) / "review-package.json"
+    workspace.write_json(path, package, overwrite=True)
+    evidence_events.record_review_package(run_id, path)
+    return path
+
+
 def _command_failure(
     error,
     *,
@@ -362,10 +372,14 @@ def cmd_bridge(args) -> int:
             )
         elif args.bridge_cmd == "sarif-import":
             result = interop.import_sarif(
-                Path(args.file), destination=Path(args.out) if args.out else None)
+                Path(args.file), destination=Path(args.out) if args.out else None,
+                subject_id=getattr(args, "subject", None),
+                classification=getattr(args, "classification", "internal"))
             human = (
                 f"SARIF evidence normalized: {result['findings']} finding(s)\n"
                 f"  artifact: {result['artifact']}\n"
+                f"  subject : {result['subject_id']}\n"
+                f"  loss    : {result['loss_report']}\n"
                 "Static-analysis findings remain informational and do not prove "
                 "correctness or conformance."
             )
@@ -813,8 +827,7 @@ def cmd_qualify(args) -> int:
                     args.resume, reviewer_label=f"model:{jdep}",
                     consider_advisory_review=getattr(args, "consider_advisory_review", False),
                     human_evaluation=getattr(args, "human_evaluation", None))
-                (workspace.run_dir(args.resume) / "review-package.json").write_text(
-                    json.dumps(review_pkg, indent=2), encoding="utf-8")
+                _write_review_package(args.resume, review_pkg)
             from . import progress
             progress.update(args.resume, "aggregation", 0, 1,
                             callback=live_progress)
@@ -956,8 +969,7 @@ def cmd_qualify(args) -> int:
                 run_id, reviewer_label=f"model:{jdep}",
                 consider_advisory_review=getattr(args, "consider_advisory_review", False),
                 human_evaluation=getattr(args, "human_evaluation", None))
-            (workspace.run_dir(run_id) / "review-package.json").write_text(
-                json.dumps(review_pkg, indent=2), encoding="utf-8")
+            _write_review_package(run_id, review_pkg)
             from . import progress as _progress
             _progress.update(run_id, "aggregation", 0, 1,
                              callback=live_progress)
@@ -1442,7 +1454,7 @@ def cmd_report(args) -> int:
 
 def cmd_audit(args) -> int:
     """Audit a repository's conformance to AIES engineering practices (ADR-0004)."""
-    from . import audit
+    from . import audit, executors
     attestations = None
     if args.attest:
         try:
@@ -1465,7 +1477,13 @@ def cmd_audit(args) -> int:
             return 2
     rt = f"RT{args.rt}" if args.gate else (f"RT{args.rt}" if args.rt else None)
     try:
-        result = audit.run_audit(args.repo, attestations=attestations, rt=rt)
+        executor = executors.RepositoryAuditExecutor()
+        result = executor.execute(executors.RepositoryAuditRequest(
+            repository=Path(args.repo),
+            attestations=attestations,
+            risk_tier=rt,
+        ))
+        result["execution"] = executor.declaration()
     except (NotADirectoryError, FileNotFoundError) as e:
         _emit_failure(
             e,
@@ -1838,22 +1856,42 @@ def cmd_benchmark(args) -> int:
 def cmd_compare(args) -> int:
     from . import compare
     try:
+        refs = list(getattr(args, "refs", []) or [])
+        if not refs:
+            refs = [args.a, args.b]
+        if len(refs) < 2:
+            raise compare.CompareError(
+                "provide at least two run ids or deployment ids")
         if (getattr(args, "formal_qualification", False)
                 and getattr(args, "area_summary", False)):
             raise compare.CompareError(
                 "--formal-qualification cannot be combined with --area-summary")
-        cmp = (compare.compare(args.a, args.b)
-               if getattr(args, "area_summary", False)
-               else compare.compare_ecm(
-                   args.a, args.b,
-                   formal_qualification=getattr(
-                       args, "formal_qualification", False)))
+        if getattr(args, "area_summary", False):
+            if len(refs) != 2:
+                raise compare.CompareError(
+                    "--area-summary accepts exactly two references; omit it "
+                    "for the multi-subject ECM comparison")
+            cmp = compare.compare(refs[0], refs[1])
+        elif len(refs) == 2:
+            cmp = compare.compare_ecm(
+                refs[0], refs[1],
+                formal_qualification=getattr(
+                    args, "formal_qualification", False))
+        else:
+            cmp = compare.compare_ecm_many(
+                refs,
+                formal_qualification=getattr(
+                    args, "formal_qualification", False),
+                sort_by=getattr(args, "sort", "task"),
+                only_comparable=getattr(args, "only_comparable", False))
         if args.json or args.format == "json":
             _out(cmp, True)
         else:
             print(compare.render_markdown(cmp)
                   if getattr(args, "area_summary", False)
-                  else compare.render_ecm_markdown(cmp))
+                  else (compare.render_ecm_markdown(cmp)
+                        if len(refs) == 2
+                        else compare.render_ecm_many_markdown(cmp)))
             print(
                 "\nNext: inspect the comparison boundary and plan any missing "
                 "matching evidence: aies starter show compare-coding-deployments")
@@ -1920,6 +1958,44 @@ def cmd_discover(args) -> int:
 
 def cmd_runs(args) -> int:
     from . import compare, workspace
+    if args.runs_cmd == "events":
+        from . import evidence_events
+        try:
+            if args.migrate:
+                result = evidence_events.migrate_run(args.run, write=True)
+            else:
+                events = evidence_events.collect(args.run)
+                result = {
+                    "run_id": args.run,
+                    "events": events,
+                    "replay": evidence_events.replay(events),
+                    "source_records_unchanged": True,
+                }
+        except (FileNotFoundError, ValueError) as error:
+            return _command_failure(
+                error,
+                operation="evidence-event-replay",
+                args=args,
+                run_id=args.run,
+                preserved_work_status="source-evidence-preserved",
+                preserved_work_detail=(
+                    "Migration only appends typed event projections; source "
+                    "manifests, responses, and ratings are never rewritten."),
+                recovery_command=f"aies runs show {args.run}",
+            )
+        replay = result["replay"]
+        _out(
+            result, args.json,
+            f"{args.run}\n"
+            f"  typed events : {replay['events_replayed']}\n"
+            f"  duplicates   : {replay['duplicates_ignored']}\n"
+            f"  event types  : {', '.join(f'{k}={v}' for k, v in replay['event_types'].items()) or 'none'}\n"
+            f"  replay digest: {replay['replay_digest']}\n"
+            f"  source records unchanged: yes"
+            + (f"\n  migrated     : {result['events_written']} event projection(s)"
+               if args.migrate else "")
+        )
+        return 0
     if args.runs_cmd == "show":
         from . import run_view
         try:
@@ -2037,8 +2113,7 @@ def cmd_review(args) -> int:
             calibration=calibration,
             consider_advisory_review=getattr(args, "consider_advisory_review", False),
             human_evaluation=getattr(args, "human_evaluation", None))
-        (workspace.run_dir(args.run) / "review-package.json").write_text(
-            json.dumps(pkg, indent=2), encoding="utf-8")
+        _write_review_package(args.run, pkg)
         manifest = workspace.read_json(
             workspace.run_dir(args.run) / "manifest.json")
         formal = run_mode.is_formal(manifest)
@@ -3092,6 +3167,14 @@ def build_parser() -> argparse.ArgumentParser:
     sarif_import.add_argument(
         "--out", default=None, help="output artifact (default: workspace imports)")
     sarif_import.add_argument(
+        "--subject", default=None,
+        help="repository subject id for correlation (default: explicit unbound identity)")
+    sarif_import.add_argument(
+        "--classification",
+        choices=("public", "internal", "confidential", "restricted"),
+        default="internal",
+        help="evidence classification recorded on every typed event")
+    sarif_import.add_argument(
         "--json", action="store_true", help="emit machine-readable JSON")
     sarif_export = bridge_sub.add_parser(
         "sarif-export", help="export normalized repository findings as SARIF 2.1.0")
@@ -3436,9 +3519,10 @@ def build_parser() -> argparse.ArgumentParser:
     comp.set_defaults(func=cmd_completion)
 
     cp = common(sub.add_parser(
-        "compare", help="compare two runs/deployments using compatible observed ECM evidence"))
-    cp.add_argument("a", help="run id or model registry id (latest aggregated run)")
-    cp.add_argument("b", help="run id or model registry id (latest aggregated run)")
+        "compare", help="compare two or more runs/deployments using compatible observed ECM evidence"))
+    cp.add_argument(
+        "refs", nargs="+",
+        help="two or more run ids or deployment ids (a deployment selects its latest aggregated run)")
     cp.add_argument("--format", choices=("markdown", "json"), default="markdown",
                     help="output representation (default: markdown)")
     cp.add_argument("--ecm", action="store_true",
@@ -3450,6 +3534,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--formal-qualification", action="store_true",
         help="require demonstrated tasks and the human-rater protocol; default "
              "ECM comparison uses compatible observed engineering evidence")
+    cp.add_argument(
+        "--sort", choices=("task", "confidence", "spread", "leader"),
+        default="task",
+        help="multi-run task ordering (default: stable task taxonomy order)")
+    cp.add_argument(
+        "--only-comparable", action="store_true",
+        help="hide tasks that cannot support a like-for-like comparison")
     cp.set_defaults(func=cmd_compare)
 
     rn = common(sub.add_parser(
@@ -3469,6 +3560,15 @@ def build_parser() -> argparse.ArgumentParser:
     rp.add_argument("run", help="run id whose durable progress will be shown")
     rp.add_argument("--json", action="store_true",
                     help="emit machine-readable JSON")
+    revents = rnsub.add_parser(
+        "events",
+        help="validate and replay typed events, or append a legacy-run projection")
+    revents.add_argument("run", help="run id whose evidence events will be replayed")
+    revents.add_argument(
+        "--migrate", action="store_true",
+        help="append typed projections of legacy records; never rewrites source evidence")
+    revents.add_argument("--json", action="store_true",
+                         help="emit events and deterministic replay as JSON")
     rn.set_defaults(func=cmd_runs)
 
     rv = common(sub.add_parser("review", help="assemble a multi-deployment peer-review package"))

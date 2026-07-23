@@ -4,6 +4,8 @@
 
 **Implemented** means an executable assessment path ships now. **Experimental** and **planned** entries are not support claims.
 
+**Shared contracts:** `subject_descriptor` = `aies-subject-descriptor/v1`; `subject_executor` = `aies-subject-executor/v1`; `evidence_event` = `aies-evidence-event/v1`; `evidence_adapter` = `aies-evidence-adapter/v1`.
+
 | Subject kind | Descriptor kind | Status | Implemented assessment path | Entry point |
 |---|---|---|---|---|
 | `ai-deployment` — AI Deployment or Served AI System | `ai_deployment` | implemented | Automated Engineering Evaluation<br>Human-Governed Formal Qualification | `aies evaluate`<br>`aies qualify`<br>`aies benchmark` |

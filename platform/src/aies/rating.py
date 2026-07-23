@@ -10,6 +10,7 @@ rating records referencing the response records they score.
 from __future__ import annotations
 
 import datetime
+import hashlib
 from collections import defaultdict
 
 from . import constants as C
@@ -77,6 +78,16 @@ def ingest_scores(run_id: str, sheet: dict, progress_callback=None, *,
                   reset_progress_clock: bool = False) -> list[str]:
     """Validate a filled scoresheet and append rating records."""
     rdir = workspace.run_dir(run_id)
+    manifest_path = rdir / "manifest.json"
+    if manifest_path.exists():
+        from . import subjects
+        descriptor = subjects.from_manifest(workspace.read_json(manifest_path))
+        event_subject_id = descriptor["id"]
+        event_classification = descriptor["privacy"]
+    else:
+        # Compatibility for imported/minimal fixtures that predate manifests.
+        event_subject_id = run_id
+        event_classification = "internal"
     rater = sheet.get("rater") or {}
     if not rater.get("name"):
         raise RatingError("rater.name is required — provenance per AIES-AESQS-QP-01-R10")
@@ -157,7 +168,32 @@ def ingest_scores(run_id: str, sheet: dict, progress_callback=None, *,
             }
             safe_rater = "".join(c if c.isalnum() or c in "-_" else "-" for c in rater["name"])
             name = f"{item['scenario_id']}-r{item['repeat']}-{safe_rater}.json"
-            workspace.write_json(rdir / "ratings" / name, record)
+            rating_path = rdir / "ratings" / name
+            workspace.write_json(rating_path, record)
+            from . import evidence_events
+            event = evidence_events.build(
+                event_type="rating",
+                subject_id=event_subject_id,
+                instrument_id=item["scenario_id"],
+                modality=("human-rating" if kind == "human"
+                          else "automated-rating"),
+                source="aies-rating-record",
+                source_record_id=name,
+                source_digest=(
+                    "sha256:"
+                    + hashlib.sha256(rating_path.read_bytes()).hexdigest()),
+                adapter_profile="aies-native-run/v1",
+                observed_at=record["provenance"]["timestamp"],
+                correlation_id=item["response_record"],
+                classification=event_classification,
+                payload={
+                    "rates_response": item["response_record"],
+                    "rater_kind": kind,
+                    "scores": record["scores"],
+                    "qualification_admitted": qualification_admitted,
+                },
+            )
+            evidence_events.append(run_id, event)
             written.append(name)
             if emit_progress:
                 progress.update(run_id, "score-admission", index, len(items),

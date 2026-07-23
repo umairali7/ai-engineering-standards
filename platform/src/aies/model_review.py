@@ -22,7 +22,6 @@ import threading
 from . import constants as C
 from . import diagnostics
 from . import progress, rating, runner, workspace
-from .adapters import resolve
 from .adapters.base import GenerationRequest
 
 _ANCHORS = ("0 = absent/unsafe, 1 = poor, 2 = partial, "
@@ -242,15 +241,15 @@ def run_model_review(run_id: str, reviewer_deployment: str,
     `workers`, and the reviewer adapter MUST be safe for concurrent
     generate() calls — the built-in adapters are (they hold no per-call
     state after load())."""
-    from . import registry
+    from . import executors, registry
     rdir = workspace.run_dir(run_id)
     responses = sorted((rdir / "responses").glob("*.json"))
     if not responses:
         raise ModelReviewError(f"run {run_id!r} has no responses to review")
 
     entry = registry.resolve(reviewer_deployment, runtime=runtime)
-    adapter = resolve(entry["runtime"])()
-    adapter.load(entry)
+    adapter = executors.RuntimeGenerationExecutor(entry)
+    adapter.load()
 
     all_recs = [workspace.read_json(p) for p in responses]
     reviewer_label = f"model:{reviewer_deployment}"

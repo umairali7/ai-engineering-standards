@@ -16,7 +16,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 # The frozen top-level keys of each artifact. Adding a key is a deliberate,
 # reviewed change: update this set AND bump the schema constant.
 EVIDENCE_PACKAGE_KEYS = {
-    "run_id", "kind", "evidence_schema", "grant_status", "subject", "model", "profile",
+    "run_id", "kind", "evidence_schema", "grant_status", "subject", "execution",
+    "model", "profile",
     "profile_version", "risk_tier", "subject_kind", "suite_versions",
     "environment_fingerprint", "areas", "raters", "rater_kinds", "aggregated_at",
     "admitted_raters", "admitted_rater_kinds", "rating_admission",
@@ -45,7 +46,7 @@ WORKSPACE_OVERVIEW_KEYS = {
 RUN_VIEW_KEYS = {
     "kind", "schema_version", "platform_version", "authority", "run_id",
     "state", "run_purpose", "subject", "scope", "execution", "products",
-    "artifacts", "links", "limitations",
+    "manifest_compatibility", "artifacts", "links", "limitations",
 }
 
 REPORT_VIEW_KEYS = {
@@ -106,7 +107,7 @@ def test_result_records_the_evidence_schema_it_decided_over():
 def test_evidence_package_envelope_shape(ws_run):
     from aies import workspace, constants
     pkg = workspace.read_json(workspace.run_dir(ws_run) / "evidence-package.json")
-    assert pkg["evidence_schema"] == constants.EVIDENCE_SCHEMA == 5
+    assert pkg["evidence_schema"] == constants.EVIDENCE_SCHEMA == 6
     assert set(pkg.keys()) == EVIDENCE_PACKAGE_KEYS, "evidence-package envelope drifted"
     assert pkg["evidence_items"]["resolution_policy"] == "one-resolved-score-per-response-v1"
     assert pkg["evidence_items"]["resolved"] == pkg["areas"]["CA-05"]["n_scored"]
@@ -135,7 +136,7 @@ def test_read_only_consumer_view_envelopes_are_pinned(ws_run):
     assert set(workspace_summary) == WORKSPACE_OVERVIEW_KEYS
 
     run_summary = run_view.build(ws_run)
-    assert run_summary["schema_version"] == run_view.SCHEMA_VERSION == 1
+    assert run_summary["schema_version"] == run_view.SCHEMA_VERSION == 2
     assert set(run_summary) == RUN_VIEW_KEYS
     assert run_summary["authority"] == "informational-read-only"
 

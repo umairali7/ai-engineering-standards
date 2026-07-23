@@ -13,7 +13,7 @@ from . import __version__, constants as C, run_mode, workspace
 
 
 KIND = "aies-run-view"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 _ARTIFACTS = {
@@ -116,7 +116,9 @@ def build(run_id: str) -> dict:
     bundle = _read_if_present(rdir / "report-bundle.json")
     inventory = _artifact_inventory(run_id, rdir)
 
-    subject = manifest.get("subject") or {}
+    from . import subjects
+    subject = subjects.from_manifest(manifest)
+    execution = subjects.execution_from_manifest(manifest)
     model = manifest.get("model") or {}
     response_count = len(list((rdir / "responses").glob("*.json")))
     rating_count = len(list((rdir / "ratings").glob("*.json")))
@@ -149,10 +151,14 @@ def build(run_id: str) -> dict:
             "id": subject.get("id", model.get("registry_id")),
             "display_name": subject.get("display_name"),
             "kind": subject.get("kind", "ai_deployment"),
-            "executor_kind": subject.get("executor_kind", "deployment"),
+            "descriptor_schema": subject.get("schema"),
+            "privacy": subject.get("privacy"),
+            "executor_kind": execution.get("executor_id", "runtime-generation"),
+            "executor_contract": execution.get("contract"),
             "deployment_evidence": model.get("registry_id"),
             "checksum": model.get("checksum"),
         },
+        "manifest_compatibility": subjects.compatibility(manifest),
         "scope": {
             "profile": manifest.get("profile"),
             "profile_version": manifest.get("profile_version"),

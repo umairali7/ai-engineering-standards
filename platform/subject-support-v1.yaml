@@ -3,6 +3,19 @@ schema: 1
 version: 1.0.0
 status: experimental
 governed_by: ADR-0015
+contracts:
+  subject_descriptor: aies-subject-descriptor/v1
+  subject_executor: aies-subject-executor/v1
+  evidence_event: aies-evidence-event/v1
+  evidence_adapter: aies-evidence-adapter/v1
+compatibility_fixtures:
+  - {id: ai-deployment, descriptor_kind: ai_deployment, status: validated}
+  - {id: repository, descriptor_kind: repository, status: validated}
+  - {id: ai-agent, descriptor_kind: agent, status: contract-only}
+  - {id: mcp-server, descriptor_kind: mcp_server, status: contract-only}
+  - {id: rag-system, descriptor_kind: rag_system, status: contract-only}
+  - {id: ai-pipeline, descriptor_kind: pipeline, status: contract-only}
+  - {id: composite-system, descriptor_kind: composite, status: contract-only}
 statuses:
   implemented: Executable assessment path and honest decision products ship now.
   experimental: Executable contract or bridge ships, but claim-bearing assessment support is not complete.
@@ -14,6 +27,8 @@ subjects:
     status: implemented
     descriptor_kind: ai_deployment
     descriptor_contract: experimental
+    executor_contract: aies-subject-executor/v1
+    evidence_event_contract: aies-evidence-event/v1
     assessment_profiles:
       - id: engineering-evaluation
         title: Automated Engineering Evaluation
@@ -42,6 +57,8 @@ subjects:
     status: implemented
     descriptor_kind: repository
     descriptor_contract: experimental
+    executor_contract: aies-subject-executor/v1
+    evidence_event_contract: aies-evidence-event/v1
     assessment_profiles:
       - id: repository-conformance-audit
         title: Repository Engineering-Practice Conformance Audit

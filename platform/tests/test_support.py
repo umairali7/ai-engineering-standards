@@ -17,6 +17,9 @@ def test_registry_covers_implemented_and_envisioned_subjects():
     assert by_id["rag-system"]["status"] == "planned"
     assert result["counts"] == {
         "implemented": 2, "experimental": 0, "planned": 12}
+    assert result["contracts"]["subject_descriptor"] == (
+        "aies-subject-descriptor/v1")
+    assert len(result["compatibility_fixtures"]) == 7
     assert "not support claims" in result["claim_boundary"]
 
 

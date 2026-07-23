@@ -12,7 +12,8 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import constants as C, evalexport, evalimport, workspace
+from . import (constants as C, evalexport, evalimport, evidence_adapters,
+               evidence_events, subjects, workspace)
 
 
 class InteropError(RuntimeError):
@@ -99,18 +100,63 @@ def import_inspect(run_id: str, path: Path, *, source: str | None = None) -> dic
         raise InteropError(
             f"this Inspect source was already converted for the run: {converted}"
         )
+    adapter = evidence_adapters.get("aies-inspect-eval-log/v1")
     converted.write_text(json.dumps({
+        "adapter": adapter,
         "source": source or f"inspect:{Path(path).name}:{digest[:23]}",
         "items": items,
     }, indent=2), encoding="utf-8")
     imported = evalimport.import_eval(run_id, str(converted), source=source)
+    manifest_path = workspace.run_dir(run_id) / "manifest.json"
+    manifest = (workspace.read_json(manifest_path)
+                if manifest_path.exists() else {"created_at": None})
+    descriptor = (
+        subjects.from_manifest(manifest) if manifest_path.exists()
+        else subjects.build(
+            run_id, kind="ai_system", display_name=run_id,
+            extensions={"compatibility": {"manifest_missing": True}}))
+    event_paths = []
+    imported_by_identity = {
+        (item["scenario_id"], item["repeat"]): item for item in items}
+    for index, sample in enumerate(samples):
+        if not isinstance(sample, dict):
+            continue
+        aies_meta = ((sample.get("metadata") or {}).get("aies") or {})
+        sid = str(aies_meta.get("scenario_id") or sample.get("id") or "")
+        repeat = int(aies_meta.get("repeat", 1))
+        item = imported_by_identity.get((sid, repeat))
+        if item is None:
+            continue
+        event_paths.append(str(evidence_events.append(run_id, evidence_events.build(
+            event_type="rating",
+            subject_id=descriptor["id"],
+            instrument_id=sid,
+            modality="automated-rating",
+            source=source or f"inspect:{Path(path).name}",
+            source_record_id=f"sample:{index}:{sid}:r{repeat}",
+            source_digest=digest,
+            adapter_profile=adapter["profile"],
+            observed_at=manifest.get("created_at"),
+            correlation_id=f"{sid}-r{repeat}.json",
+            classification=descriptor["privacy"],
+            payload={
+                "scores": item["scores"],
+                "findings": item["findings"],
+                "external_profile": adapter["profile"],
+            },
+        ))))
     loss = {
         "source_format": "Inspect EvalLog JSON (supported AIES profile)",
         "source_digest": digest,
         "converter": "aies-inspect-bridge/v1",
+        "adapter": adapter,
         "samples_seen": len(samples),
         "samples_imported": len(items),
         "samples_skipped": skipped,
+        "correlation_gaps": [
+            {"sample": item.get("sample_id", item.get("index")),
+             "reason": item["reason"]} for item in skipped
+        ],
         "not_represented_in_ratings": [
             "messages and model transcript",
             "tool calls and attachments",
@@ -121,7 +167,8 @@ def import_inspect(run_id: str, path: Path, *, source: str | None = None) -> dic
     loss_path = converted.with_suffix(".loss.json")
     loss_path.write_text(json.dumps(loss, indent=2), encoding="utf-8")
     return {**imported, "source_digest": digest, "converted": str(converted),
-            "loss_report": str(loss_path), "skipped_samples": len(skipped)}
+            "loss_report": str(loss_path), "skipped_samples": len(skipped),
+            "adapter": adapter, "typed_events_written": len(event_paths)}
 
 
 def export_inspect(run_id: str, destination: Path) -> dict:
@@ -145,6 +192,7 @@ def export_inspect(run_id: str, destination: Path) -> dict:
         })
     payload = {
         "schema": "aies-inspect-eval-log-profile/v1",
+        "adapter": evidence_adapters.get("aies-inspect-eval-log/v1"),
         "eval": {
             "task": "aies-engineering-evaluation",
             "metadata": {"aies_run": generic["run"]},
@@ -167,7 +215,13 @@ def export_inspect(run_id: str, destination: Path) -> dict:
             "artifact": str(destination)}
 
 
-def import_sarif(path: Path, *, destination: Path | None = None) -> dict:
+def import_sarif(
+    path: Path,
+    *,
+    destination: Path | None = None,
+    subject_id: str | None = None,
+    classification: str = "internal",
+) -> dict:
     """Normalize SARIF 2.1.0 findings without changing their meaning."""
     data, digest = _read(path)
     if data.get("version") != "2.1.0" or not isinstance(data.get("runs"), list):
@@ -217,9 +271,57 @@ def import_sarif(path: Path, *, destination: Path | None = None) -> dict:
                 "suppressions": result.get("suppressions") or [],
                 "baseline_state": result.get("baselineState"),
             })
+    adapter = evidence_adapters.get("aies-sarif-2.1.0/v1")
+    bound_subject = subject_id or "unbound-repository"
+    events = []
+    for finding in findings:
+        events.append(evidence_events.build(
+            event_type="observation",
+            subject_id=bound_subject,
+            instrument_id=finding.get("rule_id"),
+            modality="repository-static-analysis",
+            source=f"sarif:{Path(path).name}",
+            source_record_id=finding["id"],
+            source_digest=digest,
+            adapter_profile=adapter["profile"],
+            classification=classification,
+            payload={
+                "tool": finding.get("tool"),
+                "tool_version": finding.get("tool_version"),
+                "rule_id": finding.get("rule_id"),
+                "level": finding.get("level"),
+                "message": finding.get("message"),
+                "locations": finding.get("locations") or [],
+                "claim_boundary": (
+                    "tool-reported finding; not proof of correctness, "
+                    "absence of defects, or conformance"),
+            },
+        ))
+    loss = {
+        "source_format": "SARIF 2.1.0",
+        "source_digest": digest,
+        "adapter": adapter,
+        "records_seen": len(findings),
+        "records_imported": len(events),
+        "records_skipped": [],
+        "correlation_gaps": ([] if subject_id else [{
+            "field": "subject_id",
+            "reason": (
+                "No repository subject was supplied; events are retained under "
+                "the explicit unbound-repository identity."),
+        }]),
+        "not_represented": [
+            "SARIF properties outside the normalized finding profile",
+            "source files and repository content",
+            "AIES EV scores, maturity, correctness, and conformance",
+        ],
+    }
     normalized = {
         "schema": "aies-sarif-evidence/v1",
         "created_at": datetime.now(timezone.utc).isoformat(),
+        "subject": {"id": bound_subject, "kind": "repository",
+                    "bound": bool(subject_id), "classification": classification},
+        "adapter": adapter,
         "source": {"format": "SARIF", "version": "2.1.0", "digest": digest,
                    "path": str(Path(path).resolve())},
         "semantics": {
@@ -229,6 +331,8 @@ def import_sarif(path: Path, *, destination: Path | None = None) -> dict:
         },
         "invocations": invocations,
         "findings": findings,
+        "events": events,
+        "loss_report": loss,
     }
     if destination is None:
         imports = workspace.ensure() / "imports"
@@ -239,9 +343,13 @@ def import_sarif(path: Path, *, destination: Path | None = None) -> dict:
     if destination.exists():
         raise InteropError(f"{destination} already exists; imports are immutable")
     destination.write_text(json.dumps(normalized, indent=2), encoding="utf-8")
+    loss_path = destination.with_suffix(".loss.json")
+    loss_path.write_text(json.dumps(loss, indent=2), encoding="utf-8")
     return {"source_digest": digest, "runs": len(data["runs"]),
             "findings": len(findings), "invocations": len(invocations),
-            "artifact": str(destination)}
+            "artifact": str(destination), "loss_report": str(loss_path),
+            "adapter": adapter, "subject_id": bound_subject,
+            "typed_events": len(events)}
 
 
 def export_sarif(path: Path, destination: Path) -> dict:

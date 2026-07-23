@@ -184,62 +184,208 @@ def render_markdown(cmp: dict) -> str:
 
 def compare_ecm(ref_a: str, ref_b: str, *,
                 formal_qualification: bool = False) -> dict:
-    """Compare observed task evidence; formal claims are explicit."""
+    """Backward-compatible two-run projection of the N-run comparison."""
+    many = compare_ecm_many(
+        [ref_a, ref_b], formal_qualification=formal_qualification)
+    a, b = many["subjects"]
+    rows = []
+    for row in many["tasks"]:
+        scores = row["scores"]
+        leaders = row["leaders"]
+        higher = leaders[0] if len(leaders) == 1 else None
+        rows.append({
+            **row,
+            "task": row["task"],
+            "a": scores[0],
+            "b": scores[1],
+            "higher_observed": higher,
+            "winner": higher if formal_qualification else None,
+        })
+    return {"kind": "ecm-comparison",
+            "comparison_mode": many["comparison_mode"],
+            "compatible": many["compatible"], "checks": many["checks"],
+            "a": a, "b": b, "tasks": rows}
+
+
+def _all_equal(values: list[object]) -> bool:
+    return all(value == values[0] for value in values[1:])
+
+
+def _adapter_profiles(run_id: str) -> list[str]:
+    from . import evidence_events
+    events = evidence_events.collect(run_id)
+    return sorted({event["adapter_profile"] for event in events}) or [
+        "legacy-untyped"]
+
+
+def compare_ecm_many(
+    refs: list[str],
+    *,
+    formal_qualification: bool = False,
+    sort_by: str = "task",
+    only_comparable: bool = False,
+) -> dict:
+    """Compare two or more ECMs without inflating incompatible evidence.
+
+    Task identity, instrument set, mapping/scoring semantics, adapter profiles,
+    and run protocol must match before a leader is emitted.
+    """
     from . import ecm
-    a, b = ecm.engineering_capability_matrix(ref_a), ecm.engineering_capability_matrix(ref_b)
-    pa, pb = _resolve_package(ref_a), _resolve_package(ref_b)
-    ma = workspace.read_json(workspace.run_dir(a["run_id"]) / "manifest.json")
-    mb = workspace.read_json(workspace.run_dir(b["run_id"]) / "manifest.json")
+
+    if len(refs) < 2:
+        raise CompareError("compare requires at least two run or deployment references")
+    if sort_by not in {"task", "confidence", "spread", "leader"}:
+        raise CompareError(
+            "comparison sort must be task, confidence, spread, or leader")
+    matrices = [ecm.engineering_capability_matrix(ref) for ref in refs]
+    packages = [_resolve_package(ref) for ref in refs]
+    manifests = [
+        workspace.read_json(
+            workspace.run_dir(matrix["run_id"]) / "manifest.json")
+        for matrix in matrices
+    ]
+    profiles = [_adapter_profiles(matrix["run_id"]) for matrix in matrices]
     checks = {
-        "risk_tier": a["risk_tier"] == b["risk_tier"],
-        "profile": a["profile"] == b["profile"],
-        "mapping_version": a["mapping"]["version"] == b["mapping"]["version"],
-        "mapping_schema": a["mapping"]["schema"] == b["mapping"]["schema"],
-        "task_decision_semantics": (
-            a["task_decision_semantics_version"]
-            == b["task_decision_semantics_version"]),
-        "rater_protocol": a["rater_kinds"] == b["rater_kinds"],
-        "suite_versions": pa["suite_versions"] == pb["suite_versions"],
-        "repeat_structure": ma.get("repeats") == mb.get("repeats"),
+        "risk_tier": _all_equal([matrix["risk_tier"] for matrix in matrices]),
+        "subject_kind": _all_equal([
+            package.get("subject_kind", "ai") for package in packages]),
+        "profile": _all_equal([matrix["profile"] for matrix in matrices]),
+        "mapping_version": _all_equal([
+            matrix["mapping"]["version"] for matrix in matrices]),
+        "mapping_schema": _all_equal([
+            matrix["mapping"]["schema"] for matrix in matrices]),
+        "task_decision_semantics": _all_equal([
+            matrix["task_decision_semantics_version"] for matrix in matrices]),
+        "rater_protocol": _all_equal([
+            matrix["rater_kinds"] for matrix in matrices]),
+        "suite_versions": _all_equal([
+            package["suite_versions"] for package in packages]),
+        "repeat_structure": _all_equal([
+            manifest.get("repeats") for manifest in manifests]),
+        "evidence_adapter_profiles": _all_equal(profiles),
     }
     compatible = all(checks.values())
+    task_maps = [
+        {task["task_id"]: task for task in matrix["tasks"]}
+        for matrix in matrices
+    ]
+    task_ids = sorted(set().union(*(set(mapping) for mapping in task_maps)))
     rows = []
-    for left, right in zip(a["tasks"], b["tasks"]):
-        left_decision = left.get("task_decision") or {}
-        right_decision = right.get("task_decision") or {}
+    for task_id in task_ids:
+        task_items = [mapping.get(task_id) for mapping in task_maps]
+        present = [item for item in task_items if item is not None]
+        decisions = [(item.get("task_decision") or {}) if item else {}
+                     for item in task_items]
+        scores = [
+            item.get("observed_performance") if item else None
+            for item in task_items
+        ]
+        confidences = [
+            (item.get("scenario_breadth_percent",
+                      item.get("engineering_confidence_percent", 0)) if item else 0)
+            for item in task_items
+        ]
         task_checks = {
-            "same_scenarios": left.get("scenario_ids") == right.get("scenario_ids"),
-            "both_observed": (
-                left["observed_performance"] is not None
-                and right["observed_performance"] is not None),
-            "instrument_maturity": (
-                left_decision.get("instrument_maturity")
-                == right_decision.get("instrument_maturity")),
+            "present_for_all_subjects": len(present) == len(matrices),
+            "observed_for_all_subjects": all(score is not None for score in scores),
+            "same_scenarios": _all_equal([
+                item.get("scenario_ids") if item else None
+                for item in task_items]),
+            "instrument_maturity": _all_equal([
+                decision.get("instrument_maturity") for decision in decisions]),
         }
         if formal_qualification:
             task_checks.update({
-                "demonstrated": (
-                    left["status"] == right["status"] == "demonstrated"),
-                "rater_protocol": (
-                    (left_decision.get("rater_protocol") or {}).get(
-                        "satisfied") is True
-                    and (right_decision.get("rater_protocol") or {}).get(
-                        "satisfied") is True),
+                "demonstrated_for_all_subjects": all(
+                    item and item.get("status") == "demonstrated"
+                    for item in task_items),
+                "human_rater_protocol_for_all_subjects": all(
+                    (decision.get("rater_protocol") or {}).get("satisfied") is True
+                    for decision in decisions),
             })
-        comparable = compatible and all(task_checks.values())
-        higher_observed = None if not comparable or left["observed_performance"] == right["observed_performance"] else (
-            "A" if left["observed_performance"] > right["observed_performance"] else "B")
-        winner = higher_observed if formal_qualification else None
-        rows.append({"task": left["task"], "a": left["observed_performance"],
-                     "b": right["observed_performance"], "comparable": comparable,
-                     "checks": task_checks,
-                     "higher_observed": higher_observed, "winner": winner})
-    return {"kind": "ecm-comparison",
-            "comparison_mode": ("formal-qualification"
-                                if formal_qualification
-                                else "engineering-observed"),
-            "compatible": compatible, "checks": checks,
-            "a": a, "b": b, "tasks": rows}
+        task_comparable = compatible and all(task_checks.values())
+        numeric = [value for value in scores if value is not None]
+        leaders = []
+        if task_comparable and numeric:
+            best = max(numeric)
+            leaders = [
+                chr(65 + index) for index, value in enumerate(scores)
+                if value == best
+            ]
+        rows.append({
+            "task_id": task_id,
+            "task": present[0]["task"] if present else task_id,
+            "scores": scores,
+            "score_percent": [
+                None if score is None else round(score / 4 * 100, 1)
+                for score in scores
+            ],
+            "evidence_confidence_percent": confidences,
+            "distinct_scenarios": [
+                item.get("distinct_scenarios", 0) if item else 0
+                for item in task_items
+            ],
+            "minimum_observations": [
+                item.get("minimum_observations") if item else None
+                for item in task_items
+            ],
+            "comparable": task_comparable,
+            "checks": task_checks,
+            "leaders": leaders,
+            "spread": (
+                round(max(numeric) - min(numeric), 3)
+                if task_comparable and numeric else None),
+        })
+    if only_comparable:
+        rows = [row for row in rows if row["comparable"]]
+    if sort_by == "confidence":
+        rows.sort(key=lambda row: (
+            min(row["evidence_confidence_percent"]), row["task_id"]),
+                  reverse=True)
+    elif sort_by == "spread":
+        rows.sort(key=lambda row: (
+            row["spread"] is not None, row["spread"] or 0, row["task_id"]),
+                  reverse=True)
+    elif sort_by == "leader":
+        rows.sort(key=lambda row: (
+            bool(row["leaders"]), row["leaders"], row["task_id"]), reverse=True)
+    else:
+        rows.sort(key=lambda row: row["task_id"])
+    leader_counts = {chr(65 + index): 0 for index in range(len(matrices))}
+    for row in rows:
+        if len(row["leaders"]) == 1:
+            leader_counts[row["leaders"][0]] += 1
+    subject_rows = []
+    for index, (ref, matrix, package, adapter_profiles) in enumerate(
+            zip(refs, matrices, packages, profiles)):
+        subject_rows.append({
+            **matrix,
+            "column": chr(65 + index),
+            "reference": ref,
+            "subject_descriptor": package.get("subject"),
+            "adapter_profiles": adapter_profiles,
+        })
+    return {
+        "kind": "ecm-multi-comparison",
+        "comparison_mode": (
+            "formal-qualification" if formal_qualification
+            else "engineering-observed"),
+        "compatible": compatible,
+        "checks": checks,
+        "subjects": subject_rows,
+        "tasks": rows,
+        "summary": {
+            "subjects": len(subject_rows),
+            "tasks": len(rows),
+            "comparable_tasks": sum(row["comparable"] for row in rows),
+            "not_comparable_tasks": sum(
+                not row["comparable"] for row in rows),
+            "sole_leads": leader_counts,
+        },
+        "claim_boundary": (
+            "Leaders identify higher compatible observed scores only. They are "
+            "not a selection, deployment, qualification, or authorization grant."),
+    }
 
 
 def render_ecm_markdown(cmp: dict) -> str:
@@ -266,3 +412,61 @@ def render_ecm_markdown(cmp: dict) -> str:
         failed = ", ".join(name for name, ok in cmp["checks"].items() if not ok)
         lines += ["", f"Protocol mismatch ({failed}): no task winner is emitted."]
     return "\n".join(lines) + "\n"
+
+
+def render_ecm_many_markdown(cmp: dict) -> str:
+    subjects = cmp["subjects"]
+    lines = [
+        "# Engineering Capability Matrix Comparison",
+        "",
+        "> **INFORMATIONAL — NOT A QUALIFICATION, SELECTION, OR DEPLOYMENT GRANT.**",
+        "",
+        f"Mode: **{cmp['comparison_mode']}** · "
+        f"{len(subjects)} subjects · "
+        f"{cmp['summary']['comparable_tasks']}/{cmp['summary']['tasks']} "
+        "tasks comparable",
+        "",
+        "| | " + " | ".join(subject["column"] for subject in subjects) + " |",
+        "|---|" + "|".join("---" for _ in subjects) + "|",
+        "| Subject | " + " | ".join(
+            f"`{subject['subject']}`" for subject in subjects) + " |",
+        "| Run | " + " | ".join(
+            f"`{subject['run_id']}`" for subject in subjects) + " |",
+        "| Evidence adapters | " + " | ".join(
+            ", ".join(subject["adapter_profiles"]) for subject in subjects) + " |",
+        "",
+        "| Engineering task | " + " | ".join(
+            f"{subject['column']} performance / confidence"
+            for subject in subjects) + " | Result |",
+        "|---|" + "|".join("---:" for _ in subjects) + "|---|",
+    ]
+    for row in cmp["tasks"]:
+        cells = []
+        for score, confidence, distinct, minimum in zip(
+                row["score_percent"], row["evidence_confidence_percent"],
+                row["distinct_scenarios"], row["minimum_observations"]):
+            if score is None:
+                cells.append("not assessed")
+            else:
+                denominator = "—" if minimum is None else str(minimum)
+                cells.append(
+                    f"{score:.0f}% / {confidence:.0f}% "
+                    f"({distinct}/{denominator} scenarios)")
+        if not row["comparable"]:
+            result = "not comparable"
+        elif len(row["leaders"]) > 1:
+            result = "tie: " + ", ".join(row["leaders"])
+        else:
+            result = "higher observed: " + row["leaders"][0]
+        lines.append(
+            f"| {row['task_id']} — {row['task']} | "
+            + " | ".join(cells) + f" | {result} |")
+    failed = [name for name, ok in cmp["checks"].items() if not ok]
+    if failed:
+        lines += [
+            "",
+            "**Protocol mismatch:** " + ", ".join(failed)
+            + ". No task leader is emitted until evidence is compatible.",
+        ]
+    lines += ["", cmp["claim_boundary"], ""]
+    return "\n".join(lines)

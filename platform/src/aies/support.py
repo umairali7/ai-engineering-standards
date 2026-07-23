@@ -46,6 +46,20 @@ def validate(data: object) -> list[str]:
         errors.append("kind must be aies-subject-support-registry")
     if data.get("schema") != 1:
         errors.append("schema must be 1")
+    contracts = data.get("contracts")
+    required_contracts = {
+        "subject_descriptor", "subject_executor",
+        "evidence_event", "evidence_adapter",
+    }
+    if not isinstance(contracts, dict):
+        errors.append("contracts must be a mapping")
+    elif set(contracts) != required_contracts:
+        errors.append(
+            "contracts must declare exactly: "
+            + ", ".join(sorted(required_contracts)))
+    fixtures = data.get("compatibility_fixtures")
+    if not isinstance(fixtures, list) or not fixtures:
+        errors.append("compatibility_fixtures must be a non-empty list")
     subjects = data.get("subjects")
     if not isinstance(subjects, list):
         return errors + ["subjects must be a list"]
@@ -75,6 +89,9 @@ def validate(data: object) -> list[str]:
                 if not subject.get(field):
                     errors.append(
                         f"{where}.{field} is required for implemented support")
+            for field in ("executor_contract", "evidence_event_contract"):
+                if not subject.get(field):
+                    errors.append(f"{where}.{field} is required for implemented support")
     missing = sorted(REQUIRED_SUBJECTS - seen)
     if missing:
         errors.append("missing envisioned subject kinds: " + ", ".join(missing))
@@ -116,6 +133,9 @@ def describe(subject_id: str | None = None, *,
         "version": registry["version"],
         "status": registry["status"],
         "governed_by": registry["governed_by"],
+        "contracts": deepcopy(registry["contracts"]),
+        "compatibility_fixtures": deepcopy(
+            registry["compatibility_fixtures"]),
         "support_definitions": registry["statuses"],
         "counts": counts,
         "subjects": deepcopy(subjects),
@@ -134,6 +154,10 @@ def render(result: dict) -> str:
             f"Support status: {subject['status']}",
             f"Subject Descriptor kind: {subject['descriptor_kind']} "
             f"({subject.get('descriptor_contract', 'planned')})",
+            f"Subject Executor contract: "
+            f"{subject.get('executor_contract', 'not implemented')}",
+            f"Evidence Event contract: "
+            f"{subject.get('evidence_event_contract', 'not implemented')}",
             "",
         ]
         sections = (
@@ -199,6 +223,10 @@ def render_markdown(result: dict | None = None) -> str:
         "",
         "**Implemented** means an executable assessment path ships now. "
         "**Experimental** and **planned** entries are not support claims.",
+        "",
+        "**Shared contracts:** " + "; ".join(
+            f"`{name}` = `{value}`"
+            for name, value in result["contracts"].items()) + ".",
         "",
         "| Subject kind | Descriptor kind | Status | Implemented assessment path | Entry point |",
         "|---|---|---|---|---|",

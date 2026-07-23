@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aies.example/contracts/subject-executor-v1.schema.json",
+  "title": "AIES Subject Executor Declaration v1 (experimental)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "executor_id", "executor_version", "subject_kinds",
+    "interaction", "runtime_adapter", "claim_boundary"],
+  "properties": {
+    "contract": {"const": "aies-subject-executor/v1"},
+    "executor_id": {"type": "string", "minLength": 1},
+    "executor_version": {"type": "string", "minLength": 1},
+    "subject_kinds": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "interaction": {"type": "string", "minLength": 1},
+    "runtime_adapter": {"type": ["object", "null"]},
+    "claim_boundary": {"type": "string", "minLength": 1}
+  }
+}

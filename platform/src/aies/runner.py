@@ -207,6 +207,32 @@ def _build_record(run_id, model_entry, adapter, sc, r, suite_version,
     }
 
 
+def _record_observation_event(run_id: str, path: Path, record: dict) -> None:
+    from . import evidence_events
+
+    source_digest = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+    event = evidence_events.build(
+        event_type="observation",
+        subject_id=(record.get("model") or {}).get("registry_id", "unknown"),
+        instrument_id=record.get("scenario_id"),
+        modality="controlled-scenario",
+        source="aies-response-record",
+        source_record_id=path.name,
+        source_digest=source_digest,
+        adapter_profile="aies-native-run/v1",
+        observed_at=record.get("recorded_at"),
+        correlation_id=record.get("run_id"),
+        payload={
+            "area": record.get("area"),
+            "risk_tier": record.get("risk_tier"),
+            "repeat": record.get("repeat"),
+            "prompt_hash": (record.get("request") or {}).get("prompt_hash"),
+            "response_record": path.name,
+        },
+    )
+    evidence_events.append(run_id, event)
+
+
 def execute_journey(
     run_id: str,
     model_entry: dict,
@@ -254,6 +280,7 @@ def execute_journey(
                                  "step_risk_tier": step.get("risk_tier", risk_tier)}
             path = rdir / f"{step['id']}-r{r}.json"
             workspace.write_json(path, record)
+            _record_observation_event(run_id, path, record)
             written.append(path)
             if progress_callback:
                 progress_callback(len(written), total, label, "completed")
@@ -341,6 +368,7 @@ def execute_suite(
                                    environment_fp, response, parameters)
             path = rdir / f"{sc['id']}-r{r}.json"
             workspace.write_json(path, record)
+            _record_observation_event(run_id, path, record)
         except Exception:
             _notify(sc, r, "failed")
             raise

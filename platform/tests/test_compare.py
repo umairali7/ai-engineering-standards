@@ -108,3 +108,27 @@ def test_cross_tier_comparison_refused(ws, tmp_path):
     run_b = _qualified_run(tmp_path, "model-b", 3)
     with pytest.raises(compare.CompareError):
         compare.compare(run_a, run_b)
+
+
+def test_multi_run_ecm_comparison_aligns_tasks_and_exposes_confidence(
+        ws, tmp_path):
+    from aies import compare
+
+    runs = []
+    for model_id, score in (
+            ("model-a", 2), ("model-b", 3), ("model-c", 4)):
+        _register(tmp_path, model_id)
+        runs.append(_qualified_run(tmp_path, model_id, score))
+    result = compare.compare_ecm_many(runs, sort_by="spread")
+    assert len(result["subjects"]) == 3
+    assert result["summary"]["subjects"] == 3
+    comparable = [row for row in result["tasks"] if row["comparable"]]
+    assert comparable
+    assert all(len(row["score_percent"]) == 3 for row in comparable)
+    assert all(len(row["evidence_confidence_percent"]) == 3
+               for row in comparable)
+    assert all(row["leaders"] == ["C"] for row in comparable)
+    markdown = compare.render_ecm_many_markdown(result)
+    assert "3 subjects" in markdown
+    assert "performance / confidence" in markdown
+    assert "higher observed: C" in markdown

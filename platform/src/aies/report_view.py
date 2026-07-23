@@ -266,7 +266,7 @@ def _area_view(
 
 
 def build_context(run_id: str, *, matrix: dict | None = None) -> ReportContext:
-    from . import diagnostics, ecm, evaluation, run_mode
+    from . import diagnostics, ecm, evaluation, run_mode, subjects
 
     workspace.validate_run_id(run_id)
     rdir = workspace.run_dir(run_id)
@@ -294,7 +294,8 @@ def build_context(run_id: str, *, matrix: dict | None = None) -> ReportContext:
     threshold_met = sum(
         area["readiness"]["verdict"] == "THRESHOLD MET"
         for area in areas)
-    subject = package.get("subject") or {}
+    subject = subjects.from_manifest(manifest)
+    execution = subjects.execution_from_manifest(manifest)
     model = package.get("model") or {}
     environment = package.get("environment_fingerprint") or {}
     view = {
@@ -310,8 +311,12 @@ def build_context(run_id: str, *, matrix: dict | None = None) -> ReportContext:
             else "AIES Engineering Evaluation Report"),
         "subject": {
             "id": subject.get("id", model.get("registry_id")),
+            "display_name": subject.get("display_name"),
             "kind": subject.get("kind", "ai_deployment"),
-            "executor_kind": subject.get("executor_kind", "deployment"),
+            "descriptor_schema": subject.get("schema"),
+            "privacy": subject.get("privacy"),
+            "executor_kind": execution.get("executor_id", "runtime-generation"),
+            "executor_contract": execution.get("contract"),
             "deployment_evidence": model.get("registry_id"),
             "checksum": model.get("checksum"),
         },

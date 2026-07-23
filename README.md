@@ -333,6 +333,12 @@ The project does **not** aim to:
 
 AIES does support evidence-compatible comparison of scoped assessment runs.
 Those comparisons are engineering selection inputs, not universal rankings.
+`aies compare` accepts two or more runs or deployment IDs and places observed
+performance beside direct scenario breadth. It emits a higher-observed leader
+or tie only when risk tier, subject kind, profile, task mapping, scoring
+semantics, rater protocol, suite versions, repeat structure, evidence-adapter
+profiles, and task instruments are compatible. Use `--sort spread` to find the
+largest supported differences or `--only-comparable` to hide evidence gaps.
 AIES defines **engineering standards** that remain applicable regardless of the
 underlying AI technology.
 

@@ -8,6 +8,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Subject-neutral execution and typed-evidence foundation**: new
+  `aies-run-manifest/v2` runs embed the independently versioned
+  `aies-subject-descriptor/v1` and `aies-subject-executor/v1` contracts while
+  retaining the deployment/model envelope for compatibility. Runtime
+  generation now executes through an explicit Subject Executor, and repository
+  audit is the first non-runtime executor. Observation, rating, review,
+  environment, lifecycle, and attestation events share an append-only,
+  source-bound identity with deterministic replay and idempotent legacy-run
+  projection through `aies runs events RUN [--migrate]`. Inspect and SARIF
+  bridges declare versioned adapter semantics, privacy, completeness, allowed
+  decision use, typed output, correlation gaps, and conversion loss without
+  inferring scores or claims. Evidence Package schema 6 records execution
+  semantics; Run View schema 2 reports manifest compatibility. `aies compare`
+  now accepts two or more subjects, aligns stable ET task identities, displays
+  observed performance beside scenario breadth, checks adapter and assessment
+  protocol compatibility, supports task/confidence/spread/leader sorting, and
+  emits leaders or ties only for like-for-like evidence.
 - **Truthful command progress, durable judge checkpoints, and sortable
   decision views**: standalone `review`, collection resume, and manual scoring
   now reset their own command clock instead of inheriting the age of the run.

@@ -50,7 +50,7 @@ Every artifact carries a schema version; envelopes are field-append-only
 |---|---|---|---|
 | Assessment | `schema` | `1` | authored (`assessments/*.yaml`) |
 | Profile | `version` | semver | authored (`profiles/*.yaml`) |
-| Evidence Package | `evidence_schema` | `5` | `qualify --resume` / `aggregate` |
+| Evidence Package | `evidence_schema` | `6` | `qualify --resume` / `aggregate` |
 | Human Rater Record | `rater_schema` | `1` | `rater register` |
 | Qualification Record | `qualification_schema` | `2` | `grant` (human authority) |
 | Qualification Lifecycle Event | `event_schema` | `1` | `qualifications event` / `verify` |
@@ -67,7 +67,7 @@ Every artifact carries a schema version; envelopes are field-append-only
 | Grounding Diagnostics | `diagnostic_schema` | `2` | complete report bundle; structured reviewer observations with explicit abstention applicability |
 | Report Bundle Index | `report_bundle_schema` | `1` | complete report bundle |
 | Workspace Overview | `schema_version` | `1` | `aies overview` / `GET /overview` / dashboard |
-| Run Detail View | `schema_version` | `1` | `aies runs show` / `GET /runs/{id}` |
+| Run Detail View | `schema_version` | `2` | `aies runs show` / `GET /runs/{id}` |
 | Run Report View | `schema_version` | `1` | complete bundle / `GET /runs/{id}/report-view` |
 | API Error | `schema_version` | `1` | failed read-only REST requests |
 

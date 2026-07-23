@@ -17,3 +17,11 @@ adapter_profile)`. Major schema incompatibility is an error. Minor additions
 must be preserved under `extensions` or disclosed as loss. An adapter fixture
 must prove deterministic output, duplicate rejection, source hash binding,
 malformed-input rejection, and no-claim inflation.
+
+The shipped `aies-inspect-eval-log/v1` profile imports only explicit integer
+AIES ratings from EV1 â€” Correctness through EV6 â€” Traceability and may
+inform Engineering Evaluation and ECM products.
+The shipped `aies-sarif-2.1.0/v1` profile preserves static-analysis findings as
+informational repository observations and cannot establish an EV score,
+maturity level, correctness, conformance, qualification, or authorization.
+Both declare secrets prohibited and emit a source-bound loss report.

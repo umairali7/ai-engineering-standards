@@ -39,6 +39,9 @@ def test_sarif_bridge_preserves_findings_and_limits_claim(tmp_path, monkeypatch)
     assert normalized["findings"][0]["rule_id"] == "EX001"
     assert normalized["findings"][0]["locations"][0]["start_line"] == 7
     assert "correctness" in normalized["semantics"]["does_not_establish"]
+    assert normalized["adapter"]["profile"] == "aies-sarif-2.1.0/v1"
+    assert normalized["events"][0]["modality"] == "repository-static-analysis"
+    assert normalized["loss_report"]["correlation_gaps"]
     roundtrip = interop.export_sarif(
         Path(result["artifact"]), tmp_path / "roundtrip.sarif")
     exported = json.loads(Path(roundtrip["artifact"]).read_text(encoding="utf-8"))
@@ -78,6 +81,8 @@ def test_inspect_bridge_imports_only_explicit_aies_scores(
     loss = json.loads(Path(result["loss_report"]).read_text(encoding="utf-8"))
     assert loss["samples_seen"] == 2
     assert loss["samples_skipped"][0]["sample_id"] == "unmapped"
+    assert loss["adapter"]["profile"] == "aies-inspect-eval-log/v1"
+    assert result["typed_events_written"] == 1
 
 
 def test_inspect_export_uses_explicit_portable_profile(tmp_path, monkeypatch):
@@ -103,7 +108,9 @@ def test_inspect_export_uses_explicit_portable_profile(tmp_path, monkeypatch):
 def test_experimental_contracts_are_machine_readable():
     platform = Path(__file__).resolve().parents[1]
     for name in ("subject-descriptor-v1.schema.json",
-                 "evidence-event-v1.schema.json"):
+                 "subject-executor-v1.schema.json",
+                 "evidence-event-v1.schema.json",
+                 "evidence-adapter-v1.schema.json"):
         schema = json.loads(
             (platform / "contracts" / name).read_text(encoding="utf-8"))
         assert schema["$schema"].endswith("2020-12/schema")

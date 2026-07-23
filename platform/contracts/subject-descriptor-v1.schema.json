@@ -15,7 +15,40 @@
     },
     "display_name": {"type": "string", "minLength": 1},
     "version": {"type": ["string", "null"]},
-    "components": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "components": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "oneOf": [
+          {"type": "string", "minLength": 1},
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["subject_id", "kind", "role", "evidence_transfer"],
+            "properties": {
+              "subject_id": {"type": "string", "minLength": 1},
+              "kind": {
+                "enum": ["human", "team", "repository", "ai_deployment", "ai_system",
+                  "agent", "agent_swarm", "mcp_server", "coding_assistant",
+                  "prompt_library", "rag_system", "pipeline", "platform", "composite"]
+              },
+              "role": {
+                "enum": ["contains", "depends-on", "executes", "serves",
+                  "retrieves-from", "orchestrates", "observes", "evaluates", "uses"]
+              },
+              "version": {"type": ["string", "null"]},
+              "fingerprint": {
+                "type": ["string", "null"],
+                "pattern": "^(sha256:[0-9a-f]{64})?$"
+              },
+              "evidence_transfer": {
+                "enum": ["none", "reference-only", "explicit-mapping-required"]
+              }
+            }
+          }
+        ]
+      }
+    },
     "environment_fingerprint": {"type": ["string", "null"], "pattern": "^(sha256:[0-9a-f]{64})?$"},
     "provenance": {"type": "array", "items": {"type": "object"}},
     "privacy": {"enum": ["public", "internal", "confidential", "restricted"]},
