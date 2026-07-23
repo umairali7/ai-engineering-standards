@@ -60,6 +60,16 @@ GUIDANCE: dict[str, CommandGuidance] = {
         "Reads the shipped subject-support registry and distinguishes executable support from experimental contracts and planned architecture.",
         "Use an implemented entry point, or consult the roadmap before proposing an executor, evidence adapter, and direct instruments for a planned subject.",
     ),
+    "assessment-profile": CommandGuidance(
+        "AIES is installed; no workspace, endpoint, or credential is required.",
+        "Lists, shows, or validates approved subject-specific assessment semantics, complete perspective applicability, executors, evidence adapters, decision products, and limitations.",
+        "Select an implemented profile, then collect evidence through its declared entry point; unsupported perspectives remain explicit roadmap gaps.",
+    ),
+    "coverage": CommandGuidance(
+        "A completed deployment run or recorded repository audit exists. Repository artifact writing also requires a new output directory.",
+        "Builds a non-decisional matrix of assessed, partially assessed, not assessed, unsupported, and not-applicable perspectives; unique evidence identities and reuse are disclosed separately.",
+        "Collect direct evidence for the highest-priority blind spots, or use the report to limit claims to what was actually observed.",
+    ),
     "starter": CommandGuidance(
         "AIES is installed; listing and showing starters require no workspace or endpoint.",
         "Reads versioned decision-led workflow data covering prerequisites, command sequence, time/cost class, evidence breadth, artifacts, limitations, and next expansion.",

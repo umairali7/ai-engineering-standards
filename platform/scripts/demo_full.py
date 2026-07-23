@@ -85,6 +85,8 @@ def main() -> int:
 
     hr("3. Declarative assessments (composition as data, ADR-0005)")
     require(invoke("assessment", "list")[0], "assessment list")
+    print("\nSubject-specific semantics (ADR-0018):")
+    require(invoke("assessment-profile", "list")[0], "assessment profile list")
 
     hr("4. Assess a deployment: compose -> collect -> automated Engineering Evaluation")
     print("Running a fast RT1 — Minimal 'coder' smoke scope once per distinct instrument, "
@@ -133,6 +135,21 @@ def main() -> int:
     for name, count in sorted(counts.items()):
         print(" ", name, count)
     print("Human evaluation is optional; operational authorization remains a separate governed action.")
+    coverage = workspace.read_json(run_dir / "assessment-coverage.json")
+    summary = coverage["summary"]
+    print(
+        "Coverage boundary:",
+        f"{summary['assessed']} assessed,",
+        f"{summary['partially-assessed']} partial,",
+        f"{summary['not-assessed']} not assessed,",
+        f"{summary['unsupported']} unsupported,",
+        f"{summary['not-applicable']} not applicable.",
+    )
+    print(
+        "Evidence identity:",
+        f"{coverage['evidence_reuse']['unique_evidence_refs']} unique /",
+        f"{coverage['evidence_reuse']['cell_references']} cell references.",
+    )
 
     hr("9. Protocol-compatible ECM comparison (same evidence fixture, no invented winner)")
     code, output, _ = invoke("compare", run_id, run_id, "--ecm", "--json", capture=True)
@@ -163,12 +180,13 @@ def main() -> int:
     presentations = (
         "engineering-assessment-result.html", "report.html",
         "engineering-capability-matrix.html", "engineering-fit-guidance.html",
-        "executive-summary.html", "grounding-diagnostics.html")
+        "executive-summary.html", "grounding-diagnostics.html",
+        "assessment-coverage.html")
     missing = [name for name in presentations if not (run_dir / name).is_file()
                or not (run_dir / name).stat().st_size]
     if missing:
         raise SystemExit("demo failed: missing presentation artifacts: " + ", ".join(missing))
-    print("verified six presentation-grade HTML artifacts from the generated bundle")
+    print("verified seven presentation-grade HTML artifacts from the generated bundle")
 
     hr("12. Decision-engine CONFORMANCE (the standard as a subject)")
     print("Does the reference engine reproduce AESQS decision semantics on the golden corpus?")
@@ -216,7 +234,8 @@ def main() -> int:
     hr("DEMO COMPLETE")
     print("Subjects assessed: deployment + repository + standard")
     print("Also shown: live progress, ECM strengths/gaps, evidence-derived guidance, comparison,")
-    print("             linked reports, engineering fit, and empirical harness.")
+    print("             assessment coverage/blind spots, linked reports, engineering fit,")
+    print("             and the empirical harness.")
     print("Read-only JSON API: aies serve --port 8722")
     print(f"workspace: {demo_ws}")
     print(f"total demo time: {time.monotonic() - STARTED:.1f}s")

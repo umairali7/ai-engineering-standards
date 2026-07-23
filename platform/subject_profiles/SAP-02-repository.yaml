@@ -1,0 +1,67 @@
+kind: aies-subject-assessment-profile
+schema: aies-subject-assessment-profile/v1
+id: SAP-02
+title: Software Repository Engineering Assessment
+version: 1.0.0
+status: approved
+governed_by: ADR-0018
+subject_kinds: [repository]
+descriptor_schema: aies-subject-descriptor/v1
+fingerprint_change_triggers:
+  - commit, tree, working-scope, dependency-state, or configuration digest
+  - analyzer, evidence-adapter, policy, or retained-tool-result version
+  - assessment profile or applicability rationale
+execution:
+  executors: [deterministic-repository-audit]
+  evidence_adapters: [aies-repository-conformance/v1, aies-repository-analysis/v1, sarif-2.1.0/v1]
+instruments:
+  ids: [CA-01 through CA-12 repository-practice checks, bounded repository engineering analyzers]
+  limitations:
+    - The default executor is read-only and does not execute source, tests, migrations, workloads, or attack simulations.
+scoring:
+  schemes: [ML0 through ML4 practice maturity, perspective-native engineering metrics]
+  minimums: risk-tier repository-practice policy where explicitly requested
+  gates: only explicit audit --gate policy enforcement; engineering analysis emits no composite quality gate
+human_review:
+  engineering_evaluation: optional for contextual interpretation and finding disposition
+  formal_qualification: a consequential repository decision remains with its named human authority
+decision_products: [DP-05, DP-06, DP-07, DP-08, DP-09, DP-11]
+applicability:
+  lifecycle:
+    default: {status: applicable, rationale: Repository evidence may support practices across the complete engineering lifecycle.}
+  cross_cutting:
+    default: {status: applicable, rationale: Cross-cutting engineering obligations remain visible even when the repository contains no direct evidence.}
+  competencies:
+    default: {status: applicable, rationale: Repository-practice checks map across CA-01 through CA-12 without becoming deployment capability scores.}
+  engineering_tasks:
+    default: {status: unsupported, rationale: Controlled repository-task benchmarking is not implemented by the read-only repository executor.}
+  risk_tiers:
+    default: {status: applicable, rationale: Repository conformance can be evaluated against an explicitly selected risk-tier policy.}
+  autonomy_levels:
+    default: {status: not-applicable, rationale: A repository is not an autonomous actor; executing assistants or agents require separate subjects.}
+  stakeholders:
+    default: {status: applicable, rationale: "Repository engineering affects maintainers, reviewers, operators, decision owners, users, and affected parties."}
+  environments:
+    default: {status: applicable, rationale: "Retained repository evidence may describe local, CI, staging, hosted, production, isolated, or shared environments."}
+  evidence_modalities:
+    default: {status: unsupported, rationale: The read-only repository executor does not collect this evidence modality.}
+    overrides:
+      EM-04: {status: applicable, rationale: Bounded source and configuration analysis produces repository-static evidence.}
+      EM-05: {status: applicable, rationale: "Retained JUnit, coverage, SARIF, lint, and SBOM artifacts preserve native tool meaning."}
+      EM-07: {status: applicable, rationale: Explicit attestations may cover only non-detectable repository controls.}
+      EM-10: {status: applicable, rationale: Repository descriptors bind analyzer and environment context.}
+  operating_conditions:
+    default: {status: unsupported, rationale: Static and retained-artifact analysis does not execute behavioral operating conditions.}
+  decision_products:
+    default: {status: not-applicable, rationale: This decision product belongs to another subject profile.}
+    overrides:
+      DP-05: {status: applicable, rationale: Repository-practice evidence produces a maturity scorecard.}
+      DP-06: {status: applicable, rationale: Bounded source and retained-tool evidence produce separate engineering perspectives.}
+      DP-07: {status: applicable, rationale: Findings and gaps produce deterministic evidence-linked remediation actions.}
+      DP-08: {status: applicable, rationale: Compatible repository assessments may be compared without a quality winner.}
+      DP-09: {status: applicable, rationale: Repository bundles provide audience-oriented summaries and limitations.}
+      DP-11: {status: applicable, rationale: Every repository bundle discloses perspective coverage and blind spots.}
+limitations:
+  - Practice maturity, static findings, and retained tool results do not prove source correctness, security, or fitness.
+  - Controlled repository-task benchmarks and semantic repository review remain separate future profiles.
+  - Missing tools and unavailable artifacts remain explicit evidence gaps.

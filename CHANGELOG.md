@@ -8,6 +8,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Approved subject-specific assessment semantics and evidence coverage**:
+  accepted ADR-0018 adds the versioned Subject Assessment Profile contract,
+  governed perspective registry, and approved SAP-01 — AI Deployment
+  Engineering Assessment and SAP-02 — Software Repository Engineering
+  Assessment profiles. Every governed lifecycle, cross-cutting, competency,
+  engineering-task, risk, autonomy, stakeholder, environment,
+  evidence-modality, operating-condition, and decision-product cell now has an
+  explicit applicable, unsupported, or not-applicable rationale.
+  `aies assessment-profile list|show|validate` and read-only API discovery
+  expose those semantics. `aies coverage RUN_OR_AUDIT` and complete deployment
+  and repository bundles emit Markdown, JSON, and HTML Assessment Coverage and
+  Blind-Spot Reports. Runtime coverage distinguishes assessed, partial,
+  missing, unsupported, and not-applicable evidence, preserves legacy runs
+  through the read-only typed-event projection, and discloses unique evidence
+  identities separately from reused cell references. Coverage remains
+  informational and cannot become a quality score, qualification, or
+  authorization.
 - **Verified cross-machine run portability and compatible cohort discovery**:
   accepted ADR-0017 establishes the non-overwriting transfer boundary.
   `aies runs import DIRECTORY-OR-ZIP [--dry-run]` accepts exactly one valid run,

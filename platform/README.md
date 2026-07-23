@@ -62,7 +62,10 @@ health/coverage/duplicates/review; advisory, multidimensional, no single grade),
 `plugins`.
 `completion` generates parser-derived PowerShell, Bash, and Zsh Tab completion.
 `support` exposes the same subject-support registry through CLI and `/support`
-API output.
+API output. `assessment-profile list|show|validate` exposes the approved
+subject-specific assessment semantics, and `coverage RUN_OR_AUDIT` shows
+applicability, direct evidence, identity reuse, and blind spots without
+creating a quality score or decision.
 `overview` exposes the same versioned, informational workspace summary through
 CLI JSON/human output, `GET /overview`, and the HTML dashboard. This is the
 stable consumer boundary for integrations and a future frontend; it computes
@@ -71,6 +74,7 @@ no assessment outcome.
 `aies-run-view` detail contract: subject and human-readable scope, durable
 execution state, available decision-product summaries, artifact storage
 classes, and exact JSON links. Stored ECM, guidance, report, diagnostics,
+assessment coverage,
 executive summary, evaluation, and bundle artifacts have dedicated read-only
 endpoints; missing artifacts remain explicitly unavailable.
 All twelve competency areas

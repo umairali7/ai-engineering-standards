@@ -37,7 +37,9 @@ REGENERABLE_VIEW_FILES = frozenset({
     "engineering-fit-guidance.md", "engineering-fit-guidance.json",
     "engineering-fit-guidance.html", "report-bundle.json",
     "grounding-diagnostics.md", "grounding-diagnostics.json",
-    "grounding-diagnostics.html", "dashboard.html",
+    "grounding-diagnostics.html",
+    "assessment-coverage.md", "assessment-coverage.json",
+    "assessment-coverage.html", "dashboard.html",
 })
 ARCHIVE_DEBRIS_NAMES = frozenset({".DS_Store", "Thumbs.db", "desktop.ini"})
 CACHE_DIRECTORY_NAMES = frozenset({"__MACOSX", "__pycache__", ".pytest_cache"})

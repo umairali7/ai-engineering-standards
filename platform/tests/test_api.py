@@ -62,6 +62,8 @@ def test_health_and_index():
     assert "/comparisons" in body["endpoints"]
     assert "/run-imports" in body["endpoints"]
     assert "/run-cohorts" in body["endpoints"]
+    assert "/runs/{id}/coverage" in body["endpoints"]
+    assert "/assessment-profiles" in body["endpoints"]
 
 
 def test_collections_are_served(api_ws):
@@ -75,6 +77,13 @@ def test_collections_are_served(api_ws):
     assert status == 200
     assert body["kind"] == "aies-subject-support-registry"
     assert body["counts"]["implemented"] == 2
+
+    status, profiles = api.route("/assessment-profiles")
+    assert status == 200
+    assert profiles["profiles"][0]["id"] == "SAP-01"
+    status, profile = api.route("/assessment-profiles/repository")
+    assert status == 200
+    assert profile["profiles"][0]["id"] == "SAP-02"
 
     status, body = api.route("/overview")
     assert status == 200
@@ -133,6 +142,7 @@ def test_run_product_endpoints_serve_stored_artifacts_verbatim(api_ws):
         "ecm": "engineering-capability-matrix.json",
         "executive-summary": "executive-summary.json",
         "diagnostics": "grounding-diagnostics.json",
+        "coverage": "assessment-coverage.json",
     }
     for endpoint, filename in routes.items():
         status, body = api.route(f"/runs/{api_ws}/{endpoint}")
@@ -155,6 +165,21 @@ def test_runs_show_uses_same_run_view(api_ws, capsys):
     body = json.loads(capsys.readouterr().out)
     assert body["kind"] == "aies-run-view"
     assert body["run_id"] == api_ws
+
+
+def test_coverage_cli_uses_latest_and_changes_no_evidence(api_ws, capsys):
+    from aies import cli, workspace
+
+    event_paths = tuple(
+        (workspace.run_dir(api_ws) / "events").glob("*.json"))
+    assert cli.main(["coverage", "latest", "--format", "json"]) == 0
+    body = json.loads(capsys.readouterr().out)
+    assert body["schema"] == "aies-assessment-coverage/v1"
+    assert body["profile"]["id"] == "SAP-01"
+    assert body["summary"]["not-assessed"] > 0
+    assert tuple(
+        (workspace.run_dir(api_ws) / "events").glob("*.json")) == event_paths
+    assert body["evidence_scope"]["id"] == api_ws
 
 
 def test_conformance_endpoint(api_ws):

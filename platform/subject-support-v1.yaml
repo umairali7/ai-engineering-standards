@@ -8,6 +8,8 @@ contracts:
   subject_executor: aies-subject-executor/v1
   evidence_event: aies-evidence-event/v1
   evidence_adapter: aies-evidence-adapter/v1
+  subject_assessment_profile: aies-subject-assessment-profile/v1
+  assessment_coverage: aies-assessment-coverage/v1
 compatibility_fixtures:
   - {id: ai-deployment, descriptor_kind: ai_deployment, status: validated}
   - {id: repository, descriptor_kind: repository, status: validated}
@@ -29,12 +31,10 @@ subjects:
     descriptor_contract: experimental
     executor_contract: aies-subject-executor/v1
     evidence_event_contract: aies-evidence-event/v1
+    assessment_profile_contract: aies-subject-assessment-profile/v1
     assessment_profiles:
-      - id: engineering-evaluation
-        title: Automated Engineering Evaluation
-        status: implemented
-      - id: formal-qualification
-        title: Human-Governed Formal Qualification
+      - id: SAP-01
+        title: AI Deployment Engineering Assessment
         status: implemented
     executors:
       - id: runtime-generation
@@ -59,9 +59,10 @@ subjects:
     descriptor_contract: experimental
     executor_contract: aies-subject-executor/v1
     evidence_event_contract: aies-evidence-event/v1
+    assessment_profile_contract: aies-subject-assessment-profile/v1
     assessment_profiles:
-      - id: repository-conformance-audit
-        title: Repository Engineering-Practice Conformance Audit
+      - id: SAP-02
+        title: Software Repository Engineering Assessment
         status: implemented
     executors:
       - id: deterministic-repository-audit
@@ -85,6 +86,7 @@ subjects:
       - Repository Practice Maturity Scorecard
       - Repository Engineering Analysis
       - Evidence-Linked Remediation Plan
+      - Assessment Coverage and Blind-Spot Report
       - Markdown, JSON, and HTML Repository Assessment Bundle
       - Adaptive 2–5 Repository Evidence Comparison
     entry_points: [aies audit, aies compare]

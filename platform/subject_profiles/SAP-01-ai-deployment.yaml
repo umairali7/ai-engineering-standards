@@ -1,0 +1,69 @@
+kind: aies-subject-assessment-profile
+schema: aies-subject-assessment-profile/v1
+id: SAP-01
+title: AI Deployment Engineering Assessment
+version: 1.0.0
+status: approved
+governed_by: ADR-0018
+subject_kinds: [ai_deployment, ai_system]
+descriptor_schema: aies-subject-descriptor/v1
+fingerprint_change_triggers:
+  - served model or artifact digest
+  - runtime and behavior-affecting generation configuration
+  - endpoint identity or environment fingerprint
+  - assessment profile, suite, mapping, scoring, or adapter protocol
+execution:
+  executors: [runtime-generation]
+  evidence_adapters: [aies-run-migration/v1, inspect-eval-log/v1]
+instruments:
+  ids: [CA-01 through CA-12 scenario suites, ET-01 through ET-15 mappings]
+  limitations:
+    - Text-generation scenarios do not directly exercise agent tools, integrated systems, or field operation.
+scoring:
+  schemes: [EV1 through EV6, ECM task scoring]
+  minimums: risk-tier-specific distinct scenario breadth
+  gates: risk-tier dimension gates, EV3 hard fail, and explicit formal rater protocol
+human_review:
+  engineering_evaluation: optional and separately disclosed
+  formal_qualification: required by the governed rater and authority protocol
+decision_products: [DP-01, DP-02, DP-03, DP-04, DP-08, DP-09, DP-11]
+applicability:
+  lifecycle:
+    default: {status: applicable, rationale: Engineering deployments may participate across every lifecycle phase; actual direct evidence remains run-specific.}
+  cross_cutting:
+    default: {status: applicable, rationale: Cross-cutting obligations may affect deployment engineering and must remain visible even when unmeasured.}
+  competencies:
+    default: {status: applicable, rationale: The deployment scenario corpus defines direct instruments for all AIES competency areas.}
+  engineering_tasks:
+    default: {status: applicable, rationale: ECM defines subject-neutral engineering tasks; a run assesses only tasks with directly mapped scored scenarios.}
+  risk_tiers:
+    default: {status: applicable, rationale: Deployment evidence is scoped to exactly one declared risk tier per run.}
+  autonomy_levels:
+    default: {status: applicable, rationale: Autonomy guidance is bounded by risk and qualification evidence; no run grants autonomy.}
+  stakeholders:
+    default: {status: applicable, rationale: "Deployment use can affect engineering participants, decision owners, data subjects, customers, and non-users."}
+  environments:
+    default: {status: applicable, rationale: Deployment behavior and evidence may differ by execution environment; unobserved environments remain gaps.}
+  evidence_modalities:
+    default: {status: unsupported, rationale: The current runtime-generation executor does not collect this evidence modality.}
+    overrides:
+      EM-01: {status: applicable, rationale: Versioned scenarios directly collect controlled deployment outputs.}
+      EM-08: {status: applicable, rationale: Human ratings can be retained when supplied under the rater protocol.}
+      EM-09: {status: applicable, rationale: Automated reviewer ratings support non-blocking engineering evaluation.}
+      EM-10: {status: applicable, rationale: Every run binds evidence to an environment fingerprint.}
+  operating_conditions:
+    default: {status: applicable, rationale: "Nominal, boundary, invalid, hostile, failure, recovery, duration, and change conditions require distinct direct evidence."}
+  decision_products:
+    default: {status: not-applicable, rationale: This decision product belongs to another subject profile.}
+    overrides:
+      DP-01: {status: applicable, rationale: Automated ratings can complete an informational Engineering Evaluation.}
+      DP-02: {status: applicable, rationale: Direct task-mapped scenario evidence produces the ECM.}
+      DP-03: {status: applicable, rationale: Engineering Fit Guidance is derived from bounded ECM evidence.}
+      DP-04: {status: applicable, rationale: Formal qualification is an explicit separate human-governed workflow.}
+      DP-08: {status: applicable, rationale: Compatible run evidence may be compared without a universal winner claim.}
+      DP-09: {status: applicable, rationale: Complete bundles include a leadership-facing summary with limitations.}
+      DP-11: {status: applicable, rationale: "Every completed bundle discloses assessed, partial, missing, inapplicable, and unsupported perspectives."}
+limitations:
+  - Design review does not establish empirical validity or predictive usefulness.
+  - Integrated-system and field behavior cannot be inferred from controlled text-generation scenarios.
+  - Missing, unknown, unavailable, redacted, and failed evidence never become a pass.

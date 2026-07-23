@@ -11,6 +11,8 @@ test:              ## conformance test suite (keyed to AESQS requirement IDs)
 
 validate:          ## suite catalog + shipped assessments (the CI gate)
 	aies suites validate
+	python scripts/generate_subject_support.py --check
+	python scripts/generate_assessment_profiles.py --check
 
 audit:             ## repository self-conformance (dogfood), gated at RT2
 	aies audit .. --gate --rt 2

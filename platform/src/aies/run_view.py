@@ -36,6 +36,8 @@ _ARTIFACTS = {
     "executive_summary": ("executive-summary.json", "executive-summary"),
     "grounding_diagnostics": (
         "grounding-diagnostics.json", "diagnostics"),
+    "assessment_coverage": (
+        "assessment-coverage.json", "coverage"),
 }
 
 

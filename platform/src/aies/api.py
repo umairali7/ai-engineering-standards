@@ -33,10 +33,13 @@ _RUN_ECM = re.compile(r"^/runs/([^/]+)/ecm$")
 _RUN_GUIDANCE = re.compile(r"^/runs/([^/]+)/guidance$")
 _RUN_EXECUTIVE = re.compile(r"^/runs/([^/]+)/executive-summary$")
 _RUN_DIAGNOSTICS = re.compile(r"^/runs/([^/]+)/diagnostics$")
+_RUN_COVERAGE = re.compile(r"^/runs/([^/]+)/coverage$")
 _RUN_DETAIL = re.compile(r"^/runs/([^/]+)$")
 _AUDIT_DETAIL = re.compile(r"^/audits/([^/]+)$")
 _COMPARISON_DETAIL = re.compile(r"^/comparisons/([^/]+)$")
 _RUN_IMPORT_DETAIL = re.compile(r"^/run-imports/([^/]+)$")
+_ASSESSMENT_PROFILE_DETAIL = re.compile(
+    r"^/assessment-profiles/([^/]+)$")
 
 
 def _error(status: int, code: str, message: str, *,
@@ -70,11 +73,14 @@ def route(path: str) -> tuple[int, dict]:
                                    "/runs/{id}/ecm", "/runs/{id}/guidance",
                                    "/runs/{id}/executive-summary",
                                    "/runs/{id}/diagnostics",
+                                   "/runs/{id}/coverage",
                                    "/audits", "/audits/{id}",
                                    "/comparisons", "/comparisons/{id}",
                                    "/run-imports", "/run-imports/{id}",
                                    "/run-cohorts",
-                                   "/assessments", "/qualifications", "/conformance"]}
+                                   "/assessments", "/assessment-profiles",
+                                   "/assessment-profiles/{id}",
+                                   "/qualifications", "/conformance"]}
     if path == "/overview":
         from . import overview
         return 200, overview.build()
@@ -122,6 +128,9 @@ def route(path: str) -> tuple[int, dict]:
     if path == "/assessments":
         from . import assessments
         return 200, {"assessments": assessments.list_assessments()}
+    if path == "/assessment-profiles":
+        from . import assessment_profiles
+        return 200, assessment_profiles.describe()
     if path == "/qualifications":
         from . import qualification
         return 200, {"qualifications": qualification.list_records()}
@@ -181,6 +190,18 @@ def route(path: str) -> tuple[int, dict]:
     m = _RUN_DIAGNOSTICS.match(path)
     if m:
         return _run_artifact(m.group(1), "grounding-diagnostics.json")
+    m = _RUN_COVERAGE.match(path)
+    if m:
+        return _run_artifact(m.group(1), "assessment-coverage.json")
+    m = _ASSESSMENT_PROFILE_DETAIL.match(path)
+    if m:
+        from . import assessment_profiles
+        try:
+            return 200, assessment_profiles.describe(m.group(1))
+        except assessment_profiles.AssessmentProfileError as error:
+            return _error(
+                404, "assessment-profile-not-found", str(error),
+                hint="list profiles with GET /assessment-profiles")
     m = _RUN_DETAIL.match(path)
     if m:
         from . import run_view

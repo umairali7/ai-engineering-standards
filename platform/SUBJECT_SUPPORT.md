@@ -4,12 +4,12 @@
 
 **Implemented** means an executable assessment path ships now. **Experimental** and **planned** entries are not support claims.
 
-**Shared contracts:** `subject_descriptor` = `aies-subject-descriptor/v1`; `subject_executor` = `aies-subject-executor/v1`; `evidence_event` = `aies-evidence-event/v1`; `evidence_adapter` = `aies-evidence-adapter/v1`.
+**Shared contracts:** `subject_descriptor` = `aies-subject-descriptor/v1`; `subject_executor` = `aies-subject-executor/v1`; `evidence_event` = `aies-evidence-event/v1`; `evidence_adapter` = `aies-evidence-adapter/v1`; `subject_assessment_profile` = `aies-subject-assessment-profile/v1`; `assessment_coverage` = `aies-assessment-coverage/v1`.
 
 | Subject kind | Descriptor kind | Status | Implemented assessment path | Entry point |
 |---|---|---|---|---|
-| `ai-deployment` — AI Deployment or Served AI System | `ai_deployment` | implemented | Automated Engineering Evaluation<br>Human-Governed Formal Qualification | `aies evaluate`<br>`aies qualify`<br>`aies benchmark` |
-| `repository` — Software Repository | `repository` | implemented | Repository Engineering-Practice Conformance Audit | `aies audit`<br>`aies compare` |
+| `ai-deployment` — AI Deployment or Served AI System | `ai_deployment` | implemented | AI Deployment Engineering Assessment | `aies evaluate`<br>`aies qualify`<br>`aies benchmark` |
+| `repository` — Software Repository | `repository` | implemented | Software Repository Engineering Assessment | `aies audit`<br>`aies compare` |
 | `human` — Human Engineer | `human` | planned | — | — |
 | `team` — Engineering Team | `team` | planned | — | — |
 | `human-ai-pair` — Human–AI Engineering Pair | `composite` | planned | — | — |
@@ -44,7 +44,7 @@
 
 **Evidence adapters:** `repository-conformance` — Repository Practice Evidence Adapter (implemented); `repository-analysis` — Repository Engineering Analysis Adapter (implemented); `sarif` — SARIF 2.1.0 Findings Bridge (experimental).
 
-**Decision products:** Repository Practice Maturity Scorecard; Repository Engineering Analysis; Evidence-Linked Remediation Plan; Markdown, JSON, and HTML Repository Assessment Bundle; Adaptive 2–5 Repository Evidence Comparison.
+**Decision products:** Repository Practice Maturity Scorecard; Repository Engineering Analysis; Evidence-Linked Remediation Plan; Assessment Coverage and Blind-Spot Report; Markdown, JSON, and HTML Repository Assessment Bundle; Adaptive 2–5 Repository Evidence Comparison.
 
 **Limitations:**
 

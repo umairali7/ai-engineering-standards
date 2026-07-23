@@ -377,6 +377,9 @@ def write_bundle(result: dict, destination: str | Path) -> dict:
         "json": target / "repository-assessment.json",
         "markdown": target / "repository-assessment.md",
         "html": target / "repository-assessment.html",
+        "coverage_markdown": target / "assessment-coverage.md",
+        "coverage_json": target / "assessment-coverage.json",
+        "coverage_html": target / "assessment-coverage.html",
         "bundle": target / "repository-assessment-bundle.json",
     }
     existing = [str(path) for path in paths.values() if path.exists()]
@@ -389,6 +392,11 @@ def write_bundle(result: dict, destination: str | Path) -> dict:
         json.dumps(result, indent=2) + "\n", encoding="utf-8")
     paths["markdown"].write_text(markdown, encoding="utf-8")
     paths["html"].write_text(_render_html(result), encoding="utf-8")
+    from . import assessment_coverage
+    coverage_paths = assessment_coverage.write_repository_artifacts(
+        result, target)
+    assert set(coverage_paths) == {
+        "coverage_markdown", "coverage_json", "coverage_html"}
     bundle = {
         "kind": "aies-repository-assessment-bundle",
         "schema": 1,
@@ -398,6 +406,9 @@ def write_bundle(result: dict, destination: str | Path) -> dict:
             name: path.name for name, path in paths.items() if name != "bundle"
         },
         "claim_boundary": result.get("claim_boundary"),
+        "coverage_boundary": (
+            "Assessment coverage reports evidence availability and blind "
+            "spots; it is not repository quality or conformance."),
     }
     paths["bundle"].write_text(
         json.dumps(bundle, indent=2) + "\n", encoding="utf-8")

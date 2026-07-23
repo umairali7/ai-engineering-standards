@@ -70,6 +70,8 @@ and optional human evaluation—as different facts.
 | Evaluate it automatically | `aies evaluate DEPLOYMENT --judge JUDGE` | Completed non-blocking Engineering Evaluation and report bundle |
 | See the decision snapshot in your terminal | `aies snapshot latest` | Task evidence, observed capability, scenario breadth, assurance gaps, and engineering interpretation |
 | Check what AIES truly supports | `aies support` | Implemented, experimental, and planned subject kinds with executable entry points and limitations |
+| See how each subject is assessed | `aies assessment-profile list` | Approved Subject Assessment Profiles, executors, evidence adapters, applicability, decision products, and limitations |
+| See what evidence is missing | `aies coverage RUN_OR_AUDIT` | Assessed, partial, missing, unsupported, and not-applicable perspectives plus evidence reuse and prioritized blind spots |
 | Choose a first workflow by decision | `aies starter list` | Prerequisites, commands, artifacts, time/cost class, evidence breadth, limitations, and next expansion |
 | Assess a repository from multiple engineering perspectives | `aies audit . --out aies-repository-report` | Separate practice maturity, architecture, code-quality, correctness-assurance, security, dependency, confidence, limitation, and evidence-linked remediation views |
 | Add advisory repository evidence to CI | `aies ci audit . --rt 2` | Retained JSON/Markdown evidence and annotations without an implicit merge gate |
@@ -86,6 +88,12 @@ platforms are experimental until their dedicated executors and instruments are
 implemented and validated. The generated
 [Subject Support Matrix](platform/SUBJECT_SUPPORT.md) and `aies support` command
 are the canonical public support boundary.
+
+The generated [Subject Assessment Profile reference](platform/ASSESSMENT_PROFILES.md)
+defines the assessment semantics behind that boundary. Every complete
+deployment report and repository assessment bundle now includes an
+**Assessment Coverage and Blind-Spot Report**. Coverage is evidence
+availability—not a score, pass, capability, qualification, or authorization.
 
 ---
 

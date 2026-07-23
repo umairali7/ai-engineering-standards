@@ -1,0 +1,156 @@
+kind: aies-assessment-perspective-registry
+schema: 1
+version: 1.0.0
+status: approved
+governed_by: ADR-0018
+description: >-
+  Subject-neutral dimensions used by Subject Assessment Profiles and
+  Assessment Coverage Matrix products. Presence in this registry does not make
+  a perspective applicable or assessed.
+categories:
+  lifecycle:
+    title: Engineering lifecycle
+    items:
+      - {id: P01, title: Business Strategy}
+      - {id: P02, title: Business Analysis}
+      - {id: P03, title: Product Management}
+      - {id: P04, title: User Experience}
+      - {id: P05, title: Requirements Engineering}
+      - {id: P06, title: Solution Analysis}
+      - {id: P07, title: Architecture}
+      - {id: P08, title: Planning}
+      - {id: P09, title: Engineering}
+      - {id: P10, title: Testing & Quality}
+      - {id: P11, title: Security}
+      - {id: P12, title: DevOps}
+      - {id: P13, title: Release}
+      - {id: P14, title: Operations}
+      - {id: P15, title: Observability}
+      - {id: P16, title: Continuous Improvement}
+  cross_cutting:
+    title: Cross-cutting domains
+    items:
+      - {id: X01, title: Security}
+      - {id: X02, title: Privacy}
+      - {id: X03, title: Compliance}
+      - {id: X04, title: Governance}
+      - {id: X05, title: Risk Management}
+      - {id: X06, title: AI Safety}
+      - {id: X07, title: Human Oversight}
+      - {id: X08, title: Documentation}
+      - {id: X09, title: Knowledge Management}
+      - {id: X10, title: Cost Optimization}
+      - {id: X11, title: Performance}
+      - {id: X12, title: Scalability}
+      - {id: X13, title: Reliability}
+      - {id: X14, title: Accessibility}
+      - {id: X15, title: Sustainability}
+  competencies:
+    title: Competency areas
+    items:
+      - {id: CA-01, title: AI-Native SDLC Foundations}
+      - {id: CA-02, title: Business & Requirements Analysis with AI}
+      - {id: CA-03, title: Product & Experience Definition with AI}
+      - {id: CA-04, title: Architecture & Solution Design}
+      - {id: CA-05, title: AI-Assisted Implementation}
+      - {id: CA-06, title: "Testing, Quality & Evaluation Engineering"}
+      - {id: CA-07, title: Security & Privacy Engineering}
+      - {id: CA-08, title: Delivery & Release Engineering}
+      - {id: CA-09, title: "Operations, Observability & Reliability"}
+      - {id: CA-10, title: Human-AI Collaboration & Oversight}
+      - {id: CA-11, title: Context & Knowledge Engineering}
+      - {id: CA-12, title: "Governance, Risk & AI Safety"}
+  engineering_tasks:
+    title: Engineering tasks
+    items:
+      - {id: ET-01, title: Requirements Analysis}
+      - {id: ET-02, title: Architecture Design}
+      - {id: ET-03, title: API Design}
+      - {id: ET-04, title: Code Generation}
+      - {id: ET-05, title: Refactoring}
+      - {id: ET-06, title: Debugging}
+      - {id: ET-07, title: Testing}
+      - {id: ET-08, title: Documentation}
+      - {id: ET-09, title: Performance Optimization}
+      - {id: ET-10, title: Security Review}
+      - {id: ET-11, title: Database Design}
+      - {id: ET-12, title: Migration}
+      - {id: ET-13, title: Infrastructure}
+      - {id: ET-14, title: Observability}
+      - {id: ET-15, title: Production Operations}
+  risk_tiers:
+    title: Risk tiers
+    items:
+      - {id: RT1, title: Minimal}
+      - {id: RT2, title: Moderate}
+      - {id: RT3, title: Significant}
+      - {id: RT4, title: Critical}
+  autonomy_levels:
+    title: Autonomy levels
+    items:
+      - {id: AL0, title: Manual}
+      - {id: AL1, title: Assisted}
+      - {id: AL2, title: Collaborative}
+      - {id: AL3, title: Delegated}
+      - {id: AL4, title: Autonomous}
+  stakeholders:
+    title: Stakeholders and affected parties
+    items:
+      - {id: SH-01, title: End User}
+      - {id: SH-02, title: Operator}
+      - {id: SH-03, title: Engineer or Maintainer}
+      - {id: SH-04, title: Reviewer or Assessor}
+      - {id: SH-05, title: Decision Owner or Qualification Authority}
+      - {id: SH-06, title: Data Subject}
+      - {id: SH-07, title: Affected Non-User}
+      - {id: SH-08, title: Sponsor or Customer}
+  environments:
+    title: Execution environments
+    items:
+      - {id: ENV-01, title: Local Development}
+      - {id: ENV-02, title: CI or Test}
+      - {id: ENV-03, title: Staging or Pre-production}
+      - {id: ENV-04, title: Production}
+      - {id: ENV-05, title: Hosted or Remote Service}
+      - {id: ENV-06, title: Offline or Isolated}
+      - {id: ENV-07, title: Multi-tenant or Shared}
+  evidence_modalities:
+    title: Evidence modalities
+    items:
+      - {id: EM-01, title: Controlled Scenario, value: controlled-scenario}
+      - {id: EM-02, title: Integrated System, value: integrated-system}
+      - {id: EM-03, title: Field Observation, value: field-observation}
+      - {id: EM-04, title: Repository Static Analysis, value: repository-static-analysis}
+      - {id: EM-05, title: Retained Tool Result, value: retained-tool-result}
+      - {id: EM-06, title: Telemetry, value: telemetry}
+      - {id: EM-07, title: Attestation, value: attestation}
+      - {id: EM-08, title: Human Rating, value: human-rating}
+      - {id: EM-09, title: Automated Rating, value: automated-rating}
+      - {id: EM-10, title: Environment Fingerprint, value: environment-fingerprint}
+      - {id: EM-11, title: Lifecycle Transition, value: lifecycle-transition}
+  operating_conditions:
+    title: Operating and behavioral conditions
+    items:
+      - {id: OC-01, title: Nominal Operation}
+      - {id: OC-02, title: Boundary and Limit Conditions}
+      - {id: OC-03, title: Invalid Input}
+      - {id: OC-04, title: Misuse or Abuse}
+      - {id: OC-05, title: Adversarial or Hostile Input}
+      - {id: OC-06, title: Dependency Failure or Partial Outage}
+      - {id: OC-07, title: Recovery or Rollback}
+      - {id: OC-08, title: Long-running or Saturated Operation}
+      - {id: OC-09, title: Drift or Changed Environment}
+  decision_products:
+    title: Decision products
+    items:
+      - {id: DP-01, title: Engineering Evaluation}
+      - {id: DP-02, title: Engineering Capability Matrix}
+      - {id: DP-03, title: Engineering Fit Guidance}
+      - {id: DP-04, title: Formal Qualification Evidence}
+      - {id: DP-05, title: Repository Practice Conformance}
+      - {id: DP-06, title: Repository Engineering Analysis}
+      - {id: DP-07, title: Evidence-Linked Remediation Plan}
+      - {id: DP-08, title: Compatible Evidence Comparison}
+      - {id: DP-09, title: Executive Summary}
+      - {id: DP-10, title: Ongoing Monitoring and Reassessment}
+      - {id: DP-11, title: Assessment Coverage and Blind-Spot Report}

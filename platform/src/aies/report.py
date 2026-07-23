@@ -236,7 +236,8 @@ def render_markdown(
           "(engineering-assessment-result.md) · [Engineering Capability Matrix]"
           "(engineering-capability-matrix.md) · [Engineering Fit Guidance]"
           "(engineering-fit-guidance.md) · [Executive Summary]"
-          "(executive-summary.md).")
+          "(executive-summary.md) · [Assessment Coverage & Blind Spots]"
+          "(assessment-coverage.md).")
         a("")
         a("---")
         provenance = view["provenance"]
@@ -398,7 +399,8 @@ def render_markdown(
       "[Engineering Capability Matrix](engineering-capability-matrix.md).")
     a("")
     a("Related decision products: [Executive Summary](executive-summary.md) · "
-      "[Deployment Guidance](deployment-guidance.md).")
+      "[Deployment Guidance](deployment-guidance.md) · "
+      "[Assessment Coverage & Blind Spots](assessment-coverage.md).")
     a("")
 
     a("---")
@@ -418,9 +420,9 @@ def write_reports(run_id: str) -> dict[str, str]:
     part of the evidence-package presentation bundle alongside the Markdown,
     JSON, and standalone Engineering Capability Matrix (ECM) views.
     """
-    from . import (decision, diagnostics, ecm, engineering_assessment,
-                   executive_summary, guidance, report_html, report_view,
-                   run_mode)
+    from . import (assessment_coverage, decision, diagnostics, ecm,
+                   engineering_assessment, executive_summary, guidance,
+                   report_html, report_view, run_mode)
 
     rdir = workspace.run_dir(run_id)
     matrix = ecm.engineering_capability_matrix(run_id)
@@ -513,6 +515,11 @@ def write_reports(run_id: str) -> dict[str, str]:
     workspace.write_view(
         diagnostic_paths["diagnostics_html"], diagnostics.render_html(diagnostic_summary))
 
+    coverage_matrix = assessment_coverage.for_run(
+        run_id, capability_matrix=matrix)
+    coverage_paths = assessment_coverage.write_run_artifacts(
+        run_id, coverage_matrix)
+
     paths = {
         "markdown": str(rdir / "report.md"), "json": str(rdir / "report.json"),
         "html": str(html_path), "report_view": str(report_view_path),
@@ -522,6 +529,7 @@ def write_reports(run_id: str) -> dict[str, str]:
            for format, path in guidance_paths.items()},
         **{key: str(path) for key, path in executive_paths.items()},
         **{key: str(path) for key, path in diagnostic_paths.items()},
+        **coverage_paths,
     }
     bundle = {
         "kind": "aies-report-bundle", "report_bundle_schema": 1,
@@ -544,6 +552,9 @@ def write_reports(run_id: str) -> dict[str, str]:
                 else "engineering fit; no deployment authority"),
             "executive_summary": "leadership",
             "grounding_diagnostics": "source-separated informational reviewer observations",
+            "assessment_coverage": (
+                "evidence availability, applicability, reuse, and blind spots; "
+                "not subject quality"),
         },
     }
     bundle_path = rdir / "report-bundle.json"

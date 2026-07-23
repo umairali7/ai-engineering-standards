@@ -223,7 +223,9 @@ def test_repository_bundle_contains_linked_markdown_json_and_html(
         _repository(tmp_path), record=False, engineering_analysis=True)
     result["audit_id"] = "audit-fixture"
     paths = audit.write_bundle(result, tmp_path / "bundle")
-    assert set(paths) == {"json", "markdown", "html", "bundle"}
+    assert set(paths) == {
+        "json", "markdown", "html",
+        "coverage_markdown", "coverage_json", "coverage_html", "bundle"}
     assert "Repository Engineering Analysis" in Path(
         paths["markdown"]).read_text(encoding="utf-8")
     html = Path(paths["html"]).read_text(encoding="utf-8")
@@ -232,6 +234,12 @@ def test_repository_bundle_contains_linked_markdown_json_and_html(
     bundle = json.loads(Path(paths["bundle"]).read_text(encoding="utf-8"))
     assert bundle["audit_id"] == "audit-fixture"
     assert bundle["artifacts"]["html"] == "repository-assessment.html"
+    coverage = json.loads(
+        Path(paths["coverage_json"]).read_text(encoding="utf-8"))
+    assert coverage["schema"] == "aies-assessment-coverage/v1"
+    assert coverage["profile"]["id"] == "SAP-02"
+    assert coverage["summary"]["not-assessed"] > 0
+    assert coverage["claim_boundary"].startswith("Coverage describes")
 
 
 def test_repository_assessments_compare_without_fake_winner(

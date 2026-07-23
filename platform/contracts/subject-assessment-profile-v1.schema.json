@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aies.dev/contracts/subject-assessment-profile-v1.schema.json",
+  "title": "AIES Subject Assessment Profile v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind", "schema", "id", "title", "version", "status", "governed_by",
+    "subject_kinds", "descriptor_schema", "fingerprint_change_triggers",
+    "execution", "instruments", "scoring", "human_review",
+    "decision_products", "applicability", "limitations"
+  ],
+  "properties": {
+    "kind": {"const": "aies-subject-assessment-profile"},
+    "schema": {"const": "aies-subject-assessment-profile/v1"},
+    "id": {"type": "string", "pattern": "^SAP-[0-9]{2}$"},
+    "title": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "status": {"enum": ["draft", "review", "approved"]},
+    "governed_by": {"type": "string", "minLength": 1},
+    "subject_kinds": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"type": "string"}
+    },
+    "descriptor_schema": {"const": "aies-subject-descriptor/v1"},
+    "fingerprint_change_triggers": {
+      "type": "array", "minItems": 1, "items": {"type": "string"}
+    },
+    "execution": {
+      "type": "object",
+      "required": ["executors", "evidence_adapters"]
+    },
+    "instruments": {
+      "type": "object",
+      "required": ["ids", "limitations"]
+    },
+    "scoring": {
+      "type": "object",
+      "required": ["schemes", "minimums", "gates"]
+    },
+    "human_review": {
+      "type": "object",
+      "required": ["engineering_evaluation", "formal_qualification"]
+    },
+    "decision_products": {
+      "type": "array", "items": {"type": "string"}, "uniqueItems": true
+    },
+    "applicability": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["default"],
+        "properties": {
+          "default": {"$ref": "#/$defs/applicabilityCell"},
+          "overrides": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/$defs/applicabilityCell"
+            }
+          }
+        }
+      }
+    },
+    "limitations": {
+      "type": "array", "minItems": 1, "items": {"type": "string"}
+    }
+  },
+  "$defs": {
+    "applicabilityCell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "rationale"],
+      "properties": {
+        "status": {
+          "enum": ["applicable", "not-applicable", "unsupported"]
+        },
+        "rationale": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

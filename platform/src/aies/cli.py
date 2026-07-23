@@ -711,6 +711,86 @@ def cmd_support(args) -> int:
         return 2
 
 
+def cmd_assessment_profile(args) -> int:
+    """Inspect or validate governed Subject Assessment Profiles."""
+    from . import assessment_profiles
+    try:
+        if args.profile_cmd == "validate":
+            result = assessment_profiles.describe()
+            text = (
+                "Subject Assessment Profiles: PASS\n"
+                f"  profiles: {len(result['profiles'])}\n"
+                f"  registry: {result['perspective_registry']['version']} "
+                f"({result['perspective_registry']['status']})\n"
+                "All declared applicability cells have an explicit rationale."
+            )
+        else:
+            result = assessment_profiles.describe(
+                args.reference if args.profile_cmd == "show" else None)
+            text = assessment_profiles.render(result)
+        _out(result, args.json, text)
+        return 0
+    except assessment_profiles.AssessmentProfileError as e:
+        return _command_failure(
+            e,
+            operation="subject-assessment-profile-discovery",
+            args=args,
+            preserved_work_status="none",
+            preserved_work_detail=(
+                "Profile validation is read-only; no workspace state changed."),
+            recovery_command="aies assessment-profile list",
+            duplicate_cost_detail="Profile discovery makes no model calls.",
+        )
+
+
+def cmd_coverage(args) -> int:
+    """Render evidence coverage, applicability, reuse, and blind spots."""
+    from . import adoption, assessment_coverage, workspace
+    try:
+        reference = (
+            adoption.resolve_run("latest").name
+            if args.reference == "latest" else args.reference)
+        matrix = assessment_coverage.for_reference(reference)
+        if args.write:
+            audit_path = (
+                workspace.root() / "audits" / f"{reference}.json")
+            if audit_path.is_file():
+                if not args.out:
+                    raise assessment_coverage.CoverageError(
+                        "--out DIR is required when writing repository "
+                        "assessment coverage")
+                paths = assessment_coverage.write_repository_artifacts(
+                    workspace.read_json(audit_path), args.out, matrix)
+            else:
+                paths = assessment_coverage.write_run_artifacts(
+                    reference, matrix)
+            result = {**matrix, "written_artifacts": paths}
+        else:
+            result = matrix
+        if args.format == "html":
+            text = assessment_coverage.render_html(matrix)
+        elif args.format == "json":
+            text = json.dumps(result, indent=2)
+        else:
+            text = assessment_coverage.render_markdown(matrix)
+        _out(result, args.json or args.format == "json", text)
+        return 0
+    except (adoption.AdoptionError, assessment_coverage.CoverageError,
+            FileNotFoundError,
+            ValueError) as e:
+        return _command_failure(
+            e,
+            operation="assessment-coverage",
+            args=args,
+            preserved_work_status="none",
+            preserved_work_detail=(
+                "Coverage analysis is read-only unless --write is supplied; "
+                "canonical evidence was not changed."),
+            recovery_command="aies runs list",
+            duplicate_cost_detail="Coverage analysis makes no model calls.",
+        )
+
+
 def cmd_starter(args) -> int:
     """List or explain a decision-oriented first workflow."""
     from . import decision_starters
@@ -2986,13 +3066,15 @@ TRY AIES NOW
   aies snapshot latest                         evidence -> capability -> confidence -> decisions
   aies overview                                shared CLI/API/dashboard workspace summary
   aies support                                 implemented vs experimental vs planned subjects
+  aies assessment-profile list                 assessment semantics by subject kind
+  aies coverage latest                         assessed, missing, unsupported, and reused evidence
   aies starter list                            choose a decision-led first workflow
   aies starter show understand-deployment      exact commands, limits, time/cost class
   aies open latest                             open the result
 
 commands by stage (each group alphabetical):
-  setup & discovery   completion · demo · deployment · discover · doctor · init · runtime · starter · support
-  engineering eval    assessment · benchmark · capabilities · compare · evaluate · export · import · open · qualify · review · runs · score · snapshot · transcript
+  setup & discovery   assessment-profile · completion · demo · deployment · discover · doctor · init · runtime · starter · support
+  engineering eval    assessment · benchmark · capabilities · compare · coverage · evaluate · export · import · open · qualify · review · runs · score · snapshot · transcript
   interoperability    bridge inspect-import · bridge sarif-import
   judging             judge available · judge history · judge list   (the judge pool + track record)
   governance & audit  audit · conform · corpus · dashboard · grant · overview · qualification · report · serve · verify
@@ -3264,6 +3346,44 @@ def build_parser() -> argparse.ArgumentParser:
         "--status", choices=("implemented", "experimental", "planned"),
         default=None, help="filter by support status")
     support.set_defaults(func=cmd_support)
+
+    assessment_profile = common(sub.add_parser(
+        "assessment-profile",
+        help="inspect governed subject profiles and applicability"))
+    assessment_profile_sub = assessment_profile.add_subparsers(
+        dest="profile_cmd", required=True)
+    assessment_profile_list = assessment_profile_sub.add_parser(
+        "list", help="list shipped Subject Assessment Profiles")
+    assessment_profile_list.add_argument(
+        "--json", action="store_true", help="machine-readable output")
+    assessment_profile_show = assessment_profile_sub.add_parser(
+        "show", help="show one profile by SAP code or subject kind")
+    assessment_profile_show.add_argument(
+        "reference", help="profile code (for example SAP-01) or subject kind")
+    assessment_profile_show.add_argument(
+        "--json", action="store_true", help="machine-readable output")
+    assessment_profile_validate = assessment_profile_sub.add_parser(
+        "validate",
+        help="validate profiles, taxonomy alignment, and applicability rationale")
+    assessment_profile_validate.add_argument(
+        "--json", action="store_true", help="machine-readable output")
+    assessment_profile.set_defaults(func=cmd_assessment_profile)
+
+    coverage = common(sub.add_parser(
+        "coverage",
+        help="show evidence coverage, reuse, and blind spots for a run or audit"))
+    coverage.add_argument(
+        "reference", help="run id or recorded repository audit id")
+    coverage.add_argument(
+        "--format", choices=("markdown", "json", "html"),
+        default="markdown", help="rendering format (default: markdown)")
+    coverage.add_argument(
+        "--write", action="store_true",
+        help="write coverage artifacts without changing canonical evidence")
+    coverage.add_argument(
+        "--out", metavar="DIR",
+        help="immutable output directory required with --write for an audit")
+    coverage.set_defaults(func=cmd_coverage)
 
     starter = common(sub.add_parser(
         "starter",

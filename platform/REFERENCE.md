@@ -24,6 +24,8 @@ generated [CLI Reference](CLI_REFERENCE.md); for the specification see
 | **Runtime / Adapter** | The vendor-aware code that talks to a deployment (`ollama`, `openai-compat`, `mock`, …). The **only** vendor-specific layer (D9); frozen contract v1.0 (semantic core stable, additive surface). |
 | **Profile** | A weighting preset — per-area and per-dimension emphasis. Versioned (semver). Cannot express gates or minimums (D3). |
 | **Assessment** | Declarative composition ([ADR-0005](../adr/ADR-0005-Assessment-as-Code.md)): competencies, mandatory vs advisory status, weights, profile, risk tier, and sampling. It drives engineering evaluation by default and formal qualification only when explicitly requested. |
+| **Subject Assessment Profile (SAP)** | Approved subject-specific assessment semantics: descriptor, change triggers, executor/adapters, instruments, scoring meaning, review boundary, decision products, limitations, and complete perspective applicability. |
+| **Assessment Coverage Matrix** | Informational evidence-availability view over a SAP: assessed, partial, missing, unsupported, and not-applicable cells plus evidence-identity reuse and blind spots. It is not a quality or capability score. |
 | **Competency Area (CA-01…CA-12)** | The twelve areas of AI-engineering capability (SDLC foundations, implementation, testing, security, governance, …). |
 | **Risk Tier (RT1 — Minimal through RT4 — Critical)** | The stakes of the scope. Higher tiers demand higher gates and larger samples. |
 | **Dimension (EV1–EV6)** | The six scored qualities: Correctness, Completeness, Safety & Security, Maintainability, Efficiency, Traceability. 0–4 integer anchors. |
@@ -50,6 +52,8 @@ Every artifact carries a schema version; envelopes are field-append-only
 |---|---|---|---|
 | Assessment | `schema` | `1` | authored (`assessments/*.yaml`) |
 | Profile | `version` | semver | authored (`profiles/*.yaml`) |
+| Subject Assessment Profile | `schema` | `aies-subject-assessment-profile/v1` | authored (`subject_profiles/*.yaml`) |
+| Assessment Coverage Matrix | `schema` | `aies-assessment-coverage/v1` | complete deployment/repository bundle or `aies coverage` |
 | Evidence Package | `evidence_schema` | `6` | `qualify --resume` / `aggregate` |
 | Human Rater Record | `rater_schema` | `1` | `rater register` |
 | Qualification Record | `qualification_schema` | `2` | `grant` (human authority) |
@@ -93,7 +97,7 @@ not imply one universal mutation rule.
 | Append-only record | responses, rating observations, resolutions, human-rater records, Qualification Records and lifecycle events, audit records, explicitly saved comparison records, run-import receipts, preserved source wrappers | Created once; replacement is rejected. Corrections are new records or events. |
 | Derived canonical snapshot | `evidence-package.json`, `assessment-result.json`, `review-package.json` | Recomputed only when its recorded source evidence changes; the schema and source provenance remain explicit. |
 | Mutable working state | `manifest.json`, `scoresheet.json`, `progress.json`, latest fingerprint | May be replaced by its owning workflow while work progresses. |
-| Regenerable view | Markdown/JSON/HTML reports, `report-view.json`, Engineering Assessment Result, ECM, Engineering Fit/Deployment Guidance, Executive Summary, Grounding Diagnostics, dashboard, bundle index | May be replaced at any time from canonical records; never treated as source evidence. |
+| Regenerable view | Markdown/JSON/HTML reports, `report-view.json`, Engineering Assessment Result, ECM, Engineering Fit/Deployment Guidance, Executive Summary, Grounding Diagnostics, Assessment Coverage, dashboard, bundle index | May be replaced at any time from canonical records; never treated as source evidence. |
 | Mutable configuration | deployment registry entries | Updated only through the registry workflow; identity changes trigger qualification verification. |
 
 `workspace.artifact_class`, `workspace.write_json`, and
@@ -112,6 +116,7 @@ append-only records. Grouped as in `aies --help`.
 | `doctor` | Validate and fingerprint the environment, detect installed runtimes, and report archive/cache/misplaced-view workspace debris without deleting anything | `aies doctor --json` |
 | `discover` | Register the deployments each runtime serves (idempotent) | `aies discover` |
 | `support` | Show implemented, experimental, and planned subject kinds from the shipped registry | `aies support mcp-server` |
+| `assessment-profile list/show/validate` | Inspect approved subject-specific assessment semantics and validate all applicability rationale | `aies assessment-profile show SAP-01` |
 | `starter list` / `starter show` | Choose a decision-led workflow and inspect its prerequisites, sequence, evidence, time/cost class, artifacts, and limitations without executing it | `aies starter show understand-deployment` |
 | `deployment` / `registry` | Manage deployment entries: add/show/update/remove/`verify-artifact` | `aies deployment verify-artifact local-qwen --artifact model.bin` |
 | `runtime` | Inspect installed runtime adapters | `aies runtime list` |
@@ -182,6 +187,8 @@ decider** — it serves stored results verbatim and computes no outcome
 GET /health                    service + version
 GET /overview                  shared versioned workspace summary
 GET /support                   implemented/experimental/planned subject support
+GET /assessment-profiles       approved Subject Assessment Profiles
+GET /assessment-profiles/{id}  one profile by SAP id or subject kind
 GET /deployments               registered deployments
 GET /runs                      run history
 GET /audits                    repository assessment history
@@ -204,6 +211,7 @@ GET /runs/{id}/guidance        stored Engineering Fit or Deployment Guidance
 GET /runs/{id}/executive-summary
                                stored leadership-facing summary
 GET /runs/{id}/diagnostics     stored grounding/hallucination diagnostics
+GET /runs/{id}/coverage        stored assessment coverage and blind spots
 GET /assessments               shipped assessments
 GET /qualifications            Qualification Records
 GET /conformance               decision-engine conformance report

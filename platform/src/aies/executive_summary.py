@@ -181,6 +181,7 @@ def render_markdown(summary: dict) -> str:
     lines.extend([
         "- [Engineering Capability Matrix](engineering-capability-matrix.html) — task strengths and gaps.",
         "- [Grounding Diagnostics](grounding-diagnostics.html) — hallucination and fabrication observations.",
+        "- [Assessment Coverage & Blind Spots](assessment-coverage.html) — evidence availability, reuse, and missing perspectives; not a score.",
         ("- [Engineering Fit Guidance](engineering-fit-guidance.html) — "
          "evidence-derived fit; no deployment authority." if fit_mode else
          "- [Deployment Guidance](deployment-guidance.html) — "
@@ -217,6 +218,7 @@ def render_html(summary: dict) -> str:
         ("Engineering Evaluation Report", "report.html"),
         ("Engineering Capability Matrix", "engineering-capability-matrix.html"),
         ("Grounding Diagnostics", "grounding-diagnostics.html"),
+        ("Assessment Coverage & Blind Spots", "assessment-coverage.html"),
         (("Engineering Fit Guidance", "engineering-fit-guidance.html")
          if fit_mode else ("Deployment Guidance", "deployment-guidance.html")),
     ]

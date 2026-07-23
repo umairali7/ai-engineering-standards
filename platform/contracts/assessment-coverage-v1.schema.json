@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aies.dev/contracts/assessment-coverage-v1.schema.json",
+  "title": "AIES Assessment Coverage Matrix v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind", "schema", "profile", "subject", "evidence_scope", "categories",
+    "summary", "blind_spots", "evidence_reuse", "limitations",
+    "claim_boundary"
+  ],
+  "properties": {
+    "kind": {"const": "aies-assessment-coverage-matrix"},
+    "schema": {"const": "aies-assessment-coverage/v1"},
+    "profile": {"type": "object"},
+    "subject": {"type": "object"},
+    "evidence_scope": {"type": "object"},
+    "categories": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["title", "cells", "summary"],
+        "properties": {
+          "title": {"type": "string"},
+          "cells": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id", "title", "applicability", "status", "rationale",
+                "evidence_refs", "evidence_count"
+              ],
+              "properties": {
+                "id": {"type": "string", "minLength": 1},
+                "title": {"type": "string", "minLength": 1},
+                "value": {"type": "string"},
+                "applicability": {
+                  "enum": ["applicable", "not-applicable", "unsupported"]
+                },
+                "status": {
+                  "enum": [
+                    "assessed", "partially-assessed", "not-assessed",
+                    "not-applicable", "unsupported"
+                  ]
+                },
+                "rationale": {"type": "string", "minLength": 1},
+                "evidence_refs": {
+                  "type": "array", "uniqueItems": true,
+                  "items": {"type": "string"}
+                },
+                "evidence_count": {"type": "integer", "minimum": 0}
+              }
+            }
+          },
+          "summary": {"type": "object"}
+        }
+      }
+    },
+    "summary": {"type": "object"},
+    "blind_spots": {"type": "array", "items": {"type": "object"}},
+    "evidence_reuse": {"type": "object"},
+    "limitations": {"type": "array", "items": {"type": "string"}},
+    "claim_boundary": {"type": "string", "minLength": 1}
+  }
+}

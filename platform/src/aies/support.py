@@ -49,7 +49,8 @@ def validate(data: object) -> list[str]:
     contracts = data.get("contracts")
     required_contracts = {
         "subject_descriptor", "subject_executor",
-        "evidence_event", "evidence_adapter",
+        "evidence_event", "evidence_adapter", "subject_assessment_profile",
+        "assessment_coverage",
     }
     if not isinstance(contracts, dict):
         errors.append("contracts must be a mapping")
@@ -89,7 +90,9 @@ def validate(data: object) -> list[str]:
                 if not subject.get(field):
                     errors.append(
                         f"{where}.{field} is required for implemented support")
-            for field in ("executor_contract", "evidence_event_contract"):
+            for field in (
+                    "executor_contract", "evidence_event_contract",
+                    "assessment_profile_contract"):
                 if not subject.get(field):
                     errors.append(f"{where}.{field} is required for implemented support")
     missing = sorted(REQUIRED_SUBJECTS - seen)

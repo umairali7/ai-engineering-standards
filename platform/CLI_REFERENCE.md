@@ -228,6 +228,91 @@ validate an assessment (name or path)
 | `<NAME>` | required | assessment name or YAML path | — |
 | `--json` | optional | emit machine-readable JSON | — |
 
+## `aies assessment-profile`
+
+inspect governed subject profiles and applicability
+
+**Usage:** `aies assessment-profile [-h] [--json] {list,show,validate} ...`
+
+**Prerequisites:** AIES is installed; no workspace, endpoint, or credential is required.
+
+**Result and side effects:** Lists, shows, or validates approved subject-specific assessment semantics, complete perspective applicability, executors, evidence adapters, decision products, and limitations.
+
+**Recommended next step:** Select an implemented profile, then collect evidence through its declared entry point; unsupported perspectives remain explicit roadmap gaps.
+
+### Subcommands
+
+| Subcommand | What it does |
+|---|---|
+| `list` | list shipped Subject Assessment Profiles |
+| `show` | show one profile by SAP code or subject kind |
+| `validate` | validate profiles, taxonomy alignment, and applicability rationale |
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies assessment-profile list`
+
+list shipped Subject Assessment Profiles
+
+**Usage:** `aies assessment-profile list [-h] [--json]`
+
+**Prerequisites:** AIES is installed; no workspace, endpoint, or credential is required.
+
+**Result and side effects:** Lists, shows, or validates approved subject-specific assessment semantics, complete perspective applicability, executors, evidence adapters, decision products, and limitations.
+
+**Recommended next step:** Select an implemented profile, then collect evidence through its declared entry point; unsupported perspectives remain explicit roadmap gaps.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies assessment-profile show`
+
+show one profile by SAP code or subject kind
+
+**Usage:** `aies assessment-profile show [-h] [--json] reference`
+
+**Prerequisites:** AIES is installed; no workspace, endpoint, or credential is required.
+
+**Result and side effects:** Lists, shows, or validates approved subject-specific assessment semantics, complete perspective applicability, executors, evidence adapters, decision products, and limitations.
+
+**Recommended next step:** Select an implemented profile, then collect evidence through its declared entry point; unsupported perspectives remain explicit roadmap gaps.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<REFERENCE>` | required | profile code (for example SAP-01) or subject kind | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies assessment-profile validate`
+
+validate profiles, taxonomy alignment, and applicability rationale
+
+**Usage:** `aies assessment-profile validate [-h] [--json]`
+
+**Prerequisites:** AIES is installed; no workspace, endpoint, or credential is required.
+
+**Result and side effects:** Lists, shows, or validates approved subject-specific assessment semantics, complete perspective applicability, executors, evidence adapters, decision products, and limitations.
+
+**Recommended next step:** Select an implemented profile, then collect evidence through its declared entry point; unsupported perspectives remain explicit roadmap gaps.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
 ## `aies audit`
 
 assess repository-practice maturity and read-only engineering evidence across architecture, quality, correctness, security, testing, dependencies, and remediation
@@ -764,6 +849,29 @@ inventory pending scenario design reviews, run deterministic structural prefligh
 | `-h`, `--help` | optional | show this help message and exit | — |
 | `--root` | optional | competencies directory (default: shipped suites) | — |
 | `--json` | optional | emit machine-readable JSON | — |
+
+## `aies coverage`
+
+show evidence coverage, reuse, and blind spots for a run or audit
+
+**Usage:** `aies coverage [-h] [--json] [--format {markdown,json,html}] [--write] [--out DIR] reference`
+
+**Prerequisites:** A completed deployment run or recorded repository audit exists. Repository artifact writing also requires a new output directory.
+
+**Result and side effects:** Builds a non-decisional matrix of assessed, partially assessed, not assessed, unsupported, and not-applicable perspectives; unique evidence identities and reuse are disclosed separately.
+
+**Recommended next step:** Collect direct evidence for the highest-priority blind spots, or use the report to limit claims to what was actually observed.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<REFERENCE>` | required | run id or recorded repository audit id | — |
+| `--format` | optional | rendering format (default: markdown) | choices: `markdown`, `json`, `html`; default: `markdown` |
+| `--write` | optional | write coverage artifacts without changing canonical evidence | — |
+| `--out` | optional | immutable output directory required with --write for an audit | — |
 
 ## `aies dashboard`
 

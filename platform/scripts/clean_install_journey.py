@@ -68,6 +68,7 @@ def main() -> int:
                 f"{sorted(required - deployment_ids)}")
 
         _run(["support", "ai-deployment", "--json"], env)
+        _run(["assessment-profile", "validate", "--json"], env)
         _run(["starter", "show", "understand-deployment", "--json"], env)
         _run([
             "evaluate", "mock-mock-small",
@@ -97,6 +98,12 @@ def main() -> int:
                 or not run_view.get("artifacts", {}).get(
                     "engineering_capability_matrix", {}).get("available")):
             raise RuntimeError("run detail view did not expose the completed bundle")
+        coverage = json.loads(
+            _run(["coverage", run_id, "--format", "json"], env).stdout)
+        if (coverage.get("schema") != "aies-assessment-coverage/v1"
+                or coverage.get("profile", {}).get("id") != "SAP-01"):
+            raise RuntimeError(
+                "installed coverage command did not expose the SAP-01 matrix")
         opened = json.loads(
             _run(["open", run_id, "--no-browser", "--json"], env).stdout)
         if not Path(opened["view"]).is_file():

@@ -94,6 +94,41 @@ versioned registry as the `/support` API and generated
 [Subject Support Matrix](SUBJECT_SUPPORT.md), distinguishing executable
 support from experimental contracts and planned subject architecture.
 
+Then inspect the governed assessment semantics for the subject:
+
+```text
+aies assessment-profile list
+aies assessment-profile show SAP-01       # AI deployment
+aies assessment-profile show repository   # SAP-02
+aies assessment-profile validate
+```
+
+A Subject Assessment Profile (SAP) declares the subject descriptor,
+change triggers, executor and evidence adapters, instruments, scoring meaning,
+human-review boundary, decision products, limitations, and an explicit
+applicability rationale for every governed perspective. ADR-0018 governs this
+contract. A profile being approved does not mean a particular subject was
+assessed or passed.
+
+After a run or recorded repository audit, inspect what the evidence actually
+covers:
+
+```text
+aies coverage RUN_ID
+aies coverage RUN_ID --format json
+aies coverage RUN_ID --write
+aies coverage AUDIT_ID --write --out NEW_DIRECTORY
+```
+
+The matrix distinguishes **assessed**, **partially assessed**, **not
+assessed**, **unsupported**, and **not applicable**. It counts unique evidence
+identities separately from cell references so one observation can inform
+multiple views without masquerading as multiple independent observations.
+Report bundles generate Markdown, JSON, and HTML coverage artifacts
+automatically. These artifacts report availability and blind spots only; they
+do not measure subject quality or create qualification or deployment
+authority.
+
 If the subject is supported but the command sequence is unfamiliar, use
 `aies starter list` and `aies starter show <id>`. The versioned starters begin
 with the decision being made and state prerequisites, time/cost class, evidence

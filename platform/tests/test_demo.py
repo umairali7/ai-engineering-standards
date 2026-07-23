@@ -88,6 +88,8 @@ def test_offline_end_to_end_demo(demo_ws, monkeypatch):
                  "executive-summary.json", "executive-summary.html",
                  "grounding-diagnostics.md", "grounding-diagnostics.json",
                  "grounding-diagnostics.html",
+                 "assessment-coverage.md", "assessment-coverage.json",
+                 "assessment-coverage.html",
                  "report-bundle.json"):
         assert (runs[-1] / name).exists(), name
     executive = json.loads(
