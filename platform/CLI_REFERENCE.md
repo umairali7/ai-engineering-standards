@@ -858,9 +858,9 @@ show evidence coverage, reuse, and blind spots for a run or audit
 
 **Prerequisites:** A completed deployment run or recorded repository audit exists. Repository artifact writing also requires a new output directory.
 
-**Result and side effects:** Builds a non-decisional matrix of assessed, partially assessed, not assessed, unsupported, and not-applicable perspectives; unique evidence identities and reuse are disclosed separately.
+**Result and side effects:** Builds a non-decisional matrix of assessed, partially assessed, not assessed, unsupported, and not-applicable perspectives; unique evidence identities and reuse are disclosed separately. `--write` also emits an unassigned Evidence-Linked Remediation and Monitoring Plan.
 
-**Recommended next step:** Collect direct evidence for the highest-priority blind spots, or use the report to limit claims to what was actually observed.
+**Recommended next step:** Use the prioritized acceptance signals and exact reassessment command; a named owner must separately accept, defer, or close any action.
 
 ### Parameters and options
 
@@ -2233,6 +2233,100 @@ show one candidate deployment
 | `-h`, `--help` | optional | show this help message and exit | — |
 | `<MODEL>` | required | deployment id, or an unambiguous model name | — |
 | `--json` | optional | emit machine-readable JSON | — |
+
+## `aies remediation`
+
+inspect or disposition evidence-linked actions without changing scores
+
+**Usage:** `aies remediation [-h] [--json] {show,history,update} ...`
+
+**Prerequisites:** A completed run or recorded repository audit has a current coverage plan. Updates require a stable ACT-* id and a named accountable owner and authority.
+
+**Result and side effects:** Shows deterministic evidence-linked actions, reads append-only disposition history, or appends a human workflow disposition. It never changes canonical evidence, scores, qualification, or deployment authority.
+
+**Recommended next step:** Collect the stated acceptance evidence and rerun the exact reassessment command; use closed or mitigated only with explicit evidence references, which this command records but does not independently verify.
+
+### Subcommands
+
+| Subcommand | What it does |
+|---|---|
+| `history` | show append-only named-human action dispositions |
+| `show` | show the current remediation and monitoring plan |
+| `update` | append a named-human action workflow disposition |
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies remediation history`
+
+show append-only named-human action dispositions
+
+**Usage:** `aies remediation history [-h] [--json] reference`
+
+**Prerequisites:** The reference may have zero or more append-only remediation dispositions.
+
+**Result and side effects:** Lists named-human workflow events in durable order without recomputing or changing assessment evidence.
+
+**Recommended next step:** Inspect the current merged plan with `aies remediation show REFERENCE`.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<REFERENCE>` | required | run id, repository audit id, or latest | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies remediation show`
+
+show the current remediation and monitoring plan
+
+**Usage:** `aies remediation show [-h] [--format {markdown,json,html}] [--json] reference`
+
+**Prerequisites:** A completed run or recorded repository audit exists.
+
+**Result and side effects:** Renders prioritized gap/finding actions, ownership state, monitoring links, acceptance signals, and reassessment commands.
+
+**Recommended next step:** Select an ACT-* id and use `aies remediation update` only when a named owner is ready to record a disposition.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<REFERENCE>` | required | run id, repository audit id, or latest | — |
+| `--format` | optional | rendering format (default: markdown) | choices: `markdown`, `json`, `html`; default: `markdown` |
+| `--json` | optional | machine-readable output | — |
+
+## `aies remediation update`
+
+append a named-human action workflow disposition
+
+**Usage:** `aies remediation update [-h] --status {accepted,in-progress,mitigated,closed,deferred} --owner OWNER --authority AUTHORITY --note NOTE [--evidence EVIDENCE] [--json] reference action_id`
+
+**Prerequisites:** The ACT-* id exists in the current generated plan; the named owner has disposition authority. Mitigated or closed states require at least one explicit evidence reference.
+
+**Result and side effects:** Appends a human-attributed workflow event and refreshes run views; repository bundles remain immutable and must be written to a new directory.
+
+**Recommended next step:** Verify the merged plan, retain closure evidence, and execute the action's exact reassessment command after material change.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<REFERENCE>` | required | run id, repository audit id, or latest | — |
+| `<ACTION_ID>` | required | stable ACT-* id from remediation show | — |
+| `--status` | required | new workflow status; mitigated/closed require --evidence | choices: `accepted`, `in-progress`, `mitigated`, `closed`, `deferred` |
+| `--owner` | required | named accountable action owner | — |
+| `--authority` | required | basis for this person's action-disposition authority | — |
+| `--note` | required | reason or disposition note | — |
+| `--evidence` | optional | closure/mitigation evidence reference; repeat as needed | repeatable |
+| `--json` | optional | machine-readable output | — |
 
 ## `aies report`
 

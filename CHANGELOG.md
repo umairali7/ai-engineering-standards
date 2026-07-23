@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Cross-subject remediation and monitoring plans**: every completed
+  deployment or repository coverage product now emits linked Markdown, JSON,
+  and HTML `aies-evidence-linked-remediation-plan/v1` artifacts. Stable
+  priority-sorted actions preserve the originating gap or engineering finding,
+  direct and collection evidence identities, acceptance signal, field or
+  telemetry linkage, reassessment trigger, and exact rerun command. Every
+  generated action starts open and unassigned; the product cannot assign work,
+  accept risk, prove remediation, close findings, alter scores, qualify a
+  subject, or authorize deployment. Report bundles, run views, the read-only
+  `/runs/{id}/remediation` endpoint, profile applicability, schemas, CLI
+  guidance, and the offline demo expose the same boundary.
 - **Approved subject-specific assessment semantics and evidence coverage**:
   accepted ADR-0018 adds the versioned Subject Assessment Profile contract,
   governed perspective registry, and approved SAP-01 — AI Deployment

@@ -225,7 +225,9 @@ def test_repository_bundle_contains_linked_markdown_json_and_html(
     paths = audit.write_bundle(result, tmp_path / "bundle")
     assert set(paths) == {
         "json", "markdown", "html",
-        "coverage_markdown", "coverage_json", "coverage_html", "bundle"}
+        "coverage_markdown", "coverage_json", "coverage_html",
+        "remediation_markdown", "remediation_json", "remediation_html",
+        "bundle"}
     assert "Repository Engineering Analysis" in Path(
         paths["markdown"]).read_text(encoding="utf-8")
     html = Path(paths["html"]).read_text(encoding="utf-8")

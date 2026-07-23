@@ -366,6 +366,9 @@ def record_result(result: dict) -> str:
     result["audit_id"] = audit_id
     workspace.write_json(
         workspace.root() / "audits" / f"{audit_id}.json", result)
+    from . import remediation
+    remediation.write_repository_view(
+        audit_id, remediation.for_reference(audit_id))
     return audit_id
 
 
@@ -380,6 +383,9 @@ def write_bundle(result: dict, destination: str | Path) -> dict:
         "coverage_markdown": target / "assessment-coverage.md",
         "coverage_json": target / "assessment-coverage.json",
         "coverage_html": target / "assessment-coverage.html",
+        "remediation_markdown": target / "evidence-remediation-plan.md",
+        "remediation_json": target / "evidence-remediation-plan.json",
+        "remediation_html": target / "evidence-remediation-plan.html",
         "bundle": target / "repository-assessment-bundle.json",
     }
     existing = [str(path) for path in paths.values() if path.exists()]
@@ -396,7 +402,8 @@ def write_bundle(result: dict, destination: str | Path) -> dict:
     coverage_paths = assessment_coverage.write_repository_artifacts(
         result, target)
     assert set(coverage_paths) == {
-        "coverage_markdown", "coverage_json", "coverage_html"}
+        "coverage_markdown", "coverage_json", "coverage_html",
+        "remediation_markdown", "remediation_json", "remediation_html"}
     bundle = {
         "kind": "aies-repository-assessment-bundle",
         "schema": 1,
@@ -409,6 +416,9 @@ def write_bundle(result: dict, destination: str | Path) -> dict:
         "coverage_boundary": (
             "Assessment coverage reports evidence availability and blind "
             "spots; it is not repository quality or conformance."),
+        "remediation_boundary": (
+            "Generated actions are unassigned decision support; they do not "
+            "accept risk, prove remediation, close findings, or authorize."),
     }
     paths["bundle"].write_text(
         json.dumps(bundle, indent=2) + "\n", encoding="utf-8")

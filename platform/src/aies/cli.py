@@ -791,6 +791,86 @@ def cmd_coverage(args) -> int:
         )
 
 
+def cmd_remediation(args) -> int:
+    """Read or append dispositions for evidence-linked remediation actions."""
+    from . import adoption, assessment_coverage, remediation, workspace
+    try:
+        reference = (
+            adoption.resolve_run("latest").name
+            if args.reference == "latest" else args.reference)
+        if args.remediation_cmd == "history":
+            events = remediation.history(reference)
+            result = {
+                "kind": "aies-remediation-disposition-history",
+                "schema": "aies-remediation-disposition-history/v1",
+                "reference": reference,
+                "events": events,
+                "count": len(events),
+            }
+            _out(
+                result, args.json,
+                "\n".join(
+                    f"{event['recorded_at']}  {event['action_id']}  "
+                    f"{event['status']}  {event['owner']}"
+                    for event in events)
+                or "No remediation dispositions recorded.")
+            return 0
+        plan = remediation.for_reference(reference)
+        if args.remediation_cmd == "update":
+            known = {action["id"] for action in plan["actions"]}
+            if args.action_id not in known:
+                raise remediation.RemediationError(
+                    f"unknown action {args.action_id!r}; run "
+                    f"`aies remediation show {reference}`")
+            event = remediation.record_disposition(
+                reference, args.action_id, status=args.status,
+                owner=args.owner, authority=args.authority, note=args.note,
+                evidence_refs=args.evidence)
+            audit_path = (
+                workspace.root() / "audits" / f"{reference}.json")
+            refreshed = remediation.for_reference(reference)
+            if not audit_path.is_file():
+                matrix = assessment_coverage.for_run(reference)
+                assessment_coverage.write_run_artifacts(reference, matrix)
+            else:
+                remediation.write_repository_view(reference, refreshed)
+            result = {"disposition": event, "plan": refreshed}
+            _out(
+                result, args.json,
+                f"recorded {args.status} for {args.action_id}\n"
+                f"  owner: {args.owner}\n"
+                f"  event: {event['path']}\n"
+                + (
+                    f"  refreshed: "
+                    f"{workspace.run_dir(reference) / 'evidence-remediation-plan.json'}"
+                    if not audit_path.is_file() else
+                    "  next: write a new immutable repository bundle with "
+                    f"`aies coverage {reference} --write --out NEW_DIR`"
+                ))
+            return 0
+        if args.format == "html":
+            text = remediation.render_html(plan)
+        elif args.format == "json":
+            text = remediation.render_json(plan)
+        else:
+            text = remediation.render_markdown(plan)
+        _out(plan, args.json or args.format == "json", text)
+        return 0
+    except (
+            adoption.AdoptionError, assessment_coverage.CoverageError,
+            remediation.RemediationError, FileNotFoundError, ValueError) as e:
+        return _command_failure(
+            e,
+            operation="evidence-remediation",
+            args=args,
+            preserved_work_status="preserved",
+            preserved_work_detail=(
+                "Canonical assessment evidence and scores were not changed."),
+            recovery_command="aies remediation show latest",
+            duplicate_cost_detail="Remediation commands make no model calls.",
+        )
+
+
 def cmd_starter(args) -> int:
     """List or explain a decision-oriented first workflow."""
     from . import decision_starters
@@ -3068,13 +3148,14 @@ TRY AIES NOW
   aies support                                 implemented vs experimental vs planned subjects
   aies assessment-profile list                 assessment semantics by subject kind
   aies coverage latest                         assessed, missing, unsupported, and reused evidence
+  aies remediation show latest                 actions, owners, monitoring, reassessment
   aies starter list                            choose a decision-led first workflow
   aies starter show understand-deployment      exact commands, limits, time/cost class
   aies open latest                             open the result
 
 commands by stage (each group alphabetical):
   setup & discovery   assessment-profile · completion · demo · deployment · discover · doctor · init · runtime · starter · support
-  engineering eval    assessment · benchmark · capabilities · compare · coverage · evaluate · export · import · open · qualify · review · runs · score · snapshot · transcript
+  engineering eval    assessment · benchmark · capabilities · compare · coverage · evaluate · export · import · open · qualify · remediation · review · runs · score · snapshot · transcript
   interoperability    bridge inspect-import · bridge sarif-import
   judging             judge available · judge history · judge list   (the judge pool + track record)
   governance & audit  audit · conform · corpus · dashboard · grant · overview · qualification · report · serve · verify
@@ -3384,6 +3465,50 @@ def build_parser() -> argparse.ArgumentParser:
         "--out", metavar="DIR",
         help="immutable output directory required with --write for an audit")
     coverage.set_defaults(func=cmd_coverage)
+
+    remediation = common(sub.add_parser(
+        "remediation",
+        help="inspect or disposition evidence-linked actions without changing scores"))
+    remediation_sub = remediation.add_subparsers(
+        dest="remediation_cmd", required=True)
+    remediation_show = remediation_sub.add_parser(
+        "show", help="show the current remediation and monitoring plan")
+    remediation_show.add_argument(
+        "reference", help="run id, repository audit id, or latest")
+    remediation_show.add_argument(
+        "--format", choices=("markdown", "json", "html"),
+        default="markdown", help="rendering format (default: markdown)")
+    remediation_show.add_argument(
+        "--json", action="store_true", help="machine-readable output")
+    remediation_history = remediation_sub.add_parser(
+        "history", help="show append-only named-human action dispositions")
+    remediation_history.add_argument(
+        "reference", help="run id, repository audit id, or latest")
+    remediation_history.add_argument(
+        "--json", action="store_true", help="machine-readable output")
+    remediation_update = remediation_sub.add_parser(
+        "update", help="append a named-human action workflow disposition")
+    remediation_update.add_argument(
+        "reference", help="run id, repository audit id, or latest")
+    remediation_update.add_argument(
+        "action_id", help="stable ACT-* id from remediation show")
+    remediation_update.add_argument(
+        "--status", required=True,
+        choices=("accepted", "in-progress", "mitigated", "closed", "deferred"),
+        help="new workflow status; mitigated/closed require --evidence")
+    remediation_update.add_argument(
+        "--owner", required=True, help="named accountable action owner")
+    remediation_update.add_argument(
+        "--authority", required=True,
+        help="basis for this person's action-disposition authority")
+    remediation_update.add_argument(
+        "--note", required=True, help="reason or disposition note")
+    remediation_update.add_argument(
+        "--evidence", action="append", default=[],
+        help="closure/mitigation evidence reference; repeat as needed")
+    remediation_update.add_argument(
+        "--json", action="store_true", help="machine-readable output")
+    remediation.set_defaults(func=cmd_remediation)
 
     starter = common(sub.add_parser(
         "starter",

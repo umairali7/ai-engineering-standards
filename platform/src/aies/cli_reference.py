@@ -67,8 +67,28 @@ GUIDANCE: dict[str, CommandGuidance] = {
     ),
     "coverage": CommandGuidance(
         "A completed deployment run or recorded repository audit exists. Repository artifact writing also requires a new output directory.",
-        "Builds a non-decisional matrix of assessed, partially assessed, not assessed, unsupported, and not-applicable perspectives; unique evidence identities and reuse are disclosed separately.",
-        "Collect direct evidence for the highest-priority blind spots, or use the report to limit claims to what was actually observed.",
+        "Builds a non-decisional matrix of assessed, partially assessed, not assessed, unsupported, and not-applicable perspectives; unique evidence identities and reuse are disclosed separately. `--write` also emits an unassigned Evidence-Linked Remediation and Monitoring Plan.",
+        "Use the prioritized acceptance signals and exact reassessment command; a named owner must separately accept, defer, or close any action.",
+    ),
+    "remediation": CommandGuidance(
+        "A completed run or recorded repository audit has a current coverage plan. Updates require a stable ACT-* id and a named accountable owner and authority.",
+        "Shows deterministic evidence-linked actions, reads append-only disposition history, or appends a human workflow disposition. It never changes canonical evidence, scores, qualification, or deployment authority.",
+        "Collect the stated acceptance evidence and rerun the exact reassessment command; use closed or mitigated only with explicit evidence references, which this command records but does not independently verify.",
+    ),
+    "remediation show": CommandGuidance(
+        "A completed run or recorded repository audit exists.",
+        "Renders prioritized gap/finding actions, ownership state, monitoring links, acceptance signals, and reassessment commands.",
+        "Select an ACT-* id and use `aies remediation update` only when a named owner is ready to record a disposition.",
+    ),
+    "remediation history": CommandGuidance(
+        "The reference may have zero or more append-only remediation dispositions.",
+        "Lists named-human workflow events in durable order without recomputing or changing assessment evidence.",
+        "Inspect the current merged plan with `aies remediation show REFERENCE`.",
+    ),
+    "remediation update": CommandGuidance(
+        "The ACT-* id exists in the current generated plan; the named owner has disposition authority. Mitigated or closed states require at least one explicit evidence reference.",
+        "Appends a human-attributed workflow event and refreshes run views; repository bundles remain immutable and must be written to a new directory.",
+        "Verify the merged plan, retain closure evidence, and execute the action's exact reassessment command after material change.",
     ),
     "starter": CommandGuidance(
         "AIES is installed; listing and showing starters require no workspace or endpoint.",

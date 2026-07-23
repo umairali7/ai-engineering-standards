@@ -558,9 +558,13 @@ aies qualify --resume <run-id> --judge <judge-id> --parallel 8
 Every successful aggregation or resume writes the complete linked report bundle
 in the run directory: Engineering Evaluation Report, Engineering Assessment
 Result when the run used a declarative assessment, Engineering Capability
-Matrix, source-separated Grounding Diagnostics, Engineering Fit Guidance, and
-Executive Summary. An explicitly formal run instead adds the Canonical Formal
-Assessment Result and qualification-bounded Deployment Guidance.
+Matrix, source-separated Grounding Diagnostics, Engineering Fit Guidance,
+Assessment Coverage and Blind Spots, an Evidence-Linked Remediation &
+Monitoring Plan, and Executive Summary. Generated actions preserve their
+source evidence, acceptance signal, monitoring link, and reassessment command,
+but start `open` and `unassigned`; AIES cannot accept risk or close them. An
+explicitly formal run instead adds the Canonical Formal Assessment Result and
+qualification-bounded Deployment Guidance.
 Markdown, JSON, and HTML views are generated for each audience-facing product,
 with `report-bundle.json` as the machine-readable index. The command prints the
 primary paths; if any artifact cannot be rendered, it fails rather than claiming
@@ -573,6 +577,31 @@ available at `GET /runs/{id}/report-view`. Use it for integrations and future
 frontends that need report facts without parsing presentation markup.
 `report.json` keeps its historical compatibility contract; the Evidence
 Package remains canonical evidence and neither report file can decide or grant.
+
+The remediation plan is a separate informational artifact. Coverage says what
+was assessed, missing, unsupported, stale, conflicting, or unavailable; the
+plan says what direct evidence could address each gap. Its field/telemetry
+links can trigger reassessment but cannot retroactively rewrite prior
+observations.
+
+Use the optional workflow only when a named owner is ready to take
+accountability:
+
+```
+aies remediation show <run-or-audit>
+aies remediation update <run-or-audit> ACT-... \
+  --status in-progress \
+  --owner "Named owner" \
+  --authority "Repository or deployment owner" \
+  --note "Evidence collection scheduled"
+aies remediation history <run-or-audit>
+```
+
+`mitigated` and `closed` require one or more `--evidence` references. Those
+references are recorded but are not independently verified by this command.
+Updates are append-only named-human workflow records. They do not change assessment
+evidence or scores. Run artifacts are refreshed as regenerable views;
+repository bundles remain immutable and are written to a new output directory.
 
 These files do not all have the same storage semantics. Responses, rating
 observations, resolutions, human-rater records, Qualification Records, and

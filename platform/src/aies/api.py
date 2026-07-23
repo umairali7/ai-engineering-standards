@@ -34,8 +34,10 @@ _RUN_GUIDANCE = re.compile(r"^/runs/([^/]+)/guidance$")
 _RUN_EXECUTIVE = re.compile(r"^/runs/([^/]+)/executive-summary$")
 _RUN_DIAGNOSTICS = re.compile(r"^/runs/([^/]+)/diagnostics$")
 _RUN_COVERAGE = re.compile(r"^/runs/([^/]+)/coverage$")
+_RUN_REMEDIATION = re.compile(r"^/runs/([^/]+)/remediation$")
 _RUN_DETAIL = re.compile(r"^/runs/([^/]+)$")
 _AUDIT_DETAIL = re.compile(r"^/audits/([^/]+)$")
+_AUDIT_REMEDIATION = re.compile(r"^/audits/([^/]+)/remediation$")
 _COMPARISON_DETAIL = re.compile(r"^/comparisons/([^/]+)$")
 _RUN_IMPORT_DETAIL = re.compile(r"^/run-imports/([^/]+)$")
 _ASSESSMENT_PROFILE_DETAIL = re.compile(
@@ -74,7 +76,9 @@ def route(path: str) -> tuple[int, dict]:
                                    "/runs/{id}/executive-summary",
                                    "/runs/{id}/diagnostics",
                                    "/runs/{id}/coverage",
+                                   "/runs/{id}/remediation",
                                    "/audits", "/audits/{id}",
+                                   "/audits/{id}/remediation",
                                    "/comparisons", "/comparisons/{id}",
                                    "/run-imports", "/run-imports/{id}",
                                    "/run-cohorts",
@@ -193,6 +197,10 @@ def route(path: str) -> tuple[int, dict]:
     m = _RUN_COVERAGE.match(path)
     if m:
         return _run_artifact(m.group(1), "assessment-coverage.json")
+    m = _RUN_REMEDIATION.match(path)
+    if m:
+        return _run_artifact(
+            m.group(1), "evidence-remediation-plan.json")
     m = _ASSESSMENT_PROFILE_DETAIL.match(path)
     if m:
         from . import assessment_profiles
@@ -213,6 +221,22 @@ def route(path: str) -> tuple[int, dict]:
             return _error(
                 404, "run-not-found", str(error),
                 hint="list available runs with GET /runs")
+    m = _AUDIT_REMEDIATION.match(path)
+    if m:
+        audit_id = m.group(1)
+        try:
+            workspace.validate_run_id(audit_id)
+        except ValueError as error:
+            return _error(400, "invalid-audit-id", str(error))
+        path = (
+            workspace.root() / "reports" / audit_id
+            / "evidence-remediation-plan.json")
+        if not path.exists():
+            return _error(
+                404, "artifact-not-found",
+                f"repository remediation view for {audit_id!r} was not found",
+                hint="run a new repository assessment or regenerate its views")
+        return 200, workspace.read_json(path)
     m = _AUDIT_DETAIL.match(path)
     if m:
         audit_id = m.group(1)

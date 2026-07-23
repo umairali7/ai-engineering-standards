@@ -196,7 +196,8 @@ def render_html(
           "<a href='engineering-fit-guidance.html'>Engineering Fit Guidance</a> &middot; "
           "<a href='grounding-diagnostics.html'>Grounding Diagnostics</a> &middot; "
           "<a href='engineering-capability-matrix.html'>Engineering Capability Matrix</a> &middot; "
-          "<a href='assessment-coverage.html'>Assessment Coverage &amp; Blind Spots</a></p>")
+          "<a href='assessment-coverage.html'>Assessment Coverage &amp; Blind Spots</a> &middot; "
+          "<a href='evidence-remediation-plan.html'>Evidence-Linked Remediation Plan</a></p>")
         provenance = view["provenance"]
         w("<footer>Raters: " + _esc(", ".join(provenance["raters"])) +
           f" &middot; Aggregated {_esc(provenance['aggregated_at'])} &middot; "
@@ -341,7 +342,8 @@ def render_html(
       "<a href='deployment-guidance.html'>Deployment Guidance</a> &middot; "
       "<a href='grounding-diagnostics.html'>Grounding Diagnostics</a> &middot; "
       "<a href='engineering-capability-matrix.html'>Engineering Capability Matrix</a> &middot; "
-      "<a href='assessment-coverage.html'>Assessment Coverage &amp; Blind Spots</a></p>")
+      "<a href='assessment-coverage.html'>Assessment Coverage &amp; Blind Spots</a> &middot; "
+      "<a href='evidence-remediation-plan.html'>Evidence-Linked Remediation Plan</a></p>")
 
     provenance = view["provenance"]
     w("<footer>Raters: " + _esc(", ".join(provenance["raters"]))

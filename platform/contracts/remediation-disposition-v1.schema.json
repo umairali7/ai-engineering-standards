@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aies.dev/contracts/remediation-disposition-v1.schema.json",
+  "title": "AIES Remediation Disposition v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind", "schema", "event_id", "reference", "action_id", "status",
+    "owner", "authority", "note", "evidence_refs", "evidence_status", "recorded_at",
+    "claim_boundary"
+  ],
+  "properties": {
+    "kind": {"const": "aies-remediation-disposition"},
+    "schema": {"const": "aies-remediation-disposition/v1"},
+    "event_id": {"type": "string", "pattern": "^RMD-[a-f0-9]{32}$"},
+    "reference": {"type": "string", "minLength": 1},
+    "action_id": {"type": "string", "pattern": "^ACT-[A-F0-9]{12}$"},
+    "status": {
+      "enum": ["accepted", "in-progress", "mitigated", "closed", "deferred"]
+    },
+    "owner": {"type": "string", "minLength": 1},
+    "authority": {"type": "string", "minLength": 1},
+    "note": {"type": "string", "minLength": 1},
+    "evidence_refs": {
+      "type": "array", "items": {"type": "string"}, "uniqueItems": true
+    },
+    "evidence_status": {
+      "enum": ["not-supplied", "referenced-not-verified"]
+    },
+    "recorded_at": {"type": "string", "format": "date-time"},
+    "claim_boundary": {"type": "string", "minLength": 1}
+  }
+}

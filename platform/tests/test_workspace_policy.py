@@ -18,6 +18,7 @@ def test_artifact_storage_classes_and_writers(tmp_path, monkeypatch):
     report_view = rdir / "report-view.json"
     diagnostics = rdir / "grounding-diagnostics.json"
     coverage = rdir / "assessment-coverage.json"
+    remediation = rdir / "evidence-remediation-plan.json"
     evidence = rdir / "evidence-package.json"
     manifest = rdir / "manifest.json"
     qualification = workspace.ensure() / "qualifications" / "QUAL-2026-001.json"
@@ -28,6 +29,7 @@ def test_artifact_storage_classes_and_writers(tmp_path, monkeypatch):
     assert workspace.artifact_class(report_view) == "regenerable-view"
     assert workspace.artifact_class(diagnostics) == "regenerable-view"
     assert workspace.artifact_class(coverage) == "regenerable-view"
+    assert workspace.artifact_class(remediation) == "regenerable-view"
     assert workspace.artifact_class(evidence) == "derived-canonical-snapshot"
     assert workspace.artifact_class(manifest) == "mutable-working-state"
 
@@ -43,6 +45,11 @@ def test_artifact_storage_classes_and_writers(tmp_path, monkeypatch):
             comparison, {"kind": "replacement"}, overwrite=True)
     with pytest.raises(ValueError, match="not classified"):
         workspace.write_view(response, "replacement")
+    disposition = (
+        workspace.root() / "remediation" / "run-test" / "events"
+        / "event.json")
+    workspace.write_json(disposition, {"kind": "disposition"})
+    assert workspace.artifact_class(disposition) == "append-only-record"
 
     workspace.write_view(report, "first")
     workspace.write_view(report, "second")

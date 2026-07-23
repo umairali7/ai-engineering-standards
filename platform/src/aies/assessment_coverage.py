@@ -403,6 +403,8 @@ def _finalize(matrix: dict, evidence_catalog: dict | None = None) -> dict:
                     "status": cell["status"],
                     "collection_condition": cell["collection_condition"],
                     "evidence_confidence": cell["evidence_confidence"]["level"],
+                    "evidence_refs": list(cell["evidence_refs"]),
+                    "condition_refs": list(cell["condition_refs"]),
                     "rationale": cell["rationale"],
                     "next_evidence": (
                         "Implement a direct evidence path in the Subject "
@@ -657,6 +659,28 @@ def for_run(run_id: str, *, capability_matrix: dict | None = None) -> dict:
         status="assessed",
         evidence_refs=["derived:assessment-coverage"],
         rationale="This coverage and blind-spot product was generated.")
+    if _cell(matrix, "decision_products", "DP-07")[
+            "applicability"] == "applicable":
+        _observe(
+            matrix, "decision_products", "DP-07",
+            status="assessed",
+            evidence_refs=["derived:evidence-remediation-plan"],
+            rationale=(
+                "Coverage gaps produce a deterministic evidence-linked action "
+                "plan without assigning an owner or closing risk."))
+    monitoring_refs = (
+        by_modality.get("field-observation", [])
+        + by_modality.get("telemetry", []))
+    if monitoring_refs and _cell(
+            matrix, "decision_products", "DP-10"
+    )["applicability"] == "applicable":
+        _observe(
+            matrix, "decision_products", "DP-10",
+            status="partially-assessed",
+            evidence_refs=monitoring_refs,
+            rationale=(
+                "Field or telemetry evidence is linked to reassessment; "
+                "threshold ownership and operational response remain external."))
     return _finalize(matrix, catalog)
 
 
@@ -718,7 +742,7 @@ def for_repository(result: dict) -> dict:
                 rationale=(
                     f"{len(set(refs))} canonical repository event(s) directly "
                     f"use the {item['title']} modality."))
-    products = ["DP-05", "DP-09", "DP-11"]
+    products = ["DP-05", "DP-07", "DP-09", "DP-11"]
     if result.get("engineering_analysis"):
         products += ["DP-06", "DP-07"]
     for product_id in products:
@@ -741,6 +765,19 @@ def for_repository(result: dict) -> dict:
             matrix, target["category"], target["id"],
             payload["collection_condition"], payload["detail"],
             evidence_ref=event["event_id"])
+    monitoring_refs = (
+        by_modality.get("field-observation", [])
+        + by_modality.get("telemetry", []))
+    if monitoring_refs and _cell(
+            matrix, "decision_products", "DP-10"
+    )["applicability"] == "applicable":
+        _observe(
+            matrix, "decision_products", "DP-10",
+            status="partially-assessed",
+            evidence_refs=monitoring_refs,
+            rationale=(
+                "Field or telemetry evidence is linked to reassessment; "
+                "threshold ownership and operational response remain external."))
     return _finalize(matrix, catalog)
 
 
@@ -918,17 +955,30 @@ def render_html(matrix: dict) -> str:
 
 
 def write_run_artifacts(run_id: str, matrix: dict | None = None) -> dict[str, str]:
+    from . import remediation
+
     matrix = matrix or for_run(run_id)
     rdir = workspace.run_dir(run_id)
+    plan = remediation.build(
+        matrix, reassessment_command=f"aies resume {run_id}")
     paths = {
         "coverage_markdown": rdir / "assessment-coverage.md",
         "coverage_json": rdir / "assessment-coverage.json",
         "coverage_html": rdir / "assessment-coverage.html",
+        "remediation_markdown": rdir / "evidence-remediation-plan.md",
+        "remediation_json": rdir / "evidence-remediation-plan.json",
+        "remediation_html": rdir / "evidence-remediation-plan.html",
     }
     workspace.write_view(paths["coverage_markdown"], render_markdown(matrix))
     workspace.write_view(
         paths["coverage_json"], json.dumps(matrix, indent=2) + "\n")
     workspace.write_view(paths["coverage_html"], render_html(matrix))
+    workspace.write_view(
+        paths["remediation_markdown"], remediation.render_markdown(plan))
+    workspace.write_view(
+        paths["remediation_json"], remediation.render_json(plan))
+    workspace.write_view(
+        paths["remediation_html"], remediation.render_html(plan))
     return {key: str(path) for key, path in paths.items()}
 
 
@@ -937,12 +987,22 @@ def write_repository_artifacts(
     destination: str | Path,
     matrix: dict | None = None,
 ) -> dict[str, str]:
+    from . import remediation
+
     matrix = matrix or for_repository(result)
     target = Path(destination).resolve()
+    analysis = result.get("engineering_analysis") or {}
+    repository_argument = str(result.get("repo") or ".").replace('"', "")
+    plan = remediation.build(
+        matrix, findings=analysis.get("findings") or [],
+        reassessment_command=f'aies audit "{repository_argument}"')
     paths = {
         "coverage_markdown": target / "assessment-coverage.md",
         "coverage_json": target / "assessment-coverage.json",
         "coverage_html": target / "assessment-coverage.html",
+        "remediation_markdown": target / "evidence-remediation-plan.md",
+        "remediation_json": target / "evidence-remediation-plan.json",
+        "remediation_html": target / "evidence-remediation-plan.html",
     }
     existing = [str(path) for path in paths.values() if path.exists()]
     if existing:
@@ -955,4 +1015,10 @@ def write_repository_artifacts(
         json.dumps(matrix, indent=2) + "\n", encoding="utf-8")
     paths["coverage_html"].write_text(
         render_html(matrix), encoding="utf-8")
+    paths["remediation_markdown"].write_text(
+        remediation.render_markdown(plan), encoding="utf-8")
+    paths["remediation_json"].write_text(
+        remediation.render_json(plan), encoding="utf-8")
+    paths["remediation_html"].write_text(
+        remediation.render_html(plan), encoding="utf-8")
     return {key: str(path) for key, path in paths.items()}

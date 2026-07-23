@@ -16,6 +16,12 @@ turns those observations into bounded usage guidance. Comparison is valid only
 over compatible evidence intersections. Formal Qualification is a separate,
 human-governed conformity process.
 
+The Evidence-Linked Remediation & Monitoring Plan deterministically turns
+retained findings and coverage gaps into stable action records. It estimates
+neither subject quality nor remediation success. Actions start open and
+unassigned; only named-human append-only dispositions can change workflow
+state, and those dispositions do not change the source assessment.
+
 Performance and evidence confidence must never be merged into one value. Exact
 repeats may measure stability but do not increase distinct task breadth.
 Unassessed tasks remain unknown. Controlled scenario results do not silently

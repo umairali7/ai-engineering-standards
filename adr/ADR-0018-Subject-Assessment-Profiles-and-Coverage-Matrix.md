@@ -62,6 +62,20 @@ those boundaries.
     coverage unless a future governed explicit mapping is implemented;
     `none`, `reference-only`, and `explicit-mapping-required` never imply
     inheritance.
+11. Every completed coverage product generates a deterministic
+    **Evidence-Linked Remediation and Monitoring Plan**. Actions preserve the
+    originating gap or finding, evidence identities, priority, acceptance
+    signal, reassessment trigger, optional field/telemetry linkage, workflow
+    state, and owner/authority boundary. Generated actions start open and
+    unassigned; generation cannot assign work, accept risk, prove remediation,
+    close a finding, alter a score, or authorize deployment.
+12. A named human may append a separate remediation-disposition event to
+    accept, start, defer, mitigate, or close an action. Mitigation and closure
+    require explicit evidence references, recorded as unverified claims unless
+    separately validated. Dispositions overlay regenerable plan
+    views but never mutate canonical assessment evidence, ratings, scores, or
+    qualification records; dispositions whose stable action no longer exists
+    remain visible as ignored history rather than silently attaching elsewhere.
 
 ## Initial profiles
 

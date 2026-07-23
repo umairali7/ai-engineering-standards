@@ -90,6 +90,9 @@ def test_offline_end_to_end_demo(demo_ws, monkeypatch):
                  "grounding-diagnostics.html",
                  "assessment-coverage.md", "assessment-coverage.json",
                  "assessment-coverage.html",
+                 "evidence-remediation-plan.md",
+                 "evidence-remediation-plan.json",
+                 "evidence-remediation-plan.html",
                  "report-bundle.json"):
         assert (runs[-1] / name).exists(), name
     executive = json.loads(
@@ -123,6 +126,17 @@ def test_offline_end_to_end_demo(demo_ws, monkeypatch):
         cell["freshness"]["change_trigger_evaluated"] is False
         for category in coverage["categories"].values()
         for cell in category["cells"])
+    remediation = json.loads(
+        (runs[-1] / "evidence-remediation-plan.json").read_text(
+            encoding="utf-8"))
+    assert remediation["schema"] == (
+        "aies-evidence-linked-remediation-plan/v1")
+    assert remediation["summary"]["actions"] > 0
+    assert remediation["summary"]["unassigned"] == (
+        remediation["summary"]["actions"])
+    assert all(
+        action["closure"]["status"] == "not-evaluated"
+        for action in remediation["actions"])
     from aies import compare
     observed_comparison = compare.compare_ecm(run_id, run_id)
     assert observed_comparison["comparison_mode"] == "engineering-observed"

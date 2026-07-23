@@ -71,7 +71,8 @@ and optional human evaluation—as different facts.
 | See the decision snapshot in your terminal | `aies snapshot latest` | Task evidence, observed capability, scenario breadth, assurance gaps, and engineering interpretation |
 | Check what AIES truly supports | `aies support` | Implemented, experimental, and planned subject kinds with executable entry points and limitations |
 | See how each subject is assessed | `aies assessment-profile list` | Approved Subject Assessment Profiles, executors, evidence adapters, applicability, decision products, and limitations |
-| See what evidence is missing | `aies coverage RUN_OR_AUDIT` | Assessed, partial, missing, unsupported, and not-applicable perspectives plus evidence reuse and prioritized blind spots |
+| See what evidence is missing and what to do next | `aies coverage RUN --write` | Coverage, evidence integrity, prioritized blind spots, and an unassigned evidence-linked remediation/monitoring plan with acceptance signals and reassessment commands; audits additionally use `--out NEW_DIR` |
+| Track an evidence-gap action | `aies remediation show RUN_OR_AUDIT` | Stable ACT identifiers, owner/workflow state, closure evidence requirements, monitoring links, and append-only human dispositions |
 | Choose a first workflow by decision | `aies starter list` | Prerequisites, commands, artifacts, time/cost class, evidence breadth, limitations, and next expansion |
 | Assess a repository from multiple engineering perspectives | `aies audit . --out aies-repository-report` | Separate practice maturity, architecture, code-quality, correctness-assurance, security, dependency, confidence, limitation, and evidence-linked remediation views |
 | Add advisory repository evidence to CI | `aies ci audit . --rt 2` | Retained JSON/Markdown evidence and annotations without an implicit merge gate |
@@ -96,7 +97,10 @@ deployment report and repository assessment bundle now includes an
 availability—not a score, pass, capability, qualification, or authorization.
 It separately exposes collection failures, missing tools, redaction,
 staleness, conflicts, evidence depth and correlation, and component evidence
-that is prohibited from silently inflating the parent subject.
+that is prohibited from silently inflating the parent subject. Each written
+coverage product also emits an **Evidence-Linked Remediation & Monitoring
+Plan**. Its actions start open and unassigned; a named owner must separately
+accept, defer, or close them.
 
 ---
 
@@ -176,6 +180,7 @@ opaque score:
 | **Engineering Evaluation** | Engineers and evaluators | What was observed, under which conditions, and with what evidence? | No; automated scores are sufficient for the engineering result |
 | **Engineering Capability Matrix (ECM)** | Engineers and technical leaders | Which engineering tasks are demonstrated strengths, weaker areas, or evidence gaps? | No; human evaluation is an optional, visible corroboration |
 | **Engineering Fit Guidance** | Engineering managers and platform teams | Where is this subject a good fit, where should review be used, and where is evidence insufficient? | No; informational only and never deployment authority |
+| **Evidence-Linked Remediation & Monitoring Plan** | Subject owners, engineers, and operators | Which gaps or findings require action, what evidence would close them, and what should trigger reassessment? | No; generated actions start open and unassigned |
 | **Formal Qualification** | Auditors and qualification authorities | Does the evidence satisfy a governed, risk-scoped qualification protocol? | Yes; explicitly requested with `--formal-qualification` |
 | **Qualification Record** | Governance and accountable leadership | What consequential qualification decision did a named human authority record? | Yes |
 
@@ -414,7 +419,8 @@ products without changing the underlying observations.
   observations, and keeps every heuristic or tool limitation explicit; it does
   not execute unfamiliar code or claim that correctness/security is proven.
 - Generate Engineering Assessment Results, evidence packages, ECM artifacts,
-  Engineering Fit Guidance, reports, and compatible run comparisons.
+  Engineering Fit Guidance, Assessment Coverage, Evidence-Linked Remediation
+  and Monitoring Plans, reports, and compatible run comparisons.
 - Consume the versioned, read-only `report-view.json` contract shared by
   Markdown, HTML, safe exports, and `GET /runs/{id}/report-view`; canonical
   evidence and legacy report contracts remain intact.

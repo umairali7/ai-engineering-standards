@@ -29,7 +29,7 @@ freshness_policy:
   basis: latest directly referenced evidence timestamp
   default_max_age_days: 30
   change_triggers_override_age: true
-decision_products: [DP-05, DP-06, DP-07, DP-08, DP-09, DP-11]
+decision_products: [DP-05, DP-06, DP-07, DP-08, DP-09, DP-10, DP-11]
 applicability:
   lifecycle:
     default: {status: applicable, rationale: Repository evidence may support practices across the complete engineering lifecycle.}
@@ -64,6 +64,7 @@ applicability:
       DP-07: {status: applicable, rationale: Findings and gaps produce deterministic evidence-linked remediation actions.}
       DP-08: {status: applicable, rationale: Compatible repository assessments may be compared without a quality winner.}
       DP-09: {status: applicable, rationale: Repository bundles provide audience-oriented summaries and limitations.}
+      DP-10: {status: applicable, rationale: Retained field or telemetry evidence may trigger repository reassessment without proving operational fitness.}
       DP-11: {status: applicable, rationale: Every repository bundle discloses perspective coverage and blind spots.}
 limitations:
   - Practice maturity, static findings, and retained tool results do not prove source correctness, security, or fitness.

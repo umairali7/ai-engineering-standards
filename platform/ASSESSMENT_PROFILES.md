@@ -30,9 +30,9 @@ Version `1.0.0` · status **approved** · governed by `ADR-0018`.
 
 **Subject kinds:** `ai_deployment`, `ai_system`.
 
-**Applicability:** 102 applicable; 7 unsupported; 4 not applicable.
+**Applicability:** 104 applicable; 7 unsupported; 2 not applicable.
 
-**Decision products:** `DP-01`, `DP-02`, `DP-03`, `DP-04`, `DP-08`, `DP-09`, `DP-11`.
+**Decision products:** `DP-01`, `DP-02`, `DP-03`, `DP-04`, `DP-07`, `DP-08`, `DP-09`, `DP-10`, `DP-11`.
 
 **Freshness policy:** evidence older than 90 days is reported stale; declared change triggers override elapsed age.
 
@@ -48,9 +48,9 @@ Version `1.0.0` · status **approved** · governed by `ADR-0018`.
 
 **Subject kinds:** `repository`.
 
-**Applicability:** 72 applicable; 31 unsupported; 10 not applicable.
+**Applicability:** 73 applicable; 31 unsupported; 9 not applicable.
 
-**Decision products:** `DP-05`, `DP-06`, `DP-07`, `DP-08`, `DP-09`, `DP-11`.
+**Decision products:** `DP-05`, `DP-06`, `DP-07`, `DP-08`, `DP-09`, `DP-10`, `DP-11`.
 
 **Freshness policy:** evidence older than 30 days is reported stale; declared change triggers override elapsed age.
 

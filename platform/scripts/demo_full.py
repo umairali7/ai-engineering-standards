@@ -162,6 +162,16 @@ def main() -> int:
     print(
         "Freshness boundary: age is evaluated; declared change triggers "
         "require separate detection.")
+    remediation = workspace.read_json(
+        run_dir / "evidence-remediation-plan.json")
+    print(
+        "Action handoff:",
+        f"{remediation['summary']['actions']} evidence-linked action(s),",
+        f"{remediation['summary']['unassigned']} unassigned,",
+        f"{remediation['summary']['monitoring_linked']} monitoring-linked.")
+    print(
+        "Actions guide reassessment; they do not assign owners, accept risk, "
+        "or close findings.")
 
     hr("9. Protocol-compatible ECM comparison (same evidence fixture, no invented winner)")
     code, output, _ = invoke("compare", run_id, run_id, "--ecm", "--json", capture=True)
@@ -193,12 +203,12 @@ def main() -> int:
         "engineering-assessment-result.html", "report.html",
         "engineering-capability-matrix.html", "engineering-fit-guidance.html",
         "executive-summary.html", "grounding-diagnostics.html",
-        "assessment-coverage.html")
+        "assessment-coverage.html", "evidence-remediation-plan.html")
     missing = [name for name in presentations if not (run_dir / name).is_file()
                or not (run_dir / name).stat().st_size]
     if missing:
         raise SystemExit("demo failed: missing presentation artifacts: " + ", ".join(missing))
-    print("verified seven presentation-grade HTML artifacts from the generated bundle")
+    print("verified eight presentation-grade HTML artifacts from the generated bundle")
 
     hr("12. Decision-engine CONFORMANCE (the standard as a subject)")
     print("Does the reference engine reproduce AESQS decision semantics on the golden corpus?")

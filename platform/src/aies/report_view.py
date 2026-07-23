@@ -370,6 +370,8 @@ def build_context(run_id: str, *, matrix: dict | None = None) -> ReportContext:
             "engineering_capability_matrix": (
                 "engineering-capability-matrix.json"),
             "grounding_diagnostics": "grounding-diagnostics.json",
+            "assessment_coverage": "assessment-coverage.json",
+            "evidence_remediation_plan": "evidence-remediation-plan.json",
         },
         "limitations": [
             "This report view is informational and cannot qualify, grant, or "

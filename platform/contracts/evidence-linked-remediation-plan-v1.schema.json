@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aies.dev/contracts/evidence-linked-remediation-plan-v1.schema.json",
+  "title": "AIES Evidence-Linked Remediation Plan v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind", "schema", "generated_at", "subject", "profile", "source_scope",
+    "summary", "actions", "disposition_events", "ignored_dispositions",
+    "claim_boundary"
+  ],
+  "properties": {
+    "kind": {"const": "aies-evidence-linked-remediation-plan"},
+    "schema": {"const": "aies-evidence-linked-remediation-plan/v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "subject": {"type": "object"},
+    "profile": {"type": "object"},
+    "source_scope": {"type": "object"},
+    "summary": {"type": "object"},
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id", "priority", "priority_rank", "workflow", "source", "impact",
+          "evidence_refs", "condition_refs", "recommendation",
+          "acceptance_signal", "dependencies", "monitoring", "reassessment",
+          "closure"
+        ],
+        "properties": {
+          "id": {"type": "string", "pattern": "^ACT-[A-F0-9]{12}$"},
+          "priority": {"enum": ["P0", "P1", "P2", "P3"]},
+          "priority_rank": {"type": "integer", "minimum": 0, "maximum": 4},
+          "workflow": {"type": "object"},
+          "source": {"type": "object"},
+          "impact": {"type": "string", "minLength": 1},
+          "evidence_refs": {
+            "type": "array", "items": {"type": "string"}, "uniqueItems": true
+          },
+          "condition_refs": {
+            "type": "array", "items": {"type": "string"}, "uniqueItems": true
+          },
+          "recommendation": {"type": "string", "minLength": 1},
+          "acceptance_signal": {"type": "string", "minLength": 1},
+          "dependencies": {"type": "array"},
+          "monitoring": {"type": "object"},
+          "reassessment": {"type": "object"},
+          "closure": {"type": "object"}
+        }
+      }
+    },
+    "disposition_events": {"type": "integer", "minimum": 0},
+    "ignored_dispositions": {
+      "type": "array", "items": {"type": "object"}
+    },
+    "claim_boundary": {"type": "string", "minLength": 1}
+  }
+}

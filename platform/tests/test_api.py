@@ -63,6 +63,8 @@ def test_health_and_index():
     assert "/run-imports" in body["endpoints"]
     assert "/run-cohorts" in body["endpoints"]
     assert "/runs/{id}/coverage" in body["endpoints"]
+    assert "/runs/{id}/remediation" in body["endpoints"]
+    assert "/audits/{id}/remediation" in body["endpoints"]
     assert "/assessment-profiles" in body["endpoints"]
 
 
@@ -143,6 +145,7 @@ def test_run_product_endpoints_serve_stored_artifacts_verbatim(api_ws):
         "executive-summary": "executive-summary.json",
         "diagnostics": "grounding-diagnostics.json",
         "coverage": "assessment-coverage.json",
+        "remediation": "evidence-remediation-plan.json",
     }
     for endpoint, filename in routes.items():
         status, body = api.route(f"/runs/{api_ws}/{endpoint}")
@@ -211,6 +214,12 @@ def test_repository_assessment_endpoints_serve_stored_artifact(api_ws):
         workspace.root() / "audits" / f"{result['audit_id']}.json")
     assert detail["engineering_analysis"]["schema"] == (
         "aies-repository-analysis/v1")
+    status, remediation = api.route(
+        f"/audits/{result['audit_id']}/remediation")
+    assert status == 200
+    assert remediation["schema"] == (
+        "aies-evidence-linked-remediation-plan/v1")
+    assert remediation["subject"]["kind"] == "repository"
 
     comparison = compare.compare_repositories(
         [result["audit_id"], result["audit_id"]])

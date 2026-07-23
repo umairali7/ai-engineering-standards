@@ -177,3 +177,127 @@ def test_component_evidence_never_implicitly_fills_parent_coverage():
     assert disclosure[0]["observed_event_count"] == 1
     assert disclosure[0]["coverage_use"] == "reference-only"
     assert disclosure[0]["mapped_into_parent_cells"] == 0
+
+
+def test_blind_spots_generate_stable_unassigned_reassessment_actions():
+    from aies import assessment_coverage, assessment_profiles, remediation, subjects
+
+    subject = subjects.build(
+        "deployment-fixture", kind="ai_deployment",
+        display_name="Deployment fixture")
+    matrix = assessment_coverage._finalize(
+        assessment_coverage._skeleton(
+            assessment_profiles.get_profile("SAP-01"), subject,
+            {"kind": "fixture", "id": "actions"}))
+    first = remediation.build(
+        matrix, reassessment_command="aies resume run-fixture")
+    second = remediation.build(
+        matrix, reassessment_command="aies resume run-fixture")
+    assert [item["id"] for item in first["actions"]] == [
+        item["id"] for item in second["actions"]]
+    assert first["summary"]["actions"] == len(matrix["blind_spots"])
+    assert first["summary"]["unassigned"] == first["summary"]["actions"]
+    assert all(
+        item["workflow"]["status"] == "open"
+        and item["closure"]["status"] == "not-evaluated"
+        and item["reassessment"]["command"] == "aies resume run-fixture"
+        for item in first["actions"])
+    assert "does not assign an owner" in first["claim_boundary"]
+
+
+def test_repository_findings_and_gaps_share_one_action_schema():
+    from aies import assessment_coverage, assessment_profiles, remediation, subjects
+
+    subject = subjects.build(
+        "repository-fixture", kind="repository",
+        display_name="Repository fixture")
+    matrix = assessment_coverage._finalize(
+        assessment_coverage._skeleton(
+            assessment_profiles.get_profile("SAP-02"), subject,
+            {"kind": "repository-assessment", "id": "audit-fixture"}))
+    plan = remediation.build(
+        matrix,
+        findings=[{
+            "id": "SEC-001", "severity": "critical",
+            "title": "Retained scanner finding", "artifacts": ["scan.sarif"],
+        }],
+        reassessment_command='aies audit "repo"',
+    )
+    finding = next(
+        action for action in plan["actions"]
+        if action["source"]["kind"] == "engineering-finding")
+    assert finding["priority"] == "P0"
+    assert finding["evidence_refs"] == ["scan.sarif"]
+    assert finding["monitoring"]["evidence_level"] == "field-observation"
+
+
+def test_remediation_dispositions_are_append_only_and_evidence_bounded(
+        tmp_path, monkeypatch):
+    import pytest
+
+    from aies import assessment_coverage, assessment_profiles, remediation, subjects
+
+    monkeypatch.setenv("AIES_WORKSPACE", str(tmp_path / "workspace"))
+    subject = subjects.build(
+        "deployment-fixture", kind="ai_deployment",
+        display_name="Deployment fixture")
+    matrix = assessment_coverage._finalize(
+        assessment_coverage._skeleton(
+            assessment_profiles.get_profile("SAP-01"), subject,
+            {"kind": "run", "id": "run-fixture"}))
+    plan = remediation.build(
+        matrix, reassessment_command="aies resume run-fixture")
+    action_id = plan["actions"][0]["id"]
+    with pytest.raises(remediation.RemediationError):
+        remediation.record_disposition(
+            "run-fixture", action_id, status="closed", owner="Owner",
+            authority="Subject owner", note="Done without evidence")
+    event = remediation.record_disposition(
+        "run-fixture", action_id, status="in-progress", owner="Owner",
+        authority="Subject owner", note="Collection started")
+    assert event["schema"] == "aies-remediation-disposition/v1"
+    assert len(remediation.history("run-fixture")) == 1
+    merged = remediation.build(
+        matrix, reassessment_command="aies resume run-fixture")
+    action = next(
+        item for item in merged["actions"] if item["id"] == action_id)
+    assert action["workflow"]["status"] == "in-progress"
+    assert action["workflow"]["owner"] == "Owner"
+    assert merged["disposition_events"] == 1
+
+
+def test_stale_disposition_never_fills_or_creates_a_current_action(
+        tmp_path, monkeypatch):
+    from aies import assessment_coverage, assessment_profiles, remediation, subjects
+
+    monkeypatch.setenv("AIES_WORKSPACE", str(tmp_path / "workspace"))
+    remediation.record_disposition(
+        "run-fixture", "ACT-000000000000", status="deferred",
+        owner="Owner", authority="Subject owner",
+        note="Legacy action no longer applies")
+    subject = subjects.build(
+        "deployment-fixture", kind="ai_deployment",
+        display_name="Deployment fixture")
+    matrix = assessment_coverage._finalize(
+        assessment_coverage._skeleton(
+            assessment_profiles.get_profile("SAP-01"), subject,
+            {"kind": "run", "id": "run-fixture"}))
+    plan = remediation.build(
+        matrix, reassessment_command="aies resume run-fixture")
+    assert not any(
+        action["id"] == "ACT-000000000000" for action in plan["actions"])
+    assert plan["ignored_dispositions"][0]["reason"].startswith(
+        "action is absent")
+
+
+def test_remediation_history_cli_is_available_without_model_calls(
+        tmp_path, monkeypatch, capsys):
+    from aies import cli
+
+    monkeypatch.setenv("AIES_WORKSPACE", str(tmp_path / "workspace"))
+    assert cli.main([
+        "remediation", "history", "run-fixture", "--json",
+    ]) == 0
+    value = json.loads(capsys.readouterr().out)
+    assert value["schema"] == "aies-remediation-disposition-history/v1"
+    assert value["count"] == 0

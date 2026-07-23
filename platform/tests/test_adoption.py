@@ -118,6 +118,7 @@ def test_measurement_claims_cover_every_decision_product():
         "engineering_capability_matrix",
         "engineering_fit_guidance",
         "comparison",
+        "evidence_linked_remediation",
         "formal_qualification",
     }
     for claim in contract["claims"].values():

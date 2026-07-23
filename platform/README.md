@@ -46,7 +46,8 @@ the full pipeline is runnable end to end:
 `--parallel`, `--judge` auto-scoring, `--journey`, `--all-areas`), `score`,
 `import` (external eval results), `report` (complete linked Markdown/JSON/HTML
 bundle: Engineering Evaluation Report, ECM, Grounding Diagnostics, Engineering
-Fit Guidance, and Executive Summary), `transcript`,
+Fit Guidance, Assessment Coverage, an Evidence-Linked Remediation & Monitoring
+Plan, and Executive Summary), `transcript`,
 `snapshot` (responsive terminal evidence-to-decision view),
 `capabilities` (task-mapped ECM by default; `--qualification-profile` selects
 the formal per-area CL/autonomy view), `judge` (available/list/history),
@@ -65,7 +66,9 @@ health/coverage/duplicates/review; advisory, multidimensional, no single grade),
 API output. `assessment-profile list|show|validate` exposes the approved
 subject-specific assessment semantics, and `coverage RUN_OR_AUDIT` shows
 applicability, direct evidence, identity reuse, and blind spots without
-creating a quality score or decision.
+creating a quality score or decision. `remediation show|history|update`
+exposes stable actions and append-only named-human workflow dispositions;
+mitigation or closure requires retained evidence and never changes scores.
 `overview` exposes the same versioned, informational workspace summary through
 CLI JSON/human output, `GET /overview`, and the HTML dashboard. This is the
 stable consumer boundary for integrations and a future frontend; it computes
@@ -75,7 +78,7 @@ no assessment outcome.
 execution state, available decision-product summaries, artifact storage
 classes, and exact JSON links. Stored ECM, guidance, report, diagnostics,
 assessment coverage,
-executive summary, evaluation, and bundle artifacts have dedicated read-only
+evidence remediation, executive summary, evaluation, and bundle artifacts have dedicated read-only
 endpoints; missing artifacts remain explicitly unavailable.
 All twelve competency areas
 (CA-01…CA-12) ship demonstration suites; six weighting profiles; a
@@ -111,7 +114,7 @@ endpoint, TLS, auth, performance, and judge issues.
 
 **Default engineering cycle:** `discover` → `qualify --judge` → completed
 Engineering Assessment Result + ECM + diagnostics + Engineering Fit Guidance +
-reports. No human step is required. `score`, `review --model-reviewer`, and
+coverage + remediation plan + reports. No human step is required. `score`, `review --model-reviewer`, and
 `import` also refresh the complete bundle in their own command.
 
 **Optional formal cycle:** start with `qualify --formal-qualification`, complete

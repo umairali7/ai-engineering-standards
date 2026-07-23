@@ -176,6 +176,7 @@ append-only records. Grouped as in `aies --help`.
 | `index` | Rebuildable SQLite index over the append-only records | `aies index` |
 | `plugins` | Installed runtime adapters + declared capabilities | `aies plugins` |
 | `completion` | Generate parser-derived Tab completion for PowerShell, Bash, or Zsh | `aies completion powershell` |
+| `remediation` | Show evidence-linked actions or append/read named-human workflow dispositions without changing assessment evidence | `aies remediation show latest` |
 
 ## 4. REST API (read-only)
 
@@ -193,6 +194,7 @@ GET /deployments               registered deployments
 GET /runs                      run history
 GET /audits                    repository assessment history
 GET /audits/{id}               stored repository assessment, served verbatim
+GET /audits/{id}/remediation   current repository remediation workflow view
 GET /comparisons               explicitly saved comparison history
 GET /comparisons/{id}          stored comparison, served verbatim
 GET /run-imports               verified cross-machine import receipts
@@ -212,6 +214,7 @@ GET /runs/{id}/executive-summary
                                stored leadership-facing summary
 GET /runs/{id}/diagnostics     stored grounding/hallucination diagnostics
 GET /runs/{id}/coverage        stored assessment coverage and blind spots
+GET /runs/{id}/remediation     stored evidence-linked remediation/monitoring plan
 GET /assessments               shipped assessments
 GET /qualifications            Qualification Records
 GET /conformance               decision-engine conformance report

@@ -237,7 +237,8 @@ def render_markdown(
           "(engineering-capability-matrix.md) · [Engineering Fit Guidance]"
           "(engineering-fit-guidance.md) · [Executive Summary]"
           "(executive-summary.md) · [Assessment Coverage & Blind Spots]"
-          "(assessment-coverage.md).")
+          "(assessment-coverage.md) · [Evidence-Linked Remediation Plan]"
+          "(evidence-remediation-plan.md).")
         a("")
         a("---")
         provenance = view["provenance"]
@@ -400,7 +401,8 @@ def render_markdown(
     a("")
     a("Related decision products: [Executive Summary](executive-summary.md) · "
       "[Deployment Guidance](deployment-guidance.md) · "
-      "[Assessment Coverage & Blind Spots](assessment-coverage.md).")
+      "[Assessment Coverage & Blind Spots](assessment-coverage.md) · "
+      "[Evidence-Linked Remediation Plan](evidence-remediation-plan.md).")
     a("")
 
     a("---")
@@ -555,6 +557,9 @@ def write_reports(run_id: str) -> dict[str, str]:
             "assessment_coverage": (
                 "evidence availability, applicability, reuse, and blind spots; "
                 "not subject quality"),
+            "evidence_remediation_plan": (
+                "unassigned evidence-linked actions, monitoring links, and "
+                "reassessment triggers; not risk acceptance or authorization"),
         },
     }
     bundle_path = rdir / "report-bundle.json"

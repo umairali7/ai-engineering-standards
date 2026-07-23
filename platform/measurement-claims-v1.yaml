@@ -64,6 +64,21 @@ claims:
     does_not_mean:
       - global rank
       - statistically significant superiority unless separately tested
+  evidence_linked_remediation:
+    subject: the exact assessed subject descriptor and evidence scope
+    target_population: direct findings and applicable coverage gaps in the current assessment profile
+    sampling_frame: retained findings plus assessed, partial, missing, stale, conflicting, unavailable, and unsupported coverage cells
+    outcome: stable priority-sorted informational actions with acceptance and reassessment criteria
+    aggregation: deterministic one-action-per-subject-source identity with no score or risk averaging
+    uncertainty: inherited evidence depth, collection condition, confidence, freshness, and limitations remain explicit
+    exclusions:
+      - inferred findings or evidence not retained by the source assessment
+      - automatic owner assignment or risk acceptance
+      - unsupported component-to-parent evidence transfer
+    intended_decision: help a named subject owner plan evidence collection, remediation, monitoring, and reassessment
+    does_not_mean:
+      - proof that an action is effective or complete
+      - authority to deploy, accept risk, qualify, certify, or close a finding
   formal_qualification:
     subject: the exact governed qualification scope tuple
     target_population: the selected framework, competency, tier, and validity scope

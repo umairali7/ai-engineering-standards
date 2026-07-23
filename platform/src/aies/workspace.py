@@ -16,7 +16,7 @@ from . import config
 
 APPEND_ONLY_DIRECTORIES = frozenset({
     "responses", "ratings", "resolutions", "events", "raters", "audits",
-    "comparisons", "run-imports", "import-sources",
+    "comparisons", "run-imports", "import-sources", "remediation",
 })
 MUTABLE_WORKING_FILES = frozenset({
     "manifest.json", "scoresheet.json", "progress.json", "latest.json",
@@ -39,7 +39,9 @@ REGENERABLE_VIEW_FILES = frozenset({
     "grounding-diagnostics.md", "grounding-diagnostics.json",
     "grounding-diagnostics.html",
     "assessment-coverage.md", "assessment-coverage.json",
-    "assessment-coverage.html", "dashboard.html",
+    "assessment-coverage.html", "evidence-remediation-plan.md",
+    "evidence-remediation-plan.json", "evidence-remediation-plan.html",
+    "dashboard.html",
 })
 ARCHIVE_DEBRIS_NAMES = frozenset({".DS_Store", "Thumbs.db", "desktop.ini"})
 CACHE_DIRECTORY_NAMES = frozenset({"__MACOSX", "__pycache__", ".pytest_cache"})

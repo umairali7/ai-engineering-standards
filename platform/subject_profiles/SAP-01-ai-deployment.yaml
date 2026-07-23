@@ -30,7 +30,7 @@ freshness_policy:
   basis: latest directly referenced evidence timestamp
   default_max_age_days: 90
   change_triggers_override_age: true
-decision_products: [DP-01, DP-02, DP-03, DP-04, DP-08, DP-09, DP-11]
+decision_products: [DP-01, DP-02, DP-03, DP-04, DP-07, DP-08, DP-09, DP-10, DP-11]
 applicability:
   lifecycle:
     default: {status: applicable, rationale: Engineering deployments may participate across every lifecycle phase; actual direct evidence remains run-specific.}
@@ -64,8 +64,10 @@ applicability:
       DP-02: {status: applicable, rationale: Direct task-mapped scenario evidence produces the ECM.}
       DP-03: {status: applicable, rationale: Engineering Fit Guidance is derived from bounded ECM evidence.}
       DP-04: {status: applicable, rationale: Formal qualification is an explicit separate human-governed workflow.}
+      DP-07: {status: applicable, rationale: Coverage gaps produce deterministic evidence-linked actions without assigning authority or closing risk.}
       DP-08: {status: applicable, rationale: Compatible run evidence may be compared without a universal winner claim.}
       DP-09: {status: applicable, rationale: Complete bundles include a leadership-facing summary with limitations.}
+      DP-10: {status: applicable, rationale: Field and telemetry evidence may be linked to explicit reassessment triggers without rewriting prior observations.}
       DP-11: {status: applicable, rationale: "Every completed bundle discloses assessed, partial, missing, inapplicable, and unsupported perspectives."}
 limitations:
   - Design review does not establish empirical validity or predictive usefulness.

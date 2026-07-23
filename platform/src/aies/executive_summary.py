@@ -97,6 +97,10 @@ def build(run_id: str, matrix: dict, decision_guidance: dict,
                 "markdown": "grounding-diagnostics.md",
                 "json": "grounding-diagnostics.json",
                 "html": "grounding-diagnostics.html"},
+            "evidence_remediation_plan": {
+                "markdown": "evidence-remediation-plan.md",
+                "json": "evidence-remediation-plan.json",
+                "html": "evidence-remediation-plan.html"},
         },
         "limitations": [
             "This summary is informational and does not replace the underlying artifacts.",
@@ -182,6 +186,7 @@ def render_markdown(summary: dict) -> str:
         "- [Engineering Capability Matrix](engineering-capability-matrix.html) — task strengths and gaps.",
         "- [Grounding Diagnostics](grounding-diagnostics.html) — hallucination and fabrication observations.",
         "- [Assessment Coverage & Blind Spots](assessment-coverage.html) — evidence availability, reuse, and missing perspectives; not a score.",
+        "- [Evidence-Linked Remediation Plan](evidence-remediation-plan.html) — unassigned actions, acceptance evidence, monitoring links, and reassessment triggers.",
         ("- [Engineering Fit Guidance](engineering-fit-guidance.html) — "
          "evidence-derived fit; no deployment authority." if fit_mode else
          "- [Deployment Guidance](deployment-guidance.html) — "
@@ -219,6 +224,7 @@ def render_html(summary: dict) -> str:
         ("Engineering Capability Matrix", "engineering-capability-matrix.html"),
         ("Grounding Diagnostics", "grounding-diagnostics.html"),
         ("Assessment Coverage & Blind Spots", "assessment-coverage.html"),
+        ("Evidence-Linked Remediation Plan", "evidence-remediation-plan.html"),
         (("Engineering Fit Guidance", "engineering-fit-guidance.html")
          if fit_mode else ("Deployment Guidance", "deployment-guidance.html")),
     ]
