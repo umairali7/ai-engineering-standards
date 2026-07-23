@@ -23,6 +23,20 @@ that *cites* the study.
 > the scenario set post-hoc invalidates the study exactly as it would a
 > qualification.
 
+Create and preserve the machine-readable preregistration artifact before any
+run. It freezes exact instruments and versions rather than relying on a
+backdatable prose assertion:
+
+```text
+aies suites empirical --create-plan panel-plan.json \
+  --panel-id <id> --plan-owner <name> \
+  --plan-subjects <subject>=<ability> ... \
+  --plan-areas <CA-##> ... --plan-rt <1-4> --plan-repeats <n> \
+  --ability-basis <independent-evidence> \
+  --rating-protocol-id <kind:rater> \
+  --rating-protocol-basis <validation-evidence>
+```
+
 ---
 
 ## Question
@@ -51,8 +65,11 @@ capability across a real model panel, repeatably and without gaming?"
   (`discrimination_min`, `ceiling_min`, `floor_max`, `repeatability_max_std`,
   `twin_gap_max`). These travel in the result `metadata`; restate them here so the
   frozen design is legible without the JSON.
-- **Assembly** — `aies suites empirical --runs <run>=<ability> … --panel-id <id>
-  --write-panel panel.json`. Attach `panel.json` and the result JSON.
+- **Assembly** — `aies suites empirical --panel-plan panel-plan.json
+  --planned-runs <subject>=<run> … --write-panel panel.json`. Attach the frozen
+  plan, assembled panel, and result JSON. The result is promotion-ineligible if
+  the plan digest, subject identity, instrument set, suite/prompt hashes,
+  repeats, or rating protocol do not match.
 
 ## Findings *(post-run — report against the frozen design)*
 

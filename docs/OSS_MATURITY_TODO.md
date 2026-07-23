@@ -74,7 +74,7 @@ and selection remain separate products.
 | Status | Work item | Acceptance signal |
 |---|---|---|
 | Done | Human-review the new RT2 — Moderate tranche | Umair Ali explicitly accepted all 268 listed instruments as repository owner and maintainer after a zero-gap deterministic preflight. One disclosed human-authorized AI-assisted tranche event records every scenario ID and content hash, does not fabricate separate manual click-through reviews, and automatically reopens changed content. All 484 now have effective design review; external independent review and empirical calibration remain open separately. |
-| In progress | Empirically calibrate a preregistered real-subject panel | Panel preflight now rejects mismatched suites/prompts/samples/rating protocols, missing ratings, duplicate corrections, and ungrounded ability ranks. Four existing legacy subjects share seven CA-05 scenarios and 21 observations under one provisional protocol, but remain non-promotional because ability ordering was not independently preregistered and the rating protocol is explicitly provisional/uncalibrated. A versioned real-subject study must report difficulty, discrimination, repeatability, twin robustness, ceiling reach, limitations, and a human promotion decision. |
+| In progress | Empirically calibrate a preregistered real-subject panel | The platform now creates a content-addressed plan before runs, freezing owner, subjects/ranks and independent basis, exact instrument/prompt/content/suite hashes, tier, repeats, thresholds, and validated rating protocol. Completed runs must bind exactly to that plan; free-text timestamps and synthetic/manual panels are non-promotional. Four legacy subjects share seven CA-05 scenarios and 21 observations under one provisional protocol, but remain exploratory because no prior plan exists and the scorer is explicitly provisional/uncalibrated. A real study and human promotion decision remain external evidence. |
 | Open | Establish versioned anchor-artifact libraries | Every competency area has human-consensus anchors across scores 0–4, including subtle AI-produced defects and refresh history |
 | Open | Protect held-out evidence | Public examples, behavioral twins, and genuinely protected held-out instruments are distinct; contamination checks and refresh policy are recorded |
 | Open | Grow no-repeat coverage beyond RT2 — Moderate | Each supported tier/area meets its distinct-instrument minimum with genuinely tier-appropriate decision types: current distribution RT1=24, RT2=387, RT3=52, RT4=21 |
@@ -138,8 +138,8 @@ and selection remain separate products.
 | Open | Consolidate report view models | Markdown, HTML, JSON, dashboard, and API consume shared factual view models; no renderer recomputes decisions |
 | Done | Clarify immutable artifacts and regenerable views | Storage policy classifies append-only records, derived canonical snapshots, mutable workflow state/configuration, and regenerable views; `workspace.write_json` rejects append-only replacement and `workspace.write_view` cannot target evidence paths |
 | Done | Make record identifiers concurrency-safe | Qualification Records atomically claim human-readable IDs through exclusive creation; a 12-decision concurrent regression proves unique issued records and lifecycle events |
-| Done | Improve local verification feedback | The documented command reports ranked durations and uses a 180-second warm-cache Windows budget with a 25% regression trigger. Single-pass report views plus signature-invalidated isolated YAML, expanded-scenario, review-ledger, and suite caches reduce the measured complete run from 216 tests in 491.51 seconds to 224 tests in 81.89 seconds; cache mutation/invalidation behavior has regression coverage. Read-only API fixtures are shared safely and concurrency tests delay only the phase under test. |
-| Open | Remove local workspace archive debris safely | Workspace diagnostics identify `.DS_Store`, `__MACOSX`, caches, and stale generated bundles without deleting user evidence automatically |
+| Done | Improve local verification feedback | The documented command reports ranked durations and uses a 180-second warm-cache Windows budget with a 25% regression trigger. Single-pass report views plus signature-invalidated isolated YAML, expanded-scenario, review-ledger, and suite caches reduce the measured complete run from 216 tests in 491.51 seconds to 225 tests in a repeated 81.23–100.16-second range; cache mutation/invalidation behavior has regression coverage. Read-only API fixtures are shared safely and concurrency tests delay only the phase under test. |
+| Done | Remove local workspace archive debris safely | `aies doctor` inventories `.DS_Store`, `Thumbs.db`, `desktop.ini`, `__MACOSX`, Python/pytest caches, and misplaced regenerable views under the runs root; JSON exposes every path and category, readiness is unaffected, and tests prove the diagnostic deletes neither debris nor evidence |
 
 ### C2 — CI, security, and release hygiene
 
@@ -159,9 +159,10 @@ and selection remain separate products.
 
 Last verified on 2026-07-23:
 
-- `pytest platform/tests -q --durations=15`: **224 passed in 81.89 seconds** on
-  the current Windows workstation (down from the preceding 219-test measurement
-  of 155.38 seconds and below the documented 180-second warm-cache budget).
+- `pytest platform/tests -q --durations=15`: **225 passed in 81.23 seconds** on
+  the latest Windows run, with repeated measurements spanning **81.23–100.16
+  seconds** (down from the preceding 219-test measurement of 155.38 seconds and
+  below the documented 180-second warm-cache budget).
 - `aies suites validate`: **484 scenarios, 12 areas, 0 warnings, 0 errors**;
   **268 effective hash-bound ledger acceptances, 0 stale, 0 unknown**.
 - Decision-engine conformance: **8/8 cases passed**, semantics 1.0.

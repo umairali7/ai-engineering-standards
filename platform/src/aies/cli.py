@@ -53,6 +53,13 @@ def cmd_doctor(args) -> int:
         print(f"  ram_gb    : {fp['ram_gb']}")
         print(f"  os        : {fp['os']} | python {fp['python']}")
         print(f"  workspace : {record['checks'].get('workspace')}")
+        debris = record["checks"].get("workspace_debris") or {}
+        print(f"  debris    : {debris.get('count', 0)} advisory finding(s); "
+              "nothing deleted")
+        for finding in (debris.get("findings") or [])[:5]:
+            print(f"    [{finding['category']}] {finding['path']}")
+        if debris.get("count", 0) > 5:
+            print(f"    ... {debris['count'] - 5} more (use --json for all paths)")
         print(f"  fingerprint: {fp['fingerprint_hash']}")
         print("  runtimes:")
         for r in record.get("runtimes", []):
@@ -1295,6 +1302,51 @@ def cmd_suites(args) -> int:
         return 0
     if getattr(args, "suites_cmd", None) == "empirical":
         from . import empirical
+        if args.create_plan:
+            required = {
+                "--panel-id": args.panel_id,
+                "--plan-owner": args.plan_owner,
+                "--plan-subjects": args.plan_subjects,
+                "--plan-areas": args.plan_areas,
+                "--ability-basis": args.ability_basis,
+                "--rating-protocol-id": args.rating_protocol_id,
+                "--rating-protocol-basis": args.rating_protocol_basis,
+            }
+            missing = [name for name, value in required.items() if not value]
+            if missing:
+                print("error: creating a panel plan requires " + ", ".join(missing),
+                      file=sys.stderr)
+                return 2
+            subjects = []
+            for item in args.plan_subjects:
+                if "=" not in item:
+                    print(f"error: --plan-subjects expects SUBJECT=ABILITY, got {item!r}",
+                          file=sys.stderr)
+                    return 2
+                subject, ability = item.rsplit("=", 1)
+                try:
+                    rank = int(ability)
+                except ValueError:
+                    print(f"error: ability must be an integer, got {ability!r}",
+                          file=sys.stderr)
+                    return 2
+                subjects.append({"subject": subject, "ability": rank})
+            try:
+                plan = empirical.create_panel_plan(
+                    panel_id=args.panel_id, human_owner=args.plan_owner,
+                    subjects=subjects, areas=args.plan_areas,
+                    risk_tier=f"RT{args.plan_rt}", repeats=args.plan_repeats,
+                    ability_basis=args.ability_basis,
+                    rating_protocol_id=args.rating_protocol_id,
+                    rating_protocol_basis=args.rating_protocol_basis)
+            except (ValueError, FileNotFoundError) as exc:
+                print(f"error: {exc}", file=sys.stderr)
+                return 2
+            Path(args.create_plan).write_text(
+                json.dumps(plan, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+            _out(plan, args.json,
+                 f"wrote {args.create_plan}\n{empirical.render_panel_plan(plan)}")
+            return 0
         if args.preflight_runs:
             report = empirical.preflight_runs(
                 [{"run_id": run_id,
@@ -1302,7 +1354,41 @@ def cmd_suites(args) -> int:
                  for run_id in args.preflight_runs])
             _out(report, args.json, empirical.render_preflight(report))
             return 0  # advisory inspection; readiness is explicit in the artifact
-        if args.runs:
+        if args.panel_plan:
+            if not args.planned_runs:
+                print("error: --panel-plan requires --planned-runs SUBJECT=RUN_ID ...",
+                      file=sys.stderr)
+                return 2
+            try:
+                plan = json.loads(Path(args.panel_plan).read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                print(f"error: cannot read panel plan: {exc}", file=sys.stderr)
+                return 2
+            assignments = {}
+            for item in args.planned_runs:
+                if "=" not in item:
+                    print(f"error: --planned-runs expects SUBJECT=RUN_ID, got {item!r}",
+                          file=sys.stderr)
+                    return 2
+                subject, run_id = item.split("=", 1)
+                if subject in assignments:
+                    print(f"error: duplicate planned subject {subject!r}", file=sys.stderr)
+                    return 2
+                assignments[subject] = run_id
+            try:
+                panel = empirical.assemble_panel_from_plan(plan, assignments)
+            except (ValueError, FileNotFoundError) as exc:
+                print(f"error: {exc}", file=sys.stderr)
+                return 2
+            if args.write_panel:
+                Path(args.write_panel).write_text(
+                    json.dumps(panel, indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8")
+                if not args.json:
+                    print(f"wrote assembled panel to {args.write_panel}")
+            if not args.panel_id:
+                args.panel_id = plan.get("panel_id")
+        elif args.runs:
             specs = []
             for spec in args.runs:
                 if "=" not in spec:
@@ -1331,8 +1417,9 @@ def cmd_suites(args) -> int:
         elif args.panel:
             panel = json.loads(Path(args.panel).read_text(encoding="utf-8"))
         else:
-            print("error: pass a panel JSON file, --runs RUN=ABILITY ..., or "
-                  "--preflight-runs RUN_ID ...", file=sys.stderr)
+            print("error: pass a panel JSON file, --panel-plan with --planned-runs, "
+                  "--runs RUN=ABILITY ..., --preflight-runs RUN_ID ..., or "
+                  "--create-plan", file=sys.stderr)
             return 2
         report = empirical.analyze_panel(panel, panel_id=args.panel_id)
         _out(report, args.json, empirical.render(report))
@@ -1895,6 +1982,24 @@ def build_parser() -> argparse.ArgumentParser:
                      help="timestamp showing ability ranks were fixed before analysis")
     ste.add_argument("--rating-protocol-basis", default=None,
                      help="evidence that the shared scoring protocol is validated")
+    ste.add_argument("--create-plan", default=None, metavar="PATH",
+                     help="write a frozen empirical panel plan before running subjects")
+    ste.add_argument("--panel-plan", default=None, metavar="PATH",
+                     help="frozen panel plan to bind to completed --planned-runs")
+    ste.add_argument("--plan-subjects", nargs="+", metavar="SUBJECT=ABILITY",
+                     default=None, help="subjects and independent ability ranks to freeze")
+    ste.add_argument("--planned-runs", nargs="+", metavar="SUBJECT=RUN_ID",
+                     default=None, help="bind every planned subject to its completed run")
+    ste.add_argument("--plan-owner", default=None,
+                     help="named human accountable for the frozen study design")
+    ste.add_argument("--plan-areas", nargs="+", metavar="CA-##", default=None,
+                     help="competency areas whose exact instruments are frozen")
+    ste.add_argument("--plan-rt", type=int, choices=(1, 2, 3, 4), default=2,
+                     help="risk tier frozen in a new plan (default: 2)")
+    ste.add_argument("--plan-repeats", type=int, default=3,
+                     help="repeat observations per instrument for stability (default: 3)")
+    ste.add_argument("--rating-protocol-id", default=None,
+                     help="expected rating protocol as KIND:RATER")
     ste.add_argument("--write-panel", default=None,
                      help="also write the assembled panel JSON to this path")
     ste.add_argument("--panel-id", default=None,

@@ -22,8 +22,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   copies. Read-only API tests reuse one immutable module fixture, and the judge
   concurrency test delays only the reviewer behavior it measures. The complete
   suite retains all assertions while removing repeated setup and unrelated
-  sleeps: 224 tests complete in 81.89 seconds on the Windows verification host,
-  down from the preceding 219-test 155.38-second baseline.
+  sleeps: 225 tests complete in a repeated 81.23–100.16-second range on the
+  Windows verification host, down from the preceding 219-test 155.38-second
+  baseline.
 - **Empirical-panel admission preflight**: `aies suites empirical
   --preflight-runs` now checks that real runs use distinct subjects, identical
   scenario/repeat sets, prompt hashes and suite versions, one shared validated
@@ -34,6 +35,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   legacy subset is honestly reported as four subjects over seven CA-05 scenarios
   and 21 observations, blocked by unregistered ability ranks and its explicitly
   provisional scoring protocol.
+- **Content-addressed empirical preregistration**: `aies suites empirical
+  --create-plan` freezes a named human owner, planned subjects and independent
+  ability basis, exact scenario/prompt/content/suite hashes, risk tier, repeats,
+  methodology/thresholds, and validated rating protocol before collection.
+  `--panel-plan … --planned-runs` binds completed runs back to every planned
+  subject and rejects drift. Promotion eligibility now requires the matching
+  plan digest; manual timestamps, synthetic panels, and post-hoc run lists remain
+  explicitly non-promotional.
+- **Read-only workspace debris diagnostics**: `aies doctor` now inventories
+  archive metadata, Python/pytest caches, and regenerable report views misplaced
+  at the runs root. Findings are advisory, fully exposed in JSON, do not affect
+  runtime readiness, and never delete either debris or evidence.
 - **Review-ready RT2 instrument tranche and governed open-license proposal**:
   all 268 new RT2 — Moderate instruments now include competency-specific
   behavioral floor anchors and gaming-resistance rationales. `aies corpus

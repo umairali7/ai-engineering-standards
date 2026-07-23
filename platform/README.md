@@ -123,7 +123,7 @@ comprehensive script runs in CI too. For a real deployment,
 ## Quickstart (fully offline)
 
 ```
-aies doctor                    # validate environment; detect installed runtimes
+aies doctor                    # validate environment/runtime; inventory workspace debris read-only
 aies discover                  # register the deployments each runtime serves
 aies registry list            # see the named deployments (e.g. mock-mock-small)
 

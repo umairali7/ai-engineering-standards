@@ -267,8 +267,29 @@ assemble a **panel-results** file — run each panel model through the scenarios
 }
 ```
 
-**Preflight first.** Before assigning ability ranks, inspect whether candidate
-runs actually form one comparable panel:
+**Freeze the study first.** Create the versioned panel plan before collecting
+responses. This resolves the current suite, freezes every scenario and content
+hash, records the human owner, independent ability basis, subjects/ranks,
+repeats, thresholds, and validated rating protocol, and emits a digest:
+
+```text
+aies suites empirical \
+  --create-plan security-panel-plan.json \
+  --panel-id security-2026-Q3 \
+  --plan-owner "Umair Ali" \
+  --plan-subjects strong-ref=3 mid-ref=2 weak-ref=1 \
+  --plan-areas CA-07 CA-12 \
+  --plan-rt 3 --plan-repeats 3 \
+  --ability-basis "independent evidence cited in the study" \
+  --rating-protocol-id "human:Panel Rater" \
+  --rating-protocol-basis "consensus anchor validation v1"
+```
+
+Commit or otherwise timestamp the plan before running. A supplied timestamp is
+not a substitute for the content-addressed plan artifact.
+
+**Preflight existing runs.** Without assigning ability ranks, inspect whether
+candidate runs could form one comparable exploratory panel:
 
 ```text
 aies suites empirical --preflight-runs run-a run-b run-c
@@ -280,19 +301,16 @@ protocol, one valid rating per response, and no correction record that could be
 miscounted as an extra repeat. It also reports that ability ranks and rating
 protocols need independently documented bases. Compatibility is not calibration.
 
-**One-command pilot.** You don't have to hand-write the panel file. Run each
-panel subject through the scenarios, validate the common scoring protocol, and
-let the harness assemble the scored runs:
+After running every planned subject against the frozen scope, bind the exact run
+IDs back to their planned subject identities:
 
 ```
 aies qualify strong-ref --assessment security --judge <judge>   # -> run-strong
 aies qualify mid-ref    --assessment security --judge <judge>   # -> run-mid
 aies qualify weak-ref   --assessment security --judge <judge>   # -> run-weak
 aies suites empirical \
-  --runs run-strong=3 run-mid=2 run-weak=1 \
-  --ability-basis "independent benchmark recorded before this study" \
-  --rating-protocol-basis "human-consensus anchor validation v1" \
-  --preregistered-at 2026-07-18T00:00:00Z \
+  --panel-plan security-panel-plan.json \
+  --planned-runs strong-ref=run-strong mid-ref=run-mid weak-ref=run-weak \
   --write-panel panel.json
 ```
 
@@ -310,8 +328,9 @@ metadata. `--write-panel` saves the assembled file and its preflight record.
 - **twin robustness** — consistency across a hold-out twin (a large gap flags gaming).
 
 A scenario that clears all of them is **empirically calibratable**. It is
-**promotion eligible** only when run-panel preflight and preregistration are
-also complete; a manually supplied or synthetic panel remains non-promotional.
+**promotion eligible** only when run-panel preflight passes against a matching
+content-addressed preregistration plan; a manually supplied, free-text-timestamp,
+or synthetic panel remains non-promotional.
 The harness **flags** the rest (`low-discrimination`, `too-easy`, `ceiling-unreached`,
 `noisy`, `gameable`).
 

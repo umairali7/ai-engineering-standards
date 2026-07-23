@@ -36,3 +36,24 @@ def test_artifact_storage_classes_and_writers(tmp_path, monkeypatch):
     workspace.write_view(report, "first")
     workspace.write_view(report, "second")
     assert report.read_text(encoding="utf-8") == "second"
+
+
+def test_workspace_debris_diagnostic_is_read_only_and_evidence_aware(tmp_path):
+    from aies import workspace
+
+    root = tmp_path / "ws"
+    (root / "runs" / "run-real" / "responses").mkdir(parents=True)
+    evidence = root / "runs" / "run-real" / "responses" / "item.json"
+    evidence.write_text("{}", encoding="utf-8")
+    misplaced = root / "runs" / "report.html"
+    misplaced.write_text("view", encoding="utf-8")
+    metadata = root / ".DS_Store"
+    metadata.write_text("finder", encoding="utf-8")
+    cache = root / "runs" / "__pycache__"
+    cache.mkdir()
+
+    report = workspace.diagnose_debris(root)
+    paths = {item["path"] for item in report["findings"]}
+    assert report["count"] == 3 and not report["clean"] and report["advisory"]
+    assert paths == {".DS_Store", "runs/__pycache__", "runs/report.html"}
+    assert evidence.exists() and misplaced.exists() and metadata.exists() and cache.exists()

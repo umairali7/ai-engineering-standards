@@ -139,11 +139,12 @@ cd platform
 pip install -e .            # installs the `aies` command
 pytest tests/ -q --durations=15  # conformance + ranked performance feedback
 aies                        # or `aies help` — the command map + typical workflow
-aies doctor                 # environment fingerprint + detected runtimes
+aies doctor                 # fingerprint + runtimes + read-only workspace-debris inventory
 ```
 
 For local verification, the recorded warm-cache Windows budget is 180 seconds
-for the complete suite; the 2026-07-23 baseline is 224 tests in 81.89 seconds.
+for the complete suite; the conservative 2026-07-23 baseline is 225 tests in
+100.16 seconds (latest 81.23 seconds; repeated range 81.23–100.16 seconds).
 Treat a budget breach or greater-than-25% regression as a profiling trigger.
 This is a feedback budget, not a reason to skip correctness gates on slower CI
 hardware.

@@ -32,6 +32,8 @@ REGENERABLE_VIEW_FILES = frozenset({
     "grounding-diagnostics.md", "grounding-diagnostics.json",
     "grounding-diagnostics.html", "dashboard.html",
 })
+ARCHIVE_DEBRIS_NAMES = frozenset({".DS_Store", "Thumbs.db", "desktop.ini"})
+CACHE_DIRECTORY_NAMES = frozenset({"__MACOSX", "__pycache__", ".pytest_cache"})
 
 
 def root() -> Path:
@@ -115,3 +117,35 @@ def write_view(path: Path, content: str) -> Path:
 
 def read_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def diagnose_debris(workspace_root: Path | None = None) -> dict:
+    """Inventory disposable workspace debris without deleting anything."""
+    base = Path(workspace_root).resolve() if workspace_root else ensure()
+    findings = []
+    if not base.exists():
+        return {"kind": "workspace-debris-diagnostic", "root": str(base),
+                "findings": [], "count": 0, "clean": True, "advisory": True}
+    runs_root = base / "runs"
+    for path in sorted(base.rglob("*")):
+        category = None
+        if path.name in ARCHIVE_DEBRIS_NAMES:
+            category = "archive-metadata"
+        elif path.is_dir() and path.name in CACHE_DIRECTORY_NAMES:
+            category = "cache-directory"
+        elif path.is_file() and path.suffix.lower() in {".pyc", ".pyo"}:
+            category = "cache-file"
+        elif (path.is_file() and path.parent == runs_root
+              and path.name in REGENERABLE_VIEW_FILES):
+            category = "misplaced-regenerable-view"
+        if category:
+            findings.append({"path": path.relative_to(base).as_posix(),
+                             "category": category,
+                             "recoverability": "regenerable or non-evidence metadata"})
+    counts = {}
+    for finding in findings:
+        counts[finding["category"]] = counts.get(finding["category"], 0) + 1
+    return {"kind": "workspace-debris-diagnostic", "root": str(base),
+            "findings": findings, "count": len(findings),
+            "counts": counts, "clean": not findings, "advisory": True,
+            "action": "Review paths manually; this diagnostic never deletes files."}

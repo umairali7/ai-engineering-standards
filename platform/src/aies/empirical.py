@@ -27,6 +27,8 @@ evidence and a verdict; a human records the promotion, exactly as with grants.
 from __future__ import annotations
 
 import datetime
+import hashlib
+import json
 import re
 from collections import Counter, defaultdict
 from statistics import mean, pstdev
@@ -47,6 +49,8 @@ FLOOR_MAX = 2.5               # weakest group should land at or below this (a li
 REPEATABILITY_MAX_STD = 0.75  # per-(model,scenario) score std must be at or below this
 TWIN_GAP_MAX = 1.0            # a model's |scenario - twin| gap above this flags gaming
 PANEL_MIN_SUBJECTS = 3         # weak / middle / strong is the minimum useful shape
+PANEL_PLAN_KIND = "aies-empirical-panel-plan-v1"
+PANEL_PLAN_SCHEMA = 1
 
 
 def _thresholds() -> dict:
@@ -55,6 +59,137 @@ def _thresholds() -> dict:
             "discrimination_min": DISCRIMINATION_MIN, "ceiling_min": CEILING_MIN,
             "floor_max": FLOOR_MAX, "repeatability_max_std": REPEATABILITY_MAX_STD,
             "twin_gap_max": TWIN_GAP_MAX}
+
+
+def panel_plan_digest(plan: dict) -> str:
+    payload = json.dumps(plan, sort_keys=True, ensure_ascii=False,
+                         separators=(",", ":"))
+    return "sha256:" + hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def validate_panel_plan(plan: dict) -> list[str]:
+    problems: list[str] = []
+    if not isinstance(plan, dict) or plan.get("kind") != PANEL_PLAN_KIND:
+        return [f"kind must be {PANEL_PLAN_KIND!r}"]
+    if plan.get("schema_version") != PANEL_PLAN_SCHEMA:
+        problems.append(f"schema_version must be {PANEL_PLAN_SCHEMA}")
+    for field in ("panel_id", "created_at", "human_owner", "ability_basis"):
+        if not isinstance(plan.get(field), str) or not plan[field].strip():
+            problems.append(f"{field} must be a non-empty string")
+    try:
+        created = datetime.datetime.fromisoformat(
+            str(plan.get("created_at", "")).replace("Z", "+00:00"))
+        if created.tzinfo is None:
+            problems.append("created_at must include a timezone")
+    except ValueError:
+        problems.append("created_at must be ISO-8601")
+    if plan.get("methodology_version") != METHODOLOGY_VERSION:
+        problems.append("methodology_version does not match the current analyzer")
+    if plan.get("thresholds") != _thresholds():
+        problems.append("thresholds do not match the current analyzer")
+    if plan.get("risk_tier") not in {"RT1", "RT2", "RT3", "RT4"}:
+        problems.append("risk_tier must be RT1, RT2, RT3, or RT4")
+    if not isinstance(plan.get("repeats"), int) or isinstance(plan.get("repeats"), bool) \
+            or plan.get("repeats", 0) < 1:
+        problems.append("repeats must be a positive integer")
+
+    rating = plan.get("rating_protocol")
+    if not isinstance(rating, dict):
+        problems.append("rating_protocol must be an object")
+    else:
+        for field in ("id", "validation_basis"):
+            if not isinstance(rating.get(field), str) or not rating[field].strip():
+                problems.append(f"rating_protocol.{field} must be a non-empty string")
+
+    subjects = plan.get("subjects")
+    if not isinstance(subjects, list) or len(subjects) < PANEL_MIN_SUBJECTS:
+        problems.append(f"subjects must contain at least {PANEL_MIN_SUBJECTS} entries")
+    else:
+        ids = [item.get("subject") for item in subjects if isinstance(item, dict)]
+        if len(ids) != len(subjects) or any(not isinstance(item, str) or not item.strip()
+                                           for item in ids):
+            problems.append("every subject needs a non-empty subject id")
+        elif len(set(ids)) != len(ids):
+            problems.append("subject ids must be unique")
+        abilities = [item.get("ability") for item in subjects if isinstance(item, dict)]
+        if any(not isinstance(rank, int) or isinstance(rank, bool) or rank < 1
+               for rank in abilities):
+            problems.append("every subject ability must be a positive integer")
+        elif len(set(abilities)) < 2:
+            problems.append("subjects need at least two ability ranks")
+
+    instruments = plan.get("instruments")
+    if not isinstance(instruments, list) or not instruments:
+        problems.append("instruments must be a non-empty list")
+    else:
+        ids = []
+        for item in instruments:
+            if not isinstance(item, dict):
+                problems.append("every instrument must be an object")
+                continue
+            ids.append(item.get("scenario_id"))
+            for field in ("scenario_id", "prompt_hash", "content_hash",
+                          "area", "suite_version"):
+                if not isinstance(item.get(field), str) or not item[field].strip():
+                    problems.append(f"instrument.{field} must be a non-empty string")
+            if item.get("design_reviewed") is not True:
+                problems.append("every planned instrument must be design-reviewed")
+        if len(ids) != len(set(ids)):
+            problems.append("instrument scenario ids must be unique")
+    return list(dict.fromkeys(problems))
+
+
+def create_panel_plan(*, panel_id: str, human_owner: str,
+                      subjects: list[dict], areas: list[str], risk_tier: str,
+                      repeats: int, ability_basis: str,
+                      rating_protocol_id: str,
+                      rating_protocol_basis: str,
+                      created_at: str | None = None) -> dict:
+    """Freeze a real-subject panel design before response collection."""
+    from . import design_reviews, runner
+
+    instruments = []
+    normalized_areas = sorted(set(areas))
+    for area in normalized_areas:
+        _definition, scenarios, suite_version = runner.load_area(area)
+        for scenario in scenarios:
+            if scenario.get("risk_tier") != risk_tier:
+                continue
+            reviewed = bool((((scenario.get("calibration") or {})
+                              .get("empirical_status") or {})
+                             .get("design_reviewed")))
+            if not reviewed:
+                raise ValueError(
+                    f"cannot preregister pending instrument {scenario.get('id')}")
+            prompt = str(scenario.get("prompt") or "")
+            instruments.append({
+                "scenario_id": scenario["id"], "area": scenario["area"],
+                "suite_version": suite_version,
+                "prompt_hash": "sha256:" + hashlib.sha256(
+                    prompt.encode("utf-8")).hexdigest(),
+                "content_hash": design_reviews.scenario_content_hash(scenario),
+                "design_reviewed": True,
+            })
+    plan = {
+        "kind": PANEL_PLAN_KIND, "schema_version": PANEL_PLAN_SCHEMA,
+        "panel_id": panel_id, "created_at": created_at or
+        datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "human_owner": human_owner, "methodology_version": METHODOLOGY_VERSION,
+        "thresholds": _thresholds(), "risk_tier": risk_tier,
+        "areas": normalized_areas, "repeats": repeats,
+        "ability_basis": ability_basis,
+        "rating_protocol": {"id": rating_protocol_id,
+                            "validation_basis": rating_protocol_basis},
+        "subjects": sorted(subjects, key=lambda item: item["subject"]),
+        "instruments": sorted(instruments, key=lambda item: item["scenario_id"]),
+        "authority_boundary": (
+            "This plan freezes study design. It does not validate the rating "
+            "protocol, establish ability, promote an instrument, or grant qualification."),
+    }
+    problems = validate_panel_plan(plan)
+    if problems:
+        raise ValueError("invalid empirical panel plan: " + "; ".join(problems))
+    return plan
 
 
 def _group_means(per_model: dict[str, list[float]], ability: dict[str, int]) -> dict[int, float]:
@@ -144,10 +279,16 @@ def analyze_panel(panel: dict, panel_id: str | None = None,
         "thresholds": _thresholds(),
         "analyzed_at": analyzed_at or datetime.datetime.now(datetime.timezone.utc).isoformat(),
     }
+    preregistration = panel.get("preregistration")
+    promotion_eligible = bool(
+        (panel.get("preflight") or {}).get("ready")
+        and isinstance(preregistration, dict)
+        and preregistration.get("plan_digest"))
     return {"kind": "empirical-calibration-result",
             "metadata": metadata,
             "panel_preflight": panel.get("preflight"),
-            "promotion_eligible": bool((panel.get("preflight") or {}).get("ready")),
+            "preregistration": preregistration,
+            "promotion_eligible": promotion_eligible,
             "panel_size": len(ability),
             "scenarios": len(results),
             "empirically_calibratable": sorted(calibratable),
@@ -155,7 +296,7 @@ def analyze_panel(panel: dict, panel_id: str | None = None,
             "results": results}
 
 
-def preflight_runs(specs: list[dict]) -> dict:
+def preflight_runs(specs: list[dict], plan: dict | None = None) -> dict:
     """Check whether scored runs form one comparable empirical panel.
 
     The preflight is intentionally stricter than merely finding score files. It
@@ -174,6 +315,31 @@ def preflight_runs(specs: list[dict]) -> dict:
     reference_keys = reference_hashes = reference_suites = reference_protocol = None
     observation_sets: list[set[tuple[str, int]]] = []
     rating_bases: set[str] = set()
+    plan_digest = None
+    expected_keys = expected_hashes = expected_suites = None
+    if plan is not None:
+        problems = validate_panel_plan(plan)
+        if problems:
+            blockers.extend(f"panel plan: {problem}" for problem in problems)
+        else:
+            plan_digest = panel_plan_digest(plan)
+            expected_keys = {
+                (item["scenario_id"], repeat)
+                for item in plan["instruments"]
+                for repeat in range(1, plan["repeats"] + 1)
+            }
+            prompt_by_scenario = {
+                item["scenario_id"]: item["prompt_hash"]
+                for item in plan["instruments"]
+            }
+            expected_hashes = {
+                (scenario_id, repeat): prompt_by_scenario[scenario_id]
+                for scenario_id, repeat in expected_keys
+            }
+            expected_suites = {
+                item["area"]: item["suite_version"]
+                for item in plan["instruments"]
+            }
 
     if len(specs) < PANEL_MIN_SUBJECTS:
         blockers.append(
@@ -189,6 +355,11 @@ def preflight_runs(specs: list[dict]) -> dict:
         manifest = workspace.read_json(manifest_path)
         subject = (manifest.get("subject") or {}).get("id") or (
             manifest.get("model") or {}).get("registry_id") or run_id
+        expected_subject = spec.get("expected_subject")
+        if expected_subject and subject != expected_subject:
+            blockers.append(
+                f"{run_id}: run subject {subject!r} does not match planned "
+                f"subject {expected_subject!r}")
         if subject in seen_subjects:
             blockers.append(f"{run_id}: duplicate panel subject {subject!r}")
         seen_subjects.add(subject)
@@ -244,6 +415,19 @@ def preflight_runs(specs: list[dict]) -> dict:
         suites = {str(area.get("area")): str(area.get("suite_version"))
                   for area in manifest.get("areas", []) if isinstance(area, dict)}
         protocol = next(iter(protocols)) if len(protocols) == 1 else None
+        protocol_id = f"{protocol[0]}:{protocol[1]}" if protocol else None
+
+        if expected_keys is not None and keys != expected_keys:
+            blockers.append(f"{run_id}: observations do not match the frozen panel plan")
+        if expected_hashes is not None and hashes != expected_hashes:
+            blockers.append(f"{run_id}: prompt hashes do not match the frozen panel plan")
+        if expected_suites is not None and suites != expected_suites:
+            blockers.append(f"{run_id}: suite versions do not match the frozen panel plan")
+        planned_protocol = ((plan or {}).get("rating_protocol") or {}).get("id")
+        if planned_protocol and protocol_id != planned_protocol:
+            blockers.append(
+                f"{run_id}: rating protocol {protocol_id!r} does not match planned "
+                f"protocol {planned_protocol!r}")
 
         if reference_keys is None:
             reference_keys, reference_hashes = keys, hashes
@@ -327,13 +511,15 @@ def preflight_runs(specs: list[dict]) -> dict:
         "common_observations": len(common_keys),
         "common_scenarios": len({key[0] for key in common_keys}),
         "blockers": blockers, "warnings": warnings, "runs": rows,
+        "panel_plan": ({"panel_id": plan.get("panel_id"), "digest": plan_digest}
+                       if plan is not None else None),
         "authority_boundary": (
             "Preflight checks comparability only. A named human preregisters ability "
             "ranks from independent evidence and decides any scenario promotion."),
     }
 
 
-def assemble_panel_from_runs(specs: list[dict]) -> dict:
+def assemble_panel_from_runs(specs: list[dict], plan: dict | None = None) -> dict:
     """Build a panel-results object from completed `aies qualify` runs — so the
     pilot is one command. Each spec is {run_id, ability, model?}: the run is one
     panel model's scored evidence. Each rating contributes one observation (the
@@ -343,7 +529,7 @@ def assemble_panel_from_runs(specs: list[dict]) -> dict:
     from . import constants as C
     from . import workspace
 
-    preflight = preflight_runs(specs)
+    preflight = preflight_runs(specs, plan=plan)
     structural_blockers = [blocker for blocker in preflight["blockers"]
                            if "ability rank" not in blocker
                            and "preregistration timestamp" not in blocker
@@ -383,7 +569,36 @@ def assemble_panel_from_runs(specs: list[dict]) -> dict:
                 scores.setdefault(sid, {}).setdefault(model, []).append(round(mean(vals), 4))
 
     return {"panel": panel, "scores": scores, "twins": _twins_for(scores.keys()),
-            "preflight": preflight}
+            "preflight": preflight,
+            "preregistration": ({"panel_id": plan["panel_id"],
+                                  "plan_digest": panel_plan_digest(plan),
+                                  "created_at": plan["created_at"],
+                                  "human_owner": plan["human_owner"]}
+                                 if plan is not None else None)}
+
+
+def assemble_panel_from_plan(plan: dict, assignments: dict[str, str]) -> dict:
+    """Bind completed runs to the exact subjects frozen in a panel plan."""
+    problems = validate_panel_plan(plan)
+    if problems:
+        raise ValueError("invalid empirical panel plan: " + "; ".join(problems))
+    planned = {item["subject"]: item for item in plan["subjects"]}
+    if set(assignments) != set(planned):
+        missing = sorted(set(planned) - set(assignments))
+        unknown = sorted(set(assignments) - set(planned))
+        raise ValueError(
+            f"planned-run assignments must match subjects; missing={missing}, "
+            f"unknown={unknown}")
+    specs = []
+    for subject, item in planned.items():
+        specs.append({
+            "run_id": assignments[subject], "model": subject,
+            "expected_subject": subject, "ability": item["ability"],
+            "ability_basis": plan["ability_basis"],
+            "preregistered_at": plan["created_at"],
+            "rating_protocol_basis": plan["rating_protocol"]["validation_basis"],
+        })
+    return assemble_panel_from_runs(specs, plan=plan)
 
 
 def render_preflight(report: dict) -> str:
@@ -399,6 +614,20 @@ def render_preflight(report: dict) -> str:
     for warning in report["warnings"]:
         lines.append(f"  warning: {warning}")
     return "\n".join(lines)
+
+
+def render_panel_plan(plan: dict) -> str:
+    return "\n".join([
+        f"empirical panel plan: {plan['panel_id']}",
+        f"  created             : {plan['created_at']}",
+        f"  human owner         : {plan['human_owner']}",
+        f"  subjects            : {len(plan['subjects'])}",
+        f"  instruments         : {len(plan['instruments'])}",
+        f"  risk tier / repeats : {plan['risk_tier']} / {plan['repeats']}",
+        f"  rating protocol     : {plan['rating_protocol']['id']}",
+        f"  digest              : {panel_plan_digest(plan)}",
+        "  status              : FROZEN DESIGN — evidence collection not yet performed",
+    ])
 
 
 def _twins_for(scenario_ids) -> dict[str, str]:

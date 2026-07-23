@@ -121,9 +121,11 @@ def run_doctor() -> dict:
     try:
         ws = workspace.ensure()
         checks["workspace"] = str(ws)
+        checks["workspace_debris"] = workspace.diagnose_debris(ws)
     except OSError:
         checks["workspace_writable"] = False
         checks["workspace"] = "unwritable"
+        checks["workspace_debris"] = None
 
     record = {
         "fingerprint": fp,

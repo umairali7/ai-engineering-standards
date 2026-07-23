@@ -4,8 +4,11 @@ must (a) confirm a scenario that separates strong from weak, and (b) FLAG the
 failure modes design-time review can't see: no discrimination, too-easy, noisy,
 and gameable (twin inconsistency)."""
 
+import copy
 import sys
 from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
@@ -93,7 +96,7 @@ def test_insufficient_panel_is_handled():
     assert r["verdict"] == "insufficient-panel" and not r["empirically_calibratable"]
 
 
-def test_assemble_panel_from_scored_runs(tmp_path, monkeypatch):
+def test_assemble_preregistered_panel_from_scored_runs(tmp_path, monkeypatch):
     """The one-command pilot: assemble a panel-results object from completed,
     scored qualify runs (each run = one panel model), and confirm the harness
     reads real per-scenario scores and picks up the discrimination."""
@@ -103,6 +106,16 @@ def test_assemble_panel_from_scored_runs(tmp_path, monkeypatch):
     monkeypatch.setenv("AIES_ENV_FILE", str(tmp_path / "empty.env"))
     (tmp_path / "empty.env").write_text("", encoding="utf-8")
     from aies import registry, engine, rating, workspace, empirical
+
+    plan = empirical.create_panel_plan(
+        panel_id="pilot-2026-Q3", human_owner="Study Owner",
+        subjects=[{"subject": "strong", "ability": 3},
+                  {"subject": "mid", "ability": 2},
+                  {"subject": "weak", "ability": 1}],
+        areas=["CA-05"], risk_tier="RT2", repeats=1,
+        ability_basis="independent fixture",
+        rating_protocol_id="human:R",
+        rating_protocol_basis="consensus fixture")
 
     def make_run(dep_id, level):
         e = {"id": dep_id, "family": "demo", "runtime": "mock", "model": dep_id,
@@ -122,17 +135,8 @@ def test_assemble_panel_from_scored_runs(tmp_path, monkeypatch):
         return run_id
 
     strong, mid, weak = make_run("strong", 4), make_run("mid", 3), make_run("weak", 2)
-    panel = empirical.assemble_panel_from_runs([
-        {"run_id": strong, "ability": 3, "ability_basis": "independent fixture",
-         "preregistered_at": "2026-07-18T00:00:00Z",
-         "rating_protocol_basis": "consensus fixture"},
-        {"run_id": mid, "ability": 2, "ability_basis": "independent fixture",
-         "preregistered_at": "2026-07-18T00:00:00Z",
-         "rating_protocol_basis": "consensus fixture"},
-        {"run_id": weak, "ability": 1, "ability_basis": "independent fixture",
-         "preregistered_at": "2026-07-18T00:00:00Z",
-         "rating_protocol_basis": "consensus fixture"},
-    ])
+    panel = empirical.assemble_panel_from_plan(
+        plan, {"strong": strong, "mid": mid, "weak": weak})
     assert {m["model"] for m in panel["panel"]} == {"strong", "mid", "weak"}
     assert panel["scores"], "no per-scenario scores assembled"
     # every CA-05 scenario should carry all three models' observations
@@ -141,8 +145,18 @@ def test_assemble_panel_from_scored_runs(tmp_path, monkeypatch):
     # strong=4, mid=3, weak=2 -> discrimination 2.0, monotonic
     report = empirical.analyze_panel(panel)
     assert panel["preflight"]["ready"] and report["promotion_eligible"]
+    assert panel["preregistration"]["plan_digest"] == empirical.panel_plan_digest(plan)
     a = report["results"][next(iter(panel["scores"]))]
     assert a["discrimination"] == 2.0 and a["monotonic"]
+
+    drifted = copy.deepcopy(plan)
+    drifted["instruments"][0]["prompt_hash"] = "sha256:changed-after-registration"
+    with pytest.raises(ValueError, match="frozen panel plan"):
+        empirical.assemble_panel_from_plan(
+            drifted, {"strong": strong, "mid": mid, "weak": weak})
+    with pytest.raises(ValueError, match="missing=.*weak"):
+        empirical.assemble_panel_from_plan(
+            plan, {"strong": strong, "mid": mid})
 
 
 def test_preflight_rejects_duplicate_rating_observations(tmp_path, monkeypatch):

@@ -93,7 +93,7 @@ append-only records. Grouped as in `aies --help`.
 
 | Command | Contract | Example |
 |---|---|---|
-| `doctor` | Validate + fingerprint the environment; detect installed runtimes | `aies doctor --json` |
+| `doctor` | Validate and fingerprint the environment, detect installed runtimes, and report archive/cache/misplaced-view workspace debris without deleting anything | `aies doctor --json` |
 | `discover` | Register the deployments each runtime serves (idempotent) | `aies discover` |
 | `deployment` / `registry` | Manage deployment entries: add/show/update/remove/`verify-artifact` | `aies deployment verify-artifact local-qwen --artifact model.bin` |
 | `runtime` | Inspect installed runtime adapters | `aies runtime list` |
@@ -143,7 +143,7 @@ append-only records. Grouped as in `aies --help`.
 | `profiles` | List/show/validate/scaffold weighting profiles | `aies profiles show enterprise` |
 | `suites validate` | Validate the suite catalog **and** the shipped assessments (CI gate); validates `calibration` blocks when present | `aies suites validate` |
 | `suites calibrate` | Calibration-coverage report — how far each scenario has progressed as a measurement instrument ([CALIBRATION.md](CALIBRATION.md)); advisory | `aies suites calibrate` |
-| `suites empirical` | Phase-2 empirical calibration — preflight run compatibility with `--preflight-runs`, then analyze discrimination/repeatability/twin robustness from a preregistered panel. Auto-assembly rejects mismatched suites, prompts, samples, rating protocols, unrated responses, and duplicate/correction ratings. | `aies suites empirical --preflight-runs run-a run-b run-c` |
+| `suites empirical` | Phase-2 empirical calibration — create a content-addressed plan before runs with `--create-plan`; inspect legacy compatibility with `--preflight-runs`; bind completed runs with `--panel-plan … --planned-runs`. Promotion eligibility requires the frozen plan and rejects mismatched subjects, suites, prompts, samples, protocols, unrated responses, and duplicate/correction ratings. | `aies suites empirical --create-plan panel-plan.json …` |
 | `corpus health` / `corpus coverage` | Advisory quality review of the assessment corpus *itself* — calibration, coverage, behavioral diversity, duplication, empirical maturity, each with evidence + ranked recommendations. **Multidimensional, no single grade, never a gate** | `aies corpus health` |
 | `corpus duplicates` | Deterministic near-duplicate detection (prompt-shingle + ceiling overlap), **twin-aware** — flags non-twin redundancy candidates, and hold-out twins that are *too* similar on the surface | `aies corpus duplicates` |
 | `corpus review` | Review one scenario as a measurement instrument — deterministic structural checks always, plus an **opt-in model critique** (`--reviewer <deployment>`). Critique only: never rewrites, approves, or scores | `aies corpus review SC-CA07-015 --reviewer gpt-oss` |
