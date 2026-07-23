@@ -30,23 +30,35 @@ AEBOK / AESQS / AEOS / AEAR / AECT / ECM
              Assessment Plan
                     │
                     ▼
-             Canonical Evidence
-                    │
-          ┌─────────┼─────────┐
-          ▼         ▼         ▼
-   Qualification   ECM   Conformance
-          │         │
-          ▼         ▼
-   Human authority  Deployment Guidance
+             Subject Descriptor
                     │
                     ▼
-           Compare / AIES Select
+       Subject Executor / Evidence Adapter
+                    │
+                    ▼
+             Canonical Evidence
+                    │
+        ┌───────────┼───────────┐
+        ▼           ▼           ▼
+ Qualification    ECM      Conformance
+        │           │           │
+        └───────────┼───────────┘
+                    ▼
+     Guidance / Remediation / Limitations
+                    │
+                    ▼
+ Compare / AIES Select / Portfolio Views
+                    │
+                    ▼
+             Human authority
 ```
 
 The platform is not a model leaderboard. It prepares trustworthy, scoped
 evidence about any supported subject and presents that evidence for different
 human decisions. Qualification, engineering capability, deployment guidance,
-and selection remain separate products.
+remediation, comparison, and selection remain separate products. Subject types
+share identity, provenance, evidence lifecycle, reporting, and human-authority
+boundaries; they do not automatically share instruments or score semantics.
 
 ## 2. Vision Delivery Backlog
 
@@ -86,13 +98,57 @@ and selection remain separate products.
 
 | Status | Work item | Acceptance signal |
 |---|---|---|
-| Open | Define a governed Subject Descriptor | Canonical identity supports human, team, repository, AI deployment, agent, MCP server, RAG system, pipeline, and platform without a mandatory legacy model block |
+| Open | Define a governed Subject Descriptor | Canonical identity supports human, team, repository, AI deployment/system, agent, agent swarm, MCP server, coding assistant, prompt library, RAG system, pipeline, platform, and composite system without a mandatory legacy model block |
 | Open | Separate Subject Executor from Runtime Adapter | Runtime generation remains one executor implementation; evidence collection is not coupled to text-generation APIs |
 | Open | Define typed canonical evidence events | Provenance, subject, instrument, observation, rating, reviewer, environment, and lifecycle events are versioned and replayable across subject types |
-| Open | Implement agent-session assessment | Tool calls, memory, context, approvals, failures, and escalation traces enter canonical evidence |
-| Open | Implement MCP-server assessment | Protocol behavior, tool contracts, authorization, isolation, failure behavior, and security evidence enter the same decision-product pipeline |
-| Open | Implement RAG-system assessment | Retrieval quality, grounding, source integrity, privacy, injection resistance, and abstention are directly assessed |
+| Open | Define the Subject Assessment Profile contract | Every supported subject kind declares its descriptor schema, fingerprint/change triggers, executor or evidence adapters, applicable instruments, score semantics, minimums, gates, limitations, decision products, and human-review requirements |
+| Open | Model composite subjects and dependencies | A human–AI pair, coding assistant plus repository, agent plus MCP servers, swarm, RAG application, pipeline, or platform can reference component subjects and evidence without transferring one component's qualification or hiding dependency risk |
+| Open | Add subject capability discovery | CLI/API reports which subject kinds, profiles, executors, evidence adapters, instruments, and decision products are implemented, experimental, or planned; unsupported assessment requests fail clearly rather than silently falling back to deployment scoring |
 | Open | Unify repository audit decision products | Repository maturity remains semantically distinct from AESQS rubric scoring but shares subject identity, evidence provenance, reporting, and portfolio views |
+
+### P1 — Subject expansion program
+
+Each subject kind receives a governed Subject Assessment Profile before an
+executor is promoted from experimental status. EV1–EV6, ML0–ML4, or any future
+scale applies only when the profile establishes that it is meaningful for that
+subject and evidence type.
+
+| Status | Subject track | Acceptance signal |
+|---|---|---|
+| Done | AI deployment output assessment | Versioned scenarios execute against local or remote deployments; responses, ratings, uncertainty, qualification boundaries, ECM, grounding diagnostics, and deployment guidance are produced from canonical evidence |
+| Open | Human engineering work-sample assessment | Consent, identity, accommodations, work-sample provenance, assessor protocol, privacy/retention, appeal, competency evidence, and qualification lifecycle are implemented without covert productivity surveillance |
+| Open | Team and human–AI pair assessment | Collaboration, handoffs, review effectiveness, shared context, decision ownership, escalation, recovery, and outcome evidence are evaluated without treating individual or model scores as a substitute for team evidence |
+| Open | Agent-session assessment | Versioned tasks capture plans, tool calls, tool results, approvals, memory/context use, policy boundaries, side effects, failures, recovery, escalation, cost, latency, and final outcomes; replay and trace redaction are supported |
+| Open | Agent-swarm assessment | Delegation, role separation, coordination, consensus/conflict handling, shared-state integrity, containment, cascading failure, aggregate cost, and accountable human control are assessed in addition to member-agent capability |
+| Open | MCP-server assessment | Discovery and protocol conformance, schema accuracy, tool/resource contracts, authorization, least privilege, isolation, state handling, error behavior, injection resistance, reliability, latency, compatibility, and auditability enter canonical evidence |
+| Open | AI coding-assistant assessment | IDE/repository context selection, code edits, diff quality, test behavior, secure defaults, command/tool use, provenance, approval boundaries, rollback, and repository-task outcomes are assessed as a composite assistant–repository subject |
+| Open | Prompt-library assessment | Versioning, ownership, intended use, input/output contracts, regression suites, portability, injection resistance, sensitive-data handling, deprecation, drift, and task-specific effectiveness are assessed without publishing protected prompt content |
+| Open | RAG-system assessment | Retrieval relevance/recall, grounding and citation validity, source integrity/freshness, authorization-aware retrieval, privacy, poisoning/injection resistance, abstention, latency, cost, drift, and failure behavior are directly assessed |
+| Open | AI pipeline assessment | Data/model/prompt lineage, stage contracts, reproducibility, orchestration, quality gates, secrets, failure isolation, retry/idempotency, observability, rollback, cost, and promotion controls are assessed across the execution graph |
+| Open | AI engineering platform assessment | Tenant and environment isolation, identity/access, policy enforcement, model/tool registry, audit trails, observability, resilience, supply chain, lifecycle governance, developer experience, and operating-model support are assessed against AEAR/AEOS evidence |
+| Open | Composite-system end-to-end assessment | A declared system boundary links repositories, deployments, agents, MCP servers, RAG, pipelines, platforms, humans, and teams; component findings, interface failures, emergent risks, and end-to-end task outcomes remain traceable without averaging away a failed critical component |
+
+### P1 — Repository engineering intelligence
+
+The existing `aies audit <repo>` is a repository **conformance and practice
+maturity** assessment. It verifies evidence such as tests, CI enforcement, ADRs,
+security tooling, provenance, and governance controls; it does not claim that
+source code is correct or that an architecture is good merely because those
+artifacts exist. Deeper repository analysis is a separate evidence layer with
+its own instruments and claim boundaries.
+
+| Status | Work item | Acceptance signal |
+|---|---|---|
+| Open | Govern the repository-analysis layers | A companion ADR distinguishes (1) conformance audit, (2) static/dynamic repository engineering analysis, and (3) controlled repository-task benchmarking; it defines their score semantics, evidence admissibility, human authority, and prohibited claims |
+| Open | Add a content-addressed Repository Subject Descriptor | Repository identity records commit/tree hash, relevant configuration, languages, build system, dependency state, submodule state, analysis scope, exclusions, environment, and tool versions so results are reproducible and changes trigger reassessment |
+| Open | Define repository evidence adapters | Versioned adapters ingest native test, coverage, mutation, property/contract test, lint, type-check, complexity, duplication, dependency, SAST, secret-scan, SBOM, architecture-rule, and benchmark outputs without converting tool absence into a pass |
+| Open | Implement evidence-based architecture analysis | Reports dependency/module topology, cycles, layering and boundary violations, coupling/cohesion indicators, architecture fitness-test results, and ADR-to-implementation traceability; every finding identifies affected artifacts and no unsupported “good architecture” verdict is emitted |
+| Open | Implement a code-quality profile | Language-aware adapters report lint/type findings, complexity, duplication, dead-code signals, maintainability trends, documentation and testability evidence with tool/version provenance, confidence/coverage limits, and no cross-language comparison unless the instruments are compatible |
+| Open | Implement correctness-assurance analysis | The platform executes or ingests reproducible tests, coverage, mutation, property/contract tests, static-analysis findings, and failure evidence; it reports demonstrated assurance and untested behavior rather than claiming that repository correctness has been proven |
+| Open | Implement controlled repository-task benchmarks | Disposable, authorization-bounded workspaces run versioned defect-fix, refactoring, testing, API, migration, performance, security, and architecture tasks; patch validity, tests, regressions, safety, efficiency, and traceability are scored while the repository and executing agent remain separately identified subjects |
+| Open | Emit repository remediation evidence | Every repository gap or finding feeds the common Evidence-Linked Remediation Plan with priority, impact, exact evidence, bounded corrective action, acceptance signal, owner/authority boundary, and reassessment command |
+| Open | Add optional semantic repository review | A declared reviewer may analyze code/design context and propose findings with file/line evidence, uncertainty, reviewer identity, and conflicts; its output is advisory unless independently verified and never changes deterministic maturity or assurance scores by itself |
+| Open | Unify repository report and comparison products | One linked bundle presents conformance maturity, architecture evidence, code quality, correctness assurance, security/tool findings, recommendations, limitations, and optional human-review status; comparisons require compatible commit scope, toolchain, configuration, language, and instrument versions |
 
 ### P2 — ECM and decision products
 
@@ -102,6 +158,7 @@ and selection remain separate products.
 | Done | Deliver a compact report bundle | Qualification Evidence Package, Canonical Assessment Result when applicable, ECM, Deployment Guidance, and Executive Summary are separate linked Markdown/JSON/HTML artifacts generated from one canonical evidence package and indexed by `report-bundle.json` |
 | Done | Mature Deployment Guidance | Use / Use with Review / Avoid incorporates task evidence, current matching qualification scope, live deployment-fingerprint continuity, role/phases, autonomy, conditions, validity, residual calibration/gate risks, and operational constraints; no guidance creates authority |
 | Done | Add protocol-compatible ECM comparison | Task deltas and winners appear only when risk, profile, suites, mappings, repeats, and rater protocol are compatible |
+| Open | Build a cross-subject Evidence-Linked Remediation Plan | Findings from deployments, repositories, humans/teams, agents, swarms, MCP servers, coding assistants, prompt libraries, RAG systems, pipelines, platforms, and composite systems share a deterministic action schema: priority, impact, evidence, recommendation, acceptance signal, owner/authority, dependency, and reassessment trigger; optional generated narrative is labelled advisory and cannot alter evidence or scores |
 | Open | Build AIES Select | A declared workload mix plus latency, cost, context, tool reliability, availability, and risk constraints produces an explained fit ranking over compatible evidence—never a global best-subject claim |
 | Open | Build organization decision products | Inventory shows approved subjects, demonstrated task fit, qualification scope, conditions, drift, expiry, incidents, and requalification status |
 | Done | Rebuild `demo-full` as the AIES killer demo | The fully offline one-process CI narrative demonstrates deployment/repository/standard subjects, implicit live task/ETA progress, complete automated Engineering Evaluation, optional human-evaluation status, ECM strengths/gaps, bounded guidance, protocol-compatible comparison without invented winners, the formal qualification boundary, conformance, corpus health, empirical-panel handoff, and the linked Executive Summary bundle; expected non-zero outcomes are explicitly contained, and the measured Windows run completes in about 16 seconds without repeated inference, report computation, or production-timeout probes |
@@ -136,6 +193,9 @@ and selection remain separate products.
 | Open | Split the CLI monolith | Parser construction and command handlers are separated by domain with unchanged tested command behavior |
 | Open | Consolidate duplicate commands | `registry`/`deployment`, `profile`/`profiles`, and `qualification`/`qualifications` have one canonical surface plus documented deprecation aliases |
 | Open | Consolidate report view models | Markdown, HTML, JSON, dashboard, and API consume shared factual view models; no renderer recomputes decisions |
+| Open | Replace heuristic repository detection with structured evidence where available | CI, dependency, test, coverage, security, architecture, and governance checks prefer parsed manifests or imported tool results over filename/substring heuristics; heuristic fallbacks are labelled with lower evidence confidence and regression fixtures cover supported stacks |
+| Open | Standardize assessment vocabulary across commands and docs | `audit` means repository/practice conformance, `analysis` means artifact/tool evidence evaluation, `benchmark` means a compatible controlled comparative study, and `qualification` means a governed human decision; help and reports do not use the terms interchangeably |
+| Open | Generate and test the subject-support matrix | One machine-readable registry drives CLI help, API discovery, documentation, and tests for implemented/experimental/planned subject profiles so public claims cannot drift ahead of executable support |
 | Done | Clarify immutable artifacts and regenerable views | Storage policy classifies append-only records, derived canonical snapshots, mutable workflow state/configuration, and regenerable views; `workspace.write_json` rejects append-only replacement and `workspace.write_view` cannot target evidence paths |
 | Done | Make record identifiers concurrency-safe | Qualification Records atomically claim human-readable IDs through exclusive creation; a 12-decision concurrent regression proves unique issued records and lifecycle events |
 | Done | Improve local verification feedback | The documented command reports ranked durations and uses a 180-second warm-cache Windows budget with a 25% regression trigger. Single-pass report views plus signature-invalidated isolated YAML, expanded-scenario, review-ledger, and suite caches reduce the measured complete run from 216 tests in 491.51 seconds to 225 tests in a repeated 81.23–100.16-second range; cache mutation/invalidation behavior has regression coverage. Read-only API fixtures are shared safely and concurrency tests delay only the phase under test. |
