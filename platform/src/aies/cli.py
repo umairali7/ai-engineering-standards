@@ -35,6 +35,17 @@ def _out(data, as_json: bool, human: str | None = None) -> None:
         print(human if human is not None else json.dumps(data, indent=2, default=str))
 
 
+def _human_duration(seconds: float) -> str:
+    seconds = max(0, round(seconds))
+    if seconds < 60:
+        return f"{seconds}s"
+    minutes, seconds = divmod(seconds, 60)
+    if minutes < 60:
+        return f"{minutes}m {seconds}s"
+    hours, minutes = divmod(minutes, 60)
+    return f"{hours}h {minutes}m"
+
+
 def _live_progress(args):
     """One renderer per command so stage/bucket throttling stays coherent."""
     if getattr(args, "json", False):
@@ -113,10 +124,78 @@ def cmd_init(args) -> int:
     from . import adoption
     try:
         result = adoption.initialize(Path(args.path))
+        starter = getattr(args, "starter", None)
         if getattr(args, "starter_manifest", False):
+            if starter not in (None, "deployment"):
+                raise adoption.AdoptionError(
+                    "--starter-manifest is an alias for --starter deployment "
+                    "and cannot be combined with another starter")
+            starter = "deployment"
+        if getattr(args, "guided", False) and getattr(args, "json", False):
+            raise adoption.AdoptionError(
+                "--guided is interactive and cannot be combined with --json; "
+                "use --starter and deployment options for automation")
+        if getattr(args, "guided", False) and starter is not None:
+            raise adoption.AdoptionError(
+                "--guided selects the starter interactively; do not combine "
+                "it with --starter or --starter-manifest")
+        values = {
+            "deployment_id": args.deployment_id,
+            "model": args.model,
+            "base_url": args.endpoint,
+            "api_key_env": args.api_key_env,
+            "roles": (
+                ["subject", "judge"] if args.role == "both" else [args.role]),
+        }
+        if getattr(args, "guided", False):
+            print("Choose a first path (no action makes model or reviewer calls):")
+            print("  1. deployment       Register and evaluate an endpoint")
+            print("  2. offline-demo     Run the complete synthetic product story")
+            print("  3. repository-audit Analyze engineering evidence in a repository")
+            selected = input("Starter [1]: ").strip() or "1"
+            starter = {
+                "1": "deployment", "2": "offline-demo",
+                "3": "repository-audit",
+            }.get(selected, selected)
+            if starter == "deployment":
+                for key, label in (
+                    ("deployment_id", "Deployment id"),
+                    ("model", "Served model id"),
+                    ("base_url", "OpenAI-compatible endpoint"),
+                    ("api_key_env", "API-key environment variable"),
+                ):
+                    entered = input(f"{label} [{values[key]}]: ").strip()
+                    if entered:
+                        values[key] = entered
+                role = input("Role subject/judge/both "
+                             f"[{args.role}]: ").strip() or args.role
+                values["roles"] = (
+                    ["subject", "judge"] if role == "both" else [role])
+        if starter not in (None, "deployment", "offline-demo",
+                           "repository-audit"):
+            raise adoption.AdoptionError(
+                "starter must be deployment, offline-demo, or repository-audit")
+        if starter == "deployment":
             starter = adoption.starter_deployment(
-                Path(args.path) / "deployment.example.yaml")
+                Path(args.path) / "deployment.example.yaml", **values)
             result["starter_manifest"] = str(starter)
+            result["starter"] = "deployment"
+            result["endpoint_preview"] = {
+                "deployment_id": values["deployment_id"],
+                "model": values["model"],
+                "endpoint": values["base_url"],
+                "roles": values["roles"],
+                "credential_source": values["api_key_env"],
+            }
+            result["recommended_next_command"] = (
+                f'aies deployment add "{starter}"')
+        elif starter == "offline-demo":
+            result["starter"] = starter
+            result["recommended_next_command"] = "aies demo --open"
+        elif starter == "repository-audit":
+            result["starter"] = starter
+            result["recommended_next_command"] = (
+                "aies audit REPOSITORY --rt 2")
         if args.json:
             _out(result, True)
         else:
@@ -126,18 +205,46 @@ def cmd_init(args) -> int:
             print("  secrets : none written")
             if result.get("starter_manifest"):
                 print(f"  starter : {result['starter_manifest']} (contains no secret)")
+                preview = result["endpoint_preview"]
+                print(f"  endpoint: {preview['endpoint']}")
+                print(f"  model   : {preview['model']}")
+                print(f"  role    : {', '.join(preview['roles'])}")
+                print("  API key : read from environment variable "
+                      f"{preview['credential_source']}; not written")
             print("\nSet this workspace for the current shell:")
             print(f"  PowerShell: $env:AIES_WORKSPACE='{result['workspace']}'")
             print(f"  bash/zsh : export AIES_WORKSPACE='{result['workspace']}'")
-            print("\nNext:")
-            print("  aies starter list")
-            print("  aies discover")
-            print("  aies deployment list")
-            if result.get("starter_manifest"):
-                print(f"  aies deployment add \"{result['starter_manifest']}\"")
+            if result.get("recommended_next_command"):
+                print("\nRecommended next command:")
+                print(f"  {result['recommended_next_command']}")
+            else:
+                print("\nChoose a path:")
+                print("  aies init --guided")
+                print("  aies demo --open")
+                print("  aies starter list")
+                print("  aies discover")
+                print("  aies deployment list")
         return 0
-    except adoption.AdoptionError as e:
-        print(f"error: {e}", file=sys.stderr)
+    except (adoption.AdoptionError, EOFError, KeyboardInterrupt) as e:
+        if isinstance(e, (EOFError, KeyboardInterrupt)):
+            e = adoption.AdoptionError(
+                "guided input was cancelled; the workspace skeleton is safe "
+                "and can be reused")
+        _emit_failure(
+            e,
+            operation="workspace-initialization",
+            args=args,
+            phase="environment",
+            preserved_work_status="workspace-preserved",
+            preserved_work_detail=(
+                "Existing workspace files were not overwritten; successfully "
+                "created skeleton items remain safe to reuse."),
+            recovery_command=(
+                f'aies init "{Path(args.path)}" --guided'),
+            duplicate_cost_risk="none",
+            duplicate_cost_detail=(
+                "Initialization writes no secret and makes no model calls."),
+        )
         return 2
 
 
@@ -234,7 +341,34 @@ def cmd_bridge(args) -> int:
         _out(result, args.json, human)
         return 0
     except (interop.InteropError, OSError, ValueError) as e:
-        print(f"error: {e}", file=sys.stderr)
+        command = {
+            "inspect-import": (
+                f"aies bridge inspect-import {getattr(args, 'run', 'RUN_ID')} "
+                f"{shlex.quote(str(getattr(args, 'file', 'FILE')))}"),
+            "inspect-export": (
+                f"aies bridge inspect-export {getattr(args, 'run', 'RUN_ID')} --out "
+                f"{shlex.quote(str(getattr(args, 'out', 'OUTPUT')))}"),
+            "sarif-import": (
+                f"aies bridge sarif-import "
+                f"{shlex.quote(str(getattr(args, 'file', 'FILE')))}"),
+            "sarif-export": (
+                f"aies bridge sarif-export "
+                f"{shlex.quote(str(getattr(args, 'file', 'FILE')))} "
+                f"--out {shlex.quote(str(getattr(args, 'out', 'OUTPUT')))}"),
+        }[args.bridge_cmd]
+        _emit_failure(
+            e,
+            operation=f"interop-{args.bridge_cmd}",
+            args=args,
+            phase="evidence",
+            preserved_work_status="source-preserved",
+            preserved_work_detail=(
+                "The source artifact and existing run evidence were not removed."),
+            recovery_command=command,
+            duplicate_cost_risk="none",
+            duplicate_cost_detail=(
+                "Bridge operations make no model or paid endpoint calls."),
+        )
         return 2
 
 
@@ -264,8 +398,10 @@ def _evaluate_argv(args) -> list[str]:
 
 def cmd_evaluate(args) -> int:
     """Beginner entry point over the canonical no-repeat qualify pipeline."""
-    from . import assessments, config, engine, registry
+    from . import assessments, config, engine, planning, registry
     try:
+        if args.parallel < 1:
+            raise ValueError("--parallel must be at least 1")
         judge = args.judge or config.default_judge()
         if not judge and not args.plan_only:
             raise ValueError(
@@ -282,10 +418,15 @@ def cmd_evaluate(args) -> int:
             areas = runner.all_area_codes()
         else:
             areas = args.area or ["CA-05"]
-        registry.resolve(args.subject, runtime=args.runtime)
+        subject_entry = registry.resolve(args.subject, runtime=args.runtime)
+        judge_entry = (
+            registry.resolve(judge, runtime=args.reviewer_runtime)
+            if judge else None)
         plan = engine.plan_qualification(
             f"RT{args.rt}", areas, subject_kind="ai", repeats=1)
         batch = args.judge_batch_size or config.judge_batch_size()
+        if batch < 1:
+            raise ValueError("--judge-batch-size must be at least 1")
         plan.update({
             "subject": args.subject,
             "assessment": assessment_name,
@@ -295,8 +436,17 @@ def cmd_evaluate(args) -> int:
             "judge_batch_size": batch,
             "parallel": args.parallel,
             "repeats": 1,
-            "cost_estimate": "unavailable: no pricing declared by the deployments",
-            "duration_estimate": "unavailable until endpoint throughput is observed",
+            "resumability": {
+                "candidate_collection": (
+                    "responses are persisted as they complete; retry missing "
+                    "items with aies qualify --resume-collection RUN_ID"),
+                "judge_scoring": (
+                    "recorded ratings and all candidate responses are reused "
+                    "by aies review RUN_ID --model-reviewer REVIEWER_ID"),
+                "report_generation": (
+                    "aies qualify --resume RUN_ID regenerates derived reports "
+                    "from preserved evidence"),
+            },
             "limitations": [
                 "scenario observations do not establish field performance",
                 "unassessed tasks remain unknown",
@@ -304,14 +454,38 @@ def cmd_evaluate(args) -> int:
                 "does not itself grant Formal Qualification",
             ],
         })
+        estimate = planning.estimate(
+            plan,
+            subject=subject_entry,
+            judge=judge_entry,
+            judge_batch_size=batch,
+            parallel=args.parallel,
+        )
+        plan["estimate"] = estimate
+        plan["cost_estimate"] = (
+            f"USD {estimate['total_cost_usd']:.6f}"
+            if estimate["total_cost_usd"] is not None
+            else "unavailable: one or more deployment prices are undeclared")
+        plan["duration_estimate"] = (
+            _human_duration(estimate["total_duration_seconds"])
+            if estimate["total_duration_seconds"] is not None
+            else "unavailable: one or more endpoint speeds are undeclared")
         if args.plan_only:
+            phase_rows = []
+            for phase in estimate["phases"]:
+                phase_rows.append(
+                    f"    {phase['phase']}: {phase['requests']} request(s), "
+                    f"cost {('USD ' + format(phase['cost_usd'], '.6f')) if phase['cost_usd'] is not None else 'unknown'}, "
+                    f"duration {_human_duration(phase['duration_seconds']) if phase['duration_seconds'] is not None else 'unknown'}")
+                for missing in phase["missing"]:
+                    phase_rows.append(f"      missing: {missing}")
             _out(
                 plan,
                 args.json,
                 "Evaluation plan (nothing executed)\n"
                 f"  subject         : {args.subject}\n"
                 f"  scope           : {assessment_name or ', '.join(areas)}\n"
-                f"  risk tier       : RT{args.rt}\n"
+                f"  risk tier       : {C.risk_tier_label(f'RT{args.rt}')}\n"
                 f"  distinct calls  : {plan['candidate_calls']}\n"
                 f"  exact repeats   : 0\n"
                 f"  judge calls     : ~{plan['estimated_judge_calls']} "
@@ -319,6 +493,12 @@ def cmd_evaluate(args) -> int:
                 f"  concurrency     : {args.parallel}\n"
                 f"  cost estimate   : {plan['cost_estimate']}\n"
                 f"  duration        : {plan['duration_estimate']}\n"
+                f"  estimate status : {estimate['status']}\n"
+                + "\n".join(phase_rows) + "\n"
+                "  basis            : deployment-manifest declarations; "
+                "not a billing or latency guarantee\n"
+                "  resume           : completed responses and ratings are "
+                "persisted; retries target missing work\n"
                 "Run by removing --plan-only.",
             )
             return 0
@@ -510,7 +690,26 @@ def cmd_registry(args) -> int:
             entry = registry.retire(args.model)
             _out(entry, args.json, f"retired {entry['id']}")
     except registry.RegistryError as e:
-        print(f"error: {e}", file=sys.stderr)
+        recovery = {
+            "add": (
+                f"aies registry add "
+                f"{shlex.quote(str(getattr(args, 'file', 'MANIFEST')))}"),
+            "list": "aies doctor",
+            "show": "aies registry list",
+            "retire": f"aies registry show {getattr(args, 'model', 'DEPLOYMENT')}",
+        }.get(args.registry_cmd, "aies registry list")
+        _emit_failure(
+            e,
+            operation=f"registry-{args.registry_cmd}",
+            args=args,
+            phase="environment",
+            preserved_work_status="registry-preserved",
+            preserved_work_detail=(
+                "Existing deployment manifests were not removed or overwritten."),
+            recovery_command=recovery,
+            duplicate_cost_risk="none",
+            duplicate_cost_detail="Registry operations make no model calls.",
+        )
         return 2
     return 0
 
@@ -933,7 +1132,24 @@ def cmd_score(args) -> int:
              "explicitly requested")
     except (rating.RatingError, engine.EngineError, FileNotFoundError,
             json.JSONDecodeError) as e:
-        print(f"error: {e}", file=sys.stderr)
+        source_arg = f" {shlex.quote(str(args.file))}" if args.file else ""
+        _emit_failure(
+            e,
+            operation="score-admission",
+            args=args,
+            phase="scoring",
+            run_id=args.run,
+            preserved_work_status="run-evidence-preserved",
+            preserved_work_detail=(
+                "Responses and any ratings admitted before the failure remain "
+                "append-only evidence in the run."),
+            recovery_command=f"aies score {args.run}{source_arg}",
+            duplicate_cost_risk="none",
+            duplicate_cost_detail=(
+                "Score admission makes no candidate or reviewer calls; if an "
+                "append-only conflict is reported, correct only the remaining "
+                "scoresheet items."),
+        )
         return 2
     return 0
 
@@ -1007,7 +1223,22 @@ def cmd_import(args) -> int:
         paths = report.write_reports(args.run)
     except (evalimport.EvalImportError, rating.RatingError,
             engine.EngineError) as e:
-        print(f"error: {e}", file=sys.stderr)
+        _emit_failure(
+            e,
+            operation="evaluation-import",
+            args=args,
+            phase="evidence",
+            run_id=args.run,
+            preserved_work_status="run-evidence-preserved",
+            preserved_work_detail=(
+                "The source file, responses, and already admitted append-only "
+                "ratings remain unchanged."),
+            recovery_command=(
+                f"aies import {args.run} {shlex.quote(str(args.file))}"),
+            duplicate_cost_risk="none",
+            duplicate_cost_detail=(
+                "Import and report refresh make no model calls."),
+        )
         return 2
     _out({**summary, "engineering_evaluation": evaluation.summarize(args.run),
           "evidence_package": package, "reports": paths}, args.json,
@@ -1056,7 +1287,18 @@ def cmd_report(args) -> int:
             else:
                 print(content)
         except (QualificationError, ValueError, KeyError) as e:
-            print(f"error: {e}", file=sys.stderr)
+            _emit_failure(
+                e,
+                operation="qualification-report",
+                args=args,
+                phase="evidence",
+                preserved_work_status="records-preserved",
+                preserved_work_detail=(
+                    "Qualification records and run evidence were not changed."),
+                recovery_command="aies qualification history",
+                duplicate_cost_risk="none",
+                duplicate_cost_detail="Report rendering makes no model calls.",
+            )
             return 2
         return 0
     try:
@@ -1082,9 +1324,22 @@ def cmd_report(args) -> int:
                 _out({"report": paths["markdown"]}, args.json, f"wrote {paths['markdown']}")
             else:
                 print(report.render_markdown(args.run))
-    except FileNotFoundError:
-        print(f"error: no evidence package for {args.run!r} — run "
-              f"`aies qualify --resume {args.run}` first", file=sys.stderr)
+    except FileNotFoundError as e:
+        _emit_failure(
+            e,
+            operation="run-report",
+            args=args,
+            phase="evidence",
+            run_id=args.run,
+            preserved_work_status="run-preserved",
+            preserved_work_detail=(
+                "Existing responses and ratings remain available for report "
+                "regeneration."),
+            recovery_command=f"aies qualify --resume {args.run}",
+            duplicate_cost_risk="none",
+            duplicate_cost_detail=(
+                "Resume reuses existing responses and ratings when available."),
+        )
         return 2
     return 0
 
@@ -1097,14 +1352,36 @@ def cmd_audit(args) -> int:
         try:
             attestations = json.loads(Path(args.attest).read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as e:
-            print(f"error: cannot read attestation file {args.attest!r}: {e}",
-                  file=sys.stderr)
+            _emit_failure(
+                e,
+                operation="repository-audit-attestation",
+                args=args,
+                phase="evidence",
+                preserved_work_status="source-unchanged",
+                preserved_work_detail=(
+                    "The repository and attestation source were not changed."),
+                recovery_command=(
+                    f"aies audit {shlex.quote(str(args.repo))} "
+                    f"--attest {shlex.quote(str(args.attest))}"),
+                duplicate_cost_risk="none",
+                duplicate_cost_detail="Repository audit makes no model calls.",
+            )
             return 2
     rt = f"RT{args.rt}" if args.gate else (f"RT{args.rt}" if args.rt else None)
     try:
         result = audit.run_audit(args.repo, attestations=attestations, rt=rt)
     except (NotADirectoryError, FileNotFoundError) as e:
-        print(f"error: {e}", file=sys.stderr)
+        _emit_failure(
+            e,
+            operation="repository-audit",
+            args=args,
+            phase="evidence",
+            preserved_work_status="source-unchanged",
+            preserved_work_detail="Repository auditing is read-only.",
+            recovery_command=f"aies audit {shlex.quote(str(args.repo))}",
+            duplicate_cost_risk="none",
+            duplicate_cost_detail="Repository audit makes no model calls.",
+        )
         return 2
     if args.format == "json" or args.json:
         _out(result, True)
@@ -1199,7 +1476,18 @@ def cmd_capabilities(args) -> int:
         try:
             matrix = ecm.engineering_capability_matrix(args.ref)
         except compare.CompareError as e:
-            print(f"error: {e}", file=sys.stderr)
+            _emit_failure(
+                e,
+                operation="engineering-capability-matrix",
+                args=args,
+                phase="evidence",
+                preserved_work_status="run-evidence-preserved",
+                preserved_work_detail=(
+                    "Capability rendering is read-only; the run was not changed."),
+                recovery_command="aies runs list",
+                duplicate_cost_risk="none",
+                duplicate_cost_detail="ECM rendering makes no model calls.",
+            )
             return 2
         if args.write:
             path = ecm.write_matrix(matrix, args.format)
@@ -1215,7 +1503,17 @@ def cmd_capabilities(args) -> int:
     try:
         prof = capabilities.capability_profile(args.ref)
     except compare.CompareError as e:
-        print(f"error: {e}", file=sys.stderr)
+        _emit_failure(
+            e,
+            operation="qualification-capability-profile",
+            args=args,
+            phase="evidence",
+            preserved_work_status="run-evidence-preserved",
+            preserved_work_detail="Capability rendering is read-only.",
+            recovery_command="aies runs list",
+            duplicate_cost_risk="none",
+            duplicate_cost_detail="Capability rendering makes no model calls.",
+        )
         return 2
     if args.json:
         _out(prof, True)
@@ -1282,7 +1580,22 @@ def cmd_guidance(args) -> int:
             _out(result, args.json, guidance.render_markdown(args.ref, **options))
     except (compare.CompareError, guidance.GuidanceError,
             qualification.QualificationError) as e:
-        print(f"error: {e}", file=sys.stderr)
+        _emit_failure(
+            e,
+            operation=("deployment-guidance" if args.qualification
+                       else "engineering-fit-guidance"),
+            args=args,
+            phase="evidence",
+            preserved_work_status="evidence-preserved",
+            preserved_work_detail=(
+                "Guidance generation is read-only; runs and qualification "
+                "records were not changed."),
+            recovery_command=(
+                "aies qualification history" if args.qualification
+                else "aies runs list"),
+            duplicate_cost_risk="none",
+            duplicate_cost_detail="Guidance generation makes no model calls.",
+        )
         return 2
     return 0
 
@@ -1411,14 +1724,42 @@ def cmd_compare(args) -> int:
                 "\nNext: inspect the comparison boundary and plan any missing "
                 "matching evidence: aies starter show compare-coding-deployments")
     except compare.CompareError as e:
-        print(f"error: {e}", file=sys.stderr)
+        _emit_failure(
+            e,
+            operation="engineering-capability-comparison",
+            args=args,
+            phase="evidence",
+            preserved_work_status="run-evidence-preserved",
+            preserved_work_detail=(
+                "Comparison is read-only; both source runs remain unchanged."),
+            recovery_command="aies runs list",
+            duplicate_cost_risk="none",
+            duplicate_cost_detail="Comparison makes no model calls.",
+        )
         return 2
     return 0
 
 
 def cmd_discover(args) -> int:
     from . import registry, runtimes
-    found = runtimes.discover_all()
+    try:
+        found = runtimes.discover_all()
+    except Exception as e:
+        _emit_failure(
+            e,
+            operation="runtime-discovery",
+            args=args,
+            phase="environment",
+            preserved_work_status="registry-preserved",
+            preserved_work_detail=(
+                "Previously registered deployments remain available."),
+            recovery_command="aies doctor",
+            duplicate_cost_risk="none",
+            duplicate_cost_detail=(
+                "Runtime discovery probes local configuration and makes no "
+                "assessment model calls."),
+        )
+        return 2
     results = []
     for partial in found:
         try:
@@ -1850,7 +2191,21 @@ def cmd_deployment(args) -> int:
                     args.name, args.artifact, pubkey_path=args.pubkey,
                     sig_path=args.signature, runtime=getattr(args, "runtime", None))
             except verification.VerificationError as e:
-                print(f"error: {e}", file=sys.stderr)
+                _emit_failure(
+                    e,
+                    operation="deployment-artifact-verification",
+                    args=args,
+                    phase="evidence",
+                    preserved_work_status="artifacts-preserved",
+                    preserved_work_detail=(
+                        "The deployment manifest and artifact were not changed."),
+                    recovery_command=(
+                        f"aies deployment verify-artifact {args.name} "
+                        f"{shlex.quote(str(args.artifact))}"),
+                    duplicate_cost_risk="none",
+                    duplicate_cost_detail=(
+                        "Artifact verification makes no model calls."),
+                )
                 return 2
             if args.json:
                 _out(res, True)
@@ -1867,7 +2222,31 @@ def cmd_deployment(args) -> int:
                 print(f"  => {'OK' if res['ok'] else 'NOT VERIFIED'}")
             return 0 if res["ok"] else 1
     except registry.RegistryError as e:
-        print(f"error: {e}", file=sys.stderr)
+        recovery = {
+            "list": "aies doctor",
+            "inspect": "aies deployment list",
+            "add": (
+                f"aies deployment add "
+                f"{shlex.quote(str(getattr(args, 'file', 'MANIFEST')))}"),
+            "update": (
+                f"aies deployment update "
+                f"{shlex.quote(str(getattr(args, 'file', 'MANIFEST')))}"),
+            "remove": "aies deployment list",
+            "retire": "aies deployment list",
+            "verify-artifact": "aies deployment list",
+        }.get(args.dep_cmd, "aies deployment list")
+        _emit_failure(
+            e,
+            operation=f"deployment-{args.dep_cmd}",
+            args=args,
+            phase="environment",
+            preserved_work_status="registry-preserved",
+            preserved_work_detail=(
+                "Existing deployment manifests were not removed or overwritten."),
+            recovery_command=recovery,
+            duplicate_cost_risk="none",
+            duplicate_cost_detail="Deployment management makes no model calls.",
+        )
         return 2
     return 0
 
@@ -2251,7 +2630,28 @@ def build_parser() -> argparse.ArgumentParser:
         help="workspace directory to create (default: ./aies-workspace)")
     init.add_argument(
         "--starter-manifest", action="store_true",
-        help="also create a non-secret OpenAI-compatible deployment example")
+        help="legacy alias for --starter deployment")
+    init.add_argument(
+        "--starter", choices=("deployment", "offline-demo", "repository-audit"),
+        help="prepare one first-use path and print its exact next command")
+    init.add_argument(
+        "--guided", action="store_true",
+        help="interactively select and configure a first-use path")
+    init.add_argument(
+        "--deployment-id", default="my-deployment",
+        help="starter deployment id (default: my-deployment)")
+    init.add_argument(
+        "--model", default="replace-with-served-model-id",
+        help="served model id for a deployment starter")
+    init.add_argument(
+        "--endpoint", default="http://127.0.0.1:1234/v1",
+        help="OpenAI-compatible base URL for a deployment starter")
+    init.add_argument(
+        "--api-key-env", default="AIES_OPENAI_API_KEY",
+        help="environment variable holding the API key; never the key itself")
+    init.add_argument(
+        "--role", choices=("subject", "judge", "both"), default="subject",
+        help="intended advisory deployment role (default: subject)")
     init.set_defaults(func=cmd_init)
 
     demo = common(sub.add_parser(

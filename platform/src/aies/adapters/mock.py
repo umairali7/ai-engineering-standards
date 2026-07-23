@@ -137,8 +137,12 @@ class MockAdapter(RuntimeAdapter):
         return [
             {"runtime": cls.adapter_id, "model": "mock-small",
              "quantization": "none", "context_window": 8192,
+             "planning": {"usd_per_request": 0.0,
+                          "estimated_seconds_per_request": 0.001},
              "provenance": {"source": "mock runtime", "checksum": "sha256:" + "m" * 64}},
             {"runtime": cls.adapter_id, "model": "mock-large",
              "quantization": "none", "context_window": 32768,
+             "planning": {"usd_per_request": 0.0,
+                          "estimated_seconds_per_request": 0.001},
              "provenance": {"source": "mock runtime", "checksum": "sha256:" + "n" * 64}},
         ]

@@ -27,7 +27,7 @@ For a real deployment, initialize a workspace, discover deployments, and plan
 before execution:
 
 ```text
-aies init
+aies init --guided
 aies support
 aies starter show understand-deployment
 aies discover
@@ -42,6 +42,20 @@ engine. It schedules each selected instrument once, reports optimized judge
 calls, and generates the complete non-blocking Engineering Evaluation bundle.
 Advanced qualification, benchmark, journey, and governance commands remain
 available without being prerequisites for first value.
+
+`aies init --guided` offers three first-use paths: configure an
+OpenAI-compatible deployment, run the offline demo, or audit a repository. The
+deployment path previews its id, served model, endpoint, subject/judge role,
+and credential environment-variable name, then prints the exact registration
+command. It never accepts or writes an API key. For automation, pass
+`--starter deployment`, `--deployment-id`, `--model`, `--endpoint`,
+`--api-key-env`, and `--role` directly.
+
+`aies evaluate --plan-only` makes no endpoint calls. It reports candidate and
+batched-judge requests, concurrency, zero exact repeats, and the recovery path
+for persisted responses/ratings. Cost and duration are calculated only from
+the optional `planning` declarations in each deployment manifest; an
+undeclared price or endpoint speed remains visibly unknown.
 
 ## 0. Navigate the CLI
 
@@ -280,7 +294,7 @@ Never use `--break-system-packages`. If `pipx` or `uv` is already installed,
 application install from this checkout.
 
 For local verification, the recorded warm-cache Windows budget is 180 seconds
-for the complete suite; the 2026-07-23 baseline is 270 tests in 102.68 seconds.
+for the complete suite; the 2026-07-23 baseline is 282 tests in 107.96 seconds.
 Treat a budget breach or greater-than-25% regression as a profiling trigger.
 This is a feedback budget, not a reason to skip correctness gates on slower CI
 hardware.

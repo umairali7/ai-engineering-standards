@@ -64,7 +64,7 @@ evidence breadth instead of hiding both inside one score.
 | You want to… | Start with | You receive |
 |---|---|---|
 | See the idea without setup | `aies demo --open` | Executive Summary, ECM, fit guidance, diagnostics, and full report |
-| Understand one registered AI deployment | `aies evaluate DEPLOYMENT --plan-only` | No-cost call plan, limitations, and exact execution path |
+| Understand one registered AI deployment | `aies evaluate DEPLOYMENT --plan-only` | Non-executing call plan, declared cost/ETA or exact unknowns, limitations, resumability, and execution path |
 | Evaluate it automatically | `aies evaluate DEPLOYMENT --judge JUDGE` | Completed non-blocking Engineering Evaluation and report bundle |
 | See the decision snapshot in your terminal | `aies snapshot latest` | Task evidence, observed capability, confidence, gaps, and engineering interpretation |
 | Check what AIES truly supports | `aies support` | Implemented, experimental, and planned subject kinds with executable entry points and limitations |

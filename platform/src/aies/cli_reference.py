@@ -32,8 +32,8 @@ GUIDANCE: dict[str, CommandGuidance] = {
     ),
     "init": CommandGuidance(
         "AIES is installed and the selected parent directory is writable.",
-        "Creates a non-destructive workspace skeleton, writes no credentials, and prints shell-specific environment and next commands.",
-        "Set AIES_WORKSPACE for the shell, then run `aies discover` and inspect the deployment list.",
+        "Creates a non-destructive workspace skeleton and can interactively or reproducibly prepare deployment evaluation, offline demo, or repository audit. It previews endpoint configuration but never accepts or writes credentials.",
+        "Set AIES_WORKSPACE for the shell, then run the exact recommended command printed for the selected starter.",
     ),
     "demo": CommandGuidance(
         "AIES is installed; no model server, API key, Make, or Bash is required.",
@@ -319,7 +319,11 @@ GUIDANCE: dict[str, CommandGuidance] = {
 
 
 OPTION_INTERACTIONS: dict[tuple[str, str], str] = {
-    ("evaluate", "plan_only"): "Performs no inference and writes no run; use it to review calls, concurrency, estimates, and limitations first.",
+    ("init", "guided"): "Prompts for a first-use path and non-secret endpoint metadata; do not use in unattended automation.",
+    ("init", "starter"): "Non-interactive alternative to `--guided`; deployment accepts the related id/model/endpoint/key-environment/role options.",
+    ("init", "starter_manifest"): "Compatibility alias for `--starter deployment`.",
+    ("init", "api_key_env"): "Records only an environment-variable name. Never pass an API key value here.",
+    ("evaluate", "plan_only"): "Performs no inference and writes no run; reports calls, concurrency, declared cost/ETA or exact unknowns, limitations, and resumability.",
     ("evaluate", "assessment"): "Defaults to the bounded coder assessment unless `--area` or `--all-areas` is selected.",
     ("evaluate", "judge"): "Required for execution unless AIES_JUDGE is set; automated scoring completes Engineering Evaluation without human review.",
     ("evaluate", "open"): "Launches the Executive Summary after success; without it the same local link and safe-sharing command are printed.",
@@ -360,7 +364,8 @@ WORKFLOWS = """## Recommended command sequences
 ### Initial setup
 
 ```text
-aies doctor
+aies init --guided
+  → aies doctor
   → aies discover
   → aies deployment list
   → aies deployment inspect <deployment>

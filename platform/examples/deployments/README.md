@@ -97,6 +97,11 @@ roles (ROLE-01…14) in the Shared Taxonomy — these are deployment usage tags.
   lives only in adapters).
 - **Keys.** Name the key's env var with `runtime_config.api_key_env`; the value
   never goes in the manifest. LAN servers usually need none.
+- **Planning.** To make `aies evaluate --plan-only` estimate rather than report
+  unknown cost/ETA, add the optional validated `planning` declarations
+  documented in [`DEPLOYMENTS.md`](../../DEPLOYMENTS.md). Keep provider prices
+  and measured endpoint speed current; they are operator assumptions, not
+  guarantees.
 - **`checksum: sha256:endpoint-served`** is the convention for a remotely served
   artifact — the server owns artifact verification, and the deployment's
   identity is pinned by its environment fingerprint (D7).

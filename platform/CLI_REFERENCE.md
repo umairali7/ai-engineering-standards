@@ -12,7 +12,8 @@ This is the exhaustive syntax and prerequisite reference. See
 ### Initial setup
 
 ```text
-aies doctor
+aies init --guided
+  → aies doctor
   → aies discover
   → aies deployment list
   → aies deployment inspect <deployment>
@@ -1038,7 +1039,7 @@ plan and run a beginner-friendly automated Engineering Evaluation
 | `--parallel` | optional | maximum concurrent candidate and judge calls (default: 1) | default: `1` |
 | `--runtime` | optional | disambiguate the assessed deployment runtime | — |
 | `--reviewer-runtime` | optional | disambiguate the reviewer deployment runtime | — |
-| `--plan-only` | optional | show calls, concurrency, estimates, and limitations without executing | Performs no inference and writes no run; use it to review calls, concurrency, estimates, and limitations first. |
+| `--plan-only` | optional | show calls, concurrency, estimates, and limitations without executing | Performs no inference and writes no run; reports calls, concurrency, declared cost/ETA or exact unknowns, limitations, and resumability. |
 | `--open` | optional | open the Executive Summary in the default browser after completion | Launches the Executive Summary after success; without it the same local link and safe-sharing command are printed. |
 
 ## `aies export`
@@ -1190,13 +1191,13 @@ rebuild the result index from run files
 
 create a safe AIES workspace and print exact next steps
 
-**Usage:** `aies init [-h] [--json] [--starter-manifest] [path]`
+**Usage:** `aies init [-h] [--json] [--starter-manifest] [--starter {deployment,offline-demo,repository-audit}] [--guided] [--deployment-id DEPLOYMENT_ID] [--model MODEL] [--endpoint ENDPOINT] [--api-key-env API_KEY_ENV] [--role {subject,judge,both}] [path]`
 
 **Prerequisites:** AIES is installed and the selected parent directory is writable.
 
-**Result and side effects:** Creates a non-destructive workspace skeleton, writes no credentials, and prints shell-specific environment and next commands.
+**Result and side effects:** Creates a non-destructive workspace skeleton and can interactively or reproducibly prepare deployment evaluation, offline demo, or repository audit. It previews endpoint configuration but never accepts or writes credentials.
 
-**Recommended next step:** Set AIES_WORKSPACE for the shell, then run `aies discover` and inspect the deployment list.
+**Recommended next step:** Set AIES_WORKSPACE for the shell, then run the exact recommended command printed for the selected starter.
 
 ### Parameters and options
 
@@ -1205,7 +1206,14 @@ create a safe AIES workspace and print exact next steps
 | `-h`, `--help` | optional | show this help message and exit | — |
 | `--json` | optional | machine-readable output | — |
 | `<PATH>` | optional | workspace directory to create (default: ./aies-workspace) | default: `aies-workspace` |
-| `--starter-manifest` | optional | also create a non-secret OpenAI-compatible deployment example | — |
+| `--starter-manifest` | optional | legacy alias for --starter deployment | Compatibility alias for `--starter deployment`. |
+| `--starter` | optional | prepare one first-use path and print its exact next command | choices: `deployment`, `offline-demo`, `repository-audit`; Non-interactive alternative to `--guided`; deployment accepts the related id/model/endpoint/key-environment/role options. |
+| `--guided` | optional | interactively select and configure a first-use path | Prompts for a first-use path and non-secret endpoint metadata; do not use in unattended automation. |
+| `--deployment-id` | optional | starter deployment id (default: my-deployment) | default: `my-deployment` |
+| `--model` | optional | served model id for a deployment starter | default: `replace-with-served-model-id` |
+| `--endpoint` | optional | OpenAI-compatible base URL for a deployment starter | default: `http://127.0.0.1:1234/v1` |
+| `--api-key-env` | optional | environment variable holding the API key; never the key itself | default: `AIES_OPENAI_API_KEY`; Records only an environment-variable name. Never pass an API key value here. |
+| `--role` | optional | intended advisory deployment role (default: subject) | choices: `subject`, `judge`, `both`; default: `subject` |
 
 ## `aies journey`
 

@@ -67,6 +67,12 @@ roles: [subject]               # optional, advisory: how you use this deployment
 parameters_default:            # generation defaults for this deployment
   temperature: 0.6
   max_tokens: 32768
+planning:                      # optional, declared estimate inputs
+  estimated_input_tokens_per_item: 1800
+  estimated_output_tokens_per_item: 900
+  input_usd_per_million_tokens: 0.20
+  output_usd_per_million_tokens: 0.80
+  estimated_seconds_per_request: 12
 provenance:
   source: local MLX server
   checksum: sha256:…           # binds the deployment to an exact artifact
@@ -78,6 +84,25 @@ provenance:
     format: cyclonedx-1.7      #   (CycloneDX / SPDX 3.0), or a plain path/URI string
     reference: ./sbom/local-qwen.cdx.json
 ```
+
+`planning` is optional and informational. `aies evaluate --plan-only` uses it
+to estimate each sequential phase before any endpoint call:
+
+- Token-based cost requires all four token and per-million-price fields shown
+  above. As an alternative, declare `usd_per_request`; do not declare both
+  pricing methods.
+- `estimated_seconds_per_request` is combined with the requested
+  `--parallel N` as concurrency waves. It is an operator declaration, not an
+  observed SLA.
+- Candidate requests are estimated one per distinct scenario. Judge requests
+  use the configured batch size; token estimates remain per scored item.
+- Missing declarations stay `unknown`. Retries, batch fallback, queueing,
+  provider overhead, and variable output length can increase actual cost or
+  duration.
+
+The deterministic mock deployments declare zero request cost and a nominal
+local duration so the offline planning path is demonstrable without suggesting
+prices for real providers.
 
 `signature` and `ai_bom` are **optional** and **declarative** — the platform
 records them as provenance and surfaces them in `aies deployment inspect` and in

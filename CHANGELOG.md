@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Guided first use, declared cost/ETA planning, and wider recovery
+  diagnostics**: `aies init --guided` now selects deployment evaluation,
+  offline demonstration, or repository audit; deployment setup previews the
+  endpoint, model, advisory role, and credential environment variable while
+  never accepting or writing the secret. Non-interactive initializer flags
+  provide the same reproducible manifest path. Deployment manifests can
+  declare token-based or per-request price assumptions plus seconds per
+  request; `aies evaluate --plan-only` now reports structured candidate/judge
+  request estimates, cost, duration, missing declarations, limitations, and
+  resumability without executing a call. The actionable failure contract now
+  also covers initialization, registry/deployment mutation, discovery,
+  Inspect/SARIF bridges, score/import, audit, report generation, ECM, fit
+  guidance, and comparison.
 - **Adoption-grade CI, container, and clean-install batch**: added `aies ci
   audit` and a pinned reusable GitHub workflow that verify decision semantics,
   calculate repository policy, emit annotations and a step summary, retain
@@ -147,7 +160,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   copies. Read-only API tests reuse one immutable module fixture, and the judge
   concurrency test delays only the reviewer behavior it measures. The complete
   suite retains all assertions while removing repeated setup and unrelated
-  sleeps: the expanded 270-test suite completes in 102.68 seconds on the
+  sleeps: the expanded 282-test suite completes in 107.96 seconds on the
   Windows verification host, below the 180-second budget.
 - **Empirical-panel admission preflight**: `aies suites empirical
   --preflight-runs` now checks that real runs use distinct subjects, identical

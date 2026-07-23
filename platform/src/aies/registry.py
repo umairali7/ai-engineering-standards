@@ -60,6 +60,8 @@ def _model_of(entry: dict) -> str:
 
 
 def validate_entry(entry: dict) -> list[str]:
+    from . import planning
+
     problems = []
     for f in REQUIRED_FIELDS:
         if f not in entry or entry[f] in (None, ""):
@@ -100,6 +102,7 @@ def validate_entry(entry: dict) -> list[str]:
                 f"roles must be a list drawn from {list(KNOWN_ROLES)} "
                 "(advisory usage tags; optional)"
             )
+    problems.extend(planning.validate(entry.get("planning")))
     return problems
 
 

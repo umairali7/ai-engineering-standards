@@ -40,9 +40,16 @@ is involved.
 Before choosing a path, ask the installed platform what it truly supports:
 
 ```text
+aies init --guided
 aies support
 aies starter list
 ```
+
+The guided initializer creates a non-destructive workspace and lets you choose
+deployment evaluation, the offline demo, or repository audit. Endpoint setup
+previews non-secret metadata and stores only the API-key environment-variable
+name. `aies evaluate --plan-only` then makes no calls and reports declared
+cost/ETA (or exact unknowns), limitations, and resumability.
 
 Then enter through the decision you need. Codes are introduced with their
 titles; normative detail is linked only after the runnable first step.

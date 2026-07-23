@@ -186,3 +186,45 @@ def test_partial_qualification_routes_to_resume_without_duplicate_calls(
     assert "work preserved: partial-run-preserved" in error
     assert "recover: aies qualify --resume-collection run-partial" in error
     assert "completed candidate calls are not repeated" in error
+
+
+def test_operational_read_commands_share_actionable_recovery(
+        tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("AIES_WORKSPACE", str(tmp_path / "workspace"))
+
+    assert cli.main(["deployment", "inspect", "missing"]) == 2
+    deployment_error = capsys.readouterr().err
+    assert "recover: aies deployment list" in deployment_error
+    assert "duplicate-cost risk: none" in deployment_error
+
+    assert cli.main(["capabilities", "missing-run"]) == 2
+    capability_error = capsys.readouterr().err
+    assert "recover: aies runs list" in capability_error
+    assert "read-only" in capability_error
+
+    assert cli.main(["audit", str(tmp_path / "missing-repository")]) == 2
+    audit_error = capsys.readouterr().err
+    assert "source-unchanged" in audit_error
+    assert "makes no model calls" in audit_error
+
+
+def test_discovery_failure_routes_to_doctor(monkeypatch, capsys):
+    from aies import runtimes
+
+    monkeypatch.setattr(
+        runtimes, "discover_all",
+        lambda: (_ for _ in ()).throw(RuntimeError("runtime probe failed")))
+    assert cli.cmd_discover(Namespace(json=False)) == 2
+    error = capsys.readouterr().err
+    assert "recover: aies doctor" in error
+    assert "registry-preserved" in error
+
+
+def test_bridge_failure_preserves_source_and_reports_exact_retry(
+        tmp_path, capsys):
+    missing = tmp_path / "missing.sarif"
+    assert cli.main(["bridge", "sarif-import", str(missing)]) == 2
+    error = capsys.readouterr().err
+    assert "recover: aies bridge sarif-import" in error
+    assert "source-preserved" in error
+    assert "paid endpoint calls" in error

@@ -36,11 +36,29 @@ creating an anonymized, derived-view-only sharing bundle.
 
 ## Try a real deployment
 
-Create a safe workspace and discover supported local runtimes:
+Create a safe workspace and choose a first-use path interactively:
 
 ```powershell
-aies init
+aies init --guided
 $env:AIES_WORKSPACE = (Resolve-Path aies-workspace)
+```
+
+For a reproducible non-interactive endpoint starter:
+
+```powershell
+aies init aies-workspace --starter deployment `
+  --deployment-id local-coder `
+  --model served-model-id `
+  --endpoint http://127.0.0.1:1234/v1 `
+  --api-key-env AIES_OPENAI_API_KEY `
+  --role subject
+```
+
+The initializer prints an endpoint preview and exact next command. It records
+only the environment-variable name; it never asks for or writes the API key.
+You can then inspect supported subjects and discover local runtimes:
+
+```powershell
 aies support
 aies starter list
 aies discover
@@ -53,14 +71,8 @@ On Bash or Zsh, set the same variable with:
 export AIES_WORKSPACE="$(pwd)/aies-workspace"
 ```
 
-If discovery cannot find an OpenAI-compatible endpoint, generate a non-secret
-starter manifest:
-
-```powershell
-aies init aies-workspace --starter-manifest
-# edit model and base_url; put the API key in AIES_OPENAI_API_KEY, never YAML
-aies deployment add aies-workspace/deployment.example.yaml
-```
+The older `--starter-manifest` spelling remains an alias for
+`--starter deployment`.
 
 Plan before spending time or tokens:
 
@@ -69,7 +81,9 @@ aies evaluate SUBJECT --judge REVIEWER --plan-only --parallel 4
 ```
 
 The plan shows distinct scenario calls, optimized judge calls, concurrency,
-known cost/duration estimates, and limitations. It schedules no exact repeats.
+declared cost/duration estimates (or the exact missing manifest fields),
+resumability, and limitations. It schedules no exact repeats and makes no
+endpoint calls.
 When the scope looks right:
 
 ```powershell

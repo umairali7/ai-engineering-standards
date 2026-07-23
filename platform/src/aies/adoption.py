@@ -10,10 +10,12 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import webbrowser
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlparse
 
 import yaml
 
@@ -235,20 +237,50 @@ def export_redacted(reference: str, destination: Path | None = None) -> dict:
     return {"run_id": run.name, "archive": str(destination), **manifest}
 
 
-def starter_deployment(path: Path, *, deployment_id: str = "my-deployment") -> Path:
+_ENV_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def starter_deployment(
+    path: Path,
+    *,
+    deployment_id: str = "my-deployment",
+    model: str = "replace-with-served-model-id",
+    base_url: str = "http://127.0.0.1:1234/v1",
+    api_key_env: str = "AIES_OPENAI_API_KEY",
+    roles: list[str] | None = None,
+) -> Path:
     """Write a non-secret OpenAI-compatible starter manifest if absent."""
+    from . import registry
+
     target = Path(path).expanduser().resolve()
     if target.exists():
         raise AdoptionError(f"{target} already exists; starter files are never overwritten")
+    if not registry.ID_PATTERN.fullmatch(deployment_id):
+        raise AdoptionError(
+            "deployment id must be 2-64 lowercase letters, numbers, dots, "
+            "dashes, or underscores")
+    if not model.strip():
+        raise AdoptionError("model id cannot be empty")
+    parsed_endpoint = urlparse(base_url)
+    if parsed_endpoint.scheme not in ("http", "https") or not parsed_endpoint.netloc:
+        raise AdoptionError(
+            "endpoint must be a complete http:// or https:// base URL")
+    if not _ENV_NAME.fullmatch(api_key_env):
+        raise AdoptionError(
+            "API-key environment variable must be a valid environment name")
+    selected_roles = roles or ["subject"]
+    if not selected_roles or any(role not in registry.KNOWN_ROLES
+                                 for role in selected_roles):
+        raise AdoptionError("roles must contain subject, judge, or both")
     payload = {
         "id": deployment_id,
         "runtime": "openai-compat",
-        "model": "replace-with-served-model-id",
+        "model": model,
         "provenance": {"checksum": "sha256:endpoint-served"},
-        "roles": ["subject"],
+        "roles": selected_roles,
         "runtime_config": {
-            "base_url": "http://127.0.0.1:1234/v1",
-            "api_key_env": "AIES_OPENAI_API_KEY",
+            "base_url": base_url.rstrip("/"),
+            "api_key_env": api_key_env,
         },
     }
     target.parent.mkdir(parents=True, exist_ok=True)
