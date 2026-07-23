@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import html
 
-from . import constants as C, registry, workspace
+from . import overview, workspace
 from .report_html import _CSS
 
 
@@ -20,11 +20,11 @@ def _esc(x) -> str:
     return html.escape(str(x))
 
 
-def render_dashboard() -> str:
-    from . import compare, qualification
-    deployments = registry.list_entries(include_retired=True)
-    runs = compare.list_runs()
-    records = qualification.list_records()
+def render_dashboard(summary: dict | None = None) -> str:
+    summary = summary or overview.build()
+    deployments = summary["deployments"]
+    runs = summary["runs"]
+    records = summary["qualifications"]
 
     p: list[str] = []
     w = p.append
@@ -43,16 +43,16 @@ def render_dashboard() -> str:
         w(f"<tr><td><code>{_esc(d['id'])}</code></td>"
           f"<td>{_esc(d.get('model') or d.get('family') or '?')}</td>"
           f"<td>{_esc(d.get('runtime','?'))}</td>"
-          f"<td>{'retired' if d.get('retired') else 'active'}</td></tr>")
+          f"<td>{_esc(d['status'])}</td></tr>")
     w("</table>")
 
-    w(f"<h2>Qualification runs ({len(runs)})</h2><table>"
+    w(f"<h2>Assessment runs ({len(runs)})</h2><table>"
       "<tr><th>Run</th><th>Deployment</th><th>Profile</th><th>Tier</th><th>State</th></tr>")
     for r in runs:
         w(f"<tr><td><code>{_esc(r['run_id'])}</code></td>"
           f"<td>{_esc(r['model'])}</td><td>{_esc(r['profile'])}</td>"
-          f"<td>{_esc(C.risk_tier_label(r['risk_tier']))}</td>"
-          f"<td>{'aggregated' if r['aggregated'] else _esc(r['status'])}</td></tr>")
+          f"<td>{_esc(r['risk_tier_label'])}</td>"
+          f"<td>{_esc(r['state'])}</td></tr>")
     w("</table>")
 
     w(f"<h2>Qualification records ({len(records)})</h2>")
@@ -67,11 +67,11 @@ def render_dashboard() -> str:
                    "invalidated": "fail", "revoked": "fail",
                    "superseded": "muted"}.get(rec["status"], "muted")
             w(f"<tr><td><code>{_esc(rec['record_id'])}</code></td>"
-              f"<td>{_esc(rec['subject']['deployment'])}</td>"
-              f"<td>{_esc(C.risk_tier_label(rec['scope']['risk_tier']))}</td>"
+              f"<td>{_esc(rec['deployment'])}</td>"
+              f"<td>{_esc(rec['risk_tier_label'])}</td>"
               f"<td>{_esc(rec['decision'])}</td>"
               f"<td class={cls}>{_esc(rec['status'])}</td>"
-              f"<td>{_esc(rec['humans']['authority'])}</td></tr>")
+              f"<td>{_esc(rec['authority'])}</td></tr>")
         w("</table>")
 
     w("</body></html>")

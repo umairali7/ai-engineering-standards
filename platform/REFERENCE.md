@@ -136,19 +136,20 @@ append-only records. Grouped as in `aies --help`.
 |---|---|---|
 | `report` | Render an evidence package / record as Markdown, JSON, or HTML | `aies report run-2031 --format html --write` |
 | `grant` | Record a formal, scoped two-human qualification decision; v5 requires durable assessor/peer ids, conflict declarations, role/phases/sponsor/framework, and validity | `aies grant run-2031 --decision grant --authority "Authority" --assessor-id alice --peer-reviewer-id bob ...` |
-| `qualifications` | List/show/revoke records or append governed condition/renewal/suspension/invalidation/revocation/supersession events | `aies qualifications event QUAL-2026-001 --event suspended --authority "Authority" --reason "incident"` |
+| `qualification` | Canonical list/show/history/verify/revoke surface, including governed condition/renewal/suspension/invalidation/revocation/supersession events | `aies qualification event QUAL-2026-001 --event suspended --authority "Authority" --reason "incident"` |
 | `verify` | Re-check expiry and the deployment fingerprint (D7); non-zero if expired or invalidated | `aies verify QUAL-2026-001` |
 | `audit` | Audit a *repository's* AIES engineering practice (maturity ML0–ML4) | `aies audit . --gate --rt 2` |
 | `conform check` | Check a conformance *statement* against CONFORMANCE.md | `aies conform check statement.yaml` |
 | `conform engine` | Verify a *decision engine* against the golden corpus — the reference engine, or a **foreign** one via `--engine "<cmd>"` (reads evidence+assessment JSON on stdin, prints the result) so independent implementations self-check | `aies conform engine --engine "python conformance/example_engine.py"` |
-| `dashboard` | Render an HTML overview (a renderer — computes no outcomes) | `aies dashboard --write` |
+| `dashboard` | Render the shared workspace overview as HTML (computes no outcomes) | `aies dashboard --write` |
+| `overview` | Versioned workspace summary shared by CLI, API, dashboard, and future UI consumers; informational and read-only | `aies overview --json` |
 | `serve` | Thin read-only REST API over the canonical artifacts | `aies serve --port 8722` |
 
 ### Reference
 
 | Command | Contract | Example |
 |---|---|---|
-| `profiles` | List/show/validate/scaffold weighting profiles | `aies profiles show enterprise` |
+| `profile` | Canonical list/show/validate weighting-profile surface | `aies profile show enterprise` |
 | `suites validate` | Validate the suite catalog **and** the shipped assessments (CI gate); validates `calibration` blocks when present | `aies suites validate` |
 | `suites calibrate` | Calibration-coverage report — how far each scenario has progressed as a measurement instrument ([CALIBRATION.md](CALIBRATION.md)); advisory | `aies suites calibrate` |
 | `suites empirical` | Phase-2 empirical calibration — create a content-addressed plan before runs with `--create-plan`; inspect legacy compatibility with `--preflight-runs`; bind completed runs with `--panel-plan … --planned-runs`. Promotion eligibility requires the frozen plan and rejects mismatched subjects, suites, prompts, samples, protocols, unrated responses, and duplicate/correction ratings. | `aies suites empirical --create-plan panel-plan.json …` |
@@ -168,6 +169,7 @@ decider** — it serves stored results verbatim and computes no outcome
 
 ```
 GET /health                    service + version
+GET /overview                  shared versioned workspace summary
 GET /support                   implemented/experimental/planned subject support
 GET /deployments               registered deployments
 GET /runs                      run history

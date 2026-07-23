@@ -34,6 +34,7 @@ aies discover
 aies evaluate SUBJECT --judge REVIEWER --plan-only --parallel 4
 aies evaluate SUBJECT --judge REVIEWER --parallel 4
 aies snapshot latest
+aies overview
 aies open latest
 ```
 
@@ -56,6 +57,14 @@ batched-judge requests, concurrency, zero exact repeats, and the recovery path
 for persisted responses/ratings. Cost and duration are calculated only from
 the optional `planning` declarations in each deployment manifest; an
 undeclared price or endpoint speed remains visibly unknown.
+
+`aies overview` is the shared application-level read model. Its versioned JSON
+shape is also returned by `GET /overview` and rendered by
+`aies dashboard --write`. These consumers summarize stored deployments, runs,
+assessment definitions, support, and human-governed qualification records;
+they never recompute an assessment decision. A future frontend should consume
+this contract and the linked canonical artifact endpoints rather than reading
+workspace files or duplicating decision logic.
 
 ## 0. Navigate the CLI
 
@@ -240,7 +249,7 @@ issue a qualification on its own (D8).
 ## 3. The pipeline, stage by stage → the command that runs it
 
 ```
-stage 1 registration   →  aies registry add  /  aies discover
+stage 1 registration   →  aies deployment add  /  aies discover
 stage 2 capability      ┐
 stage 3 environment     ├► aies qualify <deployment> ... --judge <judge>
 stage 4 benchmark       ┘        (collects responses)
@@ -294,7 +303,7 @@ Never use `--break-system-packages`. If `pipx` or `uv` is already installed,
 application install from this checkout.
 
 For local verification, the recorded warm-cache Windows budget is 180 seconds
-for the complete suite; the 2026-07-23 baseline is 282 tests in 107.96 seconds.
+for the complete suite; the 2026-07-23 baseline is 293 tests in 110.27 seconds.
 Treat a budget breach or greater-than-25% regression as a profiling trigger.
 This is a feedback budget, not a reason to skip correctness gates on slower CI
 hardware.
@@ -365,7 +374,7 @@ serves:
 ```
 aies doctor          # shows each runtime: [OK] reachable / [--] not running
 aies discover        # registers every served model as a named deployment
-aies registry list   # e.g. ollama-llama3.1, lmstudio-qwen2.5-coder-7b
+aies deployment list   # e.g. ollama-llama3.1, lmstudio-qwen2.5-coder-7b
 ```
 
 Override a port, or reach a remote/hosted endpoint, via `.env`:
@@ -400,7 +409,7 @@ provenance:
 ```
 
 ```
-aies registry add my-deployment.yaml
+aies deployment add my-deployment.yaml
 ```
 
 > A deployment is `model × runtime × config × endpoint`. The same model at a
@@ -802,7 +811,7 @@ aies grant <run> --decision grant \
     --consider-advisory-review \
     --human-evaluation "Bob Example" \
     --rationale "pilot qualification"
-aies qualifications list                 # the Qualification Record (QUAL-...)
+aies qualification list                  # the Qualification Record (QUAL-...)
 aies verify QUAL-<...>                    # re-checks the deployment fingerprint
 aies dashboard --write                    # HTML overview of everything
 ```
@@ -830,7 +839,7 @@ Qualification records are immutable. Conditions, renewal, suspension,
 invalidation, revocation, and supersession append separate lifecycle events:
 
 ```
-aies qualifications event QUAL-2026-001 --event renewed \
+aies qualification event QUAL-2026-001 --event renewed \
   --authority "Qualification Authority" --reason "annual re-evaluation" \
   --evidence-run <new-decisional-run> --valid-until 2028-07-20T00:00:00Z \
   --peer-reviewer "Bob Example" --peer-reviewer-id bob --peer-conflict-free
@@ -861,7 +870,7 @@ ollama pull llama3.1:8b
 # 2. see it and register it
 aies doctor                         # ollama -> [OK] endpoint reachable
 aies discover                       # -> created ollama-llama3.1-8b
-aies registry list
+aies deployment list
 
 # 3. run the complete automated Engineering Evaluation
 aies benchmark ollama-llama3.1-8b --profile coder --rt 2 --area CA-05 \
@@ -885,7 +894,7 @@ aies grant <run> --decision grant --authority "Qualification Authority" \
       --framework-version "AIES-AESQS-CF-01@review-2026-07-22" \
       --valid-from 2026-07-22T00:00:00Z --valid-until 2027-07-21T00:00:00Z \
       --rationale "engineering pilot"
-aies qualifications list
+aies qualification list
 aies verify QUAL-<...>              # re-checks the deployment fingerprint
 aies dashboard --write              # HTML overview
 ```

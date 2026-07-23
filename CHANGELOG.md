@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Consistent command surface and shared application overview**: completed
+  `aies-cli-failure-v1` coverage across formal governance, rater/resolution,
+  assessment, export/transcript, runtime/profile, corpus/journey,
+  conformance, empirical-panel, and run-progress commands, with a global
+  actionable fallback for unexpected command failures. Established
+  `deployment`, `profile`, and `qualification` as canonical resources while
+  retaining `registry`, `profiles`, and `qualifications` as warning-emitting
+  compatibility aliases; the canonical qualification group now includes the
+  complete lifecycle-event command. Added the versioned, informational
+  `aies-workspace-overview` view model consumed by `aies overview`,
+  `GET /overview`, and the HTML dashboard so future UI work can consume one
+  factual contract without recomputing outcomes.
 - **Guided first use, declared cost/ETA planning, and wider recovery
   diagnostics**: `aies init --guided` now selects deployment evaluation,
   offline demonstration, or repository audit; deployment setup previews the
@@ -160,7 +172,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   copies. Read-only API tests reuse one immutable module fixture, and the judge
   concurrency test delays only the reviewer behavior it measures. The complete
   suite retains all assertions while removing repeated setup and unrelated
-  sleeps: the expanded 282-test suite completes in 107.96 seconds on the
+  sleeps: the expanded 293-test suite completes in 110.27 seconds on the
   Windows verification host, below the 180-second budget.
 - **Empirical-panel admission preflight**: `aies suites empirical
   --preflight-runs` now checks that real runs use distinct subjects, identical

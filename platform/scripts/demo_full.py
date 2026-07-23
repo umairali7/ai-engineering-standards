@@ -72,7 +72,7 @@ def main() -> int:
     require(invoke("doctor", "--json", quiet=True)[0], "doctor")
     print("doctor: environment validated + fingerprinted")
     require(invoke("discover", quiet=True)[0], "discover")
-    require(invoke("registry", "list")[0], "registry list")
+    require(invoke("deployment", "list")[0], "deployment list")
 
     hr("2. The corpus is a set of calibrated MEASUREMENT INSTRUMENTS")
     print("Every scenario carries a ceiling anchor ('what a 4 does that a 3 doesn't'):")

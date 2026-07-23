@@ -56,10 +56,15 @@ area, ADR-0004), `ci audit` (retained advisory-by-default CI evidence with
 explicit opt-in enforcement), `corpus` (the platform reviews its **own** assessment corpus —
 health/coverage/duplicates/review; advisory, multidimensional, no single grade),
 `runs`, `compare`, `index`, `review`, `grant`, `verify`, `journey`,
-`conform`, `runtime`/`profile`/`qualification`, `dashboard`, `plugins`.
+`conform`, `runtime`/`profile`/`qualification`, `overview`, `dashboard`,
+`plugins`.
 `completion` generates parser-derived PowerShell, Bash, and Zsh Tab completion.
 `support` exposes the same subject-support registry through CLI and `/support`
 API output.
+`overview` exposes the same versioned, informational workspace summary through
+CLI JSON/human output, `GET /overview`, and the HTML dashboard. This is the
+stable consumer boundary for integrations and a future frontend; it computes
+no assessment outcome.
 All twelve competency areas
 (CA-01…CA-12) ship demonstration suites; six weighting profiles; a
 frozen v1.0 runtime-adapter contract with an
@@ -138,7 +143,7 @@ aies open latest
 ```
 
 The warm-cache full-suite performance budget on the recorded Windows reference
-workstation is **180 seconds**. The current 282-test baseline is **107.96
+workstation is **180 seconds**. The current 293-test baseline is **110.27
 seconds**. A run above budget or a greater-than-25% regression should be
 profiled before merge; use the ranked durations rather than guessing. Scenario
 YAML and suite digests are cached by path, modification time, and size, return
@@ -180,7 +185,7 @@ comprehensive script runs in CI too. For a real deployment,
 ```
 aies doctor                    # validate environment/runtime; inventory workspace debris read-only
 aies discover                  # register the deployments each runtime serves
-aies registry list            # see the named deployments (e.g. mock-mock-small)
+aies deployment list          # see the named deployments (e.g. mock-mock-small)
 
 aies qualify <deployment> --profile enterprise --rt 2 --all-areas \
   --judge <judge> --parallel 4

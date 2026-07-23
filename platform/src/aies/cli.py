@@ -68,6 +68,45 @@ def _emit_failure(error, *, operation: str, recovery_command: str,
         diagnostic, as_json=bool(getattr(args, "json", False)))
 
 
+def _command_failure(
+    error,
+    *,
+    operation: str,
+    recovery_command: str,
+    args,
+    phase: str = "evidence",
+    preserved_work_status: str = "source-preserved",
+    preserved_work_detail: str = (
+        "The command did not remove its existing source evidence."),
+    run_id: str | None = None,
+    duplicate_cost_detail: str = (
+        "The recovery command makes no candidate or reviewer calls."),
+) -> int:
+    """Return the shared failure contract for non-inference command families."""
+    _emit_failure(
+        error,
+        operation=operation,
+        args=args,
+        phase=phase,
+        run_id=run_id,
+        preserved_work_status=preserved_work_status,
+        preserved_work_detail=preserved_work_detail,
+        recovery_command=recovery_command,
+        duplicate_cost_risk="none",
+        duplicate_cost_detail=duplicate_cost_detail,
+    )
+    return 2
+
+
+def _deprecated_alias(args, old: str, new: str) -> None:
+    """Keep compatibility while making the canonical command unambiguous."""
+    print(
+        f"warning: `aies {old}` is a deprecated compatibility alias; "
+        f"use `aies {new}` instead",
+        file=sys.stderr,
+    )
+
+
 def _review_recovery_command(args, run_id: str | None = None,
                              reviewer: str | None = None) -> str:
     run_id = run_id or getattr(args, "run", None) or getattr(args, "resume", None)
@@ -617,8 +656,17 @@ def cmd_snapshot(args) -> int:
         )
         return 0
     except (adoption.AdoptionError, snapshot.SnapshotError) as e:
-        print(f"error: {e}", file=sys.stderr)
-        return 2
+        return _command_failure(
+            e,
+            operation="terminal-snapshot",
+            args=args,
+            run_id=getattr(args, "run", None),
+            preserved_work_status="run-preserved",
+            preserved_work_detail=(
+                "Snapshot rendering is read-only; run evidence was not changed."),
+            recovery_command="aies runs list",
+            duplicate_cost_detail="Snapshot rendering makes no model calls.",
+        )
 
 
 def cmd_support(args) -> int:
@@ -692,12 +740,14 @@ def cmd_registry(args) -> int:
     except registry.RegistryError as e:
         recovery = {
             "add": (
-                f"aies registry add "
+                f"aies deployment add "
                 f"{shlex.quote(str(getattr(args, 'file', 'MANIFEST')))}"),
             "list": "aies doctor",
-            "show": "aies registry list",
-            "retire": f"aies registry show {getattr(args, 'model', 'DEPLOYMENT')}",
-        }.get(args.registry_cmd, "aies registry list")
+            "show": "aies deployment list",
+            "retire": (
+                f"aies deployment inspect "
+                f"{getattr(args, 'model', 'DEPLOYMENT')}"),
+        }.get(args.registry_cmd, "aies deployment list")
         _emit_failure(
             e,
             operation=f"registry-{args.registry_cmd}",
@@ -1066,8 +1116,8 @@ def cmd_assessment(args) -> int:
             if not src.exists():
                 src = assessments.assessments_dir() / f"{args.name}.yaml"
             if not src.exists():
-                print(f"error: assessment {args.name!r} not found", file=sys.stderr)
-                return 2
+                raise assessments.AssessmentError(
+                    f"assessment {args.name!r} not found")
             problems = assessments.validate(_yaml.safe_load(src.read_text(encoding="utf-8")))
             if args.json:
                 _out({"valid": not problems, "problems": problems}, True)
@@ -1096,15 +1146,23 @@ def cmd_assessment(args) -> int:
                             else engineering_assessment.render_markdown(res))
                 _out(res, args.json, rendered)
             return (0 if not formal or res["outcome"] == "PASS" else 1)
-    except assessments.AssessmentError as e:
-        print(f"error: {e}", file=sys.stderr)
-        return 2
     except Exception as e:
-        from . import decision
-        if isinstance(e, decision.DecisionError):
-            print(f"error: {e}", file=sys.stderr)
-            return 2
-        raise
+        result_run = getattr(args, "run", None)
+        return _command_failure(
+            e,
+            operation=f"assessment-{args.assessment_cmd}",
+            args=args,
+            run_id=result_run,
+            preserved_work_status=(
+                "run-preserved" if result_run else "definitions-preserved"),
+            preserved_work_detail=(
+                "Assessment definitions and existing run evidence were not changed."),
+            recovery_command=(
+                f"aies qualify --resume {result_run}"
+                if result_run else "aies assessment list"),
+            duplicate_cost_detail=(
+                "Assessment inspection and result rendering make no model calls."),
+        )
     return 0
 
 
@@ -1181,8 +1239,18 @@ def cmd_rater(args) -> int:
         elif args.rater_cmd == "show":
             _out(raters.get(args.id), args.json)
     except (raters.RaterError, FileExistsError) as exc:
-        print(f"error: {exc}", file=sys.stderr)
-        return 2
+        return _command_failure(
+            exc,
+            operation=f"human-rater-{args.rater_cmd}",
+            args=args,
+            phase="governance",
+            preserved_work_status="rater-records-preserved",
+            preserved_work_detail=(
+                "Existing human-rater records remain append-only and unchanged."),
+            recovery_command=(
+                "aies rater list" if args.rater_cmd != "register"
+                else "aies rater register --help"),
+        )
     return 0
 
 
@@ -1210,8 +1278,18 @@ def cmd_resolve(args) -> int:
               "reports": paths}, args.json,
              f"resolved {args.response}; refreshed {paths['markdown']}")
     except (rating.RatingError, FileExistsError, FileNotFoundError) as exc:
-        print(f"error: {exc}", file=sys.stderr)
-        return 2
+        return _command_failure(
+            exc,
+            operation="human-evidence-resolution",
+            args=args,
+            phase="governance",
+            run_id=args.run,
+            preserved_work_status="run-evidence-preserved",
+            preserved_work_detail=(
+                "Existing responses, ratings, and immutable resolutions remain "
+                "unchanged."),
+            recovery_command=f"aies resolve {args.run} --help",
+        )
     return 0
 
 
@@ -1258,9 +1336,16 @@ def cmd_export(args) -> int:
             _out({"exported": path}, args.json, f"wrote {path}")
         else:
             print(evalexport.render_json(args.run))
-    except FileNotFoundError:
-        print(f"error: no run {args.run!r} in this workspace", file=sys.stderr)
-        return 2
+    except FileNotFoundError as exc:
+        return _command_failure(
+            exc,
+            operation="evaluation-export",
+            args=args,
+            run_id=args.run,
+            preserved_work_status="workspace-unchanged",
+            preserved_work_detail="Export is read-only; no run evidence changed.",
+            recovery_command="aies runs list",
+        )
     return 0
 
 
@@ -1610,9 +1695,17 @@ def cmd_transcript(args) -> int:
             _out({"transcript": path}, args.json, f"wrote {path}")
         else:
             print(transcript.render_markdown(args.run, area=args.area))
-    except FileNotFoundError:
-        print(f"error: no run {args.run!r} in this workspace", file=sys.stderr)
-        return 2
+    except FileNotFoundError as exc:
+        return _command_failure(
+            exc,
+            operation="evidence-transcript",
+            args=args,
+            run_id=args.run,
+            preserved_work_status="run-preserved",
+            preserved_work_detail=(
+                "Transcript rendering is read-only; run evidence was not changed."),
+            recovery_command="aies runs list",
+        )
     return 0
 
 
@@ -1641,8 +1734,15 @@ def cmd_profiles(args) -> int:
                  f"profile {p['name']!r} is valid (gates untouched, "
                  "adjustments within AIES-AESQS-CS-01-R03 bounds)")
     except profiles.ProfileError as e:
-        print(f"error: {e}", file=sys.stderr)
-        return 2
+        return _command_failure(
+            e,
+            operation=f"weighting-profile-{args.profiles_cmd}",
+            args=args,
+            preserved_work_status="profile-definitions-preserved",
+            preserved_work_detail=(
+                "Profile inspection and validation do not modify definitions."),
+            recovery_command="aies profile list",
+        )
     return 0
 
 
@@ -1662,8 +1762,18 @@ def cmd_corpus(args) -> int:
             report = corpus.review_scenario(args.scenario, reviewer=args.reviewer,
                                             runtime=args.runtime)
         except ValueError as e:
-            print(f"error: {e}", file=sys.stderr)
-            return 2
+            return _command_failure(
+                e,
+                operation="scenario-instrument-review",
+                args=args,
+                preserved_work_status="corpus-preserved",
+                preserved_work_detail=(
+                    "Corpus review is advisory and did not modify instruments."),
+                recovery_command="aies corpus review-pending",
+                duplicate_cost_detail=(
+                    "Structural review makes no calls; a reviewer retry only "
+                    "repeats the failed advisory critique when one was selected."),
+            )
         _out(report, args.json, corpus.render_review(report))
         return 0   # advisory — critique only, never a gate
     report = corpus.health(root)
@@ -1779,7 +1889,7 @@ def cmd_discover(args) -> int:
             print(f"  [{r['status']:8}] {r.get('id', '?'):32} "
                   f"{r.get('runtime', '?')} / {r.get('model', '?')}")
         created = sum(1 for r in results if r["status"] == "created")
-        print(f"\n{created} new deployment(s); run `aies registry list` to see all, "
+        print(f"\n{created} new deployment(s); run `aies deployment list` to see all, "
               "then `aies qualify <deployment>`.")
     return 0
 
@@ -1789,8 +1899,17 @@ def cmd_runs(args) -> int:
     if args.runs_cmd == "progress":
         path = workspace.run_dir(args.run) / "progress.json"
         if not path.exists():
-            print(f"error: run {args.run!r} has no progress state", file=sys.stderr)
-            return 2
+            return _command_failure(
+                FileNotFoundError(
+                    f"run {args.run!r} has no durable progress state"),
+                operation="run-progress",
+                args=args,
+                run_id=args.run,
+                preserved_work_status="workspace-unchanged",
+                preserved_work_detail=(
+                    "Progress observation is read-only; no run evidence changed."),
+                recovery_command="aies runs list",
+            )
         event = workspace.read_json(path)
         eta = "—" if event.get("eta_seconds") is None else f"{event['eta_seconds']:.0f}s"
         active_tasks = event.get("active_tasks") or []
@@ -1978,8 +2097,18 @@ def cmd_grant(args) -> int:
              + f"\n  advisory review: {'considered' if record['evidence_consideration']['automated_advisory_review']['considered_by_authority'] else 'not declared'}"
              + f"\n  human evaluation: {record['evidence_consideration']['human_evaluation']['evaluator'] or 'not declared'}")
     except qualification.QualificationError as e:
-        print(f"error: {e}", file=sys.stderr)
-        return 2
+        return _command_failure(
+            e,
+            operation="formal-qualification-decision",
+            args=args,
+            phase="governance",
+            run_id=args.run,
+            preserved_work_status="records-preserved",
+            preserved_work_detail=(
+                "The evidence run and existing qualification records remain "
+                "unchanged; no grant was recorded."),
+            recovery_command=f"aies assessment result {args.run}",
+        )
     return 0
 
 
@@ -1994,8 +2123,16 @@ def cmd_verify(args) -> int:
         # Non-zero exit when a grant is invalidated, for CI gating.
         return 0 if result["environment_unchanged"] else 4
     except qualification.QualificationError as e:
-        print(f"error: {e}", file=sys.stderr)
-        return 2
+        return _command_failure(
+            e,
+            operation="qualification-verification",
+            args=args,
+            phase="governance",
+            preserved_work_status="records-preserved",
+            preserved_work_detail=(
+                "Existing qualification records and evidence remain unchanged."),
+            recovery_command="aies qualification history",
+        )
 
 
 def cmd_qualifications(args) -> int:
@@ -2025,8 +2162,17 @@ def cmd_qualifications(args) -> int:
                  f"recorded immutable {args.event} event for {rec['record_id']} "
                  f"-> {rec['status']}")
     except qualification.QualificationError as e:
-        print(f"error: {e}", file=sys.stderr)
-        return 2
+        return _command_failure(
+            e,
+            operation=f"qualification-{args.q_cmd}",
+            args=args,
+            phase="governance",
+            preserved_work_status="records-preserved",
+            preserved_work_detail=(
+                "Existing qualification records and lifecycle events remain "
+                "append-only and unchanged."),
+            recovery_command="aies qualification history",
+        )
     return 0
 
 
@@ -2053,9 +2199,16 @@ def cmd_runtime(args) -> int:
     elif args.rt_cmd == "inspect":
         cls = classes.get(args.name)
         if cls is None:
-            print(f"error: no runtime adapter {args.name!r} (aies runtime list)",
-                  file=sys.stderr)
-            return 2
+            return _command_failure(
+                ValueError(f"no runtime adapter {args.name!r}"),
+                operation="runtime-inspection",
+                args=args,
+                phase="environment",
+                preserved_work_status="workspace-unchanged",
+                preserved_work_detail=(
+                    "Runtime inspection is read-only; no deployment changed."),
+                recovery_command="aies runtime list",
+            )
         try:
             probe = cls.probe_runtime()
         except Exception as e:
@@ -2277,8 +2430,16 @@ def cmd_qualification(args) -> int:
         args.q_cmd = args.qual_cmd
         return cmd_qualifications(args)
     except qualification.QualificationError as e:
-        print(f"error: {e}", file=sys.stderr)
-        return 2
+        return _command_failure(
+            e,
+            operation=f"qualification-{args.qual_cmd}",
+            args=args,
+            phase="governance",
+            preserved_work_status="records-preserved",
+            preserved_work_detail=(
+                "Qualification history and existing records remain unchanged."),
+            recovery_command="aies qualification history",
+        )
 
 
 def cmd_conform(args) -> int:
@@ -2320,14 +2481,29 @@ def cmd_conform(args) -> int:
             try:
                 report = ec.verify(corpus_dir, decide_fn=decide_fn, engine=engine_label)
             except ec.ConformanceError as e:
-                print(f"error: {e}", file=sys.stderr)
-                return 2
+                return _command_failure(
+                    e,
+                    operation="decision-engine-conformance",
+                    args=args,
+                    preserved_work_status="corpus-preserved",
+                    preserved_work_detail=(
+                        "Conformance verification is read-only; the corpus and "
+                        "engine were not changed."),
+                    recovery_command="aies conform engine --help",
+                )
             _out(report, args.json, ec.render(report))
             # Non-zero exit if the engine is not conformant to the corpus (CI gate).
             return 0 if report["valid"] else 5
     except conformance.ConformanceError as e:
-        print(f"error: {e}", file=sys.stderr)
-        return 2
+        return _command_failure(
+            e,
+            operation=f"conformance-{args.conform_cmd}",
+            args=args,
+            preserved_work_status="evidence-preserved",
+            preserved_work_detail=(
+                "Existing evidence and conformance definitions were not changed."),
+            recovery_command="aies conform requirements",
+        )
     return 0
 
 
@@ -2347,8 +2523,15 @@ def cmd_journey(args) -> int:
             j["_version"] = ver
             _out(j, args.json)
     except journeys.JourneyError as e:
-        print(f"error: {e}", file=sys.stderr)
-        return 2
+        return _command_failure(
+            e,
+            operation=f"journey-{args.journey_cmd}",
+            args=args,
+            preserved_work_status="journey-definitions-preserved",
+            preserved_work_detail=(
+                "Journey inspection is read-only; definitions were not changed."),
+            recovery_command="aies journey list",
+        )
     return 0
 
 
@@ -2361,6 +2544,21 @@ def cmd_suites(args) -> int:
         return 0
     if getattr(args, "suites_cmd", None) == "empirical":
         from . import empirical
+        def empirical_failure(error) -> int:
+            return _command_failure(
+                error,
+                operation="empirical-calibration",
+                args=args,
+                preserved_work_status="panel-evidence-preserved",
+                preserved_work_detail=(
+                    "Existing panel plans, run evidence, and analysis artifacts "
+                    "were not removed or overwritten."),
+                recovery_command="aies suites empirical --help",
+                duplicate_cost_detail=(
+                    "Empirical planning and analysis make no candidate or "
+                    "reviewer calls."),
+            )
+
         if args.create_plan:
             required = {
                 "--panel-id": args.panel_id,
@@ -2373,22 +2571,20 @@ def cmd_suites(args) -> int:
             }
             missing = [name for name, value in required.items() if not value]
             if missing:
-                print("error: creating a panel plan requires " + ", ".join(missing),
-                      file=sys.stderr)
-                return 2
+                return empirical_failure(ValueError(
+                    "creating a panel plan requires " + ", ".join(missing)))
             subjects = []
             for item in args.plan_subjects:
                 if "=" not in item:
-                    print(f"error: --plan-subjects expects SUBJECT=ABILITY, got {item!r}",
-                          file=sys.stderr)
-                    return 2
+                    return empirical_failure(ValueError(
+                        "--plan-subjects expects SUBJECT=ABILITY, "
+                        f"got {item!r}"))
                 subject, ability = item.rsplit("=", 1)
                 try:
                     rank = int(ability)
                 except ValueError:
-                    print(f"error: ability must be an integer, got {ability!r}",
-                          file=sys.stderr)
-                    return 2
+                    return empirical_failure(ValueError(
+                        f"ability must be an integer, got {ability!r}"))
                 subjects.append({"subject": subject, "ability": rank})
             try:
                 plan = empirical.create_panel_plan(
@@ -2399,8 +2595,7 @@ def cmd_suites(args) -> int:
                     rating_protocol_id=args.rating_protocol_id,
                     rating_protocol_basis=args.rating_protocol_basis)
             except (ValueError, FileNotFoundError) as exc:
-                print(f"error: {exc}", file=sys.stderr)
-                return 2
+                return empirical_failure(exc)
             Path(args.create_plan).write_text(
                 json.dumps(plan, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
             _out(plan, args.json,
@@ -2415,30 +2610,28 @@ def cmd_suites(args) -> int:
             return 0  # advisory inspection; readiness is explicit in the artifact
         if args.panel_plan:
             if not args.planned_runs:
-                print("error: --panel-plan requires --planned-runs SUBJECT=RUN_ID ...",
-                      file=sys.stderr)
-                return 2
+                return empirical_failure(ValueError(
+                    "--panel-plan requires --planned-runs SUBJECT=RUN_ID ..."))
             try:
                 plan = json.loads(Path(args.panel_plan).read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError) as exc:
-                print(f"error: cannot read panel plan: {exc}", file=sys.stderr)
-                return 2
+                return empirical_failure(ValueError(
+                    f"cannot read panel plan: {exc}"))
             assignments = {}
             for item in args.planned_runs:
                 if "=" not in item:
-                    print(f"error: --planned-runs expects SUBJECT=RUN_ID, got {item!r}",
-                          file=sys.stderr)
-                    return 2
+                    return empirical_failure(ValueError(
+                        "--planned-runs expects SUBJECT=RUN_ID, "
+                        f"got {item!r}"))
                 subject, run_id = item.split("=", 1)
                 if subject in assignments:
-                    print(f"error: duplicate planned subject {subject!r}", file=sys.stderr)
-                    return 2
+                    return empirical_failure(ValueError(
+                        f"duplicate planned subject {subject!r}"))
                 assignments[subject] = run_id
             try:
                 panel = empirical.assemble_panel_from_plan(plan, assignments)
             except (ValueError, FileNotFoundError) as exc:
-                print(f"error: {exc}", file=sys.stderr)
-                return 2
+                return empirical_failure(exc)
             if args.write_panel:
                 Path(args.write_panel).write_text(
                     json.dumps(panel, indent=2, ensure_ascii=False) + "\n",
@@ -2451,15 +2644,14 @@ def cmd_suites(args) -> int:
             specs = []
             for spec in args.runs:
                 if "=" not in spec:
-                    print(f"error: --runs expects RUN_ID=ABILITY, got {spec!r}", file=sys.stderr)
-                    return 2
+                    return empirical_failure(ValueError(
+                        f"--runs expects RUN_ID=ABILITY, got {spec!r}"))
                 run_id, ability = spec.rsplit("=", 1)
                 try:
                     rank = int(ability)
                 except ValueError:
-                    print(f"error: ability must be an integer, got {ability!r}",
-                          file=sys.stderr)
-                    return 2
+                    return empirical_failure(ValueError(
+                        f"ability must be an integer, got {ability!r}"))
                 specs.append({"run_id": run_id, "ability": rank,
                               "ability_basis": args.ability_basis,
                               "preregistered_at": args.preregistered_at,
@@ -2467,8 +2659,7 @@ def cmd_suites(args) -> int:
             try:
                 panel = empirical.assemble_panel_from_runs(specs)
             except (ValueError, FileNotFoundError) as e:
-                print(f"error: {e}", file=sys.stderr)
-                return 2
+                return empirical_failure(e)
             if args.write_panel:
                 Path(args.write_panel).write_text(json.dumps(panel, indent=2), encoding="utf-8")
                 if not args.json:
@@ -2476,10 +2667,10 @@ def cmd_suites(args) -> int:
         elif args.panel:
             panel = json.loads(Path(args.panel).read_text(encoding="utf-8"))
         else:
-            print("error: pass a panel JSON file, --panel-plan with --planned-runs, "
-                  "--runs RUN=ABILITY ..., --preflight-runs RUN_ID ..., or "
-                  "--create-plan", file=sys.stderr)
-            return 2
+            return empirical_failure(ValueError(
+                "pass a panel JSON file, --panel-plan with --planned-runs, "
+                "--runs RUN=ABILITY ..., --preflight-runs RUN_ID ..., or "
+                "--create-plan"))
         report = empirical.analyze_panel(panel, panel_id=args.panel_id)
         _out(report, args.json, empirical.render(report))
         return 0
@@ -2495,6 +2686,15 @@ def cmd_dashboard(args) -> int:
         _out({"dashboard": path}, args.json, f"wrote {path}")
     else:
         print(dashboard.render_dashboard())
+    return 0
+
+
+def cmd_overview(args) -> int:
+    """Render the shared read-only application view model."""
+    from . import overview
+
+    summary = overview.build()
+    _out(summary, args.json, overview.render(summary))
     return 0
 
 
@@ -2514,6 +2714,7 @@ TRY AIES NOW
                                                preview scope/calls/limits; execute nothing
   aies evaluate SUBJECT --judge JUDGE          automated evaluation -> ECM + fit + reports
   aies snapshot latest                         evidence -> capability -> confidence -> decisions
+  aies overview                                shared CLI/API/dashboard workspace summary
   aies support                                 implemented vs experimental vs planned subjects
   aies starter list                            choose a decision-led first workflow
   aies starter show understand-deployment      exact commands, limits, time/cost class
@@ -2524,7 +2725,7 @@ commands by stage (each group alphabetical):
   engineering eval    assessment · benchmark · capabilities · compare · evaluate · export · import · open · qualify · review · runs · score · snapshot · transcript
   interoperability    bridge inspect-import · bridge sarif-import
   judging             judge available · judge history · judge list   (the judge pool + track record)
-  governance & audit  audit · conform · corpus · dashboard · grant · qualification · report · serve · verify
+  governance & audit  audit · conform · corpus · dashboard · grant · overview · qualification · report · serve · verify
   reference           index · journey · plugins · profile · suites
 
 typical workflow:
@@ -2621,6 +2822,45 @@ def build_parser() -> argparse.ArgumentParser:
 
     def common(sp):
         sp.add_argument("--json", action="store_true", help="machine-readable output")
+        return sp
+
+    def qualification_event_args(sp):
+        sp.add_argument("record", help="qualification record id")
+        sp.add_argument(
+            "--event", required=True,
+            choices=("condition-changed", "renewed", "suspended",
+                     "invalidated", "revoked", "superseded"),
+            help="immutable lifecycle transition to append")
+        sp.add_argument(
+            "--authority", required=True,
+            help="named human authority recording the event")
+        sp.add_argument(
+            "--reason", required=True,
+            help="reason for the lifecycle transition")
+        sp.add_argument(
+            "--condition", action="append", default=None,
+            help="replacement condition; repeat for multiple conditions")
+        sp.add_argument(
+            "--valid-until", default=None, metavar="ISO-8601",
+            help="new validity end for a renewal")
+        sp.add_argument(
+            "--superseded-by", default=None,
+            help="replacement qualification record id")
+        sp.add_argument(
+            "--evidence-run", default=None,
+            help="decisional, gate-passing re-evaluation run for renewal")
+        sp.add_argument(
+            "--peer-reviewer", default=None,
+            help="named independent human peer reviewer for renewal")
+        sp.add_argument(
+            "--peer-reviewer-id", default=None,
+            help="durable peer id from `aies rater register`")
+        sp.add_argument(
+            "--peer-conflict-free", action="store_true",
+            help="peer reviewer declares no conflict with the subject")
+        sp.add_argument(
+            "--json", action="store_true",
+            help="emit machine-readable JSON")
         return sp
 
     init = common(sub.add_parser(
@@ -2797,7 +3037,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--json", action="store_true", help="emit machine-readable JSON")
     bridge.set_defaults(func=cmd_bridge)
 
-    reg = common(sub.add_parser("registry", help="manage candidate deployment entries"))
+    reg = common(sub.add_parser(
+        "registry",
+        help="deprecated compatibility alias for `deployment`"))
     regsub = reg.add_subparsers(dest="registry_cmd", required=True)
     radd = regsub.add_parser("add", help="register a candidate deployment from YAML")
     radd.add_argument("file", help="deployment YAML file to register")
@@ -2811,7 +3053,10 @@ def build_parser() -> argparse.ArgumentParser:
     for x in (radd, rlist, rshow, rret):
         x.add_argument("--json", action="store_true",
                        help="emit machine-readable JSON")
-    reg.set_defaults(func=cmd_registry)
+    reg.set_defaults(
+        func=cmd_registry,
+        deprecated_alias=("registry", "deployment"),
+    )
 
     q = common(sub.add_parser(
         "qualify", help="run engineering evaluation for one deployment; "
@@ -3091,7 +3336,9 @@ def build_parser() -> argparse.ArgumentParser:
                                         help="emit machine-readable JSON")
     asm.set_defaults(func=cmd_assessment)
 
-    pr = common(sub.add_parser("profiles", help="list/show/validate weighting profiles"))
+    pr = common(sub.add_parser(
+        "profiles",
+        help="deprecated compatibility alias for `profile`"))
     prsub = pr.add_subparsers(dest="profiles_cmd", required=True)
     prsub.add_parser("list", help="list available weighting profiles").add_argument(
         "--json", action="store_true", help="emit machine-readable JSON")
@@ -3101,7 +3348,10 @@ def build_parser() -> argparse.ArgumentParser:
     prv = prsub.add_parser("validate", help="validate one weighting profile")
     prv.add_argument("name", help="profile name or YAML path")
     prv.add_argument("--json", action="store_true", help="emit machine-readable JSON")
-    pr.set_defaults(func=cmd_profiles)
+    pr.set_defaults(
+        func=cmd_profiles,
+        deprecated_alias=("profiles", "profile"),
+    )
 
     common(sub.add_parser("plugins", help="list installed runtime adapters")
            ).set_defaults(func=cmd_plugins)
@@ -3219,7 +3469,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     qz = common(sub.add_parser(
         "qualifications",
-        help="list/show qualification records or append governed lifecycle events"))
+        help="deprecated compatibility alias for `qualification`"))
     qzsub = qz.add_subparsers(dest="q_cmd", required=True)
     qzsub.add_parser("list", help="list qualification records").add_argument(
         "--json", action="store_true", help="emit machine-readable JSON")
@@ -3233,38 +3483,22 @@ def build_parser() -> argparse.ArgumentParser:
     qzr.add_argument("--reason", required=True,
                      help="reason for revocation")
     qzr.add_argument("--json", action="store_true", help="emit machine-readable JSON")
-    qze = qzsub.add_parser("event", help="append an immutable lifecycle event")
-    qze.add_argument("record", help="qualification record id")
-    qze.add_argument("--event", required=True,
-                     choices=("condition-changed", "renewed", "suspended",
-                              "invalidated", "revoked", "superseded"),
-                     help="immutable lifecycle transition to append")
-    qze.add_argument("--authority", required=True,
-                     help="named human authority recording the event")
-    qze.add_argument("--reason", required=True,
-                     help="reason for the lifecycle transition")
-    qze.add_argument("--condition", action="append", default=None,
-                     help="replacement condition; repeat for multiple conditions")
-    qze.add_argument("--valid-until", default=None, metavar="ISO-8601",
-                     help="new validity end for a renewal")
-    qze.add_argument("--superseded-by", default=None,
-                     help="replacement qualification record id")
-    qze.add_argument("--evidence-run", default=None,
-                     help="decisional, gate-passing re-evaluation run for renewal")
-    qze.add_argument("--peer-reviewer", default=None,
-                     help="named independent human peer reviewer for renewal")
-    qze.add_argument("--peer-reviewer-id", default=None,
-                     help="durable peer id from `aies rater register`")
-    qze.add_argument("--peer-conflict-free", action="store_true",
-                     help="peer reviewer declares no conflict with the subject")
-    qze.add_argument("--json", action="store_true",
-                     help="emit machine-readable JSON")
-    qz.set_defaults(func=cmd_qualifications)
+    qualification_event_args(qzsub.add_parser(
+        "event", help="append an immutable lifecycle event"))
+    qz.set_defaults(
+        func=cmd_qualifications,
+        deprecated_alias=("qualifications", "qualification"),
+    )
 
     db = common(sub.add_parser("dashboard", help="render an HTML dashboard over runs and grants"))
     db.add_argument("--write", action="store_true",
                     help="write dashboard.html into the workspace instead of only printing its path")
     db.set_defaults(func=cmd_dashboard)
+
+    common(sub.add_parser(
+        "overview",
+        help="summarize deployments, runs, assessments, support, and records")
+    ).set_defaults(func=cmd_overview)
 
     sv = common(sub.add_parser("serve", help="thin read-only REST API over the "
                                "canonical artifacts (JSON; computes no outcomes)"))
@@ -3494,6 +3728,8 @@ def build_parser() -> argparse.ArgumentParser:
     qcr.add_argument("--reason", required=True,
                      help="reason for revocation")
     qcr.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    qualification_event_args(qualsub.add_parser(
+        "event", help="append an immutable lifecycle event"))
     qual.set_defaults(func=cmd_qualification)
 
     from .cli_reference import apply_guidance
@@ -3507,7 +3743,7 @@ def _qualify_defaults(args) -> None:
         try:
             resolved = assessments.resolve(assessments.load(args.assessment))
         except assessments.AssessmentError as e:
-            raise SystemExit(f"error: {e}")
+            raise ValueError(str(e)) from e
         args._assessment = resolved            # stashed for the manifest (ADR-0005)
         args.area = resolved["areas"]          # assessment selects the competencies
         args.profile = resolved["profile"]     # and its EV-weighting profile
@@ -3525,8 +3761,9 @@ def _qualify_defaults(args) -> None:
     if (getattr(args, "resume", None) is None
             and getattr(args, "resume_collection", None) is None
             and not getattr(args, "model", None)):
-        raise SystemExit("error: a model registry id is required unless --resume "
-                         "or --resume-collection is used")
+        raise ValueError(
+            "a deployment id is required unless --resume or "
+            "--resume-collection is used")
 
 
 def _subparsers_action(parser):
@@ -3575,7 +3812,41 @@ def main(argv: list[str] | None = None) -> int:
         parser.print_help()
         print(command_tree_text(parser))
         return 0
-    return args.func(args)
+    deprecated = getattr(args, "deprecated_alias", None)
+    if deprecated:
+        _deprecated_alias(args, deprecated[0], deprecated[1])
+    try:
+        return args.func(args)
+    except KeyboardInterrupt as error:
+        return _command_failure(
+            error,
+            operation=f"{args.cmd}-command",
+            args=args,
+            phase="environment",
+            preserved_work_status="command-interrupted",
+            preserved_work_detail=(
+                "The command was interrupted; inspect any durable run progress "
+                "before retrying."),
+            recovery_command=f"aies {args.cmd} --help",
+            duplicate_cost_detail=(
+                "Inspect the command-specific progress before repeating any "
+                "operation that may call an endpoint."),
+        )
+    except Exception as error:
+        return _command_failure(
+            error,
+            operation=f"{args.cmd}-command",
+            args=args,
+            phase="environment",
+            preserved_work_status="existing-state-preserved",
+            preserved_work_detail=(
+                "Existing workspace evidence remains available; inspect the "
+                "error before retrying a mutation."),
+            recovery_command=f"aies {args.cmd} --help",
+            duplicate_cost_detail=(
+                "Review the command-specific help and durable progress before "
+                "retrying any operation that may call an endpoint."),
+        )
 
 
 if __name__ == "__main__":

@@ -764,7 +764,7 @@ render an HTML dashboard over runs and grants
 
 **Prerequisites:** The workspace contains runs or qualification records.
 
-**Result and side effects:** Renders a read-only HTML overview; `--write` persists the view and computes no decisions.
+**Result and side effects:** Renders the shared read-only workspace-overview view model as HTML; `--write` persists it and computes no decisions.
 
 **Recommended next step:** Open the dashboard and follow links to canonical evidence products.
 
@@ -1387,6 +1387,25 @@ open a run result or export share-safe derived views
 | `--no-browser` | optional | print the local result link without launching a browser | — |
 | `--export-redacted` | optional | also create an immutable redacted ZIP at ZIP or the default exports path | Exports only allowlisted derived views. Raw prompts, responses, ratings, fingerprints, and secrets are excluded. |
 
+## `aies overview`
+
+summarize deployments, runs, assessments, support, and records
+
+**Usage:** `aies overview [-h] [--json]`
+
+**Prerequisites:** AIES has a readable workspace; an empty workspace is valid.
+
+**Result and side effects:** Returns the versioned informational summary shared by the CLI, `/overview` API endpoint, dashboard, and future UI consumers. It computes no assessment outcome.
+
+**Recommended next step:** Inspect runs or support, render the dashboard, or start the read-only API.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
 ## `aies plugins`
 
 list installed runtime adapters
@@ -1494,13 +1513,13 @@ validate one weighting profile
 
 ## `aies profiles`
 
-list/show/validate weighting profiles
+deprecated compatibility alias for `profile`
 
 **Usage:** `aies profiles [-h] [--json] {list,show,validate} ...`
 
 **Prerequisites:** Shipped or supplied weighting profile YAML is available.
 
-**Result and side effects:** Legacy alias for listing, showing, or validating weighting profiles.
+**Result and side effects:** Deprecated compatibility alias for the canonical profile resource.
 
 **Recommended next step:** Prefer the canonical `aies profile` surface in new workflows.
 
@@ -1527,7 +1546,7 @@ list available weighting profiles
 
 **Prerequisites:** Shipped or supplied weighting profile YAML is available.
 
-**Result and side effects:** Legacy alias for listing, showing, or validating weighting profiles.
+**Result and side effects:** Deprecated compatibility alias for the canonical profile resource.
 
 **Recommended next step:** Prefer the canonical `aies profile` surface in new workflows.
 
@@ -1546,7 +1565,7 @@ show one weighting profile
 
 **Prerequisites:** Shipped or supplied weighting profile YAML is available.
 
-**Result and side effects:** Legacy alias for listing, showing, or validating weighting profiles.
+**Result and side effects:** Deprecated compatibility alias for the canonical profile resource.
 
 **Recommended next step:** Prefer the canonical `aies profile` surface in new workflows.
 
@@ -1566,7 +1585,7 @@ validate one weighting profile
 
 **Prerequisites:** Shipped or supplied weighting profile YAML is available.
 
-**Result and side effects:** Legacy alias for listing, showing, or validating weighting profiles.
+**Result and side effects:** Deprecated compatibility alias for the canonical profile resource.
 
 **Recommended next step:** Prefer the canonical `aies profile` surface in new workflows.
 
@@ -1582,11 +1601,11 @@ validate one weighting profile
 
 qualification records (the QUAL-… manifests) and their history
 
-**Usage:** `aies qualification [-h] [--json] {list,show,history,verify,revoke} ...`
+**Usage:** `aies qualification [-h] [--json] {list,show,history,verify,revoke,event} ...`
 
-**Prerequisites:** Qualification Records exist for read operations; revoke requires a named human authority and reason.
+**Prerequisites:** Qualification Records exist for read operations; lifecycle mutations require a named human authority, reason, and event-specific evidence.
 
-**Result and side effects:** Reads records/history, verifies current validity, or appends an immutable revocation event.
+**Result and side effects:** Reads records/history, verifies current validity, or appends immutable governed lifecycle events.
 
 **Recommended next step:** Monitor expiry and conditions or begin reassessment when the record is no longer current.
 
@@ -1594,6 +1613,7 @@ qualification records (the QUAL-… manifests) and their history
 
 | Subcommand | What it does |
 |---|---|
+| `event` | append an immutable lifecycle event |
 | `history` | show immutable qualification lifecycle events |
 | `list` | list qualification records |
 | `revoke` | append a revocation lifecycle event |
@@ -1607,15 +1627,45 @@ qualification records (the QUAL-… manifests) and their history
 | `-h`, `--help` | optional | show this help message and exit | — |
 | `--json` | optional | machine-readable output | — |
 
+## `aies qualification event`
+
+append an immutable lifecycle event
+
+**Usage:** `aies qualification event [-h] --event {condition-changed,renewed,suspended,invalidated,revoked,superseded} --authority AUTHORITY --reason REASON [--condition CONDITION] [--valid-until ISO-8601] [--superseded-by SUPERSEDED_BY] [--evidence-run EVIDENCE_RUN] [--peer-reviewer PEER_REVIEWER] [--peer-reviewer-id PEER_REVIEWER_ID] [--peer-conflict-free] [--json] record`
+
+**Prerequisites:** Qualification Records exist for read operations; lifecycle mutations require a named human authority, reason, and event-specific evidence.
+
+**Result and side effects:** Reads records/history, verifies current validity, or appends immutable governed lifecycle events.
+
+**Recommended next step:** Monitor expiry and conditions or begin reassessment when the record is no longer current.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<RECORD>` | required | qualification record id | — |
+| `--event` | required | immutable lifecycle transition to append | choices: `condition-changed`, `renewed`, `suspended`, `invalidated`, `revoked`, `superseded` |
+| `--authority` | required | named human authority recording the event | — |
+| `--reason` | required | reason for the lifecycle transition | — |
+| `--condition` | optional | replacement condition; repeat for multiple conditions | repeatable |
+| `--valid-until` | optional | new validity end for a renewal | — |
+| `--superseded-by` | optional | replacement qualification record id | Used with the `superseded` event to identify the replacement record. |
+| `--evidence-run` | optional | decisional, gate-passing re-evaluation run for renewal | Required for evidence-backed renewal and must identify a decisional, gate-passing reassessment. |
+| `--peer-reviewer` | optional | named independent human peer reviewer for renewal | — |
+| `--peer-reviewer-id` | optional | durable peer id from `aies rater register` | — |
+| `--peer-conflict-free` | optional | peer reviewer declares no conflict with the subject | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
 ## `aies qualification history`
 
 show immutable qualification lifecycle events
 
 **Usage:** `aies qualification history [-h] [--deployment DEPLOYMENT] [--json]`
 
-**Prerequisites:** Qualification Records exist for read operations; revoke requires a named human authority and reason.
+**Prerequisites:** Qualification Records exist for read operations; lifecycle mutations require a named human authority, reason, and event-specific evidence.
 
-**Result and side effects:** Reads records/history, verifies current validity, or appends an immutable revocation event.
+**Result and side effects:** Reads records/history, verifies current validity, or appends immutable governed lifecycle events.
 
 **Recommended next step:** Monitor expiry and conditions or begin reassessment when the record is no longer current.
 
@@ -1633,9 +1683,9 @@ list qualification records
 
 **Usage:** `aies qualification list [-h] [--json]`
 
-**Prerequisites:** Qualification Records exist for read operations; revoke requires a named human authority and reason.
+**Prerequisites:** Qualification Records exist for read operations; lifecycle mutations require a named human authority, reason, and event-specific evidence.
 
-**Result and side effects:** Reads records/history, verifies current validity, or appends an immutable revocation event.
+**Result and side effects:** Reads records/history, verifies current validity, or appends immutable governed lifecycle events.
 
 **Recommended next step:** Monitor expiry and conditions or begin reassessment when the record is no longer current.
 
@@ -1652,9 +1702,9 @@ append a revocation lifecycle event
 
 **Usage:** `aies qualification revoke [-h] --authority AUTHORITY --reason REASON [--json] record`
 
-**Prerequisites:** Qualification Records exist for read operations; revoke requires a named human authority and reason.
+**Prerequisites:** Qualification Records exist for read operations; lifecycle mutations require a named human authority, reason, and event-specific evidence.
 
-**Result and side effects:** Reads records/history, verifies current validity, or appends an immutable revocation event.
+**Result and side effects:** Reads records/history, verifies current validity, or appends immutable governed lifecycle events.
 
 **Recommended next step:** Monitor expiry and conditions or begin reassessment when the record is no longer current.
 
@@ -1674,9 +1724,9 @@ show one qualification record
 
 **Usage:** `aies qualification show [-h] [--json] record`
 
-**Prerequisites:** Qualification Records exist for read operations; revoke requires a named human authority and reason.
+**Prerequisites:** Qualification Records exist for read operations; lifecycle mutations require a named human authority, reason, and event-specific evidence.
 
-**Result and side effects:** Reads records/history, verifies current validity, or appends an immutable revocation event.
+**Result and side effects:** Reads records/history, verifies current validity, or appends immutable governed lifecycle events.
 
 **Recommended next step:** Monitor expiry and conditions or begin reassessment when the record is no longer current.
 
@@ -1694,9 +1744,9 @@ verify one qualification against current state
 
 **Usage:** `aies qualification verify [-h] [--json] record`
 
-**Prerequisites:** Qualification Records exist for read operations; revoke requires a named human authority and reason.
+**Prerequisites:** Qualification Records exist for read operations; lifecycle mutations require a named human authority, reason, and event-specific evidence.
 
-**Result and side effects:** Reads records/history, verifies current validity, or appends an immutable revocation event.
+**Result and side effects:** Reads records/history, verifies current validity, or appends immutable governed lifecycle events.
 
 **Recommended next step:** Monitor expiry and conditions or begin reassessment when the record is no longer current.
 
@@ -1710,15 +1760,15 @@ verify one qualification against current state
 
 ## `aies qualifications`
 
-list/show qualification records or append governed lifecycle events
+deprecated compatibility alias for `qualification`
 
 **Usage:** `aies qualifications [-h] [--json] {list,show,revoke,event} ...`
 
 **Prerequisites:** Qualification Records exist; lifecycle mutations require a named human authority and event-specific evidence.
 
-**Result and side effects:** Lists/shows records or appends immutable qualification lifecycle events.
+**Result and side effects:** Deprecated compatibility alias for the canonical qualification resource.
 
-**Recommended next step:** Verify the resulting current state and retain any required peer/reassessment evidence.
+**Recommended next step:** Prefer `aies qualification` for new workflows.
 
 ### Subcommands
 
@@ -1744,9 +1794,9 @@ append an immutable lifecycle event
 
 **Prerequisites:** Qualification Records exist; lifecycle mutations require a named human authority and event-specific evidence.
 
-**Result and side effects:** Lists/shows records or appends immutable qualification lifecycle events.
+**Result and side effects:** Deprecated compatibility alias for the canonical qualification resource.
 
-**Recommended next step:** Verify the resulting current state and retain any required peer/reassessment evidence.
+**Recommended next step:** Prefer `aies qualification` for new workflows.
 
 ### Parameters and options
 
@@ -1759,8 +1809,8 @@ append an immutable lifecycle event
 | `--reason` | required | reason for the lifecycle transition | — |
 | `--condition` | optional | replacement condition; repeat for multiple conditions | repeatable |
 | `--valid-until` | optional | new validity end for a renewal | — |
-| `--superseded-by` | optional | replacement qualification record id | Used with the `superseded` event to identify the replacement record. |
-| `--evidence-run` | optional | decisional, gate-passing re-evaluation run for renewal | Required for evidence-backed renewal and must identify a decisional, gate-passing reassessment. |
+| `--superseded-by` | optional | replacement qualification record id | — |
+| `--evidence-run` | optional | decisional, gate-passing re-evaluation run for renewal | — |
 | `--peer-reviewer` | optional | named independent human peer reviewer for renewal | — |
 | `--peer-reviewer-id` | optional | durable peer id from `aies rater register` | — |
 | `--peer-conflict-free` | optional | peer reviewer declares no conflict with the subject | — |
@@ -1774,9 +1824,9 @@ list qualification records
 
 **Prerequisites:** Qualification Records exist; lifecycle mutations require a named human authority and event-specific evidence.
 
-**Result and side effects:** Lists/shows records or appends immutable qualification lifecycle events.
+**Result and side effects:** Deprecated compatibility alias for the canonical qualification resource.
 
-**Recommended next step:** Verify the resulting current state and retain any required peer/reassessment evidence.
+**Recommended next step:** Prefer `aies qualification` for new workflows.
 
 ### Parameters and options
 
@@ -1793,9 +1843,9 @@ append a revocation lifecycle event
 
 **Prerequisites:** Qualification Records exist; lifecycle mutations require a named human authority and event-specific evidence.
 
-**Result and side effects:** Lists/shows records or appends immutable qualification lifecycle events.
+**Result and side effects:** Deprecated compatibility alias for the canonical qualification resource.
 
-**Recommended next step:** Verify the resulting current state and retain any required peer/reassessment evidence.
+**Recommended next step:** Prefer `aies qualification` for new workflows.
 
 ### Parameters and options
 
@@ -1815,9 +1865,9 @@ show one qualification record
 
 **Prerequisites:** Qualification Records exist; lifecycle mutations require a named human authority and event-specific evidence.
 
-**Result and side effects:** Lists/shows records or appends immutable qualification lifecycle events.
+**Result and side effects:** Deprecated compatibility alias for the canonical qualification resource.
 
-**Recommended next step:** Verify the resulting current state and retain any required peer/reassessment evidence.
+**Recommended next step:** Prefer `aies qualification` for new workflows.
 
 ### Parameters and options
 
@@ -1961,13 +2011,13 @@ show one human-rater record
 
 ## `aies registry`
 
-manage candidate deployment entries
+deprecated compatibility alias for `deployment`
 
 **Usage:** `aies registry [-h] [--json] {add,list,show,retire} ...`
 
 **Prerequisites:** AIES has a writable workspace; `add` requires valid deployment YAML.
 
-**Result and side effects:** Provides the legacy candidate-deployment registry surface.
+**Result and side effects:** Deprecated compatibility alias for the canonical deployment resource.
 
 **Recommended next step:** Prefer the canonical `aies deployment` commands for new workflows.
 
@@ -1995,7 +2045,7 @@ register a candidate deployment from YAML
 
 **Prerequisites:** AIES has a writable workspace; `add` requires valid deployment YAML.
 
-**Result and side effects:** Provides the legacy candidate-deployment registry surface.
+**Result and side effects:** Deprecated compatibility alias for the canonical deployment resource.
 
 **Recommended next step:** Prefer the canonical `aies deployment` commands for new workflows.
 
@@ -2015,7 +2065,7 @@ list active candidate deployments
 
 **Prerequisites:** AIES has a writable workspace; `add` requires valid deployment YAML.
 
-**Result and side effects:** Provides the legacy candidate-deployment registry surface.
+**Result and side effects:** Deprecated compatibility alias for the canonical deployment resource.
 
 **Recommended next step:** Prefer the canonical `aies deployment` commands for new workflows.
 
@@ -2035,7 +2085,7 @@ retire a deployment without deleting history
 
 **Prerequisites:** AIES has a writable workspace; `add` requires valid deployment YAML.
 
-**Result and side effects:** Provides the legacy candidate-deployment registry surface.
+**Result and side effects:** Deprecated compatibility alias for the canonical deployment resource.
 
 **Recommended next step:** Prefer the canonical `aies deployment` commands for new workflows.
 
@@ -2055,7 +2105,7 @@ show one candidate deployment
 
 **Prerequisites:** AIES has a writable workspace; `add` requires valid deployment YAML.
 
-**Result and side effects:** Provides the legacy candidate-deployment registry surface.
+**Result and side effects:** Deprecated compatibility alias for the canonical deployment resource.
 
 **Recommended next step:** Prefer the canonical `aies deployment` commands for new workflows.
 
@@ -2304,7 +2354,7 @@ thin read-only REST API over the canonical artifacts (JSON; computes no outcomes
 
 **Prerequisites:** The workspace contains artifacts to expose; choose a safe bind address.
 
-**Result and side effects:** Starts a read-only API that exposes canonical artifacts and computes no new decisions.
+**Result and side effects:** Starts a read-only API exposing the shared `/overview` view model and canonical artifacts; it computes no new decisions.
 
 **Recommended next step:** Stop the process when finished; use an authenticated reverse proxy before any non-local exposure.
 

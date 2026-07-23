@@ -228,3 +228,25 @@ def test_bridge_failure_preserves_source_and_reports_exact_retry(
     assert "recover: aies bridge sarif-import" in error
     assert "source-preserved" in error
     assert "paid endpoint calls" in error
+
+
+@pytest.mark.parametrize(
+    "argv,recovery",
+    [
+        (["snapshot", "missing-run"], "aies runs list"),
+        (["export", "missing-run"], "aies runs list"),
+        (["transcript", "missing-run"], "aies runs list"),
+        (["profile", "show", "missing-profile"], "aies profile list"),
+        (["runtime", "inspect", "missing-runtime"], "aies runtime list"),
+        (["qualification", "show", "QUAL-missing"],
+         "aies qualification history"),
+        (["suites", "empirical"], "aies suites empirical --help"),
+    ],
+)
+def test_secondary_command_families_use_shared_failure_contract(
+        tmp_path, monkeypatch, capsys, argv, recovery):
+    monkeypatch.setenv("AIES_WORKSPACE", str(tmp_path / "workspace"))
+    assert cli.main(argv) == 2
+    error = capsys.readouterr().err
+    assert "duplicate-cost risk: none" in error
+    assert f"recover: {recovery}" in error

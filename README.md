@@ -387,6 +387,9 @@ products without changing the underlying observations.
   Packages through the conformance runner.
 - Discover the exact implemented, experimental, and planned subject boundary
   through `aies support` or the read-only `/support` API endpoint.
+- Consume one versioned workspace summary through `aies overview`,
+  `GET /overview`, or the HTML dashboard. All three are read-only
+  presentations over the same facts and compute no assessment outcome.
 
 ### Typical workflow
 
@@ -398,7 +401,7 @@ Adoption is progressive; users do not need to begin with formal qualification:
 | **Evaluate** | Collect and automatically score engineering evidence | `aies qualify … --judge …` or `aies benchmark … --judge …` |
 | **Understand** | Read task strengths, evidence confidence, gaps, and fit | `aies snapshot`, `aies capabilities`, `aies guidance`, `aies transcript` |
 | **Compare** | Compare compatible observed ECM evidence | `aies compare` |
-| **Integrate** | Audit repositories, export evidence, or consume the read-only API | `aies audit`, `aies export`, `aies serve` |
+| **Integrate** | Audit repositories, export evidence, or consume the shared read-only application contract | `aies audit`, `aies export`, `aies overview`, `aies serve` |
 | **Govern** | Explicitly invoke formal qualification and human authority | `--formal-qualification`, followed by the governed rater and decision workflow |
 
 From `platform/`, create an isolated Python environment and install the CLI:

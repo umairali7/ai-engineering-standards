@@ -17,7 +17,7 @@ ASSESSMENT="${ASSESSMENT:-coder}"
 if [ -z "$DEPLOYMENT" ] || [ -z "$JUDGE" ]; then
   echo "error: set DEPLOYMENT and JUDGE to registered deployments." >&2
   echo "  make integration-demo DEPLOYMENT=local-qwen JUDGE=gpt-oss" >&2
-  echo "  (list them with: aies registry list)" >&2
+  echo "  (list them with: aies deployment list)" >&2
   exit 2
 fi
 if [ "$DEPLOYMENT" = "$JUDGE" ]; then
@@ -30,7 +30,7 @@ echo "candidate: $DEPLOYMENT   judge: $JUDGE   assessment: $ASSESSMENT"
 echo
 
 aies doctor
-aies registry list
+aies deployment list
 
 RUN=$(aies qualify "$DEPLOYMENT" --assessment "$ASSESSMENT" --judge "$JUDGE" --json \
         | python -c 'import sys,json; print(json.load(sys.stdin)["run_id"])')

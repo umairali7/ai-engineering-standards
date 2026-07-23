@@ -175,7 +175,9 @@ def remove(model_id: str) -> dict:
 def get(model_id: str) -> dict:
     p = _entry_path(model_id)
     if not p.exists():
-        raise RegistryError(f"model {model_id!r} is not registered (aies registry add …)")
+        raise RegistryError(
+            f"deployment {model_id!r} is not registered "
+            "(aies deployment add ...)")
     entry = yaml.safe_load(p.read_text(encoding="utf-8"))
     if entry.get("retired"):
         raise RegistryError(f"model {model_id!r} is retired")
@@ -220,7 +222,7 @@ def resolve(ref: str, runtime: str | None = None) -> dict:
             f"{ref!r} is not a deployment id, and no registered deployment "
             f"serves model {ref!r}"
             + (f" on runtime {runtime!r}" if runtime else "")
-            + " (try `aies registry list` or `aies discover`)"
+            + " (try `aies deployment list` or `aies discover`)"
         )
     if len(matches) > 1:
         raise AmbiguousDeployment(ref, [e["id"] for e in matches])

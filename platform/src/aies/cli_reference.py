@@ -132,7 +132,7 @@ GUIDANCE: dict[str, CommandGuidance] = {
     ),
     "registry": CommandGuidance(
         "AIES has a writable workspace; `add` requires valid deployment YAML.",
-        "Provides the legacy candidate-deployment registry surface.",
+        "Deprecated compatibility alias for the canonical deployment resource.",
         "Prefer the canonical `aies deployment` commands for new workflows.",
     ),
     "deployment add": CommandGuidance(
@@ -226,14 +226,14 @@ GUIDANCE: dict[str, CommandGuidance] = {
         "Requalify or append the appropriate governed lifecycle event when verification fails.",
     ),
     "qualification": CommandGuidance(
-        "Qualification Records exist for read operations; revoke requires a named human authority and reason.",
-        "Reads records/history, verifies current validity, or appends an immutable revocation event.",
+        "Qualification Records exist for read operations; lifecycle mutations require a named human authority, reason, and event-specific evidence.",
+        "Reads records/history, verifies current validity, or appends immutable governed lifecycle events.",
         "Monitor expiry and conditions or begin reassessment when the record is no longer current.",
     ),
     "qualifications": CommandGuidance(
         "Qualification Records exist; lifecycle mutations require a named human authority and event-specific evidence.",
-        "Lists/shows records or appends immutable qualification lifecycle events.",
-        "Verify the resulting current state and retain any required peer/reassessment evidence.",
+        "Deprecated compatibility alias for the canonical qualification resource.",
+        "Prefer `aies qualification` for new workflows.",
     ),
     "audit": CommandGuidance(
         "The repository path is readable. Attestation files may support only genuinely non-detectable controls.",
@@ -257,7 +257,7 @@ GUIDANCE: dict[str, CommandGuidance] = {
     ),
     "profiles": CommandGuidance(
         "Shipped or supplied weighting profile YAML is available.",
-        "Legacy alias for listing, showing, or validating weighting profiles.",
+        "Deprecated compatibility alias for the canonical profile resource.",
         "Prefer the canonical `aies profile` surface in new workflows.",
     ),
     "runs": CommandGuidance(
@@ -307,12 +307,17 @@ GUIDANCE: dict[str, CommandGuidance] = {
     ),
     "dashboard": CommandGuidance(
         "The workspace contains runs or qualification records.",
-        "Renders a read-only HTML overview; `--write` persists the view and computes no decisions.",
+        "Renders the shared read-only workspace-overview view model as HTML; `--write` persists it and computes no decisions.",
         "Open the dashboard and follow links to canonical evidence products.",
+    ),
+    "overview": CommandGuidance(
+        "AIES has a readable workspace; an empty workspace is valid.",
+        "Returns the versioned informational summary shared by the CLI, `/overview` API endpoint, dashboard, and future UI consumers. It computes no assessment outcome.",
+        "Inspect runs or support, render the dashboard, or start the read-only API.",
     ),
     "serve": CommandGuidance(
         "The workspace contains artifacts to expose; choose a safe bind address.",
-        "Starts a read-only API that exposes canonical artifacts and computes no new decisions.",
+        "Starts a read-only API exposing the shared `/overview` view model and canonical artifacts; it computes no new decisions.",
         "Stop the process when finished; use an authenticated reverse proxy before any non-local exposure.",
     ),
 }
@@ -350,8 +355,8 @@ OPTION_INTERACTIONS: dict[tuple[str, str], str] = {
     ("review", "reviewer_qualified"): "A declaration that must be supported by a current CA-06 — Testing, Quality & Evaluation Engineering qualification.",
     ("review", "calibration"): "Bootstrap evidence for an otherwise unqualified reviewer; does not make model ratings human qualification evidence.",
     ("grant", "condition"): "Repeatable and required when `--decision grant-with-conditions` is selected.",
-    ("qualifications event", "evidence_run"): "Required for evidence-backed renewal and must identify a decisional, gate-passing reassessment.",
-    ("qualifications event", "superseded_by"): "Used with the `superseded` event to identify the replacement record.",
+    ("qualification event", "evidence_run"): "Required for evidence-backed renewal and must identify a decisional, gate-passing reassessment.",
+    ("qualification event", "superseded_by"): "Used with the `superseded` event to identify the replacement record.",
     ("deployment verify-artifact", "signature"): "Use with `--pubkey`; both are needed for detached-signature verification.",
     ("deployment verify-artifact", "pubkey"): "Use with `--signature`; checksum verification remains available without either.",
     ("suites empirical", "create_plan"): "Planning mode; use before subject runs with `--plan-subjects`, owner, areas, tier, repeats, and rating protocol.",
