@@ -61,7 +61,8 @@ Each asset must show real generated output and pass claim review:
   separates decisions, reproducible commands, limitations, and roadmap.
 - A downloadable redacted example bundle with hashes and reproduction notes.
 - Issue forms for first-run failure, report comprehension, case-study interest,
-  instrument review, and adapter proposals.
+  instrument review, and adapter proposals are implemented with explicit
+  secret/private-evidence boundaries and a private security-advisory route.
 
 ## Channel plan
 

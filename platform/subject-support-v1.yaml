@@ -1,0 +1,123 @@
+kind: aies-subject-support-registry
+schema: 1
+version: 1.0.0
+status: experimental
+governed_by: ADR-0015
+statuses:
+  implemented: Executable assessment path and honest decision products ship now.
+  experimental: Executable contract or bridge ships, but claim-bearing assessment support is not complete.
+  planned: Architecture intent only; no assessment support claim is permitted.
+subjects:
+  - id: ai-deployment
+    title: AI Deployment or Served AI System
+    aliases: [model, ai system, inference deployment]
+    status: implemented
+    descriptor_kind: ai_deployment
+    descriptor_contract: experimental
+    assessment_profiles:
+      - id: engineering-evaluation
+        title: Automated Engineering Evaluation
+        status: implemented
+      - id: formal-qualification
+        title: Human-Governed Formal Qualification
+        status: implemented
+    executors:
+      - id: runtime-generation
+        title: Runtime Generation Executor
+        status: implemented
+    evidence_adapters:
+      - id: inspect-log
+        title: Inspect Evaluation Log Bridge
+        status: experimental
+    instruments: [CA-01 through CA-12 scenario suites, ET-01 through ET-15 task mapping]
+    decision_products: [Engineering Evaluation, Engineering Capability Matrix, Engineering Fit Guidance, Formal Qualification Evidence]
+    entry_points: [aies evaluate, aies qualify, aies benchmark]
+    limitations:
+      - Current executor assesses registered text-generation deployments; it is not a general agent or multimodal-system executor.
+      - Design-reviewed instruments are not yet empirically calibrated on a representative real-subject panel.
+
+  - id: repository
+    title: Software Repository
+    aliases: [codebase, source repository]
+    status: implemented
+    descriptor_kind: repository
+    descriptor_contract: experimental
+    assessment_profiles:
+      - id: repository-conformance-audit
+        title: Repository Engineering-Practice Conformance Audit
+        status: implemented
+    executors:
+      - id: deterministic-repository-audit
+        title: Deterministic Repository Evidence Collector
+        status: implemented
+    evidence_adapters:
+      - id: sarif
+        title: SARIF 2.1.0 Findings Bridge
+        status: experimental
+    instruments: [CA-01 through CA-12 repository-practice checks]
+    decision_products: [Maturity Scorecard, Evidence Gaps, Ranked Remediation]
+    entry_points: [aies audit]
+    limitations:
+      - Repository maturity is not an AESQS competency score or model capability claim.
+      - SARIF findings are preserved separately and are not yet consumed by the deterministic audit score.
+
+  - id: human
+    title: Human Engineer
+    aliases: [individual engineer]
+    status: planned
+    descriptor_kind: human
+  - id: team
+    title: Engineering Team
+    aliases: [delivery team]
+    status: planned
+    descriptor_kind: team
+  - id: human-ai-pair
+    title: Human–AI Engineering Pair
+    aliases: [paired human and assistant]
+    status: planned
+    descriptor_kind: composite
+  - id: ai-agent
+    title: AI Agent
+    aliases: [coding agent, autonomous agent]
+    status: planned
+    descriptor_kind: agent
+  - id: agent-swarm
+    title: Agent Swarm
+    aliases: [multi-agent system]
+    status: planned
+    descriptor_kind: agent_swarm
+  - id: mcp-server
+    title: Model Context Protocol Server
+    aliases: [MCP server]
+    status: planned
+    descriptor_kind: mcp_server
+  - id: coding-assistant
+    title: AI Coding Assistant
+    aliases: [IDE assistant]
+    status: planned
+    descriptor_kind: coding_assistant
+  - id: prompt-library
+    title: Prompt Library
+    aliases: [prompt collection]
+    status: planned
+    descriptor_kind: prompt_library
+  - id: rag-system
+    title: Retrieval-Augmented Generation System
+    aliases: [RAG application]
+    status: planned
+    descriptor_kind: rag_system
+  - id: ai-pipeline
+    title: AI Pipeline
+    aliases: [AI workflow]
+    status: planned
+    descriptor_kind: pipeline
+  - id: ai-platform
+    title: AI Engineering Platform
+    aliases: [AI platform]
+    status: planned
+    descriptor_kind: platform
+  - id: composite-system
+    title: Composite Engineering System
+    aliases: [system of systems]
+    status: planned
+    descriptor_kind: composite

@@ -18,9 +18,17 @@ appropriate.
 
 ```powershell
 cd platform
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
 python -m pip install -e .
 aies demo --open
 ```
+
+On macOS or Linux, use `python3 -m venv .venv`, then
+`source .venv/bin/activate` before the same install and demo commands. AIES
+never requires `--break-system-packages`. Existing isolated-tool users may
+instead run `pipx install ./platform` or `uv tool install ./platform` from the
+repository root.
 
 No model server. No API key. No Make or Bash. No mandatory human-review loop.
 The command executes the real collection, batched scoring, analysis, ECM,
@@ -46,7 +54,8 @@ evidence breadth instead of hiding both inside one score.
 [see every CLI command](platform/CLI_REFERENCE.md) ·
 [review the public roadmap](ROADMAP.md) ·
 [see the adoption and launch plan](docs/ADOPTION_AND_LAUNCH_PLAN.md) ·
-[help build it](CONTRIBUTING.md)
+[help build it](CONTRIBUTING.md) ·
+[share first-run or report feedback](https://github.com/umairali7/ai-engineering-standards/issues/new/choose)
 
 ### What can you use today?
 
@@ -56,6 +65,8 @@ evidence breadth instead of hiding both inside one score.
 | Understand one registered AI deployment | `aies evaluate DEPLOYMENT --plan-only` | No-cost call plan, limitations, and exact execution path |
 | Evaluate it automatically | `aies evaluate DEPLOYMENT --judge JUDGE` | Completed non-blocking Engineering Evaluation and report bundle |
 | See the decision snapshot in your terminal | `aies snapshot latest` | Task evidence, observed capability, confidence, gaps, and engineering interpretation |
+| Check what AIES truly supports | `aies support` | Implemented, experimental, and planned subject kinds with executable entry points and limitations |
+| Choose a first workflow by decision | `aies starter list` | Prerequisites, commands, artifacts, time/cost class, evidence breadth, limitations, and next expansion |
 | Assess repository engineering practice | `aies audit .` | Evidence-backed maturity gaps and ranked remediation |
 | Compare compatible runs | `aies compare RUN_A RUN_B` | Task-by-task observed differences without a fake universal winner |
 | Integrate an evaluation tool | `aies bridge inspect-import …` | Source-bound imported ratings and an explicit loss report |
@@ -65,7 +76,9 @@ evidence breadth instead of hiding both inside one score.
 Current implemented subjects are AI deployments and repositories. The
 subject-neutral contracts for agents, MCP servers, RAG systems, pipelines, and
 platforms are experimental until their dedicated executors and instruments are
-implemented and validated.
+implemented and validated. The generated
+[Subject Support Matrix](platform/SUBJECT_SUPPORT.md) and `aies support` command
+are the canonical public support boundary.
 
 ---
 
@@ -368,6 +381,8 @@ products without changing the underlying observations.
   `aies corpus`.
 - Verify decision-engine compatibility against immutable golden Evidence
   Packages through the conformance runner.
+- Discover the exact implemented, experimental, and planned subject boundary
+  through `aies support` or the read-only `/support` API endpoint.
 
 ### Typical workflow
 
@@ -375,7 +390,7 @@ Adoption is progressive; users do not need to begin with formal qualification:
 
 | Stage | Goal | Current entry point |
 |---|---|---|
-| **Try** | See the complete product without credentials or model cost | `make demo` |
+| **Try** | See the complete product without credentials or model cost | `aies demo --open` |
 | **Evaluate** | Collect and automatically score engineering evidence | `aies qualify … --judge …` or `aies benchmark … --judge …` |
 | **Understand** | Read task strengths, evidence confidence, gaps, and fit | `aies snapshot`, `aies capabilities`, `aies guidance`, `aies transcript` |
 | **Compare** | Compare compatible observed ECM evidence | `aies compare` |
@@ -406,6 +421,8 @@ generate the complete report bundle. Human review is optional. Inspect or
 compare the decision products with:
 
 ```powershell
+aies support
+aies starter show understand-deployment
 aies snapshot <run-id>
 aies capabilities <run-id>
 aies guidance <run-id>
@@ -464,7 +481,7 @@ Individual documents carry a lifecycle status only (Draft → Review → Approve
   expansion remain in progress under
   [ADR-0009](adr/ADR-0009-Engineering-Assessment-Platform-Identity.md).
 - **Verified baseline:** 484 scenarios across 12 competency areas with zero
-  suite warnings/errors; 237 platform tests passing at the latest local
+  suite warnings/errors; 248 platform tests passing at the latest local
   verification. Empirical panel calibration and an independent pilot remain
   open.
 - **ECM standardization:** The ECM implementation and ET-01 through ET-15

@@ -1,0 +1,54 @@
+name: Report Comprehension Feedback
+description: Tell us what an AIES snapshot or report made clear or confusing.
+title: "[Report feedback] "
+labels: ["needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not attach an unredacted report or disclose private subjects,
+        prompts, responses, ratings, environments, or reviewer identities.
+        Describe the confusing structure using generic examples.
+  - type: dropdown
+    id: artifact
+    attributes:
+      label: Artifact reviewed
+      options:
+        - CLI decision snapshot
+        - Executive Summary
+        - Engineering Capability Matrix
+        - Engineering Fit Guidance
+        - Grounding Diagnostics
+        - Engineering Evaluation Report
+        - Engineering Assessment Result
+        - Formal Qualification Evidence
+    validations:
+      required: true
+  - type: textarea
+    id: interpretation
+    attributes:
+      label: What decision did you think the artifact supported?
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Which distinctions were clear?
+      options:
+        - label: Observed capability versus evidence confidence
+        - label: Not assessed versus poor performance
+        - label: Engineering fit versus deployment authorization
+        - label: Automated evaluation versus optional human evaluation
+        - label: Engineering Evaluation versus Formal Qualification
+  - type: textarea
+    id: confusion
+    attributes:
+      label: What remained confusing?
+      description: Quote only non-sensitive labels or headings.
+    validations:
+      required: true
+  - type: textarea
+    id: improvement
+    attributes:
+      label: Smallest change that would have helped
+

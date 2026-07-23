@@ -16,6 +16,11 @@ Canonical evidence, ECM, and decision-product boundaries are subject-neutral so
 future adapters can assess agents, MCP servers, RAG systems, pipelines, and
 platforms without redefining the product.
 
+Run `aies support` or read the generated
+[Subject Support Matrix](SUBJECT_SUPPORT.md) for the canonical implemented,
+experimental, and planned boundary. Architecture intent is never represented
+as shipped assessment support.
+
 **Capability scope is explicit.** A run assesses one risk tier (RT1 — Minimal through RT4 — Critical).
 `--all-areas` expands coverage across competency areas only at that selected
 tier; it is not an all-tier claim. ECM rows marked `not assessed` mean no
@@ -52,6 +57,8 @@ health/coverage/duplicates/review; advisory, multidimensional, no single grade),
 `runs`, `compare`, `index`, `review`, `grant`, `verify`, `journey`,
 `conform`, `runtime`/`profile`/`qualification`, `dashboard`, `plugins`.
 `completion` generates parser-derived PowerShell, Bash, and Zsh Tab completion.
+`support` exposes the same subject-support registry through CLI and `/support`
+API output.
 All twelve competency areas
 (CA-01…CA-12) ship demonstration suites; six weighting profiles; a
 frozen v1.0 runtime-adapter contract with an
@@ -94,10 +101,16 @@ platform itself never grants.
 
 ```
 cd platform
-pip install -e .          # installs `aies` (Python 3.10–3.14 tested in CI)
+python -m venv .venv
+# PowerShell: .\.venv\Scripts\Activate.ps1
+# macOS/Linux: source .venv/bin/activate
+python -m pip install -e .       # installs `aies` inside the environment
 pytest tests/ -q --durations=15  # conformance + ranked performance feedback
 aies suites validate      # suites + shipped assessments (one gate; CI runs it)
 ```
+
+Do not use `--break-system-packages`. `pipx install .` and `uv tool install .`
+are optional isolated alternatives for users who already have those tools.
 
 First useful result:
 
@@ -110,6 +123,8 @@ Make, or Bash. For a real deployment, use the guided path:
 
 ```
 aies init
+aies support
+aies starter show understand-deployment
 aies discover
 aies evaluate <deployment> --judge <reviewer> --plan-only
 aies evaluate <deployment> --judge <reviewer> --parallel 4
@@ -118,7 +133,7 @@ aies open latest
 ```
 
 The warm-cache full-suite performance budget on the recorded Windows reference
-workstation is **180 seconds**. The current 237-test baseline is **94.58
+workstation is **180 seconds**. The current 248-test baseline is **110.12
 seconds**. A run above budget or a greater-than-25% regression should be
 profiled before merge; use the ranked durations rather than guessing. Scenario
 YAML and suite digests are cached by path, modification time, and size, return

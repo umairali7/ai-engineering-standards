@@ -66,7 +66,10 @@ jobs:
       - name: Install the built wheel, not the checkout
         run: python -c "import glob,subprocess,sys; subprocess.check_call([sys.executable,'-m','pip','install','--force-reinstall',glob.glob('dist/*.whl')[0]])"
       - name: Validate shipped data from the installed package
-        run: python -m aies suites validate
+        run: |
+          python -m aies suites validate
+          python -m aies support ai-deployment --json
+          python -m aies starter show understand-deployment --json
       - name: First-use offline demo from the installed package
         run: python -m aies demo --workspace "${{ runner.temp }}/aies-demo" --parallel 8
       - name: Uninstall cleanly
@@ -103,6 +106,8 @@ jobs:
         run: aies suites validate
       - name: Governed document ID uniqueness
         run: python scripts/check_document_ids.py ..
+      - name: Subject-support registry and generated matrix
+        run: python scripts/generate_subject_support.py --check
       - name: Release hygiene
         run: python scripts/check_release_artifacts.py ..
       - name: Decision-engine conformance (golden Evidence Package corpus)

@@ -8,6 +8,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Honest subject-support discovery**: added a versioned subject-support
+  registry, generated support matrix, `aies support`, and read-only `/support`
+  API endpoint. AI deployments and repositories name their shipped profiles,
+  executors, entry points, decision products, and limitations; human/team,
+  agent/swarm, MCP, coding-assistant, prompt, RAG, pipeline, platform, and
+  composite assessment remain explicitly planned rather than implied.
+- **Decision-oriented starters**: added packaged workflows for understanding
+  one deployment, comparing two compatible coding deployments, auditing a
+  repository, and deliberately entering formal qualification. `aies starter
+  list/show` exposes the decision, prerequisites, sequence, time/cost class,
+  evidence breadth, artifacts, limitations, and next expansion without
+  executing calls.
+- **Contextual CLI handoff**: human-readable repository audits now end with an
+  exact scoped rerun or explicit-gate command, and comparisons point to the
+  compatible-evidence starter. JSON and exit-code behavior remain unchanged.
+- **Decision-first documentation paths**: reorganized first-use guidance around
+  Try, Evaluate, Compare, Audit, Integrate, and Govern, with a runnable command,
+  expected artifact, limitation, and next step for each path before the
+  standards reading map.
+- **Safe feedback and contributor funnel**: replaced placeholder community
+  links and added validated issue forms for first-run failures, report
+  comprehension, reproducible case studies, scenario-instrument review, and
+  subject/evidence adapter proposals. Every public form states its secret,
+  privacy, evidence, or independence boundary.
+- **PEP 668-safe installation guidance**: canonical Windows, macOS, and Linux
+  source installs now create and activate a virtual environment before
+  installation, document optional pipx/uv isolation, and explicitly reject
+  `--break-system-packages`.
 - **Evidence-to-decision CLI snapshot**: accepted ADR-0015 and added
   `aies snapshot [run|latest]`, a responsive terminal projection of canonical
   ECM and Engineering Fit facts. The same view now appears after `demo`,
@@ -101,7 +129,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   copies. Read-only API tests reuse one immutable module fixture, and the judge
   concurrency test delays only the reviewer behavior it measures. The complete
   suite retains all assertions while removing repeated setup and unrelated
-  sleeps: the expanded 237-test suite completes in 94.58 seconds on the
+  sleeps: the expanded 248-test suite completes in 110.12 seconds on the
   Windows verification host, below the 180-second budget.
 - **Empirical-panel admission preflight**: `aies suites empirical
   --preflight-runs` now checks that real runs use distinct subjects, identical

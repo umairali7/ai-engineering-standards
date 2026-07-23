@@ -47,7 +47,7 @@ aies = ["py.typed"]
 # under the environment's share/aies directory so normal wheels behave exactly
 # like a source checkout; aies.resources resolves both layouts.
 [tool.setuptools.data-files]
-"share/aies" = ["measurement-claims-v1.yaml", "MEASUREMENT_CLAIMS.md"]
+"share/aies" = ["measurement-claims-v1.yaml", "MEASUREMENT_CLAIMS.md", "subject-support-v1.yaml", "SUBJECT_SUPPORT.md", "decision-starters-v1.yaml"]
 "share/aies/assessments" = ["assessments/*.yaml"]
 "share/aies/contracts" = ["contracts/*.json", "contracts/*.md"]
 "share/aies/profiles" = ["profiles/*.yaml"]

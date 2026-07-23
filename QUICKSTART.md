@@ -6,9 +6,25 @@ score them in optimized batches, generate the Engineering Capability Matrix
 
 ```powershell
 cd platform
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
 python -m pip install -e .
 aies demo --open
 ```
+
+macOS or Linux:
+
+```bash
+cd platform
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e .
+aies demo --open
+```
+
+Do not use `--break-system-packages`. If you already use an isolated
+application manager, `pipx install ./platform` or `uv tool install ./platform`
+is an optional source-checkout alternative.
 
 This works in PowerShell, Bash, and Zsh. It needs Python 3.10 or newer, but no
 model server, GPU, API key, Make, Bash script, or human review. The mock subject
@@ -25,6 +41,8 @@ Create a safe workspace and discover supported local runtimes:
 ```powershell
 aies init
 $env:AIES_WORKSPACE = (Resolve-Path aies-workspace)
+aies support
+aies starter list
 aies discover
 aies deployment list
 ```
@@ -75,6 +93,8 @@ tasks as unknown rather than zero.
 ## Choose the next path
 
 - Understand every command and parameter: [CLI Reference](platform/CLI_REFERENCE.md)
+- Check executable versus planned subjects: `aies support`
+- Choose a bounded workflow by decision: `aies starter show understand-deployment`
 - Register real endpoints: [Platform Guide](platform/GUIDE.md)
 - Compare compatible runs: `aies compare RUN_A RUN_B`
 - Analyze repository practice: `aies audit .`

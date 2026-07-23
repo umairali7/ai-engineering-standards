@@ -25,6 +25,21 @@ The key words "MUST" and "MUST NOT" in this document are to be interpreted as de
 | Translations | Open a Content Proposal first — translation infrastructure is being designed | Class 2 |
 | Peer review of drafts | Comment on open PRs, or ask a Module Editor to be added as a Reviewer | — |
 
+New users and integrators can also contribute structured evidence without
+drafting a standard change:
+
+| Feedback path | Use it for |
+|---|---|
+| [First-run experience](https://github.com/umairali7/ai-engineering-standards/issues/new/choose) | Installation, demo, planning, evaluation, resume, report opening, or cleanup friction |
+| [Report comprehension](https://github.com/umairali7/ai-engineering-standards/issues/new/choose) | Confusing capability, confidence, unknown, fit, human-evaluation, or qualification boundaries |
+| [Reproducible case-study interest](https://github.com/umairali7/ai-engineering-standards/issues/new/choose) | A publishable local/hosted evaluation, compatible comparison, repository assurance, or reassessment story |
+| [Scenario instrument review](https://github.com/umairali7/ai-engineering-standards/issues/new/choose) | Independent review of construct relevance, anchors, gaming resistance, risk tier, rubric applicability, twins, or ET mapping |
+| [Subject or Evidence Adapter proposal](https://github.com/umairali7/ai-engineering-standards/issues/new/choose) | A version-pinned executor, evidence bridge, export, or Subject Assessment Profile with explicit provenance, loss, privacy, and claim boundaries |
+
+The issue chooser contains a private security-advisory route. Never place
+credentials, private prompts/responses, unredacted reports, production
+endpoints, or confidential evidence in a public issue.
+
 ## 2. Before You Start
 
 1. **Read the [Documentation Standards (AIES-STD-00 — Documentation Standards)](docs/standards/README.md)** — metadata tables, document IDs, RFC 2119 usage, status lifecycle. Every AIES document follows them.

@@ -2280,6 +2280,71 @@ show evidence, capability, confidence, and engineering decisions
 | `<RUN>` | optional | completed run id or 'latest' (default: latest) | default: `latest` |
 | `--observed-only` | optional | hide tasks without directly mapped scored evidence | Hides unassessed task rows from the table; the coverage summary still reports them as unknown rather than zero. |
 
+## `aies starter`
+
+choose a decision-led evaluation, comparison, audit, or governance workflow
+
+**Usage:** `aies starter [-h] [--json] {list,show} ...`
+
+**Prerequisites:** AIES is installed; listing and showing starters require no workspace or endpoint.
+
+**Result and side effects:** Reads versioned decision-led workflow data covering prerequisites, command sequence, time/cost class, evidence breadth, artifacts, limitations, and next expansion.
+
+**Recommended next step:** Choose a starter with `aies starter show <id>`, replace its placeholders deliberately, and run plan-only before any model calls.
+
+### Subcommands
+
+| Subcommand | What it does |
+|---|---|
+| `list` | list the shipped decision-oriented starters |
+| `show` | show prerequisites, commands, artifacts, and limitations |
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies starter list`
+
+list the shipped decision-oriented starters
+
+**Usage:** `aies starter list [-h] [--json]`
+
+**Prerequisites:** AIES is installed.
+
+**Result and side effects:** Lists the shipped decision starters and the decision, subject kind, and workflow each supports.
+
+**Recommended next step:** Run `aies starter show <id>` for the executable sequence and boundaries.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies starter show`
+
+show prerequisites, commands, artifacts, and limitations
+
+**Usage:** `aies starter show [-h] [--json] starter_id`
+
+**Prerequisites:** Use an id from `aies starter list`.
+
+**Result and side effects:** Prints the complete versioned workflow without executing commands or incurring cost.
+
+**Recommended next step:** Resolve the prerequisites, replace placeholders, and execute the plan-only command before the live workflow.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<STARTER_ID>` | required | starter id from `aies starter list` | — |
+| `--json` | optional | machine-readable output | — |
+
 ## `aies suites`
 
 inspect and validate competency suites
@@ -2382,6 +2447,27 @@ validate suite YAML structure and coverage
 | `-h`, `--help` | optional | show this help message and exit | — |
 | `--root` | optional | competencies directory to validate (default: shipped suites) | — |
 | `--json` | optional | emit machine-readable JSON | — |
+
+## `aies support`
+
+show implemented, experimental, and planned subject support
+
+**Usage:** `aies support [-h] [--json] [--status {implemented,experimental,planned}] [subject_kind]`
+
+**Prerequisites:** AIES is installed; no workspace, endpoint, or credential is required.
+
+**Result and side effects:** Reads the shipped subject-support registry and distinguishes executable support from experimental contracts and planned architecture.
+
+**Recommended next step:** Use an implemented entry point, or consult the roadmap before proposing an executor, evidence adapter, and direct instruments for a planned subject.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<SUBJECT_KIND>` | optional | subject id or alias to inspect (default: show all) | — |
+| `--status` | optional | filter by support status | choices: `implemented`, `experimental`, `planned` |
 
 ## `aies transcript`
 

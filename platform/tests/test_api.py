@@ -52,6 +52,7 @@ def test_health_and_index():
     status, body = api.route("/health")
     assert status == 200 and body["status"] == "ok"
     assert "/runs/{id}/result" in body["endpoints"]
+    assert "/support" in body["endpoints"]
 
 
 def test_collections_are_served(api_ws):
@@ -60,6 +61,11 @@ def test_collections_are_served(api_ws):
                       ("/assessments", "assessments"), ("/qualifications", "qualifications")]:
         status, body = api.route(path)
         assert status == 200 and key in body
+
+    status, body = api.route("/support")
+    assert status == 200
+    assert body["kind"] == "aies-subject-support-registry"
+    assert body["counts"]["implemented"] == 2
 
 
 def test_result_endpoint_serves_stored_result_verbatim(api_ws):

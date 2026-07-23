@@ -20,25 +20,45 @@ You do not need to study the framework to see the product:
 
 ```text
 cd platform
+python3 -m venv .venv
+source .venv/bin/activate        # macOS/Linux
+# .\.venv\Scripts\Activate.ps1   # Windows PowerShell
 python -m pip install -e .
 aies demo --open
 ```
+
+Use `py -m venv .venv` on Windows when `python3` is not available. Never pass
+`--break-system-packages`; the canonical source install is isolated. Existing
+`pipx` or `uv` users may instead run `pipx install ./platform` or
+`uv tool install ./platform` from the repository root.
 
 In about a minute, the offline demo produces a real Engineering Capability
 Matrix, Engineering Fit guidance, diagnostics, Executive Summary, and linked
 report bundle. No model server, API key, Make, Bash, or mandatory human review
 is involved.
 
-Then choose the path that matches your decision:
+Before choosing a path, ask the installed platform what it truly supports:
 
-| Need | Next action |
-|---|---|
-| Understand one AI deployment | `aies evaluate SUBJECT --judge REVIEWER --plan-only` |
-| Compare compatible evidence | `aies compare RUN_A RUN_B` |
-| Analyze repository practice | `aies audit .` |
-| Integrate evaluation/static-analysis evidence | `aies bridge --help` |
-| Adopt the operating standard | Continue with the role-based reading paths below |
-| Contribute or review | Read [CONTRIBUTING.md](CONTRIBUTING.md) and the [launch plan](docs/ADOPTION_AND_LAUNCH_PLAN.md) |
+```text
+aies support
+aies starter list
+```
+
+Then enter through the decision you need. Codes are introduced with their
+titles; normative detail is linked only after the runnable first step.
+
+| Path | Decision | First command | What you receive | Important limitation | Next step |
+|---|---|---|---|---|---|
+| **Try** | Is the product understandable and useful enough to investigate? | `aies demo --open` | Offline Engineering Capability Matrix, fit guidance, diagnostics, and linked reports | Deterministic mock evidence demonstrates the workflow, not real-subject validity | `aies starter show understand-deployment` |
+| **Evaluate** | Where does one AI deployment show capability and where is evidence thin? | `aies evaluate SUBJECT --judge REVIEWER --plan-only` | Bounded call plan, then a complete automated Engineering Evaluation and task snapshot | Observed performance is not field performance, qualification, or deployment authority | `aies snapshot latest` |
+| **Compare** | Which compatible observed evidence better fits a scoped coding workload? | `aies starter show compare-coding-deployments` | Two matched evaluations and a task-by-task compatible comparison | No universal winner; incompatible protocols are not compared | Preregister broader evidence before publishing a selection claim |
+| **Audit** | Which repository-practice evidence exists and which gaps come first? | `aies audit .` | CA-01 — AI-Native SDLC Foundations through CA-12 — Governance, Risk & AI Safety maturity, evidence states, and ranked remediation | Repository maturity does not prove source correctness or vulnerability absence | Close gaps, then run `aies audit . --gate --rt 2` |
+| **Integrate** | How can an existing evaluator or static-analysis tool feed AIES evidence? | `aies bridge --help` | Source-bound Inspect or SARIF conversion with explicit loss and claim boundaries | Imported findings never silently become correctness, qualification, or authority | Validate the applicable experimental adapter profile |
+| **Govern** | Is a formal human-governed qualification decision actually required? | `aies starter show formal-qualification` | The explicit rater, evidence, decision, record, and verification sequence | Automated scores do not grant; named humans retain consequential authority | Enter only when the formal decision is necessary |
+
+To contribute or independently review the work, read
+[CONTRIBUTING.md](CONTRIBUTING.md) and the
+[Adoption and Launch Plan](docs/ADOPTION_AND_LAUNCH_PLAN.md).
 
 ## How the Pieces Fit
 

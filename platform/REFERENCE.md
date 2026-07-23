@@ -100,6 +100,8 @@ append-only records. Grouped as in `aies --help`.
 |---|---|---|
 | `doctor` | Validate and fingerprint the environment, detect installed runtimes, and report archive/cache/misplaced-view workspace debris without deleting anything | `aies doctor --json` |
 | `discover` | Register the deployments each runtime serves (idempotent) | `aies discover` |
+| `support` | Show implemented, experimental, and planned subject kinds from the shipped registry | `aies support mcp-server` |
+| `starter list` / `starter show` | Choose a decision-led workflow and inspect its prerequisites, sequence, evidence, time/cost class, artifacts, and limitations without executing it | `aies starter show understand-deployment` |
 | `deployment` / `registry` | Manage deployment entries: add/show/update/remove/`verify-artifact` | `aies deployment verify-artifact local-qwen --artifact model.bin` |
 | `runtime` | Inspect installed runtime adapters | `aies runtime list` |
 
@@ -114,6 +116,7 @@ append-only records. Grouped as in `aies --help`.
 | `resolve` | Append a named, reasoned human disposition for a materially divergent evidence item | `aies resolve run-2031 SC-CA05-001-r1.json --scores 4 4 3 4 3 4 ...` |
 | `import` / `export` | Import external EV results plus aggregate/report in one command / round-trip out | `aies import run-2031 eval.json` |
 | `capabilities` | ECM task performance/evidence/confidence by default; `--qualification-profile` selects formal CL/autonomy/gates | `aies capabilities run-2031 --format html --write` |
+| `snapshot` | Responsive terminal Evidence → Capability → Confidence → Engineering Decisions projection over canonical ECM/Fit facts | `aies snapshot latest` |
 | `assessment` | `result <run>` renders non-blocking engineering status; `--formal-qualification` selects the formal outcome | `aies assessment result run-2031` |
 | `review` | Automated review, optional human-evaluation record, implicit live progress, and refreshed report bundle | `aies review run-2031 --model-reviewer rev` |
 | `compare` | Compatible observed ECM scores compare by default without human review; `--formal-qualification` additionally requires demonstrated status/protocol before a winner claim; `--area-summary` selects the legacy aggregate | `aies compare run-a run-b` |
@@ -165,6 +168,7 @@ decider** — it serves stored results verbatim and computes no outcome
 
 ```
 GET /health                    service + version
+GET /support                   implemented/experimental/planned subject support
 GET /deployments               registered deployments
 GET /runs                      run history
 GET /runs/{id}/evidence        the Evidence Package

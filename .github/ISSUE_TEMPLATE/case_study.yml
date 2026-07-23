@@ -1,0 +1,56 @@
+name: Reproducible Case-Study Interest
+description: Propose a publishable local, hosted, comparison, repository, or reassessment case study.
+title: "[Case study] "
+labels: ["needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Submit no confidential evidence here. A public case study requires
+        permission, anonymization where needed, reproducible artifacts, honest
+        null findings, and independent review before publication.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Case-study decision
+      options:
+        - Understand one deployment
+        - Compare compatible deployments
+        - Repository assurance and remediation
+        - Reassessment after change
+        - Local versus hosted reproducibility
+        - Formal qualification process
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Decision question
+      description: State the engineering decision, not a desired marketing conclusion.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Publishable evidence and reproduction plan
+      description: Identify what can be shared, hashed, rerun, and independently reviewed.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Privacy, licensing, cost, and access constraints
+    validations:
+      required: true
+  - type: checkboxes
+    id: commitments
+    attributes:
+      label: Publication commitments
+      options:
+        - label: I can disclose limitations and negative or null findings.
+          required: true
+        - label: I will not describe an incompatible comparison as a winner.
+          required: true
+        - label: I can identify a path to independent reproduction or review.
+          required: true
+

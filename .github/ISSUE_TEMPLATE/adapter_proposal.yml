@@ -1,0 +1,62 @@
+name: Subject or Evidence Adapter Proposal
+description: Propose a bounded integration without inflating AIES support claims.
+title: "[Adapter proposal] "
+labels: ["proposal", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check `aies support` first. A schema or bridge does not make a subject
+        assessable. Never include credentials, private traces, prompts,
+        responses, tokens, or production endpoint details.
+  - type: dropdown
+    id: adapter_kind
+    attributes:
+      label: Integration kind
+      options:
+        - Subject Executor
+        - Evidence Adapter
+        - Export bridge
+        - Subject Assessment Profile
+    validations:
+      required: true
+  - type: input
+    id: subject
+    attributes:
+      label: Subject kind and support-registry status
+      placeholder: "mcp-server — planned"
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Source specification and pinned version
+      description: Link the authoritative schema/API/specification and state the exact supported version.
+    validations:
+      required: true
+  - type: textarea
+    id: mapping
+    attributes:
+      label: Identity, provenance, correlation, deduplication, and loss mapping
+    validations:
+      required: true
+  - type: textarea
+    id: claims
+    attributes:
+      label: Supported and prohibited claims
+      description: State which decision products may consume the evidence and what it cannot establish.
+    validations:
+      required: true
+  - type: textarea
+    id: privacy
+    attributes:
+      label: Trust, privacy, redaction, and secret boundaries
+    validations:
+      required: true
+  - type: textarea
+    id: fixtures
+    attributes:
+      label: Conformance and adversarial fixtures
+      description: Cover malformed data, duplicates, missingness, unsupported versions, loss, and no-claim inflation.
+    validations:
+      required: true

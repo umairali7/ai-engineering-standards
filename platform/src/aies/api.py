@@ -32,13 +32,16 @@ def route(path: str) -> tuple[int, dict]:
 
     if path in ("/", "/health"):
         return 200, {"status": "ok", "service": "aies", "version": __version__,
-                     "endpoints": ["/health", "/deployments", "/runs",
+                     "endpoints": ["/health", "/support", "/deployments", "/runs",
                                    "/runs/{id}/evidence", "/runs/{id}/result",
                                    "/runs/{id}/formal-result",
                                    "/assessments", "/qualifications", "/conformance"]}
     if path == "/deployments":
         from . import registry
         return 200, {"deployments": registry.list_entries(include_retired=True)}
+    if path == "/support":
+        from . import support
+        return 200, support.describe()
     if path == "/runs":
         from . import compare
         return 200, {"runs": compare.list_runs()}

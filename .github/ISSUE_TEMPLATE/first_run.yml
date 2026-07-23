@@ -1,0 +1,61 @@
+name: First-Run Experience
+description: Report where installation, demo, planning, evaluation, or result opening became difficult.
+title: "[First run] "
+labels: ["needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for trying AIES. Do not include API keys, private prompts,
+        model responses, endpoints, subject identities, or unredacted reports.
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Stage reached
+      options:
+        - Installation
+        - Offline demo
+        - Workspace initialization
+        - Deployment discovery or registration
+        - Plan-only preview
+        - Evaluation or resume
+        - Snapshot or report opening
+        - Redacted export
+        - Uninstall or cleanup
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: AIES version or source revision
+      placeholder: "aies --version or git commit hash"
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Operating system
+      options: [Windows, macOS, Linux, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Sanitized command and output
+      description: Remove credentials, private paths, endpoint details, prompts, responses, and report content.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected next step
+      description: What did you expect AIES to do or explain?
+    validations:
+      required: true
+  - type: textarea
+    id: recovery
+    attributes:
+      label: Recovery attempted
+      description: What documentation or retry did you try, and did completed work remain available?
+

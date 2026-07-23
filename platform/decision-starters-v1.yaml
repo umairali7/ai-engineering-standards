@@ -1,0 +1,109 @@
+kind: aies-decision-starter-registry
+schema: 1
+version: 1.0.0
+status: experimental
+starters:
+  - id: understand-deployment
+    title: Understand One AI Deployment
+    decision: Where does this deployment show useful engineering capability, and where is evidence missing?
+    subject_kind: ai-deployment
+    workflow: engineering-evaluation
+    prerequisites:
+      - SUBJECT and REVIEWER are separately registered, reachable deployments.
+      - The reviewer is not the assessed subject.
+    command_sequence:
+      - aies support ai-deployment
+      - aies evaluate SUBJECT --judge REVIEWER --assessment coder --rt 1 --plan-only
+      - aies evaluate SUBJECT --judge REVIEWER --assessment coder --rt 1
+      - aies snapshot latest
+      - aies open latest
+    expected_artifacts:
+      - Engineering Evaluation
+      - Engineering Capability Matrix
+      - Engineering Fit Guidance
+      - Executive Summary and report bundle
+    does_not_prove:
+      - Production readiness, formal qualification, deployment authorization, or field performance.
+      - Capability for tasks marked not assessed.
+    time_class: short to medium; endpoint throughput determines duration
+    cost_class: bounded candidate and batched reviewer calls; inspect --plan-only first
+    evidence_breadth: Bounded coder profile at RT1 — Minimal; each selected scenario runs once.
+    next_expansion: Increase the risk tier or use --all-areas only when the intended decision requires broader evidence.
+
+  - id: compare-coding-deployments
+    title: Compare Two AI Deployments for Coding Work
+    decision: Which deployment has the stronger compatible observed evidence for my coding workload?
+    subject_kind: ai-deployment
+    workflow: compatible-comparison
+    prerequisites:
+      - SUBJECT_A, SUBJECT_B, and REVIEWER are registered and reachable.
+      - Both evaluations use the same assessment, risk tier, suites, mappings, and reviewer protocol.
+    command_sequence:
+      - aies evaluate SUBJECT_A --judge REVIEWER --assessment coder --rt 1 --plan-only
+      - aies evaluate SUBJECT_A --judge REVIEWER --assessment coder --rt 1
+      - aies evaluate SUBJECT_B --judge REVIEWER --assessment coder --rt 1
+      - aies compare RUN_A RUN_B
+    expected_artifacts:
+      - Two complete report bundles
+      - Protocol compatibility report
+      - Task-by-task observed comparison
+    does_not_prove:
+      - A universal winner, statistical superiority, production performance, or formal qualification.
+      - Comparability when the protocol compatibility checks fail.
+    time_class: medium; two complete bounded evaluations
+    cost_class: twice the planned candidate/reviewer calls; plan both before execution
+    evidence_breadth: Matching bounded coder profiles; comparison is limited to mutually assessed compatible tasks.
+    next_expansion: Preregister a workload-specific study and add held-out evidence before publishing a selection claim.
+
+  - id: audit-repository
+    title: Audit Repository Engineering Practice
+    decision: Which engineering-practice evidence is present, and which gaps should be remediated first?
+    subject_kind: repository
+    workflow: repository-conformance
+    prerequisites:
+      - REPOSITORY is a readable source checkout.
+      - Non-detectable practices require explicit evidence-backed attestations.
+    command_sequence:
+      - aies support repository
+      - aies audit REPOSITORY
+      - aies audit REPOSITORY --gate --rt 2
+    expected_artifacts:
+      - CA-01 through CA-12 maturity scorecard
+      - Verified, asserted, and gap evidence
+      - Ranked remediation recommendations
+    does_not_prove:
+      - Source-code correctness, vulnerability absence, production readiness, or organizational certification.
+      - Non-detectable controls without an attestation and evidence reference.
+    time_class: short; local deterministic inspection
+    cost_class: no model or API cost for the deterministic audit
+    evidence_breadth: Repository-practice controls only; semantic code review and controlled task execution are separate evidence.
+    next_expansion: Close ranked gaps, add applicable tool evidence, and rerun the same scoped gate.
+
+  - id: formal-qualification
+    title: Begin Human-Governed Formal Qualification
+    decision: Can scoped evidence support a named human qualification authority's formal decision?
+    subject_kind: ai-deployment
+    workflow: formal-qualification
+    prerequisites:
+      - A formal qualification decision is genuinely required.
+      - Qualified, current, independent human raters and named decision authorities are available.
+      - The selected scope can meet distinct-scenario and rater-protocol requirements.
+    command_sequence:
+      - aies qualify SUBJECT --assessment enterprise --rt 2 --judge REVIEWER --formal-qualification
+      - aies rater list
+      - Complete the run scoresheet with evidence-backed ratings from the required qualified human raters.
+      - aies score RUN
+      - aies assessment result RUN --formal-qualification
+      - aies grant RUN --decision DECISION --authority "NAME (ROLE-13)" --assessor-id ASSESSOR_ID --peer-reviewer-id PEER_ID --assessor-conflict-free --peer-conflict-free --role ROLE-NN --phase PHASE-NN --sponsor SPONSOR --framework-version VERSION --valid-until DATE --rationale "RATIONALE"
+      - aies verify QUALIFICATION_ID
+    expected_artifacts:
+      - Qualification Evidence Package
+      - Canonical Formal Assessment Result
+      - Human decision record and lifecycle history when granted or denied
+    does_not_prove:
+      - Authority before the named human decision is recorded.
+      - Capability outside the subject, environment, risk tier, competency, role, phase, autonomy, and validity scope.
+    time_class: long; evidence breadth, independent rating, and governance dominate
+    cost_class: candidate/reviewer calls plus qualified human review and decision effort
+    evidence_breadth: Governed minimums, gates, uncertainty, rater admission, divergence resolution, and environment binding apply.
+    next_expansion: Monitor conditions, drift, incidents, expiry, and requalification triggers after the decision.

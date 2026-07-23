@@ -1,0 +1,44 @@
+name: Scenario Instrument Review
+description: Volunteer to review or propose a bounded improvement to an AIES measurement instrument.
+title: "[Instrument review] "
+labels: ["needs-triage"]
+body:
+  - type: input
+    id: scenario
+    attributes:
+      label: Scenario ID or competency area
+      placeholder: "SC-CA05-001 or CA-05 — AI-Assisted Implementation"
+    validations:
+      required: true
+  - type: textarea
+    id: expertise
+    attributes:
+      label: Relevant expertise and independence
+      description: State domain experience, prior authorship, affiliations, and potential conflicts.
+    validations:
+      required: true
+  - type: checkboxes
+    id: review_scope
+    attributes:
+      label: Review scope
+      options:
+        - label: Construct and task relevance
+        - label: Ceiling and floor anchors
+        - label: Gaming resistance
+        - label: Risk-tier appropriateness
+        - label: Rubric applicability
+        - label: Hold-out/twin quality
+        - label: Engineering Task mapping
+  - type: textarea
+    id: finding
+    attributes:
+      label: Evidence-backed finding
+      description: Explain the defect or review offer; do not submit generated replacement instruments without provenance.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance signal
+      description: How should maintainers verify that the issue is resolved?
+

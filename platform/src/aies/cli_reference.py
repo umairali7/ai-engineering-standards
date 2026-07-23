@@ -55,6 +55,26 @@ GUIDANCE: dict[str, CommandGuidance] = {
         "Prints the responsive Evidence → Capability → Confidence → Engineering Decisions view. It reuses canonical ECM and Engineering Fit facts and creates no new score or authority.",
         "Open the linked report for detail, inspect `aies capabilities <run>`, or compare only compatible runs.",
     ),
+    "support": CommandGuidance(
+        "AIES is installed; no workspace, endpoint, or credential is required.",
+        "Reads the shipped subject-support registry and distinguishes executable support from experimental contracts and planned architecture.",
+        "Use an implemented entry point, or consult the roadmap before proposing an executor, evidence adapter, and direct instruments for a planned subject.",
+    ),
+    "starter": CommandGuidance(
+        "AIES is installed; listing and showing starters require no workspace or endpoint.",
+        "Reads versioned decision-led workflow data covering prerequisites, command sequence, time/cost class, evidence breadth, artifacts, limitations, and next expansion.",
+        "Choose a starter with `aies starter show <id>`, replace its placeholders deliberately, and run plan-only before any model calls.",
+    ),
+    "starter list": CommandGuidance(
+        "AIES is installed.",
+        "Lists the shipped decision starters and the decision, subject kind, and workflow each supports.",
+        "Run `aies starter show <id>` for the executable sequence and boundaries.",
+    ),
+    "starter show": CommandGuidance(
+        "Use an id from `aies starter list`.",
+        "Prints the complete versioned workflow without executing commands or incurring cost.",
+        "Resolve the prerequisites, replace placeholders, and execute the plan-only command before the live workflow.",
+    ),
     "bridge": CommandGuidance(
         "A version-supported external evidence file is available; Inspect rating import also requires an existing matching AIES run.",
         "Converts supported external evidence with a source digest, converter identity, explicit loss accounting, and no inferred scores or claim inflation.",

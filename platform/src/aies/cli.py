@@ -13,6 +13,7 @@ import io
 import json
 import math
 import os
+import shlex
 import sys
 from pathlib import Path
 
@@ -94,6 +95,7 @@ def cmd_init(args) -> int:
             print(f"  PowerShell: $env:AIES_WORKSPACE='{result['workspace']}'")
             print(f"  bash/zsh : export AIES_WORKSPACE='{result['workspace']}'")
             print("\nNext:")
+            print("  aies starter list")
             print("  aies discover")
             print("  aies deployment list")
             if result.get("starter_manifest"):
@@ -350,6 +352,34 @@ def cmd_snapshot(args) -> int:
         )
         return 0
     except (adoption.AdoptionError, snapshot.SnapshotError) as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+
+
+def cmd_support(args) -> int:
+    """Show exactly which subject kinds have executable assessment support."""
+    from . import support
+    try:
+        result = support.describe(args.subject_kind, status=args.status)
+        _out(result, args.json, support.render(result))
+        return 0
+    except support.SupportError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+
+
+def cmd_starter(args) -> int:
+    """List or explain a decision-oriented first workflow."""
+    from . import decision_starters
+    try:
+        if args.starter_cmd == "list":
+            result = decision_starters.list_starters()
+            _out(result, args.json, decision_starters.render_list(result))
+        else:
+            result = decision_starters.get(args.starter_id)
+            _out(result, args.json, decision_starters.render(result))
+        return 0
+    except decision_starters.StarterError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
 
@@ -891,6 +921,22 @@ def cmd_audit(args) -> int:
         _out(result, True)
     else:
         print(audit.render_markdown(result))
+        repo = shlex.quote(str(args.repo))
+        if args.gate:
+            gate = result.get("gate") or {}
+            if gate.get("passed"):
+                print(
+                    f"\nNext: retain this evidence and rerun after material "
+                    f"change: aies audit {repo} --gate --rt {args.rt}")
+            else:
+                print(
+                    f"\nNext: close the ranked required gaps, then rerun: "
+                    f"aies audit {repo} --gate --rt {args.rt}")
+        else:
+            print(
+                f"\nNext: preview the decision workflow with "
+                f"`aies starter show audit-repository`, or apply an explicit "
+                f"CI gate: aies audit {repo} --gate --rt 2")
     if args.gate:
         g = result.get("gate") or {}
         return 0 if g.get("passed") else 1
@@ -1112,6 +1158,9 @@ def cmd_compare(args) -> int:
             print(compare.render_markdown(cmp)
                   if getattr(args, "area_summary", False)
                   else compare.render_ecm_markdown(cmp))
+            print(
+                "\nNext: inspect the comparison boundary and plan any missing "
+                "matching evidence: aies starter show compare-coding-deployments")
     except compare.CompareError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
@@ -1822,10 +1871,13 @@ TRY AIES NOW
                                                preview scope/calls/limits; execute nothing
   aies evaluate SUBJECT --judge JUDGE          automated evaluation -> ECM + fit + reports
   aies snapshot latest                         evidence -> capability -> confidence -> decisions
+  aies support                                 implemented vs experimental vs planned subjects
+  aies starter list                            choose a decision-led first workflow
+  aies starter show understand-deployment      exact commands, limits, time/cost class
   aies open latest                             open the result
 
 commands by stage (each group alphabetical):
-  setup & discovery   completion · demo · deployment · discover · doctor · init · runtime
+  setup & discovery   completion · demo · deployment · discover · doctor · init · runtime · starter · support
   engineering eval    assessment · benchmark · capabilities · compare · evaluate · export · import · open · qualify · review · runs · score · snapshot · transcript
   interoperability    bridge inspect-import · bridge sarif-import
   judging             judge available · judge history · judge list   (the judge pool + track record)
@@ -2018,6 +2070,33 @@ def build_parser() -> argparse.ArgumentParser:
         "--observed-only", action="store_true",
         help="hide tasks without directly mapped scored evidence")
     snap.set_defaults(func=cmd_snapshot)
+
+    support = common(sub.add_parser(
+        "support",
+        help="show implemented, experimental, and planned subject support"))
+    support.add_argument(
+        "subject_kind", nargs="?", default=None,
+        help="subject id or alias to inspect (default: show all)")
+    support.add_argument(
+        "--status", choices=("implemented", "experimental", "planned"),
+        default=None, help="filter by support status")
+    support.set_defaults(func=cmd_support)
+
+    starter = common(sub.add_parser(
+        "starter",
+        help="choose a decision-led evaluation, comparison, audit, or governance workflow"))
+    starter_sub = starter.add_subparsers(dest="starter_cmd", required=True)
+    starter_list = starter_sub.add_parser(
+        "list", help="list the shipped decision-oriented starters")
+    starter_list.add_argument(
+        "--json", action="store_true", help="machine-readable output")
+    starter_list.set_defaults(func=cmd_starter)
+    starter_show = starter_sub.add_parser(
+        "show", help="show prerequisites, commands, artifacts, and limitations")
+    starter_show.add_argument("starter_id", help="starter id from `aies starter list`")
+    starter_show.add_argument(
+        "--json", action="store_true", help="machine-readable output")
+    starter_show.set_defaults(func=cmd_starter)
 
     bridge = common(sub.add_parser(
         "bridge", help="import versioned external evidence with provenance and loss reports"))

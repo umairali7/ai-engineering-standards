@@ -28,6 +28,8 @@ before execution:
 
 ```text
 aies init
+aies support
+aies starter show understand-deployment
 aies discover
 aies evaluate SUBJECT --judge REVIEWER --plan-only --parallel 4
 aies evaluate SUBJECT --judge REVIEWER --parallel 4
@@ -56,6 +58,17 @@ documents every live command and parameter, prerequisites, option interactions,
 outputs/side effects, recommended next commands, and end-to-end command
 sequences. CI compares it with the live parser so a new option cannot be added
 without documentation.
+
+Before choosing an assessment path, run `aies support`. It reads the same
+versioned registry as the `/support` API and generated
+[Subject Support Matrix](SUBJECT_SUPPORT.md), distinguishing executable
+support from experimental contracts and planned subject architecture.
+
+If the subject is supported but the command sequence is unfamiliar, use
+`aies starter list` and `aies starter show <id>`. The versioned starters begin
+with the decision being made and state prerequisites, time/cost class, evidence
+breadth, exact workflow sequence, expected artifacts, limitations, and the
+next safe expansion. Showing a starter executes nothing.
 
 ### Enable Tab completion
 
@@ -253,14 +266,21 @@ used for verified HTTPS connections.
 
 ```
 cd platform
-pip install -e .            # installs the `aies` command
+python -m venv .venv
+# PowerShell: .\.venv\Scripts\Activate.ps1
+# macOS/Linux: source .venv/bin/activate
+python -m pip install -e .   # installs `aies` inside the environment
 pytest tests/ -q --durations=15  # conformance + ranked performance feedback
 aies                        # or `aies help` — the command map + typical workflow
 aies doctor                 # fingerprint + runtimes + read-only workspace-debris inventory
 ```
 
+Never use `--break-system-packages`. If `pipx` or `uv` is already installed,
+`pipx install .` or `uv tool install .` provides an optional isolated
+application install from this checkout.
+
 For local verification, the recorded warm-cache Windows budget is 180 seconds
-for the complete suite; the 2026-07-23 baseline is 237 tests in 94.58 seconds.
+for the complete suite; the 2026-07-23 baseline is 248 tests in 110.12 seconds.
 Treat a budget breach or greater-than-25% regression as a profiling trigger.
 This is a feedback budget, not a reason to skip correctness gates on slower CI
 hardware.
@@ -818,7 +838,7 @@ in AI-assisted implementation (CA-05):
 
 ```
 # 0. one-time
-cd platform && pip install -e . && cp .env.example .env
+cd platform && cp .env.example .env
 
 # 1. have the model running
 ollama serve &                      # if not already running
