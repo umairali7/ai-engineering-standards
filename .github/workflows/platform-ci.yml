@@ -70,6 +70,8 @@ jobs:
           python -m aies suites validate
           python -m aies support ai-deployment --json
           python -m aies starter show understand-deployment --json
+      - name: Validate installed actionable-failure contract
+        run: python -c "import json,subprocess,sys; p=subprocess.run([sys.executable,'-m','aies','support','not-a-subject','--json'],text=True,capture_output=True); d=json.loads(p.stderr); assert p.returncode==2; assert d['kind']=='cli-failure-diagnostic'; assert d['category']=='evidence'; assert d['recovery_command']=='aies support'"
       - name: First-use offline demo from the installed package
         run: python -m aies demo --workspace "${{ runner.temp }}/aies-demo" --parallel 8
       - name: Uninstall cleanly

@@ -21,6 +21,15 @@ class EngineError(Exception):
     pass
 
 
+class RunExecutionError(EngineError):
+    """A run failed after durable run state had been created."""
+
+    def __init__(self, message: str, *, run_id: str, phase: str):
+        super().__init__(message)
+        self.run_id = run_id
+        self.phase = phase
+
+
 def plan_qualification(risk_tier: str, areas: list[str], *, subject_kind: str = "ai",
                        repeats: int | None = None) -> dict:
     """Pre-register the projected sample size before execution."""
@@ -238,14 +247,15 @@ def start_qualification(
             runner.execute_suite(run_id, entry, adapter, scenarios, suite_version, fp,
                                  repeats=repeats, parameters=gen_params, workers=workers,
                                  progress_callback=_collection_progress)
-    except Exception:
+    except Exception as exc:
         manifest["status"] = "collection-partial" if completed_items > failures else "collection-failed"
         workspace.write_json(workspace.run_dir(run_id) / "manifest.json", manifest, overwrite=True)
         progress.update(run_id, "response-collection", completed_items, total_items,
                         status="partial" if completed_items > failures else "failed",
                         failures=failures, message="collection stopped; run is resumable",
                         callback=progress_callback)
-        raise
+        raise RunExecutionError(
+            str(exc), run_id=run_id, phase="collection") from exc
 
     rating.build_scoresheet(run_id)
     manifest["status"] = "responses-collected"

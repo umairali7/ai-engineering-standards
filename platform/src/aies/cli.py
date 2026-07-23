@@ -43,6 +43,41 @@ def _live_progress(args):
     return CliProgress()
 
 
+def _emit_failure(error, *, operation: str, recovery_command: str,
+                  args=None, **context) -> None:
+    """Emit the shared actionable-failure contract without leaking secrets."""
+    from . import failure_diagnostics
+    diagnostic = failure_diagnostics.build(
+        error,
+        operation=operation,
+        recovery_command=recovery_command,
+        **context,
+    )
+    failure_diagnostics.emit(
+        diagnostic, as_json=bool(getattr(args, "json", False)))
+
+
+def _review_recovery_command(args, run_id: str | None = None,
+                             reviewer: str | None = None) -> str:
+    run_id = run_id or getattr(args, "run", None) or getattr(args, "resume", None)
+    reviewer = reviewer or getattr(args, "model_reviewer", None) or getattr(args, "judge", None)
+    parts = ["aies", "review", str(run_id or "RUN_ID")]
+    if reviewer:
+        parts.extend(["--model-reviewer", str(reviewer)])
+    else:
+        parts.extend(["--model-reviewer", "REVIEWER_ID"])
+    parallel = getattr(args, "parallel", None)
+    if parallel:
+        parts.extend(["--parallel", str(parallel)])
+    runtime = getattr(args, "reviewer_runtime", None)
+    if runtime:
+        parts.extend(["--reviewer-runtime", str(runtime)])
+    batch = getattr(args, "judge_batch_size", None)
+    if batch:
+        parts.extend(["--judge-batch-size", str(batch)])
+    return " ".join(parts)
+
+
 def cmd_doctor(args) -> int:
     from . import doctor
     record = doctor.run_doctor()
@@ -129,7 +164,33 @@ def cmd_open(args) -> int:
                 print(f"share : {result['redacted_export']['archive']}")
         return 0
     except adoption.AdoptionError as e:
-        print(f"error: {e}", file=sys.stderr)
+        has_run = "has no HTML result" in str(e)
+        recovery_run = args.run
+        if has_run:
+            try:
+                recovery_run = adoption.resolve_run(args.run).name
+            except adoption.AdoptionError:
+                pass
+        _emit_failure(
+            e,
+            operation="open-result",
+            args=args,
+            phase="evidence",
+            run_id=recovery_run if has_run else None,
+            preserved_work_status=("run-preserved" if has_run else "none"),
+            preserved_work_detail=(
+                "The run and its existing evidence are unchanged."
+                if has_run else
+                "Opening a result is read-only; no evidence was changed."),
+            recovery_command=(
+                f"aies qualify --resume {recovery_run}"
+                if has_run else "aies runs list"),
+            duplicate_cost_risk="none",
+            duplicate_cost_detail=(
+                "Report regeneration reuses existing ratings and responses."
+                if has_run else
+                "Listing runs and opening an existing artifact make no model calls."),
+        )
         return 2
 
 
@@ -283,7 +344,31 @@ def cmd_evaluate(args) -> int:
             print(f"  Share safely: aies open {opened['run_id']} --export-redacted")
         return code
     except Exception as e:
-        print(f"error: {e}", file=sys.stderr)
+        if isinstance(e, registry.RegistryError):
+            recovery_command = "aies deployment list"
+            preserved_detail = (
+                "Deployment resolution failed before an assessment run started.")
+        elif isinstance(e, assessments.AssessmentError):
+            recovery_command = "aies starter list"
+            preserved_detail = (
+                "Assessment composition failed before an assessment run started.")
+        else:
+            recovery_command = (
+                f"aies evaluate {args.subject} --judge REVIEWER_ID --plan-only")
+            preserved_detail = (
+                "Evaluation planning failed before this wrapper created a run.")
+        _emit_failure(
+            e,
+            operation="engineering-evaluation",
+            args=args,
+            phase="planning",
+            preserved_work_status="none",
+            preserved_work_detail=preserved_detail,
+            recovery_command=recovery_command,
+            duplicate_cost_risk="none",
+            duplicate_cost_detail=(
+                "The recovery command is plan-only and makes no model calls."),
+        )
         return 2
 
 
@@ -364,7 +449,18 @@ def cmd_support(args) -> int:
         _out(result, args.json, support.render(result))
         return 0
     except support.SupportError as e:
-        print(f"error: {e}", file=sys.stderr)
+        _emit_failure(
+            e,
+            operation="subject-support-discovery",
+            args=args,
+            phase="evidence",
+            preserved_work_status="none",
+            preserved_work_detail=(
+                "Subject-support discovery is read-only; no workspace state changed."),
+            recovery_command="aies support",
+            duplicate_cost_risk="none",
+            duplicate_cost_detail="Support discovery makes no model calls.",
+        )
         return 2
 
 
@@ -380,7 +476,18 @@ def cmd_starter(args) -> int:
             _out(result, args.json, decision_starters.render(result))
         return 0
     except decision_starters.StarterError as e:
-        print(f"error: {e}", file=sys.stderr)
+        _emit_failure(
+            e,
+            operation="decision-starter-discovery",
+            args=args,
+            phase="evidence",
+            preserved_work_status="none",
+            preserved_work_detail=(
+                "Decision-starter discovery is read-only; no workspace state changed."),
+            recovery_command="aies starter list",
+            duplicate_cost_risk="none",
+            duplicate_cost_detail="Starter discovery makes no model calls.",
+        )
         return 2
 
 
@@ -411,6 +518,8 @@ def cmd_registry(args) -> int:
 def cmd_qualify(args) -> int:
     from . import engine
     live_progress = _live_progress(args)
+    run_id = None
+    reviewer_id = None
     try:
         if getattr(args, "resume_collection", None):
             summary = engine.resume_collection(args.resume_collection,
@@ -432,6 +541,7 @@ def cmd_qualify(args) -> int:
             if judge:
                 manifest = workspace.read_json(workspace.run_dir(args.resume) / "manifest.json")
                 jdep = manifest["model"]["registry_id"] if judge == "self" else judge
+                reviewer_id = jdep
                 workers = getattr(args, "parallel", None) or config.default_parallel()
                 if not args.json:
                     print(f"scoring existing responses with judge '{jdep}' across "
@@ -551,6 +661,7 @@ def cmd_qualify(args) -> int:
             from . import (engine as _engine, evaluation as _evaluation,
                            model_review, report as _report, review as _review)
             jdep = manifest["model"]["registry_id"] if judge == "self" else judge
+            reviewer_id = jdep
             self_judged = jdep == manifest["model"]["registry_id"]
             n_resp = len(list((workspace.run_dir(run_id) / "responses").glob("*.json")))
             if not args.json:
@@ -564,9 +675,23 @@ def cmd_qualify(args) -> int:
                                 or config.judge_batch_size()),
                     progress_callback=live_progress)
             except Exception as e:
-                print(f"error: automated scoring failed ({e}). The responses were "
-                      f"collected; you can score manually — see the scoresheet in "
-                      f"{workspace.run_dir(run_id)}.", file=sys.stderr)
+                _emit_failure(
+                    e,
+                    operation="automated-scoring",
+                    args=args,
+                    phase="scoring",
+                    run_id=run_id,
+                    preserved_work_status="responses-preserved",
+                    preserved_work_detail=(
+                        f"All {n_resp} candidate responses remain in run {run_id}; "
+                        "successful ratings from this reviewer are reused."),
+                    recovery_command=_review_recovery_command(
+                        args, run_id=run_id, reviewer=jdep),
+                    duplicate_cost_risk="partial",
+                    duplicate_cost_detail=(
+                        "Candidate calls will not repeat. Only failed or unrecorded "
+                        "judge batches can be called again."),
+                )
                 return 2
             review_pkg = _review.assemble_review_package(
                 run_id, reviewer_label=f"model:{jdep}",
@@ -635,7 +760,71 @@ def cmd_qualify(args) -> int:
              f"  Tip: next time pass --judge <deployment> for a one-command benchmark.\n"
              f"  Human evaluation remains optional for Engineering Evaluation.")
     except Exception as e:
-        print(f"error: {e}", file=sys.stderr)
+        durable_run_id = (
+            getattr(e, "run_id", None)
+            or run_id
+            or getattr(args, "resume", None)
+            or getattr(args, "resume_collection", None)
+        )
+        if isinstance(e, engine.RunExecutionError):
+            recovery = f"aies qualify --resume-collection {e.run_id}"
+            preserved_status = "partial-run-preserved"
+            preserved_detail = (
+                f"Run {e.run_id} remains resumable; every successfully written "
+                "candidate response will be reused.")
+            duplicate_risk = "none"
+            duplicate_detail = (
+                "Resume-collection requests only missing responses; completed "
+                "candidate calls are not repeated.")
+            failure_phase = e.phase
+        elif getattr(args, "resume", None):
+            recovery = _review_recovery_command(
+                args,
+                run_id=args.resume,
+                reviewer=reviewer_id,
+            )
+            preserved_status = "run-preserved"
+            preserved_detail = (
+                f"Run {args.resume}, its responses, and any recorded ratings "
+                "are unchanged.")
+            duplicate_risk = "partial"
+            duplicate_detail = (
+                "Candidate calls will not repeat; only failed or unrecorded "
+                "judge batches can be called again.")
+            failure_phase = (
+                "scoring" if getattr(args, "judge", None) else "evidence")
+        elif getattr(args, "resume_collection", None):
+            recovery = (
+                f"aies qualify --resume-collection {args.resume_collection}")
+            preserved_status = "partial-run-preserved"
+            preserved_detail = (
+                f"Existing responses in run {args.resume_collection} remain reusable.")
+            duplicate_risk = "none"
+            duplicate_detail = (
+                "Resume-collection requests only missing responses.")
+            failure_phase = "inference"
+        else:
+            recovery = f"aies deployment inspect {args.model}"
+            preserved_status = "none"
+            preserved_detail = (
+                "The failure occurred before a durable run identifier was returned.")
+            duplicate_risk = "none"
+            duplicate_detail = (
+                "Deployment inspection makes no model calls; correct the cause "
+                "before rerunning the evaluation.")
+            failure_phase = "inference"
+        _emit_failure(
+            e,
+            operation="engineering-evaluation",
+            args=args,
+            phase=failure_phase,
+            run_id=durable_run_id,
+            preserved_work_status=preserved_status,
+            preserved_work_detail=preserved_detail,
+            recovery_command=recovery,
+            duplicate_cost_risk=duplicate_risk,
+            duplicate_cost_detail=duplicate_detail,
+        )
         return 2
     return 0
 
@@ -1336,7 +1525,22 @@ def cmd_review(args) -> int:
             else:
                 print("  no ratings yet; review package saved but no report was generated")
     except Exception as e:
-        print(f"error: {e}", file=sys.stderr)
+        _emit_failure(
+            e,
+            operation="automated-review",
+            args=args,
+            phase="review",
+            run_id=args.run,
+            preserved_work_status="run-preserved",
+            preserved_work_detail=(
+                f"Candidate responses in run {args.run} remain unchanged; any "
+                "successfully recorded ratings are reused on retry."),
+            recovery_command=_review_recovery_command(args),
+            duplicate_cost_risk="partial",
+            duplicate_cost_detail=(
+                "Candidate calls will not repeat. Only failed or unrecorded "
+                "reviewer batches can be called again."),
+        )
         return 2
     return 0
 

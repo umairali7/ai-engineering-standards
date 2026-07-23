@@ -133,7 +133,7 @@ aies open latest
 ```
 
 The warm-cache full-suite performance budget on the recorded Windows reference
-workstation is **180 seconds**. The current 248-test baseline is **110.12
+workstation is **180 seconds**. The current 265-test baseline is **99.91
 seconds**. A run above budget or a greater-than-25% regression should be
 profiled before merge; use the ranked durations rather than guessing. Scenario
 YAML and suite digests are cached by path, modification time, and size, return

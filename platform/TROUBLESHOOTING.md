@@ -19,6 +19,48 @@ aies runtime <name>         # probe one runtime's endpoint
 aies deployment inspect <id># the base_url and api_key_env a deployment uses
 ```
 
+## Actionable failure output
+
+High-friction CLI paths now use one diagnostic contract:
+
+```text
+error [category]: what failed
+  work preserved: status — what remains usable
+  recover: exact command
+  duplicate-cost risk: none|partial — what a retry can call again
+  help: platform/TROUBLESHOOTING.md#relevant-section
+```
+
+The current rollout covers `aies evaluate`, `aies qualify`, `aies review`,
+`aies open`, `aies support`, and `aies starter`. JSON-mode failures emit the
+same fields as `aies-cli-failure-v1` JSON on stderr. Provider messages are
+sanitized for common bearer-token and API-key forms before display.
+
+---
+
+## Installation and dependencies
+
+Create and activate a virtual environment before installing from source:
+
+```text
+python3 -m venv .venv
+source .venv/bin/activate        # macOS/Linux
+# .venv\Scripts\Activate.ps1     # Windows PowerShell
+python -m pip install -e .
+```
+
+`No module named 'aies'` means the active interpreter does not have this
+checkout installed. `No module named 'yaml'` means the install is incomplete;
+PyYAML is a declared dependency and is installed by the command above. Do not
+work around PEP 668 with `--break-system-packages`.
+
+## Environment and workspace
+
+Run `aies doctor` to see the effective workspace and runtime readiness. Set
+`AIES_WORKSPACE` in the same shell that runs `aies`. Read-only discovery
+commands do not alter evidence. A partial assessment names its durable run and
+the exact resume command; do not delete that run directory.
+
 ---
 
 ## Connectivity & TLS
@@ -66,8 +108,21 @@ port than the deployment records.
 `base_url` is wrong, or `runtime_config.model` is not a model the server serves.
 Check `curl <base_url>/models`.
 
+---
+
+## Quota and rate limits
+
 ### HTTP `429` — rate limited
-The provider is throttling. Lower `--parallel`, or slow the run down.
+First read the provider error body:
+
+- `insufficient_quota` / “exceeded your current quota” means the selected API
+  project has no available billed quota. Changing `--parallel` cannot fix it.
+- A transient rate limit means the provider is throttling. Lower `--parallel`
+  or retry after the provider's stated interval.
+
+If collection already finished, retry only the judge with the exact `aies
+review <run> ...` command printed by the diagnostic. Candidate calls are not
+repeated.
 
 ---
 
@@ -78,15 +133,16 @@ Almost always the **subject model**, not the platform.
 - **Cap output length.** With no `max_tokens`, a model may generate very long
   answers. `export AIES_MAX_TOKENS=1024` (or set `parameters_default.max_tokens`
   in the deployment) — often the single biggest speedup.
-- **Do less while exploring.** `--repeats 1` collects one answer per scenario
-  (report labelled **NON-DECISIONAL**, which is correct for a spot-check). Raise
-  repeats only for a decisional result (RT1 — Minimal/2/3/4 need ≥20/30/50/100 scored items
-  per area).
+- **Choose a bounded starter while exploring.** Use `aies evaluate ...
+  --plan-only` to see the distinct call count before execution. Exact repeats
+  are never added implicitly and do not substitute for distinct scenario
+  breadth in a decisional sample.
 
 ### `--parallel N` doesn't speed things up
 A single local GPU serves requests roughly one at a time, so extra workers just
 queue on the model — parallelism helps hosted endpoints far more than a local
-server. For local models, `max_tokens` and `--repeats` are the real levers.
+server. For local models, output length and a purpose-specific assessment are
+the main levers.
 `--parallel` applies to **both** phases (collection and judge scoring); each
 prints how many workers it uses.
 
@@ -141,6 +197,16 @@ update`). A declared **signature** shows `declared-not-checked` until you pass
 isn't installed (`pip install cryptography`, or verify with cosign/Sigstore
 externally). `endpoint-served` checksums can't be checked against a local file.
 
+---
+
+## Compatibility
+
+Suite, schema, adapter, and version mismatches are not safe blind-retry cases.
+Keep the run unchanged, compare its recorded manifest and suite versions with
+the active installation, and follow the diagnostic's command. In particular,
+`aies qualify --resume-collection <run>` refuses to mix a changed suite with
+already-collected responses.
+
 ### Importing external eval results (`aies import`) skipped items
 `aies import` ingests only items with a `scenario_id` and **six integer 0–4 EV
 scores**; anything else is skipped and counted (never fabricated). If everything
@@ -162,8 +228,19 @@ Read the whole run in one view: `aies transcript <run-id>` — per item the task
 the model's answer, and its scores/findings together.
 
 ### The report says NON-DECISIONAL
-Fewer scored items than the risk-tier minimum. Increase `--repeats` (or combine
-runs) until the area reaches its minimum; the gate is intentional.
+There are fewer distinct scored scenarios than the risk-tier minimum. Select a
+suite with sufficient distinct breadth or add and validate new scenario
+instruments. Exact repeats do not fill this gap; the gate is intentional.
+
+---
+
+## Engineering Evaluation vs Formal Qualification
+
+Automated scores are sufficient to complete an **Engineering Evaluation** and
+generate ECM and Engineering Fit artifacts. Human evaluation is optional and
+is displayed separately when supplied. Only an explicitly requested **Formal
+Qualification** enters the human-authority grant workflow; a governance error
+there does not invalidate or erase the engineering evidence.
 
 ---
 

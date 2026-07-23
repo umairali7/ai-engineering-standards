@@ -280,7 +280,7 @@ Never use `--break-system-packages`. If `pipx` or `uv` is already installed,
 application install from this checkout.
 
 For local verification, the recorded warm-cache Windows budget is 180 seconds
-for the complete suite; the 2026-07-23 baseline is 248 tests in 110.12 seconds.
+for the complete suite; the 2026-07-23 baseline is 265 tests in 99.91 seconds.
 Treat a budget breach or greater-than-25% regression as a profiling trigger.
 This is a feedback budget, not a reason to skip correctness gates on slower CI
 hardware.

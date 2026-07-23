@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Actionable CLI failure diagnostics**: introduced the secret-safe
+  `aies-cli-failure-v1` contract with a stable cause category, durable-work
+  status, exact recovery command, troubleshooting anchor, and duplicate-cost
+  risk. Evaluation/qualification, automated review, result opening,
+  subject-support discovery, and decision-starter discovery now distinguish
+  quota from transient inference/scoring failures and explicitly preserve and
+  reuse completed candidate responses and recorded reviewer ratings. Transient
+  HTTP 429 errors retain the provider's `Retry-After` instruction when present.
 - **Honest subject-support discovery**: added a versioned subject-support
   registry, generated support matrix, `aies support`, and read-only `/support`
   API endpoint. AI deployments and repositories name their shipped profiles,
@@ -129,7 +137,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   copies. Read-only API tests reuse one immutable module fixture, and the judge
   concurrency test delays only the reviewer behavior it measures. The complete
   suite retains all assertions while removing repeated setup and unrelated
-  sleeps: the expanded 248-test suite completes in 110.12 seconds on the
+  sleeps: the expanded 265-test suite completes in 99.91 seconds on the
   Windows verification host, below the 180-second budget.
 - **Empirical-panel admission preflight**: `aies suites empirical
   --preflight-runs` now checks that real runs use distinct subjects, identical

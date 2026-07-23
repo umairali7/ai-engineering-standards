@@ -131,11 +131,19 @@ class OpenAICompatAdapter(RuntimeAdapter):
             except Exception:
                 pass
             quota_exhausted = "insufficient_quota" in detail or "exceeded your current quota" in detail
+            retry_after = ""
+            if e.code == 429 and not quota_exhausted:
+                raw_retry_after = str((e.headers or {}).get("Retry-After") or "").strip()
+                if raw_retry_after and len(raw_retry_after) <= 80:
+                    retry_after = (
+                        f" Provider Retry-After: {raw_retry_after}; wait that long "
+                        "before retrying.")
             hint = (
                 ". The API key was accepted, but its OpenAI API project has no available quota. "
                 "Check that the key belongs to the intended billed project; changing --parallel will not fix this."
                 if e.code == 429 and quota_exhausted else
-                ". The server may be rate-limiting — lower --parallel."
+                ". The server is rate-limiting — lower --parallel."
+                + retry_after
                 if e.code == 429 else
                 ". Check the model name and API key."
                 if e.code in (400, 401, 403, 404) else ""
