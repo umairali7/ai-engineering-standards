@@ -1453,7 +1453,7 @@ def cmd_report(args) -> int:
 
 
 def cmd_audit(args) -> int:
-    """Audit a repository's conformance to AIES engineering practices (ADR-0004)."""
+    """Assess repository practices and engineering evidence without execution."""
     from . import audit, executors
     attestations = None
     if args.attest:
@@ -1482,9 +1482,15 @@ def cmd_audit(args) -> int:
             repository=Path(args.repo),
             attestations=attestations,
             risk_tier=rt,
+            engineering_analysis=not getattr(
+                args, "conformance_only", False),
         ))
-        result["execution"] = executor.declaration()
-    except (NotADirectoryError, FileNotFoundError) as e:
+        bundle_paths = (
+            audit.write_bundle(result, args.out)
+            if getattr(args, "out", None) else None)
+        if bundle_paths:
+            result["report_bundle"] = bundle_paths
+    except (NotADirectoryError, FileNotFoundError, FileExistsError, ValueError) as e:
         _emit_failure(
             e,
             operation="repository-audit",
@@ -1517,6 +1523,13 @@ def cmd_audit(args) -> int:
                 f"\nNext: preview the decision workflow with "
                 f"`aies starter show audit-repository`, or apply an explicit "
                 f"CI gate: aies audit {repo} --gate --rt 2")
+        if bundle_paths:
+            print(
+                "\nRepository assessment bundle:\n"
+                f"  Markdown: {bundle_paths['markdown']}\n"
+                f"  JSON    : {bundle_paths['json']}\n"
+                f"  HTML    : {bundle_paths['html']}\n"
+                f"  Index   : {bundle_paths['bundle']}")
     if args.gate:
         g = result.get("gate") or {}
         return 0 if g.get("passed") else 1
@@ -1862,11 +1875,28 @@ def cmd_compare(args) -> int:
         if len(refs) < 2:
             raise compare.CompareError(
                 "provide at least two run ids or deployment ids")
+        repository_refs = [compare.is_audit_ref(ref) for ref in refs]
+        if any(repository_refs) and not all(repository_refs):
+            raise compare.CompareError(
+                "cannot mix deployment/run evidence and repository audit ids "
+                "in one comparison")
+        repository_comparison = all(repository_refs)
+        if repository_comparison and (
+                getattr(args, "formal_qualification", False)
+                or getattr(args, "area_summary", False)):
+            raise compare.CompareError(
+                "repository evidence comparison has no qualification or "
+                "competency-area winner mode")
         if (getattr(args, "formal_qualification", False)
                 and getattr(args, "area_summary", False)):
             raise compare.CompareError(
                 "--formal-qualification cannot be combined with --area-summary")
-        if getattr(args, "area_summary", False):
+        if repository_comparison:
+            cmp = compare.compare_repositories(
+                refs,
+                only_comparable=getattr(args, "only_comparable", False),
+                sort_by=getattr(args, "sort", "task"))
+        elif getattr(args, "area_summary", False):
             if len(refs) != 2:
                 raise compare.CompareError(
                     "--area-summary accepts exactly two references; omit it "
@@ -1889,7 +1919,9 @@ def cmd_compare(args) -> int:
         else:
             print(compare.render_markdown(cmp)
                   if getattr(args, "area_summary", False)
-                  else (compare.render_ecm_markdown(cmp)
+                  else (compare.render_repository_comparison(cmp)
+                        if repository_comparison
+                        else compare.render_ecm_markdown(cmp)
                         if len(refs) == 2
                         else compare.render_ecm_many_markdown(cmp)))
             print(
@@ -3426,9 +3458,11 @@ def build_parser() -> argparse.ArgumentParser:
     gd.add_argument("--write", action="store_true", help="write Deployment Guidance Markdown, JSON, and HTML beside the run")
     gd.set_defaults(func=cmd_guidance)
 
-    au = common(sub.add_parser("audit", help="audit a repository's conformance to "
-                               "AIES engineering practices (maturity per area; "
-                               "verified/asserted/gap; ADR-0004)"))
+    au = common(sub.add_parser(
+        "audit",
+        help="assess repository-practice maturity and read-only engineering "
+             "evidence across architecture, quality, correctness, security, "
+             "testing, dependencies, and remediation"))
     au.add_argument("repo", help="path to the repository to audit")
     au.add_argument("--rt", type=int, choices=(1, 2, 3, 4), default=None,
                     help="evaluate against this risk tier's required evidence")
@@ -3440,6 +3474,13 @@ def build_parser() -> argparse.ArgumentParser:
                          "({items:[{id, evidence}]})")
     au.add_argument("--format", choices=("markdown", "json"), default="markdown",
                     help="output representation (default: markdown)")
+    au.add_argument(
+        "--conformance-only", action="store_true",
+        help="skip deeper static/retained-artifact engineering analysis and "
+             "emit only the faster ML0 through ML4 practice-maturity layer")
+    au.add_argument(
+        "--out", default=None, metavar="DIRECTORY",
+        help="write an immutable Markdown, JSON, HTML, and bundle-index report")
     au.set_defaults(func=lambda a: (setattr(a, "rt", a.rt or (2 if a.gate else None)),
                                     cmd_audit(a))[1])
 
@@ -3519,10 +3560,12 @@ def build_parser() -> argparse.ArgumentParser:
     comp.set_defaults(func=cmd_completion)
 
     cp = common(sub.add_parser(
-        "compare", help="compare two or more runs/deployments using compatible observed ECM evidence"))
+        "compare", help="compare two or more compatible deployment runs or "
+        "stored repository assessments"))
     cp.add_argument(
         "refs", nargs="+",
-        help="two or more run ids or deployment ids (a deployment selects its latest aggregated run)")
+        help="two or more run ids, deployment ids, or repository audit ids; "
+             "do not mix repository and deployment evidence")
     cp.add_argument("--format", choices=("markdown", "json"), default="markdown",
                     help="output representation (default: markdown)")
     cp.add_argument("--ecm", action="store_true",

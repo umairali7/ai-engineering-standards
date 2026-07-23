@@ -90,6 +90,7 @@ class RepositoryAuditRequest:
     attestations: dict | None = None
     risk_tier: str | None = None
     record: bool = True
+    engineering_analysis: bool = True
 
 
 class RepositoryAuditExecutor(SubjectExecutor):
@@ -101,12 +102,17 @@ class RepositoryAuditExecutor(SubjectExecutor):
 
     def execute(self, request: RepositoryAuditRequest) -> dict:
         from . import audit
-        return audit.run_audit(
+        result = audit.run_audit(
             request.repository,
             attestations=request.attestations,
             rt=request.risk_tier,
-            record=request.record,
+            record=False,
+            engineering_analysis=request.engineering_analysis,
         )
+        result["execution"] = self.declaration()
+        if request.record:
+            audit.record_result(result)
+        return result
 
     def declaration(self) -> dict:
         return {
@@ -117,6 +123,8 @@ class RepositoryAuditExecutor(SubjectExecutor):
             "interaction": "read-only-repository-observation",
             "runtime_adapter": None,
             "claim_boundary": (
-                "Repository checks establish observed practice evidence only; "
-                "they do not establish deployment competency or correctness."),
+                "Repository checks establish observed practice and static "
+                "engineering-analysis evidence only; they do not establish "
+                "deployment competency, runtime correctness, security, or "
+                "authorization."),
         }

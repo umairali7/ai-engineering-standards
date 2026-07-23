@@ -146,7 +146,61 @@ SARIF = declaration(
     ],
 )
 
-REGISTRY = {item["profile"]: item for item in (INSPECT, SARIF)}
+REPOSITORY_ANALYSIS = declaration(
+    profile="aies-repository-analysis/v1",
+    version="1.0.0",
+    source_format=(
+        "Repository source plus retained JUnit, coverage, SARIF, manifest, "
+        "lockfile, policy, and configuration artifacts"),
+    source_versions=["aies-repository-analysis/v1"],
+    modalities=["repository-static-analysis"],
+    event_types=["observation"],
+    completeness="partial",
+    decision_use="informational-only",
+    scoring_semantics=(
+        "Perspective metrics and findings retain their native meaning. They "
+        "are not converted into EV scores, maturity, correctness, security, "
+        "fitness, conformance, qualification, or authorization."),
+    privacy={
+        "classification_required": True,
+        "sensitive_payloads": "paths-and-aggregate-signals-only",
+        "secrets": "prohibited",
+    },
+    limitations=[
+        "Repository code and tests are not executed.",
+        "Python import topology is parsed; other languages are inventoried only.",
+        "Tool absence is an evidence gap and tool success is not proof of quality.",
+    ],
+)
+
+REPOSITORY_CONFORMANCE = declaration(
+    profile="aies-repository-conformance/v1",
+    version="1.0.0",
+    source_format="Repository practice and governance artifacts",
+    source_versions=["aies-repository-assessment/v1"],
+    modalities=["repository-static-analysis", "attestation"],
+    event_types=["observation", "attestation"],
+    completeness="profile-bounded",
+    decision_use="informational-only",
+    scoring_semantics=(
+        "Verified, asserted, and gap states roll up only to repository-practice "
+        "ML0 through ML4 maturity; they are not AESQS competency scores."),
+    privacy={
+        "classification_required": True,
+        "sensitive_payloads": "evidence-pointers-only",
+        "secrets": "prohibited",
+    },
+    limitations=[
+        "Practice maturity does not prove source correctness or security.",
+        "Assertions remain distinct from automatically verified evidence.",
+    ],
+)
+
+REGISTRY = {
+    item["profile"]: item
+    for item in (
+        INSPECT, SARIF, REPOSITORY_ANALYSIS, REPOSITORY_CONFORMANCE)
+}
 
 
 def get(profile: str) -> dict:

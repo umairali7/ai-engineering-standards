@@ -69,6 +69,9 @@ Every artifact carries a schema version; envelopes are field-append-only
 | Workspace Overview | `schema_version` | `1` | `aies overview` / `GET /overview` / dashboard |
 | Run Detail View | `schema_version` | `2` | `aies runs show` / `GET /runs/{id}` |
 | Run Report View | `schema_version` | `1` | complete bundle / `GET /runs/{id}/report-view` |
+| Repository Engineering Analysis | `schema` | `aies-repository-analysis/v1` | `aies audit` |
+| Repository Assessment | `schema` | `aies-repository-assessment/v1` | `aies audit` / `GET /audits/{id}` |
+| Repository Assessment Bundle | `schema` | `1` | `aies audit --out DIRECTORY` |
 | API Error | `schema_version` | `1` | failed read-only REST requests |
 
 The result's `metadata` records both `decision_engine_version` (which software)
@@ -177,6 +180,8 @@ GET /overview                  shared versioned workspace summary
 GET /support                   implemented/experimental/planned subject support
 GET /deployments               registered deployments
 GET /runs                      run history
+GET /audits                    repository assessment history
+GET /audits/{id}               stored repository assessment, served verbatim
 GET /runs/{id}                 versioned read-only run + artifact summary
 GET /runs/{id}/evidence        the Evidence Package
 GET /runs/{id}/result          primary Engineering or legacy Formal Result

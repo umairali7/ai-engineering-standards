@@ -236,14 +236,14 @@ GUIDANCE: dict[str, CommandGuidance] = {
         "Prefer `aies qualification` for new workflows.",
     ),
     "audit": CommandGuidance(
-        "The repository path is readable. Attestation files may support only genuinely non-detectable controls.",
-        "Produces ML0–ML4 repository-practice maturity, verified/asserted/gap evidence, and ranked recommendations; `--gate` returns non-zero on required gaps.",
-        "Close evidence gaps, rerun the audit, and record any human conformance decision separately.",
+        "The repository path is readable. The default is read-only and does not execute repository code; attestations may support only genuinely non-detectable controls.",
+        "Produces separate ML0–ML4 repository-practice maturity and architecture, code-quality, correctness-assurance, security, dependency, evidence-confidence, limitation, and remediation views. `--out` writes a linked bundle; `--conformance-only` selects the faster legacy layer.",
+        "Triage evidence-linked findings, retain native tool results, rerun after material change, and record any human conformance or change decision separately.",
     ),
     "compare": CommandGuidance(
-        "At least two references resolve to aggregated runs. Task leaders require matching subject/risk/profile, mapping and scoring semantics, rater and suite protocols, repeat structure, adapter profiles, and direct instruments.",
-        "Builds a two-or-more-subject ECM table with observed performance, direct scenario breadth, compatibility reasons, ties or higher observations, and optional task/confidence/spread/leader sorting.",
-        "Use `--only-comparable --sort spread` for the strongest scoped selection signals; do not treat them as a qualification, authorization, or global leaderboard.",
+        "At least two references resolve either to aggregated deployment runs or to stored repository audit ids; subject types cannot be mixed. Deployment leaders and repository deltas require their respective scope/protocol compatibility checks.",
+        "Builds a multi-subject ECM table for deployments or a no-winner perspective/metric delta table for repository assessments. Both disclose compatibility and support task/confidence/spread sorting where meaningful.",
+        "Use `--only-comparable --sort spread` for the strongest scoped signals; do not treat them as qualification, authorization, universal ranking, or proof of repository quality.",
     ),
     "assessment": CommandGuidance(
         "Shipped or supplied assessment YAML is available; result rendering additionally requires an aggregated assessment run.",

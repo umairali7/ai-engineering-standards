@@ -71,10 +71,10 @@ and optional human evaluation—as different facts.
 | See the decision snapshot in your terminal | `aies snapshot latest` | Task evidence, observed capability, scenario breadth, assurance gaps, and engineering interpretation |
 | Check what AIES truly supports | `aies support` | Implemented, experimental, and planned subject kinds with executable entry points and limitations |
 | Choose a first workflow by decision | `aies starter list` | Prerequisites, commands, artifacts, time/cost class, evidence breadth, limitations, and next expansion |
-| Assess repository engineering practice | `aies audit .` | Evidence-backed maturity gaps and ranked remediation |
+| Assess a repository from multiple engineering perspectives | `aies audit . --out aies-repository-report` | Separate practice maturity, architecture, code-quality, correctness-assurance, security, dependency, confidence, limitation, and evidence-linked remediation views |
 | Add advisory repository evidence to CI | `aies ci audit . --rt 2` | Retained JSON/Markdown evidence and annotations without an implicit merge gate |
 | Run without a host Python install | `docker build -f platform/Dockerfile -t aies:local .` | Non-root container for demo, audit, conformance, and networked evaluations |
-| Compare compatible runs | `aies compare RUN_A RUN_B` | Task-by-task observed differences without a fake universal winner |
+| Compare compatible deployment runs or repository snapshots | `aies compare REF_A REF_B [REF_C ...] --sort spread` | Task-level deployment evidence or perspective-level repository deltas without a fake universal winner |
 | Integrate an evaluation tool | `aies bridge inspect-import …` | Source-bound imported ratings and an explicit loss report |
 | Integrate static analysis | `aies bridge sarif-import …` | Preserved SARIF findings that remain distinct from correctness claims |
 | Apply formal governance | `--formal-qualification` | A separate human-governed qualification path |
@@ -380,7 +380,10 @@ products without changing the underlying observations.
   CA-12 — Governance, Risk & AI Safety.
 - Audit repositories across architecture, correctness, code quality, testing,
   security, operations, governance, documentation, and improvement
-  opportunities.
+  opportunities. Repository analysis content-binds the assessed scope, ingests
+  retained JUnit/coverage/SARIF and dependency evidence, emits typed
+  observations, and keeps every heuristic or tool limitation explicit; it does
+  not execute unfamiliar code or claim that correctness/security is proven.
 - Generate Engineering Assessment Results, evidence packages, ECM artifacts,
   Engineering Fit Guidance, reports, and compatible run comparisons.
 - Consume the versioned, read-only `report-view.json` contract shared by

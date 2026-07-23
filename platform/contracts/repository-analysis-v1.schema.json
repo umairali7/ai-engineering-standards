@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aies.dev/contracts/repository-analysis-v1.schema.json",
+  "title": "AIES Repository Engineering Analysis v1 (experimental)",
+  "type": "object",
+  "required": [
+    "kind",
+    "schema",
+    "analyzer",
+    "subject",
+    "snapshot",
+    "perspectives",
+    "findings",
+    "remediation_plan",
+    "events",
+    "event_replay",
+    "timing",
+    "claim_boundary"
+  ],
+  "properties": {
+    "kind": {"const": "repository-engineering-analysis"},
+    "schema": {"const": "aies-repository-analysis/v1"},
+    "analyzer": {
+      "type": "object",
+      "required": ["id", "version", "execution"]
+    },
+    "subject": {
+      "type": "object",
+      "required": ["schema", "id", "kind", "display_name", "privacy"],
+      "properties": {
+        "schema": {"const": "aies-subject-descriptor/v1"},
+        "kind": {"const": "repository"}
+      }
+    },
+    "snapshot": {
+      "type": "object",
+      "required": [
+        "scope_digest",
+        "files_seen",
+        "files_hashed",
+        "bytes_hashed",
+        "complete",
+        "excluded",
+        "limits"
+      ]
+    },
+    "perspectives": {
+      "type": "object",
+      "required": [
+        "architecture",
+        "code_quality",
+        "correctness_assurance",
+        "security",
+        "dependencies"
+      ],
+      "additionalProperties": {
+        "type": "object",
+        "required": ["status", "metrics", "evidence", "findings", "confidence"]
+      }
+    },
+    "findings": {"type": "array", "items": {"type": "object"}},
+    "remediation_plan": {"type": "array", "items": {"type": "object"}},
+    "events": {"type": "array", "items": {"type": "object"}},
+    "event_replay": {"type": "object"},
+    "timing": {"type": "object"},
+    "claim_boundary": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}

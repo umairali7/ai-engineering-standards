@@ -958,26 +958,85 @@ twelve competency areas
 form of [conformance](../docs/CONFORMANCE.md).
 
 ```
-aies audit .                      # scorecard + ranked recommendations (markdown)
+aies audit .                      # maturity + engineering analysis + remediation
 aies audit . --rt 2               # evaluate against RT2 — Moderate required evidence
 aies audit . --gate --rt 2        # CI mode: non-zero exit if RT2 — Moderate evidence is missing
 aies audit . --attest attest.json # supply evidence for non-detectable practices
 aies audit . --format json        # machine-readable
+aies audit . --out aies-repository-report
+                                  # immutable Markdown/JSON/HTML bundle
+aies audit . --conformance-only   # faster practice-maturity layer only
 ```
 
-It scores **maturity ML0–ML4 per area** with **three-state evidence**:
-**verified** (found in the repo), **asserted** (attested with an evidence
-pointer), or **gap**. Absence of a signal is always a gap — never a false pass —
-and an assertion cannot stand in for a control that *is* file-detectable. It
-auto-detects the strong-signal areas (foundations, implementation provenance,
-testing, security, delivery, context) and maps findings to external standards
-(OWASP, MITRE ATLAS, CISA/NCSC, SLSA, ISO/IEC 42119); the non-detectable areas
-(requirements, product) are attestation-only. The attestation file mirrors the
-conformance model:
+The default report deliberately contains two separate layers.
+
+1. **Repository Practice Conformance** scores maturity from ML0 — Absent
+   through ML4 — Optimizing per area with **three-state evidence**:
+   **verified** (found in the repo), **asserted** (attested with an evidence
+   pointer), or **gap**. Absence of a signal is always a gap — never a false
+   pass — and an assertion cannot stand in for a control that is
+   file-detectable. It maps practice evidence to the competency areas and
+   relevant external standards.
+
+2. **Repository Engineering Analysis** is informational, read-only static and
+   retained-artifact analysis. It content-binds the Repository Subject
+   Descriptor and reports:
+
+   - language/build/dependency inventory and reproducible scope exclusions;
+   - Python-aware internal topology, cycles, fan-out, declared layer
+     violations, and ADR-to-source references;
+   - bounded complexity, size, duplication, documentation, lint/type
+     configuration, and testability signals;
+   - retained JUnit execution, coverage, mutation/property/contract-test
+     signals and explicit failure evidence;
+   - security policy/scanner signals and retained SARIF 2.1.0 findings without
+     changing their severity or meaning;
+   - dependency manifests, lockfiles, pinning, update automation, and SBOM
+     evidence;
+   - evidence confidence and limitations per perspective; and
+   - a priority-sorted, evidence-linked remediation plan with acceptance
+     signals, owner boundary, reassessment trigger, and exact rerun command.
+
+The analyzer does not execute repository code, tests, scanners, linters, or
+dependency resolution. Test presence is not execution evidence, passing tests
+do not prove correctness, coverage does not measure test quality, an empty scan
+does not prove security, and structural signals are not architecture verdicts.
+The proposed
+[ADR-0016 — Repository Engineering Analysis Layers](../adr/ADR-0016-Repository-Engineering-Analysis-Layers.md)
+governs this separation; acceptance is still required before freezing it.
+
+An optional `aies-repository-analysis.yaml` can declare enforceable layers:
+
+```yaml
+layers:
+  domain:
+    include: ["src/domain/**"]
+    may_depend_on: []
+  application:
+    include: ["src/application/**"]
+    may_depend_on: [domain]
+```
+
+Layer violations are reported only against this repository-owned policy. The
+attestation file for the separate maturity layer mirrors the conformance model:
 
 ```json
 { "items": [ {"id": "ca10-branch-protection", "evidence": "link or note"} ] }
 ```
+
+Every assessment is retained under its collision-safe `audit-...` identifier
+and served verbatim through `GET /audits/{id}`. Compare two or more compatible
+repository snapshots with the same command used for deployment evidence:
+
+```text
+aies compare audit-... audit-... --sort spread
+aies compare audit-... audit-... audit-... --only-comparable
+```
+
+Repository comparison checks assessment/analysis schema, analyzer version,
+language and build scope, complete content snapshots, and evidence-adapter
+profiles. It reports perspective-specific metric values and deltas but emits no
+composite score, winner, correctness claim, security claim, or authorization.
 
 #### Adopt the audit in CI without an implicit gate
 

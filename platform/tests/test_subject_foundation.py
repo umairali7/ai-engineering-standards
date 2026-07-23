@@ -159,8 +159,18 @@ def test_evidence_adapter_profiles_disclose_semantics_and_incompatibility():
 
     inspect = evidence_adapters.get("aies-inspect-eval-log/v1")
     sarif = evidence_adapters.get("aies-sarif-2.1.0/v1")
+    repository_analysis = evidence_adapters.get(
+        "aies-repository-analysis/v1")
+    repository_conformance = evidence_adapters.get(
+        "aies-repository-conformance/v1")
     assert evidence_adapters.validate(inspect) == []
     assert evidence_adapters.validate(sarif) == []
+    assert evidence_adapters.validate(repository_analysis) == []
+    assert evidence_adapters.validate(repository_conformance) == []
     assert inspect["privacy"]["secrets"] == "prohibited"
     assert sarif["decision_use"] == "informational-only"
+    assert repository_analysis["decision_use"] == "informational-only"
+    assert repository_conformance["decision_use"] == "informational-only"
+    assert "correctness" in repository_analysis["scoring_semantics"]
+    assert "ML0 through ML4" in repository_conformance["scoring_semantics"]
     assert evidence_adapters.compatibility(inspect, sarif)["compatible"] is False

@@ -16,6 +16,222 @@ class CompareError(Exception):
     pass
 
 
+def _audit_path(ref: str):
+    return workspace.root() / "audits" / f"{ref}.json"
+
+
+def is_audit_ref(ref: str) -> bool:
+    return _audit_path(ref).exists()
+
+
+def _resolve_audit(ref: str) -> dict:
+    path = _audit_path(ref)
+    if not path.exists():
+        raise CompareError(
+            f"{ref!r} is not a stored repository assessment "
+            "(GET /audits or inspect the workspace audits directory)")
+    value = workspace.read_json(path)
+    if not value.get("engineering_analysis"):
+        raise CompareError(
+            f"{ref!r} contains conformance maturity only; rerun `aies audit` "
+            "without --conformance-only before repository comparison")
+    return value
+
+
+def compare_repositories(
+    refs: list[str],
+    *,
+    only_comparable: bool = False,
+    sort_by: str = "task",
+) -> dict:
+    """Compare stored repository evidence without emitting a quality winner."""
+    if len(refs) < 2:
+        raise CompareError("repository comparison requires at least two audit ids")
+    if sort_by == "leader":
+        raise CompareError(
+            "--sort leader is unavailable for repository evidence because "
+            "repository comparison emits no winner")
+    assessments = [_resolve_audit(ref) for ref in refs]
+    analyses = [item["engineering_analysis"] for item in assessments]
+    repository_extensions = [
+        (analysis["subject"].get("extensions") or {}).get("repository") or {}
+        for analysis in analyses
+    ]
+    profiles = [
+        sorted({event["adapter_profile"] for event in item.get("events") or []})
+        for item in assessments
+    ]
+    checks = {
+        "assessment_schema": _all_equal([
+            item.get("schema") for item in assessments]),
+        "analysis_schema": _all_equal([
+            analysis.get("schema") for analysis in analyses]),
+        "analyzer_version": _all_equal([
+            (analysis.get("analyzer") or {}).get("version")
+            for analysis in analyses]),
+        "languages": _all_equal([
+            [(row["language"], row["files"])
+             for row in extension.get("languages") or []]
+            for extension in repository_extensions]),
+        "build_systems": _all_equal([
+            extension.get("build_systems") or []
+            for extension in repository_extensions]),
+        "complete_snapshot": all(
+            analysis["snapshot"].get("complete") for analysis in analyses),
+        "evidence_adapter_profiles": _all_equal(profiles),
+    }
+    compatible = all(checks.values())
+    perspective_names = sorted(set.intersection(*[
+        set(analysis["perspectives"]) for analysis in analyses]))
+    rows = []
+    for perspective in perspective_names:
+        metrics = [
+            analysis["perspectives"][perspective]["metrics"]
+            for analysis in analyses
+        ]
+        shared = sorted(set.intersection(*[set(item) for item in metrics]))
+        for metric in shared:
+            values = [item.get(metric) for item in metrics]
+            if not all(
+                    value is None or isinstance(value, (int, float))
+                    for value in values):
+                continue
+            numeric = [value for value in values if value is not None]
+            comparable = compatible and len(numeric) == len(values)
+            row = {
+                "perspective": perspective,
+                "metric": metric,
+                "values": values,
+                "deltas_from_a": [
+                    None if value is None or values[0] is None
+                    else round(value - values[0], 3)
+                    for value in values
+                ],
+                "comparable": comparable,
+                "spread": (
+                    round(max(numeric) - min(numeric), 3)
+                    if comparable and numeric else None),
+                "interpretation": _repository_metric_interpretation(
+                    perspective, metric),
+            }
+            if not only_comparable or comparable:
+                rows.append(row)
+    if sort_by == "spread":
+        rows.sort(key=lambda row: (
+            row["spread"] is not None, row["spread"] or 0,
+            row["perspective"], row["metric"]), reverse=True)
+    elif sort_by == "confidence":
+        rows.sort(key=lambda row: (
+            row["comparable"], row["perspective"], row["metric"]), reverse=True)
+    else:
+        rows.sort(key=lambda row: (row["perspective"], row["metric"]))
+    same_subject = _all_equal([
+        analysis["subject"]["id"] for analysis in analyses])
+    subjects = []
+    for index, (ref, assessment, analysis, profile) in enumerate(
+            zip(refs, assessments, analyses, profiles)):
+        subjects.append({
+            "column": chr(65 + index),
+            "audit_id": ref,
+            "subject": analysis["subject"],
+            "snapshot": analysis["snapshot"],
+            "analyzer": analysis["analyzer"],
+            "adapter_profiles": profile,
+            "generated_at": assessment.get("generated_at"),
+        })
+    return {
+        "kind": "aies-repository-comparison",
+        "schema": 1,
+        "compatible": compatible,
+        "same_subject_over_time": same_subject,
+        "checks": checks,
+        "subjects": subjects,
+        "metrics": rows,
+        "caveats": [
+            value for value in (
+                None if compatible else
+                "One or more scope/protocol checks failed; deltas remain visible "
+                "but are marked non-comparable.",
+                None if same_subject else
+                "Assessments identify different repository subjects; this is a "
+                "descriptive evidence comparison, not a trend.",
+            ) if value
+        ],
+        "claim_boundary": (
+            "Metric deltas retain their perspective-specific meaning. No "
+            "composite score, winner, repository quality verdict, correctness "
+            "claim, security claim, or authorization is emitted."),
+    }
+
+
+def _repository_metric_interpretation(
+        perspective: str, metric: str) -> str:
+    lower_signals = {
+        "dependency_cycles", "layer_violations", "python_parse_failures",
+        "complex_or_long_functions", "large_source_files",
+        "duplicate_block_groups", "todo_fixme_markers",
+        "test_failures_or_errors", "sarif_error_findings",
+        "sensitive_configuration_filenames",
+        "unpinned_direct_declarations",
+    }
+    higher_assurance = {
+        "retained_test_pass_percent", "retained_line_coverage_percent",
+        "python_documented_function_percent",
+    }
+    if metric in lower_signals:
+        return (
+            "Lower is a smaller bounded review signal; zero does not prove "
+            "quality or absence.")
+    if metric in higher_assurance:
+        return (
+            "Higher is more retained evidence on this metric; it is not a "
+            "quality or correctness score.")
+    return (
+        f"Context/evidence-volume metric for {perspective.replace('_', ' ')}; "
+        "direction is not a quality ranking.")
+
+
+def render_repository_comparison(cmp: dict) -> str:
+    subjects = cmp["subjects"]
+    lines = [
+        "# AIES Repository Evidence Comparison",
+        "",
+        "> **INFORMATIONAL — NO COMPOSITE SCORE OR WINNER.**",
+        "",
+        f"{len(subjects)} repository assessment(s) · "
+        f"{sum(row['comparable'] for row in cmp['metrics'])}/"
+        f"{len(cmp['metrics'])} metric rows comparable",
+        "",
+        "| | " + " | ".join(item["column"] for item in subjects) + " |",
+        "|---|" + "|".join("---" for _ in subjects) + "|",
+        "| Audit | " + " | ".join(
+            f"`{item['audit_id']}`" for item in subjects) + " |",
+        "| Subject | " + " | ".join(
+            f"`{item['subject']['id']}`" for item in subjects) + " |",
+        "| Snapshot | " + " | ".join(
+            f"`{item['snapshot']['scope_digest'][:23]}…`"
+            for item in subjects) + " |",
+        "",
+        "| Perspective / metric | " + " | ".join(
+            item["column"] for item in subjects)
+        + " | Comparable | Interpretation |",
+        "|---|" + "|".join("---:" for _ in subjects) + "|---|---|",
+    ]
+    for row in cmp["metrics"]:
+        values = ["—" if value is None else str(value)
+                  for value in row["values"]]
+        lines.append(
+            f"| {row['perspective'].replace('_', ' ').title()} / "
+            f"{row['metric'].replace('_', ' ').capitalize()} | "
+            + " | ".join(values)
+            + f" | {'yes' if row['comparable'] else 'no'} | "
+            + row["interpretation"] + " |")
+    for caveat in cmp["caveats"]:
+        lines += ["", f"> **Caveat:** {caveat}"]
+    lines += ["", cmp["claim_boundary"], ""]
+    return "\n".join(lines)
+
+
 def list_runs(model: str | None = None) -> list[dict]:
     """Result history: every run's manifest summary, newest first."""
     out = []

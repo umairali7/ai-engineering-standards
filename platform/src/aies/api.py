@@ -33,6 +33,7 @@ _RUN_GUIDANCE = re.compile(r"^/runs/([^/]+)/guidance$")
 _RUN_EXECUTIVE = re.compile(r"^/runs/([^/]+)/executive-summary$")
 _RUN_DIAGNOSTICS = re.compile(r"^/runs/([^/]+)/diagnostics$")
 _RUN_DETAIL = re.compile(r"^/runs/([^/]+)$")
+_AUDIT_DETAIL = re.compile(r"^/audits/([^/]+)$")
 
 
 def _error(status: int, code: str, message: str, *,
@@ -66,6 +67,7 @@ def route(path: str) -> tuple[int, dict]:
                                    "/runs/{id}/ecm", "/runs/{id}/guidance",
                                    "/runs/{id}/executive-summary",
                                    "/runs/{id}/diagnostics",
+                                   "/audits", "/audits/{id}",
                                    "/assessments", "/qualifications", "/conformance"]}
     if path == "/overview":
         from . import overview
@@ -79,6 +81,25 @@ def route(path: str) -> tuple[int, dict]:
     if path == "/runs":
         from . import compare
         return 200, {"runs": compare.list_runs()}
+    if path == "/audits":
+        directory = workspace.root() / "audits"
+        rows = []
+        for artifact in (
+                sorted(directory.glob("audit-*.json"), reverse=True)
+                if directory.exists() else []):
+            value = workspace.read_json(artifact)
+            subject = value.get("subject") or {}
+            rows.append({
+                "audit_id": value.get("audit_id") or artifact.stem,
+                "subject_id": subject.get("id"),
+                "subject_kind": subject.get("kind"),
+                "repository": value.get("repo"),
+                "generated_at": value.get("generated_at"),
+                "engineering_analysis": bool(
+                    value.get("engineering_analysis")),
+                "href": f"/audits/{value.get('audit_id') or artifact.stem}",
+            })
+        return 200, {"audits": rows}
     if path == "/assessments":
         from . import assessments
         return 200, {"assessments": assessments.list_assessments()}
@@ -152,6 +173,20 @@ def route(path: str) -> tuple[int, dict]:
             return _error(
                 404, "run-not-found", str(error),
                 hint="list available runs with GET /runs")
+    m = _AUDIT_DETAIL.match(path)
+    if m:
+        audit_id = m.group(1)
+        try:
+            workspace.validate_run_id(audit_id)
+        except ValueError as error:
+            return _error(400, "invalid-audit-id", str(error))
+        artifact = workspace.root() / "audits" / f"{audit_id}.json"
+        if not artifact.exists():
+            return _error(
+                404, "audit-not-found",
+                f"repository assessment {audit_id!r} was not found",
+                hint="list available repository assessments with GET /audits")
+        return 200, workspace.read_json(artifact)
 
     return _error(
         404, "route-not-found", f"not found: {path}",

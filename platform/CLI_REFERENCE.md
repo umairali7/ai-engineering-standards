@@ -230,15 +230,15 @@ validate an assessment (name or path)
 
 ## `aies audit`
 
-audit a repository's conformance to AIES engineering practices (maturity per area; verified/asserted/gap; ADR-0004)
+assess repository-practice maturity and read-only engineering evidence across architecture, quality, correctness, security, testing, dependencies, and remediation
 
-**Usage:** `aies audit [-h] [--json] [--rt {1,2,3,4}] [--gate] [--attest FILE] [--format {markdown,json}] repo`
+**Usage:** `aies audit [-h] [--json] [--rt {1,2,3,4}] [--gate] [--attest FILE] [--format {markdown,json}] [--conformance-only] [--out DIRECTORY] repo`
 
-**Prerequisites:** The repository path is readable. Attestation files may support only genuinely non-detectable controls.
+**Prerequisites:** The repository path is readable. The default is read-only and does not execute repository code; attestations may support only genuinely non-detectable controls.
 
-**Result and side effects:** Produces ML0–ML4 repository-practice maturity, verified/asserted/gap evidence, and ranked recommendations; `--gate` returns non-zero on required gaps.
+**Result and side effects:** Produces separate ML0–ML4 repository-practice maturity and architecture, code-quality, correctness-assurance, security, dependency, evidence-confidence, limitation, and remediation views. `--out` writes a linked bundle; `--conformance-only` selects the faster legacy layer.
 
-**Recommended next step:** Close evidence gaps, rerun the audit, and record any human conformance decision separately.
+**Recommended next step:** Triage evidence-linked findings, retain native tool results, rerun after material change, and record any human conformance or change decision separately.
 
 ### Parameters and options
 
@@ -251,6 +251,8 @@ audit a repository's conformance to AIES engineering practices (maturity per are
 | `--gate` | optional | CI mode: non-zero exit if RT-required evidence is missing (implies the given --rt, default RT2 — Moderate) | Implies RT2 — Moderate when `--rt` is omitted. |
 | `--attest` | optional | attestation JSON for non-detectable practices ({items:[{id, evidence}]}) | — |
 | `--format` | optional | output representation (default: markdown) | choices: `markdown`, `json`; default: `markdown` |
+| `--conformance-only` | optional | skip deeper static/retained-artifact engineering analysis and emit only the faster ML0 through ML4 practice-maturity layer | — |
+| `--out` | optional | write an immutable Markdown, JSON, HTML, and bundle-index report | — |
 
 ## `aies benchmark`
 
@@ -477,15 +479,15 @@ retain repository-assessment evidence and annotations
 
 ## `aies compare`
 
-compare two or more runs/deployments using compatible observed ECM evidence
+compare two or more compatible deployment runs or stored repository assessments
 
 **Usage:** `aies compare [-h] [--json] [--format {markdown,json}] [--ecm] [--area-summary] [--formal-qualification] [--sort {task,confidence,spread,leader}] [--only-comparable] refs [refs ...]`
 
-**Prerequisites:** At least two references resolve to aggregated runs. Task leaders require matching subject/risk/profile, mapping and scoring semantics, rater and suite protocols, repeat structure, adapter profiles, and direct instruments.
+**Prerequisites:** At least two references resolve either to aggregated deployment runs or to stored repository audit ids; subject types cannot be mixed. Deployment leaders and repository deltas require their respective scope/protocol compatibility checks.
 
-**Result and side effects:** Builds a two-or-more-subject ECM table with observed performance, direct scenario breadth, compatibility reasons, ties or higher observations, and optional task/confidence/spread/leader sorting.
+**Result and side effects:** Builds a multi-subject ECM table for deployments or a no-winner perspective/metric delta table for repository assessments. Both disclose compatibility and support task/confidence/spread sorting where meaningful.
 
-**Recommended next step:** Use `--only-comparable --sort spread` for the strongest scoped selection signals; do not treat them as a qualification, authorization, or global leaderboard.
+**Recommended next step:** Use `--only-comparable --sort spread` for the strongest scoped signals; do not treat them as qualification, authorization, universal ranking, or proof of repository quality.
 
 ### Parameters and options
 
@@ -493,7 +495,7 @@ compare two or more runs/deployments using compatible observed ECM evidence
 |---|---|---|---|
 | `-h`, `--help` | optional | show this help message and exit | — |
 | `--json` | optional | machine-readable output | — |
-| `<REFS>` | required | two or more run ids or deployment ids (a deployment selects its latest aggregated run) | values: + |
+| `<REFS>` | required | two or more run ids, deployment ids, or repository audit ids; do not mix repository and deployment evidence | values: + |
 | `--format` | optional | output representation (default: markdown) | choices: `markdown`, `json`; default: `markdown` |
 | `--ecm` | optional | compatibility alias; task-level ECM comparison is now the default | Compatibility alias; ECM comparison is the default. |
 | `--area-summary` | optional | render the legacy competency-area aggregate comparison instead of ECM | Selects the legacy competency-area aggregate instead of the default ECM comparison. |

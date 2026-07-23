@@ -8,6 +8,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Multi-perspective repository engineering assessment**: `aies audit`
+  preserves its verified/asserted/gap ML0 — Absent through ML4 — Optimizing
+  practice-maturity layer and now adds a separate, read-only Repository
+  Engineering Analysis. A content-addressed Repository Subject Descriptor
+  binds commit/tree where available, working-scope digest, exclusions,
+  languages, build systems, dependency state, configuration, environment, and
+  analyzer versions. Five claim-bounded perspectives cover Python-aware
+  topology/cycles/declared layers/ADR traceability; complexity, size,
+  duplication, documentation and lint/type signals; retained JUnit, coverage,
+  mutation/property/contract-test and failure evidence; security configuration
+  and retained SARIF; and manifests, lockfiles, pinning, update automation, and
+  SBOM evidence. Each perspective reports evidence confidence and limitations,
+  never a composite quality score. Findings feed a deterministic
+  evidence-linked remediation plan with priority, impact, artifacts, bounded
+  action, acceptance signal, authority, reassessment trigger, and command.
+  Repository assessments emit typed events, persist collision-safe records,
+  expose read-only `/audits` API inventory/detail, and optionally write a
+  linked Markdown/JSON/HTML bundle with `aies audit --out`. Proposed ADR-0016 —
+  Repository Engineering Analysis Layers records the boundary pending human
+  acceptance. `aies compare` now also accepts two or more stored repository
+  audit ids, checks schema/analyzer/language/build/snapshot/adapter
+  compatibility, and renders perspective metric deltas without a composite
+  repository score or winner.
 - **Subject-neutral execution and typed-evidence foundation**: new
   `aies-run-manifest/v2` runs embed the independently versioned
   `aies-subject-descriptor/v1` and `aies-subject-executor/v1` contracts while

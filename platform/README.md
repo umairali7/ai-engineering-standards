@@ -51,8 +51,10 @@ Fit Guidance, and Executive Summary), `transcript`,
 `capabilities` (task-mapped ECM by default; `--qualification-profile` selects
 the formal per-area CL/autonomy view), `judge` (available/list/history),
 `assessment` (declarative engineering composition — list/show/validate/result,
-Markdown/JSON/HTML, ADR-0005), `audit` (repository conformance — maturity per
-area, ADR-0004), `ci audit` (retained advisory-by-default CI evidence with
+Markdown/JSON/HTML, ADR-0005), `audit` (separate repository-practice maturity
+and read-only architecture/code-quality/correctness/security/dependency
+analysis with typed evidence, confidence, limitations, remediation, and an
+optional Markdown/JSON/HTML bundle), `ci audit` (retained advisory-by-default CI evidence with
 explicit opt-in enforcement), `corpus` (the platform reviews its **own** assessment corpus —
 health/coverage/duplicates/review; advisory, multidimensional, no single grade),
 `runs`, `compare`, `index`, `review`, `grant`, `verify`, `journey`,

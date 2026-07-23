@@ -58,6 +58,7 @@ def test_health_and_index():
     assert "/runs/{id}/report-view" in body["endpoints"]
     assert "/support" in body["endpoints"]
     assert "/overview" in body["endpoints"]
+    assert "/audits" in body["endpoints"]
 
 
 def test_collections_are_served(api_ws):
@@ -99,7 +100,7 @@ def test_run_detail_is_versioned_read_only_consumer_contract(api_ws):
     status, body = api.route(f"/runs/{api_ws}")
     assert status == 200
     assert body["kind"] == "aies-run-view"
-    assert body["schema_version"] == 1
+    assert body["schema_version"] == 2
     assert body["authority"] == "informational-read-only"
     assert body["run_id"] == api_ws
     assert body["scope"]["risk_tier_label"].startswith("RT2 — ")
@@ -153,6 +154,26 @@ def test_conformance_endpoint(api_ws):
     assert status in (200, 503)
     if status == 200:
         assert "valid" in body and "cases" in body
+
+
+def test_repository_assessment_endpoints_serve_stored_artifact(api_ws):
+    from aies import api, executors, workspace
+
+    repository = workspace.root() / "api-repository"
+    repository.mkdir(exist_ok=True)
+    (repository / "README.md").write_text("# API fixture", encoding="utf-8")
+    result = executors.RepositoryAuditExecutor().execute(
+        executors.RepositoryAuditRequest(repository))
+    status, listing = api.route("/audits")
+    assert status == 200
+    assert any(item["audit_id"] == result["audit_id"]
+               for item in listing["audits"])
+    status, detail = api.route(f"/audits/{result['audit_id']}")
+    assert status == 200
+    assert detail == workspace.read_json(
+        workspace.root() / "audits" / f"{result['audit_id']}.json")
+    assert detail["engineering_analysis"]["schema"] == (
+        "aies-repository-analysis/v1")
 
 
 def test_unknown_path_is_404_and_missing_run_is_404(api_ws):

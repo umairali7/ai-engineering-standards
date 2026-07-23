@@ -42,14 +42,16 @@
 
 **Executor:** `deterministic-repository-audit` — Deterministic Repository Evidence Collector (implemented).
 
-**Evidence adapters:** `sarif` — SARIF 2.1.0 Findings Bridge (experimental).
+**Evidence adapters:** `repository-conformance` — Repository Practice Evidence Adapter (implemented); `repository-analysis` — Repository Engineering Analysis Adapter (implemented); `sarif` — SARIF 2.1.0 Findings Bridge (experimental).
 
-**Decision products:** Maturity Scorecard; Evidence Gaps; Ranked Remediation.
+**Decision products:** Repository Practice Maturity Scorecard; Repository Engineering Analysis; Evidence-Linked Remediation Plan; Markdown, JSON, and HTML Repository Assessment Bundle.
 
 **Limitations:**
 
 - Repository maturity is not an AESQS competency score or model capability claim.
-- SARIF findings are preserved separately and are not yet consumed by the deterministic audit score.
+- SARIF findings remain tool findings and are never converted into maturity, correctness, or conformance.
+- Static analysis is Python-aware for import topology; other languages are inventoried pending native adapters.
+- Repository code and tests are not executed by the default read-only analysis.
 
 ## Claim boundary
 

@@ -1,4 +1,4 @@
-"""Repository conformance audit (ADR-0004).
+"""Repository assessment: conformance plus engineering analysis.
 
 `aies audit <repo>` assesses a **repository and the engineering practice
 evidenced in it** against the AIES competency areas — a different subject from
@@ -11,22 +11,29 @@ never false-green:
   pointer) in an attestation file.
 - **gap** — neither; absence of signal is always a gap.
 
-This module holds the scoring model, the repository scanner (`RepoContext`), the
-`Check` contract, and the engine. The checks themselves live in
-`audit_checks.py`. Non-goals (ADR-0004): this is not a SAST/secret/dependency
-scanner or an oracle — it detects that such practices/tools are *present* and
-maps them to external standards; a human still judges.
+This module holds the conformance scoring model, repository scanner
+(`RepoContext`), `Check` contract, report bundle, and orchestration engine. The
+practice checks live in `audit_checks.py`; the separate, non-decisional
+engineering perspectives live in `repository_analysis.py`.
+
+The analysis is deliberately not a SAST, secret scanner, vulnerability scanner,
+or correctness oracle. It consumes repository structure and retained,
+machine-readable evidence without executing repository code. Its findings and
+remediation are decision support, not qualification or authorization.
 """
 
 from __future__ import annotations
 
 import datetime
+import html
+import json
 import subprocess
+import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
-from . import constants as C, workspace
+from . import constants as C, evidence_events, workspace
 
 # --- Maturity model (ML0–ML4) --------------------------------------------------
 MATURITY = {
@@ -264,7 +271,8 @@ def _gate(results: list[dict], rt: str) -> dict:
 
 
 def run_audit(repo: str | Path, attestations: dict | None = None,
-              rt: str | None = None, record: bool = True) -> dict:
+              rt: str | None = None, record: bool = True,
+              engineering_analysis: bool = False) -> dict:
     """Audit a repository; returns the structured result (and persists it)."""
     ctx = RepoContext(repo)
     results = evaluate(ctx, attestations)
@@ -285,8 +293,45 @@ def run_audit(repo: str | Path, attestations: dict | None = None,
 
     totals = {s: sum(1 for r in results if r["state"] == s) for s in STATES}
     auto_checks = sum(1 for r in results if r["auto"])
+    from . import repository_analysis
+    analysis = (
+        repository_analysis.analyze(ctx, results)
+        if engineering_analysis else None)
+    if analysis:
+        subject = analysis["subject"]
+        scope_digest = analysis["snapshot"]["scope_digest"]
+    else:
+        snapshot = repository_analysis._snapshot(ctx)
+        subject = repository_analysis._repository_descriptor(
+            ctx, snapshot, repository_analysis._source_files(ctx))
+        scope_digest = snapshot["scope_digest"]
+    conformance_events = [
+        evidence_events.build(
+            event_type="observation",
+            subject_id=subject["id"],
+            instrument_id=check["id"],
+            modality="repository-static-analysis",
+            source="aies-repository-conformance-audit",
+            source_record_id=check["id"],
+            source_digest=scope_digest,
+            adapter_profile="aies-repository-conformance/v1",
+            classification=subject["privacy"],
+            payload={
+                "area": check["area"],
+                "state": check["state"],
+                "band": check["band"],
+                "auto": check["auto"],
+                "required_at": check["required_at"],
+                "evidence": check["evidence"],
+            },
+        )
+        for check in results
+    ]
+    all_events = conformance_events + (analysis["events"] if analysis else [])
     result = {
         "kind": "audit",
+        "schema": "aies-repository-assessment/v1",
+        "subject": subject,
         "repo": str(ctx.root),
         "is_git": ctx.is_git,
         "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
@@ -296,16 +341,145 @@ def run_audit(repo: str | Path, attestations: dict | None = None,
         "totals": totals,
         "areas": area_summ,
         "gate": _gate(results, rt) if rt else None,
+        "engineering_analysis": analysis,
+        "events": all_events,
+        "event_replay": evidence_events.replay(all_events),
+        "claim_boundary": (
+            "Repository-practice maturity and engineering-analysis evidence "
+            "remain separate. Neither proves source correctness, security, "
+            "fitness, or authorization."),
     }
     if record:
-        try:
-            audit_id = "audit-" + datetime.datetime.now(
-                datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-            workspace.write_json(workspace.root() / "audits" / f"{audit_id}.json", result)
-            result["audit_id"] = audit_id
-        except Exception:
-            pass
+        record_result(result)
     return result
+
+
+def record_result(result: dict) -> str:
+    """Persist one append-only repository assessment with collision-safe id."""
+    audit_id = (
+        "audit-"
+        + datetime.datetime.now(datetime.timezone.utc).strftime(
+            "%Y%m%dT%H%M%S%fZ")
+        + "-"
+        + uuid.uuid4().hex[:6]
+    )
+    result["audit_id"] = audit_id
+    workspace.write_json(
+        workspace.root() / "audits" / f"{audit_id}.json", result)
+    return audit_id
+
+
+def write_bundle(result: dict, destination: str | Path) -> dict:
+    """Write a self-contained repository assessment bundle."""
+    target = Path(destination).expanduser().resolve()
+    target.mkdir(parents=True, exist_ok=True)
+    paths = {
+        "json": target / "repository-assessment.json",
+        "markdown": target / "repository-assessment.md",
+        "html": target / "repository-assessment.html",
+        "bundle": target / "repository-assessment-bundle.json",
+    }
+    existing = [str(path) for path in paths.values() if path.exists()]
+    if existing:
+        raise FileExistsError(
+            "repository assessment output is immutable; already exists: "
+            + ", ".join(existing))
+    markdown = render_markdown(result)
+    paths["json"].write_text(
+        json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    paths["markdown"].write_text(markdown, encoding="utf-8")
+    paths["html"].write_text(_render_html(result), encoding="utf-8")
+    bundle = {
+        "kind": "aies-repository-assessment-bundle",
+        "schema": 1,
+        "audit_id": result.get("audit_id"),
+        "subject": result.get("subject"),
+        "artifacts": {
+            name: path.name for name, path in paths.items() if name != "bundle"
+        },
+        "claim_boundary": result.get("claim_boundary"),
+    }
+    paths["bundle"].write_text(
+        json.dumps(bundle, indent=2) + "\n", encoding="utf-8")
+    return {name: str(path) for name, path in paths.items()}
+
+
+def _render_html(result: dict) -> str:
+    analysis = result.get("engineering_analysis") or {}
+    perspectives = analysis.get("perspectives") or {}
+    rows = []
+    for name, value in perspectives.items():
+        confidence = value["confidence"]
+        rows.append(
+            "<tr><td>" + html.escape(name.replace("_", " ").title())
+            + "</td><td>" + html.escape(value["status"])
+            + "</td><td>" + html.escape(confidence["level"])
+            + f" ({confidence['coverage_percent']:.0f}%)</td><td>"
+            + str(len(value["findings"])) + "</td></tr>")
+    findings = []
+    for finding in analysis.get("findings") or []:
+        artifacts = ", ".join(finding["artifacts"]) or "no retained artifact"
+        findings.append(
+            "<li><strong>" + html.escape(
+                f"{finding['severity'].upper()} · {finding['id']}")
+            + "</strong> — " + html.escape(finding["title"])
+            + "<br><small>Evidence: " + html.escape(artifacts)
+            + "</small></li>")
+    maturity = []
+    for area in result["areas"].values():
+        counts = area["counts"]
+        maturity.append(
+            "<tr><td>" + html.escape(f"{area['area']} — {area['name']}")
+            + f"</td><td>ML{area['maturity']}</td><td>{counts['verified']}"
+            + f"</td><td>{counts['asserted']}</td><td>{counts['gap']}</td></tr>")
+    return """<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AIES Repository Assessment</title><style>
+:root{color-scheme:light dark;--line:#8885;--card:#8881}
+body{font:15px/1.5 system-ui,sans-serif;max-width:1100px;margin:auto;padding:2rem}
+table{border-collapse:collapse;width:100%}th,td{padding:.45rem;border-bottom:1px solid var(--line);text-align:left}
+.sortable th{cursor:pointer;user-select:none}.sortable th:hover{text-decoration:underline}
+.notice{padding:1rem;background:var(--card);border:1px solid var(--line);border-radius:8px}
+li{margin:.6rem 0}code{word-break:break-all}</style></head><body>""" + (
+        "<h1>AIES Repository Assessment</h1><p class=notice>"
+        "<strong>Informational evidence only.</strong> Practice maturity and "
+        "engineering analysis do not prove correctness, security, fitness, "
+        "conformance, or authorization.</p><p>Subject: <code>"
+        + html.escape((result.get("subject") or {}).get("id", "unknown"))
+        + "</code></p><h2>Practice maturity</h2><table class=sortable><thead><tr>"
+        "<th>Competency area</th><th>Maturity</th><th>Verified</th>"
+        "<th>Asserted</th><th>Gaps</th></tr></thead><tbody>"
+        + "".join(maturity)
+        + "</tbody></table><h2>Engineering perspectives</h2><table class=sortable><thead><tr>"
+        "<th>Perspective</th><th>Status</th><th>Evidence confidence</th>"
+        "<th>Findings</th></tr></thead><tbody>" + "".join(rows)
+        + "</tbody></table><h2>Evidence-linked findings</h2><ol>"
+        + ("".join(findings) or
+           "<li>No bounded analyzer finding was emitted; this is not proof of absence.</li>")
+        + "</ol><footer><p>" + html.escape(result.get("claim_boundary", ""))
+        + """</p></footer><script>
+document.querySelectorAll("table.sortable th").forEach((header,index)=>{
+  header.title="Sort by this column";
+  header.addEventListener("click",()=>{
+    const body=header.closest("table").tBodies[0];
+    const rows=[...body.rows];
+    const ascending=header.dataset.order!=="asc";
+    rows.sort((left,right)=>{
+      const a=left.cells[index].textContent.trim();
+      const b=right.cells[index].textContent.trim();
+      const an=Number(a.replace(/[^0-9.+-]/g,""));
+      const bn=Number(b.replace(/[^0-9.+-]/g,""));
+      const value=Number.isNaN(an)||Number.isNaN(bn)
+        ? a.localeCompare(b,undefined,{numeric:true,sensitivity:"base"})
+        : an-bn;
+      return ascending?value:-value;
+    });
+    [...header.parentElement.children].forEach(item=>delete item.dataset.order);
+    header.dataset.order=ascending?"asc":"desc";
+    rows.forEach(row=>body.appendChild(row));
+  });
+});
+</script></body></html>""")
 
 
 # --- Rendering -----------------------------------------------------------------
@@ -315,7 +489,9 @@ _STATE_MARK = {"verified": "✓ verified", "asserted": "~ asserted", "gap": "✗
 def render_markdown(result: dict) -> str:
     t = result["totals"]
     out = [f"# Conformance Audit — {result['repo']}", ""]
-    out.append(f"AIES repository conformance audit (ADR-0004). Maturity ML0–ML4 per "
+    out.append(f"AIES repository conformance audit "
+               f"(ADR-0004 — executable repository conformance assessment). "
+               f"Maturity ML0–ML4 per "
                f"competency area; evidence is **verified** (found in repo), "
                f"**asserted** (attested with evidence), or **gap**. Absence is a gap, "
                f"never a pass.")
@@ -325,6 +501,8 @@ def render_markdown(result: dict) -> str:
                f"{result['attestation_checks']} attestation-only)")
     out.append(f"- Evidence: **{t['verified']} verified**, {t['asserted']} asserted, "
                f"**{t['gap']} gaps**")
+    if result.get("audit_id"):
+        out.append(f"- Assessment record: `{result['audit_id']}`")
     if result.get("gate"):
         g = result["gate"]
         out.append(f"- Gate ({C.risk_tier_label(g['risk_tier'])}): **{'PASS' if g['passed'] else 'FAIL'}**"
@@ -345,9 +523,15 @@ def render_markdown(result: dict) -> str:
     if gaps:
         out += ["", "## Recommendations (ranked)", ""]
         for c in gaps:
-            req = f" _(required at {c['required_at']})_" if c["required_at"] else ""
+            req = (
+                f" _(required at {C.risk_tier_label(c['required_at'])})_"
+                if c["required_at"] else "")
             ext = f" · maps to {c['external']}" if c["external"] else ""
             out.append(f"- **{c['area']} {c['title']}**{req} — {c['recommendation']}{ext}")
+    if result.get("engineering_analysis"):
+        from . import repository_analysis
+        out += ["", repository_analysis.render_markdown(
+            result["engineering_analysis"])]
     out += ["", "---", "*Evidence, not checkboxes: this audit prepares evidence; a "
             "human records any conformance decision. Non-detectable practices require "
             "attestation (`--attest`).*"]

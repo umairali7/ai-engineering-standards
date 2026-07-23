@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aies.dev/contracts/repository-assessment-v1.schema.json",
+  "title": "AIES Repository Assessment v1 (experimental)",
+  "type": "object",
+  "required": [
+    "kind",
+    "schema",
+    "subject",
+    "repo",
+    "generated_at",
+    "n_checks",
+    "totals",
+    "areas",
+    "engineering_analysis",
+    "events",
+    "event_replay",
+    "claim_boundary"
+  ],
+  "properties": {
+    "kind": {"const": "audit"},
+    "schema": {"const": "aies-repository-assessment/v1"},
+    "audit_id": {"type": "string"},
+    "subject": {"type": "object"},
+    "execution": {"type": "object"},
+    "repo": {"type": "string"},
+    "is_git": {"type": "boolean"},
+    "generated_at": {"type": "string"},
+    "n_checks": {"type": "integer", "minimum": 0},
+    "auto_checks": {"type": "integer", "minimum": 0},
+    "attestation_checks": {"type": "integer", "minimum": 0},
+    "totals": {"type": "object"},
+    "areas": {"type": "object"},
+    "gate": {"type": ["object", "null"]},
+    "engineering_analysis": {"type": ["object", "null"]},
+    "events": {"type": "array", "items": {"type": "object"}},
+    "event_replay": {"type": "object"},
+    "claim_boundary": {"type": "string", "minLength": 1},
+    "report_bundle": {"type": "object"}
+  },
+  "additionalProperties": false
+}
