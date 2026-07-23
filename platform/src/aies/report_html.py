@@ -53,47 +53,53 @@ footer { margin-top: 3rem; color: var(--muted); font-size: .8rem;
 """
 
 
-def render_html(run_id: str, *, matrix: dict | None = None) -> str:
-    from . import evaluation as evaluation_view, run_mode
+def render_html(
+    run_id: str,
+    *,
+    matrix: dict | None = None,
+    context=None,
+) -> str:
+    from . import report_view
 
-    rdir = workspace.run_dir(run_id)
-    pkg = workspace.read_json(rdir / "evidence-package.json")
-    manifest = workspace.read_json(rdir / "manifest.json")
-    formal = run_mode.is_formal(manifest)
-    fp = pkg["environment_fingerprint"]
-    from .report import (_human_evaluation_label, _human_review_record,
-                         _score_sources, _source_cell)
-    source_scores = _score_sources(run_id)
-    human_review = _human_review_record(run_id)
+    context = context or report_view.build_context(run_id, matrix=matrix)
+    view = context.view
+    formal = view["formal_qualification_requested"]
+    fp = view["environment"]
+    human_review = view["human_review"]
+    evaluation = view["engineering_evaluation"]
+    diagnostic_summary = view["grounding_diagnostics"]
+    matrix = context.matrix
+    area_models = {area["code"]: area for area in view["areas"]}
     p: list[str] = []
     w = p.append
-    subject = pkg.get("subject") or {}
-    subject_id = subject.get("id", pkg["model"]["registry_id"])
+    subject = view["subject"]
+    scope = view["scope"]
+    subject_id = subject["id"]
 
     w("<!doctype html><html lang=en><head><meta charset=utf-8>")
     w("<meta name=viewport content='width=device-width, initial-scale=1'>")
-    title = ("AIES Qualification Evidence Package" if formal
-             else "AIES Engineering Evaluation Report")
+    title = view["title"]
     w(f"<title>{title} — {_esc(subject_id)}</title>")
     w(f"<style>{_CSS}</style></head><body>")
 
     w(f"<h1>{title}</h1>")
-    w(f"<div class=muted>Run <code>{_esc(pkg['run_id'])}</code></div>")
+    w(f"<div class=muted>Run <code>{_esc(view['run_id'])}</code></div>")
     w(f"<p><strong>Subject:</strong> <code>{_esc(subject_id)}</code> "
-      f"({_esc(subject.get('kind', 'ai_deployment'))}; executor: "
-      f"{_esc(subject.get('executor_kind', 'deployment'))}) &middot; "
-      f"<strong>Deployment / model evidence:</strong> <code>{_esc(pkg['model']['registry_id'])}</code> "
-      f"&middot; <strong>Profile:</strong> {_esc(pkg['profile'])} "
-      f"&middot; <strong>Scoped risk tier:</strong> {_esc(C.risk_tier_label(pkg['risk_tier']))} "
+      f"({_esc(subject['kind'])}; executor: "
+      f"{_esc(subject['executor_kind'])}) &middot; "
+      f"<strong>Deployment / model evidence:</strong> "
+      f"<code>{_esc(subject['deployment_evidence'])}</code> "
+      f"&middot; <strong>Profile:</strong> {_esc(scope['profile'])} "
+      f"&middot; <strong>Scoped risk tier:</strong> "
+      f"{_esc(scope['risk_tier_label'])} "
       f"&middot; <strong>Subject class:</strong> "
-      f"{_esc(C.identifier_label(pkg['subject_kind']))}</p>")
+      f"{_esc(scope['subject_kind_label'])}</p>")
 
-    evaluation = evaluation_view.summarize(run_id)
-    banner = (pkg["grant_status"] if formal else
+    banner = (view["status"]["grant_status"] if formal else
               "ENGINEERING EVALUATION " +
               str(evaluation.get("status", "not-scored")).upper())
     w(f"<div class='banner grant'>{_esc(banner)}</div>")
-    admission = pkg.get("rating_admission") or {}
+    admission = view["qualification"]["rating_admission"]
     if formal and admission.get("advisory_ratings", 0):
         reason = admission.get("reviewer_reason") or "reviewer admission not recorded"
         w("<div class='banner nondec'><strong>ADVISORY AUTOMATED REVIEW</strong> "
@@ -101,7 +107,7 @@ def render_html(run_id: str, *, matrix: dict | None = None) -> str:
           "qualification scoring. Reviewer admission permits corroborating peer review, "
           "not automated-only qualification evidence. "
           f"{_esc(reason)} (AIES-AESQS-ER-01-R10; ADR-0012)</div>")
-    nondec = [a for a, d in pkg["areas"].items() if not d["decisional"]]
+    nondec = view["qualification"]["nondecisional_areas"]
     if formal and nondec:
         w(f"<div class='banner nondec'>NON-DECISIONAL — sample below the AESQS "
           f"minimum for {_esc(', '.join(C.competency_label(area) for area in nondec))} (AIES-AESQS-CS-01 §6). "
@@ -109,7 +115,8 @@ def render_html(run_id: str, *, matrix: dict | None = None) -> str:
 
     w("<h2>Engineering Evaluation</h2>")
     w(f"<p><strong>Evaluation status: {_esc(str(evaluation.get('status', 'not-scored')).upper())}</strong>"
-      f" &middot; <strong>Human evaluation:</strong> {_esc(_human_evaluation_label(evaluation))}</p>")
+      f" &middot; <strong>Human evaluation:</strong> "
+      f"{_esc(view['status']['human_evaluation_label'])}</p>")
     w("<p class=muted>Automated scores are sufficient to complete this informational "
       "engineering evaluation and its ECM decision products. Human evaluation is "
       "optional here; formal qualification and grants use a separate explicit protocol.</p>")
@@ -125,7 +132,7 @@ def render_html(run_id: str, *, matrix: dict | None = None) -> str:
           f"<td>{automated.get('responses_scored', 0)}/{automated.get('responses_total', 0)} "
           f"({automated.get('coverage_percent', 0):.1f}%)</td>"
           f"<td>{_esc(mean_value if mean_value is not None else '—')}</td>"
-          f"<td>{_esc(_human_evaluation_label(evaluation))}</td>"
+          f"<td>{_esc(view['status']['human_evaluation_label'])}</td>"
           f"<td><strong>{_esc(status)}</strong></td></tr>")
     w("</table>")
 
@@ -137,12 +144,12 @@ def render_html(run_id: str, *, matrix: dict | None = None) -> str:
             w(f"<h3>{_esc(C.competency_label(area))}</h3>")
             w("<table><tr><th>Dimension</th><th>Automated review</th>"
               "<th>Human eval (optional)</th></tr>")
-            for dim in C.DIMENSIONS:
-                automated = _source_cell(
-                    source_scores.get(area, {}), "automated", dim)
-                human = _source_cell(
-                    source_scores.get(area, {}), "human", dim)
-                w(f"<tr><td>{_esc(C.identifier_label(dim))}</td>"
+            for dimension in area_models[area]["dimensions"]:
+                automated = report_view.source_display(
+                    dimension["sources"]["automated"])
+                human = report_view.source_display(
+                    dimension["sources"]["human"])
+                w(f"<tr><td>{_esc(dimension['label'])}</td>"
                   f"<td>{_esc(automated)}</td><td>{_esc(human)}</td></tr>")
             w("</table>")
         if human_review:
@@ -160,8 +167,7 @@ def render_html(run_id: str, *, matrix: dict | None = None) -> str:
         w(f"<tr><td>fingerprint</td><td><code>"
           f"{_esc(fp.get('fingerprint_hash','unknown'))}</code></td></tr></table>")
         from . import diagnostics, ecm
-        w(diagnostics.render_report_section_html(diagnostics.summarize(run_id)))
-        matrix = matrix or ecm.engineering_capability_matrix(run_id)
+        w(diagnostics.render_report_section_html(diagnostic_summary))
         w(ecm.render_capability_summary_html(matrix))
         w("<h2>Optional Formal Qualification</h2><p>Formal qualification was "
           "<strong>not requested</strong> and therefore has no readiness verdict "
@@ -172,28 +178,32 @@ def render_html(run_id: str, *, matrix: dict | None = None) -> str:
           "<a href='engineering-fit-guidance.html'>Engineering Fit Guidance</a> &middot; "
           "<a href='grounding-diagnostics.html'>Grounding Diagnostics</a> &middot; "
           "<a href='engineering-capability-matrix.html'>Engineering Capability Matrix</a></p>")
-        w("<footer>Raters: " + _esc(", ".join(pkg["raters"])) +
-          f" &middot; Aggregated {_esc(pkg['aggregated_at'])} &middot; "
+        provenance = view["provenance"]
+        w("<footer>Raters: " + _esc(", ".join(provenance["raters"])) +
+          f" &middot; Aggregated {_esc(provenance['aggregated_at'])} &middot; "
           "Generated by AIES Engineering Assessment Platform.</footer>")
         w("</body></html>")
         return "".join(p)
 
-    from .report import _area_verdict, _gate_status, _overall_readiness
     w("<h2>Grant Readiness (Formal Qualification)</h2>")
     w("<table><tr><th>Area</th><th>Decisional</th><th>Gates</th><th>CL</th>"
       "<th>Verdict — informs a human grant</th></tr>")
-    verdicts = {}
-    for area, d in pkg["areas"].items():
-        verdict, why = _area_verdict(d)
-        verdicts[area] = verdict
-        gates = _gate_status(d)
+    for area_model in view["areas"]:
+        area = area_model["code"]
+        verdict = area_model["readiness"]["verdict"]
+        why = area_model["readiness"]["reason"]
+        gates = area_model["readiness"]["gate_status"]
+        evidence = area_model["evidence"]
+        competency = area_model["competency_level"]
         verdict_class = "pass" if verdict == "THRESHOLD MET" else "fail"
         w(f"<tr><td>{_esc(C.competency_label(area))}</td>"
-          f"<td>{'yes' if d['decisional'] else 'no'}</td><td>{gates}</td>"
-          f"<td>{_esc(C.identifier_label(d['cl']) if d.get('cl') else '-')}</td>"
+          f"<td>{'yes' if evidence['decisional'] else 'no'}</td><td>{gates}</td>"
+          f"<td>{_esc(competency['label'] or '-')}</td>"
           f"<td class={verdict_class}><strong>{_esc(verdict)}</strong> — {_esc(why)}</td></tr>")
     w("</table>")
-    readiness, blocked = _overall_readiness(verdicts)
+    readiness_model = view["qualification"]["readiness"]
+    readiness = readiness_model["status"]
+    blocked = readiness_model["blocked_areas"]
     if readiness == "READY":
         w("<p class='pass'><strong>Overall: READY</strong> — every scoped area "
           "is decisional and passes its gates. This is not a grant; a named "
@@ -203,9 +213,8 @@ def render_html(run_id: str, *, matrix: dict | None = None) -> str:
         w(f"<p class='fail'><strong>Overall: BLOCKED</strong> — formal qualification "
           f"is not grant-ready for {_esc(labels)}. This does not block the completed "
           "Engineering Evaluation above.</p>")
-    threshold_met = sum(1 for d in pkg["areas"].values()
-                        if d["decisional"] and d.get("gates_passed") and not d.get("ev3_hard_fail"))
-    w(f"<p><strong>Qualification coverage:</strong> {threshold_met}/{len(pkg['areas'])} "
+    w(f"<p><strong>Qualification coverage:</strong> "
+      f"{readiness_model['threshold_met_areas']}/{readiness_model['total_areas']} "
       "scoped areas meet the admitted-evidence threshold. This is not a grant; "
       "a named human authority records any grant.</p>")
 
@@ -235,18 +244,20 @@ def render_html(run_id: str, *, matrix: dict | None = None) -> str:
     w("<h2>Detailed qualification evidence</h2>")
     w("<p class=muted>Expand an area for its dimension-level scores, gates, and policy envelope. "
       "The Grant Readiness table above remains the authoritative summary.</p>")
-    for area, d in pkg["areas"].items():
-        w(f"<details><summary>{_esc(C.competency_label(area))} — "
-          f"{_esc(C.risk_tier_label(pkg['risk_tier']))} detailed evidence</summary>")
-        protocol = d.get("rater_protocol") or {}
-        w(f"<p class=muted>Suite <code>{_esc(pkg['suite_versions'].get(area,'?'))}</code> "
-          f"&middot; resolved evidence items: {d['n_scored']} "
-          f"&middot; verified admitted observations: {d.get('admitted_ratings', 0)} "
+    for area_model in view["areas"]:
+        area = area_model["code"]
+        evidence = area_model["evidence"]
+        protocol = area_model["rater_protocol"]
+        w(f"<details><summary>{_esc(area_model['label'])} — "
+          f"{_esc(scope['risk_tier_label'])} detailed evidence</summary>")
+        w(f"<p class=muted>Suite <code>{_esc(area_model['suite_version'])}</code> "
+          f"&middot; resolved evidence items: {evidence['resolved_items']} "
+          f"&middot; verified admitted observations: {evidence['admitted_observations']} "
           f"&middot; distinct scored scenarios: "
-          f"{d.get('n_distinct_scenarios', d['n_scored'])} (adequacy minimum {d['min_sample']} by "
-          f"{'distinct scenarios' if d.get('sample_adequacy_basis') == 'distinct_scenarios' else 'legacy scored items'}) "
-          f"&middot; advisory automated ratings: {d.get('advisory_ratings', 0)} "
-          f"&middot; decisional: {'yes' if d['decisional'] else 'NO'}</p>")
+          f"{evidence['distinct_scenarios']} (adequacy minimum {evidence['minimum']} by "
+          f"{'distinct scenarios' if evidence['adequacy_basis'] == 'distinct_scenarios' else 'legacy scored items'}) "
+          f"&middot; advisory automated ratings: {evidence['advisory_automated_ratings']} "
+          f"&middot; decisional: {'yes' if evidence['decisional'] else 'NO'}</p>")
         if protocol:
             status = "SATISFIED" if protocol.get("satisfied") else "INCOMPLETE"
             w(f"<p><strong>Rater protocol: {_esc(status)}</strong> &middot; verified items "
@@ -260,57 +271,60 @@ def render_html(run_id: str, *, matrix: dict | None = None) -> str:
         w("<table><tr><th>Dimension</th><th>Automated review</th>"
           "<th>Human eval (optional)</th><th>Resolved item n</th><th>Resolved item mean</th><th>90% CI</th>"
           "<th>Decision value</th><th>Gate</th><th>Result</th></tr>")
-        gates = {g["dimension"]: g for g in d["gates"]}
-        for dim in C.DIMENSIONS:
-            ds = d["dimensions"].get(dim)
-            g = gates.get(dim, {})
-            automated = _source_cell(source_scores.get(area, {}), "automated", dim)
-            human = _source_cell(source_scores.get(area, {}), "human", dim)
-            cls = "pass" if g.get("passed") else "fail"
-            res = "PASS" if g.get("passed") else "FAIL"
+        for dimension in area_model["dimensions"]:
+            ds = dimension["resolved"]
+            gate = dimension["gate"]
+            automated = report_view.source_display(
+                dimension["sources"]["automated"])
+            human = report_view.source_display(
+                dimension["sources"]["human"])
+            cls = "pass" if gate["passed"] else "fail"
+            res = gate["status"]
             if ds:
-                w(f"<tr><td>{_esc(C.identifier_label(dim))}</td>"
+                w(f"<tr><td>{_esc(dimension['label'])}</td>"
                   f"<td>{_esc(automated)}</td><td>{_esc(human)}</td><td>{ds['n']}</td>"
                   f"<td>{ds['mean']}</td><td>[{ds['ci90_low']}, {ds['ci90_high']}]</td>"
-                  f"<td><strong>{ds['ci90_low']}</strong></td>"
-                  f"<td>&ge; {g.get('threshold','-')}</td>"
+                  f"<td><strong>{ds['decision_value']}</strong></td>"
+                  f"<td>&ge; {gate['threshold'] if gate['threshold'] is not None else '-'}</td>"
                   f"<td class={cls}>{res}</td></tr>")
             else:
-                w(f"<tr><td>{_esc(C.identifier_label(dim))}</td>"
+                w(f"<tr><td>{_esc(dimension['label'])}</td>"
                   f"<td>{_esc(automated)}</td><td>{_esc(human)}</td><td>0</td><td>-</td><td>-</td>"
-                  f"<td>-</td><td>&ge; {g.get('threshold','-')}</td>"
+                  f"<td>-</td><td>&ge; "
+                  f"{gate['threshold'] if gate['threshold'] is not None else '-'}</td>"
                   f"<td class=fail>FAIL</td></tr>")
         w("</table>")
         w("<p class=muted>Automated-review and human-review values are displayed "
           "separately. A human score is optional for this evidence view; a named "
           "human authority is still required for any grant.</p>")
-        if d["ev3_hard_fail"]:
+        if area_model["ev3_hard_fail"]:
             w("<p class=fail>EV3 hard gate failed — qualification must be denied at "
               "this tier regardless of the aggregate (AIES-AESQS-CS-01-R04).</p>")
-        agg = d["aggregate_A"]
+        agg = area_model["aggregate"]
+        competency = area_model["competency_level"]
         w(f"<p><strong>Aggregate A (decision values, profile-weighted):</strong> "
           f"{agg if agg is not None else '-'} &middot; "
-          f"<strong>Score-bounded CL:</strong> {_esc(C.identifier_label(d['cl']) if d['cl'] else 'none')}</p>")
+          f"<strong>Score-bounded CL:</strong> {_esc(competency['label'] or 'none')}</p>")
         w("<p class=muted>Derived policy envelope only: this run directly assesses "
-          f"{_esc(C.risk_tier_label(pkg['risk_tier']))}; it does not establish evidence at other tiers.</p>")
+          f"{_esc(scope['risk_tier_label'])}; it does not establish evidence at other tiers.</p>")
         w("<table><tr><th>Risk tier</th><th>Recommended max AL</th></tr>")
-        for tier, al in d["al_envelope"].items():
-            w(f"<tr><td><strong>{_esc(C.risk_tier_label(tier))}</strong></td>"
-              f"<td><strong>{_esc(C.autonomy_level_label(al))}</strong></td></tr>")
+        for envelope in area_model["autonomy_envelope"]:
+            w(f"<tr><td><strong>{_esc(envelope['risk_tier_label'])}</strong></td>"
+              f"<td><strong>{_esc(envelope['autonomy_level_label'])}</strong></td></tr>")
         w("</table>")
         w("</details>")
 
     from . import diagnostics, ecm
-    w(diagnostics.render_report_section_html(diagnostics.summarize(run_id)))
-    matrix = matrix or ecm.engineering_capability_matrix(run_id)
+    w(diagnostics.render_report_section_html(diagnostic_summary))
     w(ecm.render_capability_summary_html(matrix))
     w("<p><a href='executive-summary.html'>Executive Summary</a> &middot; "
       "<a href='deployment-guidance.html'>Deployment Guidance</a> &middot; "
       "<a href='grounding-diagnostics.html'>Grounding Diagnostics</a> &middot; "
       "<a href='engineering-capability-matrix.html'>Engineering Capability Matrix</a></p>")
 
-    w("<footer>Raters: " + _esc(", ".join(pkg["raters"]))
-      + f" &middot; Aggregated {_esc(pkg['aggregated_at'])}"
+    provenance = view["provenance"]
+    w("<footer>Raters: " + _esc(", ".join(provenance["raters"]))
+      + f" &middot; Aggregated {_esc(provenance['aggregated_at'])}"
       " &middot; A comparison or report is presentation over existing evidence; "
       "it makes no additional claims. Generated by AIES Engineering Assessment Platform "
       "(docs/PLATFORM.md, AIES-DOC-06).</footer>")

@@ -8,6 +8,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Shared per-run factual report contract**: Markdown, HTML, the additive
+  `aies-run-report-view` JSON artifact, bundle index, run inventory, safe
+  export, and `GET /runs/{id}/report-view` now consume one report context
+  computed once per bundle. The canonical Evidence Package and legacy
+  `report.json` contracts remain unchanged. Golden shape, stored-artifact API,
+  workspace-classification, and single-build regression tests prevent future
+  renderer drift and give a frontend a versioned read-only contract.
+- **True interactive progress heartbeat**: long candidate or judge calls now
+  refresh elapsed time and active work every second even before the first call
+  completes. Interactive output is terminal-width bounded and rotates through
+  concurrent tasks without wrapped-line debris; multi-area runs use global
+  task ordinals. Restrained semantic colors distinguish stage, completion,
+  warming ETA, failures, and active capacity while preserving text labels and
+  respecting `NO_COLOR`, `TERM=dumb`, and redirected output. ETA is explicitly
+  calculating until observed throughput
+  exists, or starts from a declared deployment estimate, then continuously
+  updates from measured completions and reaches zero at stage completion.
 - **Versioned run-detail consumer contract**: added the informational,
   read-only `aies-run-view` contract shared by `aies runs show RUN` and
   `GET /runs/{id}`. The view exposes subject and human-readable scope,

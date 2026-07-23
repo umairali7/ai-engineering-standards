@@ -25,6 +25,7 @@ _RUN_RESULT = re.compile(r"^/runs/([^/]+)/result$")
 _RUN_EVIDENCE = re.compile(r"^/runs/([^/]+)/evidence$")
 _RUN_FORMAL_RESULT = re.compile(r"^/runs/([^/]+)/formal-result$")
 _RUN_REPORT = re.compile(r"^/runs/([^/]+)/report$")
+_RUN_REPORT_VIEW = re.compile(r"^/runs/([^/]+)/report-view$")
 _RUN_BUNDLE = re.compile(r"^/runs/([^/]+)/bundle$")
 _RUN_EVALUATION = re.compile(r"^/runs/([^/]+)/engineering-evaluation$")
 _RUN_ECM = re.compile(r"^/runs/([^/]+)/ecm$")
@@ -59,7 +60,8 @@ def route(path: str) -> tuple[int, dict]:
                                    "/runs/{id}",
                                    "/runs/{id}/evidence", "/runs/{id}/result",
                                    "/runs/{id}/formal-result",
-                                   "/runs/{id}/report", "/runs/{id}/bundle",
+                                   "/runs/{id}/report", "/runs/{id}/report-view",
+                                   "/runs/{id}/bundle",
                                    "/runs/{id}/engineering-evaluation",
                                    "/runs/{id}/ecm", "/runs/{id}/guidance",
                                    "/runs/{id}/executive-summary",
@@ -108,6 +110,9 @@ def route(path: str) -> tuple[int, dict]:
     m = _RUN_REPORT.match(path)
     if m:
         return _run_artifact(m.group(1), "report.json")
+    m = _RUN_REPORT_VIEW.match(path)
+    if m:
+        return _run_artifact(m.group(1), "report-view.json")
     m = _RUN_BUNDLE.match(path)
     if m:
         return _run_artifact(m.group(1), "report-bundle.json")

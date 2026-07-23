@@ -9,140 +9,72 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from statistics import mean
 
 from . import constants as C
 from . import workspace
 
 
 def _area_verdict(d: dict) -> tuple[str, str]:
-    """Grant-readiness verdict for one area (informs a human decision; the
-    platform never grants)."""
-    protocol = d.get("rater_protocol") or {}
-    if protocol and not protocol.get("satisfied"):
-        reasons = protocol.get("reasons") or ["verified human-rater protocol incomplete"]
-        return "BLOCKED", "rater protocol incomplete: " + "; ".join(reasons)
-    if not d["decisional"]:
-        distinct = d.get("sample_adequacy_basis") == "distinct_scenarios"
-        n = d.get("n_distinct_scenarios", d["n_scored"]) if distinct else d["n_scored"]
-        unit = "distinct scenarios" if distinct else "scored items"
-        return "BLOCKED", f"non-decisional ({n}/{d['min_sample']} {unit})"
-    if d.get("ev3_hard_fail"):
-        return "BLOCKED", "EV3 safety hard gate failed"
-    if not d.get("gates_passed", True):
-        failed = [g["dimension"] for g in d["gates"] if not g["passed"]]
-        return "BLOCKED", f"gate failure: {', '.join(failed)}"
-    return "THRESHOLD MET", f"admitted evidence informs a human grant review up to {d.get('cl') or 'CL?'}"
+    from .report_view import area_verdict
+    return area_verdict(d)
 
 
 def _gate_status(d: dict) -> str:
-    """Render gate state without turning missing evidence into a failure."""
-    if not d.get("n_scored") or not d.get("dimensions"):
-        return "NOT EVALUATED"
-    if (d.get("rater_protocol") or {}).get("satisfied") is False:
-        return "NOT ADMITTED"
-    return ("PASS" if d.get("gates_passed") and not d.get("ev3_hard_fail")
-            else "FAIL")
+    from .report_view import gate_status
+    return gate_status(d)
 
 
 def _overall_readiness(verdicts: dict[str, str]) -> tuple[str, list[str]]:
-    """Summarize the factual per-area verdicts using their actual vocabulary."""
-    blocked = [area for area, verdict in verdicts.items()
-               if verdict != "THRESHOLD MET"]
-    return ("READY" if not blocked else "BLOCKED", blocked)
+    from .report_view import overall_readiness
+    return overall_readiness(verdicts)
 
 
 def _residual_risks(pkg: dict) -> list[str]:
-    risks: list[str] = []
-    if (pkg.get("rating_admission") or {}).get("advisory_ratings", 0):
-        risks.append("Scores are **judge-produced** — advisory until the judge is "
-                     "calibrated against human anchors (AIES-AESQS-PR-01-R09).")
-    for area, d in pkg["areas"].items():
-        area = C.competency_label(area)
-        if not d["decisional"]:
-            protocol = d.get("rater_protocol") or {}
-            if protocol and not protocol.get("satisfied"):
-                remedy = "complete verified human-rater admission, independence, agreement, and double-rating coverage"
-            else:
-                basis = d.get("sample_adequacy_basis")
-                remedy = ("collect more distinct scenarios; exact repeats do not repair breadth"
-                          if basis == "distinct_scenarios"
-                          else "collect more independently admissible evidence")
-            risks.append(f"**{area}**: non-decisional — {remedy}.")
-        for g in d["gates"]:
-            dv, th = g.get("decision_value"), g.get("threshold")
-            if g.get("passed") and dv is not None and th is not None and (dv - th) < 0.5:
-                sev = " — **safety gate**" if g["dimension"] == "EV3" else ""
-                risks.append(f"**{area} {g['dimension']}**: passed by a thin margin "
-                             f"(decision value {dv} vs threshold {th}){sev}.")
-    if not risks:
-        risks.append("No elevated residual risk flagged by the platform; a named "
-                     "human still owns the grant decision (D8).")
-    return risks
+    from .report_view import _residual_risks as residual_risks
+    return [risk["message"] for risk in residual_risks(pkg)]
 
 
 def _score_sources(run_id: str) -> dict[str, dict[str, dict[str, list[int]]]]:
-    """Return per-area, per-source EV observations for report transparency.
-
-    The evidence aggregate remains the canonical scored result. These source
-    columns make it clear whether that evidence came from an automated reviewer,
-    an optional human rater, or another imported automated source.
-    """
-    from . import rating
-
-    rdir = workspace.run_dir(run_id)
-    response_areas = {
-        p.name: workspace.read_json(p).get("area", "unknown")
-        for p in (rdir / "responses").glob("*.json")
-    }
-    out: dict[str, dict[str, dict[str, list[int]]]] = {}
-    for record in rating.collect_ratings(run_id):
-        kind = (record.get("provenance") or {}).get("rater_kind", "unknown")
-        source = "human" if kind == "human" else "automated"
-        area = response_areas.get(record.get("rates_response"), "unknown")
-        buckets = out.setdefault(area, {}).setdefault(
-            source, {dimension: [] for dimension in C.DIMENSIONS})
-        for dimension, score in (record.get("scores") or {}).items():
-            if dimension in buckets and isinstance(score, int):
-                buckets[dimension].append(score)
-    return out
+    from .report_view import _source_observations
+    return _source_observations(run_id)
 
 
 def _source_cell(sources: dict, source: str, dimension: str) -> str:
-    values = sources.get(source, {}).get(dimension, [])
-    return f"{round(mean(values), 3)} (n={len(values)})" if values else "—"
+    from .report_view import _source_stat, source_display
+    return source_display(_source_stat(sources, source, dimension))
 
 
 def _human_review_record(run_id: str) -> dict | None:
-    """Read the optional human consideration declared through `aies review`."""
-    path = workspace.run_dir(run_id) / "review-package.json"
-    if not path.exists():
-        return None
-    return (workspace.read_json(path).get("human_consideration") or None)
+    from .report_view import _human_review
+    return _human_review(run_id)
 
 
 def _human_evaluation_label(evaluation_summary: dict) -> str:
-    record = evaluation_summary.get("human_evaluation") or {}
-    if record.get("status") == "reviewed":
-        return f"☑ Reviewed — {record.get('evaluator') or 'named human'}"
-    return "☐ Not reviewed (optional)"
+    from .report_view import human_evaluation_label
+    return human_evaluation_label(evaluation_summary)
 
 
-def render_json(run_id: str) -> str:
-    from . import evaluation as evaluation_view, run_mode
+def render_json(run_id: str, *, context=None) -> str:
+    """Render the backward-compatible report JSON contract.
 
-    rdir = workspace.run_dir(run_id)
-    pkg = workspace.read_json(rdir / "evidence-package.json")
-    manifest = workspace.read_json(rdir / "manifest.json")
-    if run_mode.is_formal(manifest):
+    Formal runs historically expose the Evidence Package at ``report.json``;
+    engineering runs retain ``engineering_report_schema: 1``. The richer
+    shared model is written separately as ``report-view.json``.
+    """
+    from . import report_view
+
+    context = context or report_view.build_context(run_id)
+    pkg = context.package
+    view = context.view
+    if view["formal_qualification_requested"]:
         return json.dumps(pkg, indent=2)
     return json.dumps({
         "kind": "engineering-evaluation-report",
         "engineering_report_schema": 1,
         "run_id": run_id,
-        "status": evaluation_view.summarize(run_id)["status"],
-        "run_purpose": run_mode.purpose(manifest),
-        "engineering_evaluation": evaluation_view.summarize(run_id),
+        "status": view["status"]["engineering_evaluation"],
+        "run_purpose": view["run_purpose"],
+        "engineering_evaluation": view["engineering_evaluation"],
         "formal_qualification": {"status": "not-requested"},
         "canonical_evidence": {
             "artifact": "evidence-package.json",
@@ -158,38 +90,53 @@ def render_json(run_id: str) -> str:
     }, indent=2)
 
 
-def render_markdown(run_id: str, *, matrix: dict | None = None) -> str:
-    from . import diagnostics, evaluation as evaluation_view, run_mode
+def render_view_json(run_id: str, *, context=None) -> str:
+    from . import report_view
 
-    rdir = workspace.run_dir(run_id)
-    pkg = workspace.read_json(rdir / "evidence-package.json")
-    manifest = workspace.read_json(rdir / "manifest.json")
-    formal = run_mode.is_formal(manifest)
-    fp = pkg["environment_fingerprint"]
-    source_scores = _score_sources(run_id)
-    human_review = _human_review_record(run_id)
+    context = context or report_view.build_context(run_id)
+    return json.dumps(context.view, indent=2) + "\n"
+
+
+def render_markdown(
+    run_id: str,
+    *,
+    matrix: dict | None = None,
+    context=None,
+) -> str:
+    from . import diagnostics, report_view
+
+    context = context or report_view.build_context(run_id, matrix=matrix)
+    view = context.view
+    formal = view["formal_qualification_requested"]
+    fp = view["environment"]
+    human_review = view["human_review"]
+    evaluation = view["engineering_evaluation"]
+    diagnostic_summary = view["grounding_diagnostics"]
+    matrix = context.matrix
+    area_models = {area["code"]: area for area in view["areas"]}
     lines: list[str] = []
     a = lines.append
 
-    a("# AIES Qualification Evidence Package" if formal
-      else "# AIES Engineering Evaluation Report")
+    a(f"# {view['title']}")
     a("")
-    a(f"**Run:** `{pkg['run_id']}`  ")
-    subject = pkg.get("subject") or {}
-    a(f"**Subject:** `{subject.get('id', pkg['model']['registry_id'])}` "
-      f"({subject.get('kind', 'ai_deployment')}; executor: "
-      f"{subject.get('executor_kind', 'deployment')})  ")
-    a(f"**Deployment / model evidence:** `{pkg['model']['registry_id']}` "
-      f"({pkg['model']['checksum']})  ")
-    a(f"**Profile:** {pkg['profile']} | **Scoped risk tier:** {C.risk_tier_label(pkg['risk_tier'])} | "
-      f"**Assessment subject class:** {C.identifier_label(pkg['subject_kind'])}")
+    a(f"**Run:** `{view['run_id']}`  ")
+    subject = view["subject"]
+    scope = view["scope"]
+    a(f"**Subject:** `{subject['id']}` "
+      f"({subject['kind']}; executor: {subject['executor_kind']})  ")
+    a(f"**Deployment / model evidence:** "
+      f"`{subject['deployment_evidence']}` ({subject['checksum']})  ")
+    a(f"**Profile:** {scope['profile']} | **Scoped risk tier:** "
+      f"{scope['risk_tier_label']} | **Assessment subject class:** "
+      f"{scope['subject_kind_label']}")
     a("")
-    a(f"> **{pkg['grant_status'].upper()}**" if formal
+    a(f"> **{view['status']['grant_status'].upper()}**" if formal
       else f"> **ENGINEERING EVALUATION "
-           f"{evaluation_view.summarize(run_id)['status'].upper()}**")
+           f"{view['status']['engineering_evaluation'].upper()}**")
     a("")
 
-    if formal and (pkg.get("rating_admission") or {}).get("advisory_ratings", 0):
+    admission = view["qualification"]["rating_admission"]
+    if formal and admission.get("advisory_ratings", 0):
         a("> **SCORES ARE JUDGE-PRODUCED (automated).** A judge model rated these "
           "responses; scores reflect the judge's opinion, not ground truth. "
           "Automated ratings are retained as engineering-evaluation and "
@@ -197,14 +144,13 @@ def render_markdown(run_id: str, *, matrix: dict | None = None) -> str:
           "qualification evidence (AIES-AESQS-ER-01-R10; ADR-0012).")
         a("")
 
-    nondecisional = [area for area, d in pkg["areas"].items() if not d["decisional"]]
+    nondecisional = view["qualification"]["nondecisional_areas"]
     if formal and nondecisional:
         a("> **NON-DECISIONAL** - sample below the AESQS minimum for "
           f"{', '.join(C.competency_label(area) for area in nondecisional)} (AIES-AESQS-CS-01 §6). These results "
           "MUST NOT be presented as qualification evidence.")
         a("")
 
-    evaluation = evaluation_view.summarize(run_id)
     a("## Engineering Evaluation")
     a("")
     a(f"**Evaluation status: {str(evaluation.get('status', 'not-scored')).upper()}**  ")
@@ -230,7 +176,7 @@ def render_markdown(run_id: str, *, matrix: dict | None = None) -> str:
           f"{_human_evaluation_label(evaluation)} | **{status}** |")
     a("")
     a(diagnostics.render_report_section_markdown(
-        diagnostics.summarize(run_id)).rstrip())
+        diagnostic_summary).rstrip())
     a("")
 
     if not formal:
@@ -244,10 +190,10 @@ def render_markdown(run_id: str, *, matrix: dict | None = None) -> str:
             a("")
             a("| Dimension | Automated review | Human eval (optional) |")
             a("|---|---:|---:|")
-            for dim in C.DIMENSIONS:
-                a(f"| {C.identifier_label(dim)} | "
-                  f"{_source_cell(source_scores.get(area, {}), 'automated', dim)} | "
-                  f"{_source_cell(source_scores.get(area, {}), 'human', dim)} |")
+            for dimension in area_models[area]["dimensions"]:
+                a(f"| {dimension['label']} | "
+                  f"{report_view.source_display(dimension['sources']['automated'])} | "
+                  f"{report_view.source_display(dimension['sources']['human'])} |")
             a("")
         a("## Environment Fingerprint")
         a("")
@@ -260,7 +206,6 @@ def render_markdown(run_id: str, *, matrix: dict | None = None) -> str:
         a(f"| fingerprint | `{fp.get('fingerprint_hash', 'unknown')}` |")
         a("")
         from . import ecm
-        matrix = matrix or ecm.engineering_capability_matrix(run_id)
         a(ecm.render_capability_summary_markdown(matrix).rstrip())
         a("")
         a("## Optional Formal Qualification")
@@ -277,8 +222,9 @@ def render_markdown(run_id: str, *, matrix: dict | None = None) -> str:
           "(executive-summary.md).")
         a("")
         a("---")
-        a(f"Raters: {', '.join(pkg['raters'])} | Aggregated: "
-          f"{pkg['aggregated_at']} | Generated by AIES Engineering Assessment "
+        provenance = view["provenance"]
+        a(f"Raters: {', '.join(provenance['raters'])} | Aggregated: "
+          f"{provenance['aggregated_at']} | Generated by AIES Engineering Assessment "
           "Platform (see docs/PLATFORM.md, AIES-DOC-06)")
         a("")
         return "\n".join(lines)
@@ -288,15 +234,17 @@ def render_markdown(run_id: str, *, matrix: dict | None = None) -> str:
     a("")
     a("| Area | Decisional | Gates | CL | Verdict — informs a human grant |")
     a("|---|---|---|---|---|")
-    verdicts = {}
-    for area, d in pkg["areas"].items():
-        v, why = _area_verdict(d)
-        verdicts[area] = v
-        gates = _gate_status(d)
-        a(f"| {C.competency_label(area)} | {'yes' if d['decisional'] else '**no**'} | {gates} | "
-          f"{d.get('cl') or '-'} | **{v}** — {why} |")
+    for area in view["areas"]:
+        readiness = area["readiness"]
+        competency = area["competency_level"]
+        a(f"| {area['label']} | "
+          f"{'yes' if area['evidence']['decisional'] else '**no**'} | "
+          f"{readiness['gate_status']} | "
+          f"{competency['label'] or '-'} | "
+          f"**{readiness['verdict']}** — {readiness['reason']} |")
     a("")
-    readiness, blocked = _overall_readiness(verdicts)
+    readiness = view["qualification"]["readiness"]["status"]
+    blocked = view["qualification"]["readiness"]["blocked_areas"]
     if readiness == "READY":
         a("**Overall: READY** — every scoped area is decisional and passes its "
           "gates. A named human authority may record a grant "
@@ -308,8 +256,8 @@ def render_markdown(run_id: str, *, matrix: dict | None = None) -> str:
     a("")
     a("### Residual risk")
     a("")
-    for r in _residual_risks(pkg):
-        a(f"- {r}")
+    for risk in view["qualification"]["residual_risks"]:
+        a(f"- {risk['message']}")
     a("")
 
     if human_review:
@@ -341,18 +289,25 @@ def render_markdown(run_id: str, *, matrix: dict | None = None) -> str:
       "re-qualification trigger (PLATFORM.md D7).")
     a("")
 
-    for area, d in pkg["areas"].items():
-        a(f"## {C.competency_label(area)} — {C.risk_tier_label(pkg['risk_tier'])}")
+    for area in view["areas"]:
+        evidence = area["evidence"]
+        a(f"## {area['label']} — {view['scope']['risk_tier_label']}")
         a("")
-        protocol = d.get("rater_protocol") or {}
-        a(f"Suite version: `{pkg['suite_versions'].get(area, 'unknown')}` | "
-          f"resolved evidence items: {d['n_scored']}; verified admitted observations: "
-          f"{d.get('admitted_ratings', 0)}; distinct scored scenarios: "
-          f"{d.get('n_distinct_scenarios', d['n_scored'])} "
-          f"(adequacy minimum {d['min_sample']} by "
-          f"{'distinct scenarios' if d.get('sample_adequacy_basis') == 'distinct_scenarios' else 'legacy scored items'}); "
-          f"advisory automated ratings: {d.get('advisory_ratings', 0)} | "
-          f"decisional: {'**yes**' if d['decisional'] else '**NO**'}")
+        protocol = area["rater_protocol"]
+        basis = (
+            "distinct scenarios"
+            if evidence["adequacy_basis"] == "distinct_scenarios"
+            else "legacy scored items")
+        a(f"Suite version: `{area['suite_version']}` | "
+          f"resolved evidence items: {evidence['resolved_items']}; "
+          f"verified admitted observations: "
+          f"{evidence['admitted_observations']}; distinct scored scenarios: "
+          f"{evidence['distinct_scenarios']} "
+          f"(adequacy minimum {evidence['minimum']} by {basis}); "
+          f"advisory automated ratings: "
+          f"{evidence['advisory_automated_ratings']} | "
+          f"decisional: "
+          f"{'**yes**' if evidence['decisional'] else '**NO**'}")
         a("")
         if protocol:
             a(f"Rater protocol: **{'SATISFIED' if protocol.get('satisfied') else 'INCOMPLETE'}** | "
@@ -367,45 +322,52 @@ def render_markdown(run_id: str, *, matrix: dict | None = None) -> str:
             a("")
         a("| Dimension | Automated review | Human eval (optional) | Resolved item n | Resolved item mean | 90% CI | Decision value | Gate | Result |")
         a("|---|---|---|---|---|---|---|---|---|")
-        gates = {g["dimension"]: g for g in d["gates"]}
-        for dim in C.DIMENSIONS:
-            ds = d["dimensions"].get(dim)
-            g = gates.get(dim, {})
-            automated = _source_cell(source_scores.get(area, {}), "automated", dim)
-            human = _source_cell(source_scores.get(area, {}), "human", dim)
-            if ds:
-                a(f"| {C.identifier_label(dim)} | {automated} | {human} | "
-                  f"{ds['n']} | {ds['mean']} | "
-                  f"[{ds['ci90_low']}, {ds['ci90_high']}] | **{ds['ci90_low']}** | "
-                  f">= {g.get('threshold', '-')} | "
-                  f"{'PASS' if g.get('passed') else '**FAIL**'} |")
+        for dimension in area["dimensions"]:
+            resolved = dimension["resolved"]
+            gate = dimension["gate"]
+            automated = report_view.source_display(
+                dimension["sources"]["automated"])
+            human = report_view.source_display(
+                dimension["sources"]["human"])
+            if resolved:
+                a(f"| {dimension['label']} | {automated} | {human} | "
+                  f"{resolved['n']} | {resolved['mean']} | "
+                  f"[{resolved['ci90_low']}, {resolved['ci90_high']}] | "
+                  f"**{resolved['decision_value']}** | "
+                  f">= {gate['threshold'] if gate['threshold'] is not None else '-'} | "
+                  f"{'PASS' if gate['passed'] else '**FAIL**'} |")
             else:
-                a(f"| {C.identifier_label(dim)} | {automated} | {human} | "
+                a(f"| {dimension['label']} | {automated} | {human} | "
                   "0 | - | - | - | "
-                  f">= {g.get('threshold', '-')} | **FAIL** (no evidence) |")
+                  f">= {gate['threshold'] if gate['threshold'] is not None else '-'} | "
+                  "**FAIL** (no evidence) |")
         a("")
         a("Automated-review and human-review values are displayed separately. "
           "A human score is optional for this evidence view; a named human "
           "authority is still required for any grant.")
         a("")
-        for g in d["gates"]:
-            if not g["passed"] and g.get("reason"):
-                a(f"- FAIL **{g['dimension']}**: {g['reason']}")
-        if d["ev3_hard_fail"]:
+        for dimension in area["dimensions"]:
+            gate = dimension["gate"]
+            if not gate["passed"] and gate.get("reason"):
+                a(f"- FAIL **{dimension['label']}**: {gate['reason']}")
+        if area["ev3_hard_fail"]:
             a("- **EV3 HARD GATE FAILED** - qualification MUST be denied at "
               "this tier regardless of the aggregate (AIES-AESQS-CS-01-R04).")
         a("")
         a(f"**Aggregate A (over decision values, profile-weighted): "
-          f"{d['aggregate_A'] if d['aggregate_A'] is not None else '-'}**")
+          f"{area['aggregate'] if area['aggregate'] is not None else '-'}**")
         a("")
-        a(f"**Score-bounded competency level:** {C.identifier_label(d['cl']) if d['cl'] else 'none'} - {d['cl_note']}")
+        competency = area["competency_level"]
+        a(f"**Score-bounded competency level:** "
+          f"{competency['label'] or 'none'} - {competency['note']}")
         a("")
         a("### Recommended autonomy envelope (min of RT cap and CL-earned cap)")
         a("")
         a("| Risk tier | Recommended max AL |")
         a("|---|---|")
-        for rt, al in d["al_envelope"].items():
-            a(f"| **{C.risk_tier_label(rt)}** | **{C.autonomy_level_label(al)}** |")
+        for envelope in area["autonomy_envelope"]:
+            a(f"| **{envelope['risk_tier_label']}** | "
+              f"**{envelope['autonomy_level_label']}** |")
         a("")
         a("AL4 is never recommended at initial qualification "
           "(AIES-AESQS-CS-01-R08). Recommendations inform a human decision; "
@@ -413,7 +375,6 @@ def render_markdown(run_id: str, *, matrix: dict | None = None) -> str:
         a("")
 
     from . import ecm
-    matrix = matrix or ecm.engineering_capability_matrix(run_id)
     a(ecm.render_capability_summary_markdown(matrix).rstrip())
     a("")
     a("For the standalone, engineer-facing artifact, see the "
@@ -424,7 +385,9 @@ def render_markdown(run_id: str, *, matrix: dict | None = None) -> str:
     a("")
 
     a("---")
-    a(f"Raters: {', '.join(pkg['raters'])} | Aggregated: {pkg['aggregated_at']} | "
+    provenance = view["provenance"]
+    a(f"Raters: {', '.join(provenance['raters'])} | "
+      f"Aggregated: {provenance['aggregated_at']} | "
       f"Generated by AIES Engineering Assessment Platform (see docs/PLATFORM.md, AIES-DOC-06)")
     a("")
     return "\n".join(lines)
@@ -438,18 +401,24 @@ def write_reports(run_id: str) -> dict[str, str]:
     part of the evidence-package presentation bundle alongside the Markdown,
     JSON, and standalone Engineering Capability Matrix (ECM) views.
     """
-    from . import (decision, diagnostics, ecm, engineering_assessment, evaluation,
-                   executive_summary, guidance, report_html, run_mode)
+    from . import (decision, diagnostics, ecm, engineering_assessment,
+                   executive_summary, guidance, report_html, report_view,
+                   run_mode)
 
     rdir = workspace.run_dir(run_id)
     matrix = ecm.engineering_capability_matrix(run_id)
-    md = render_markdown(run_id, matrix=matrix)
+    context = report_view.build_context(run_id, matrix=matrix)
+    md = render_markdown(run_id, context=context)
     workspace.write_view(rdir / "report.md", md)
-    js = render_json(run_id)
+    js = render_json(run_id, context=context)
     workspace.write_view(rdir / "report.json", js)
+    report_view_path = rdir / "report-view.json"
+    workspace.write_view(
+        report_view_path, render_view_json(run_id, context=context))
     evaluation_path = rdir / "engineering-evaluation.json"
     workspace.write_view(
-        evaluation_path, json.dumps(evaluation.summarize(run_id), indent=2) + "\n")
+        evaluation_path,
+        json.dumps(context.view["engineering_evaluation"], indent=2) + "\n")
     ecm_contents = {
         "markdown": ecm.render_markdown(matrix),
         "json": json.dumps(matrix, indent=2) + "\n",
@@ -462,7 +431,8 @@ def write_reports(run_id: str) -> dict[str, str]:
         workspace.write_view(path, content)
         ecm_paths[f"ecm_{format}"] = str(path)
     html_path = rdir / "report.html"
-    workspace.write_view(html_path, report_html.render_html(run_id, matrix=matrix))
+    workspace.write_view(
+        html_path, report_html.render_html(run_id, context=context))
 
     # A declarative assessment produces its canonical outcome and three views.
     # Runs without an assessment still receive the other audience-specific
@@ -512,7 +482,7 @@ def write_reports(run_id: str) -> dict[str, str]:
     workspace.write_view(
         executive_paths["executive_html"], executive_summary.render_html(summary))
 
-    diagnostic_summary = diagnostics.summarize(run_id)
+    diagnostic_summary = context.view["grounding_diagnostics"]
     diagnostic_paths = {
         "diagnostics_markdown": rdir / "grounding-diagnostics.md",
         "diagnostics_json": rdir / "grounding-diagnostics.json",
@@ -528,7 +498,8 @@ def write_reports(run_id: str) -> dict[str, str]:
 
     paths = {
         "markdown": str(rdir / "report.md"), "json": str(rdir / "report.json"),
-        "html": str(html_path), "engineering_evaluation": str(evaluation_path),
+        "html": str(html_path), "report_view": str(report_view_path),
+        "engineering_evaluation": str(evaluation_path),
         **ecm_paths, **assessment_paths,
         **{f"{guidance_prefix}_{format}": path
            for format, path in guidance_paths.items()},

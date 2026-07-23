@@ -89,6 +89,14 @@ The `aies` command exposes the pipeline as composable verbs:
 
 Every verb MUST support `--json` output for automation, and every verb that produces evidence MUST write append-only records (§5.5).
 
+Complete report generation MUST compute one versioned, read-only
+`aies-run-report-view` and use that factual context for its Markdown, HTML,
+bundle-index, safe-export, and API presentations. The additive artifact is
+written as `report-view.json` and served verbatim by
+`GET /runs/{id}/report-view`. It is a regenerable consumer view, not evidence
+or a decision. The canonical Evidence Package and the historical
+`report.json` compatibility contracts remain separate and unchanged.
+
 ## 4. Package Architecture
 
 ```

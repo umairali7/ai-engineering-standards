@@ -15,6 +15,7 @@ def test_artifact_storage_classes_and_writers(tmp_path, monkeypatch):
     rdir = workspace.run_dir("run-test")
     response = rdir / "responses" / "item.json"
     report = rdir / "report.json"
+    report_view = rdir / "report-view.json"
     diagnostics = rdir / "grounding-diagnostics.json"
     evidence = rdir / "evidence-package.json"
     manifest = rdir / "manifest.json"
@@ -23,6 +24,7 @@ def test_artifact_storage_classes_and_writers(tmp_path, monkeypatch):
     assert workspace.artifact_class(response) == "append-only-record"
     assert workspace.artifact_class(qualification) == "append-only-record"
     assert workspace.artifact_class(report) == "regenerable-view"
+    assert workspace.artifact_class(report_view) == "regenerable-view"
     assert workspace.artifact_class(diagnostics) == "regenerable-view"
     assert workspace.artifact_class(evidence) == "derived-canonical-snapshot"
     assert workspace.artifact_class(manifest) == "mutable-working-state"

@@ -1928,7 +1928,17 @@ def cmd_runs(args) -> int:
                 recovery_command="aies runs list",
             )
         event = workspace.read_json(path)
-        eta = "—" if event.get("eta_seconds") is None else f"{event['eta_seconds']:.0f}s"
+        from .progress import format_duration
+        if event.get("eta_seconds") is None:
+            eta = "calculating (waiting for first completion)"
+        elif event.get("eta_basis") == "deployment-declaration":
+            eta = (
+                f"~{format_duration(event['eta_seconds'])} "
+                "(deployment declaration)")
+        else:
+            eta = (
+                f"~{format_duration(event['eta_seconds'])} "
+                "(observed throughput)")
         active_tasks = event.get("active_tasks") or []
         if active_tasks:
             current_display = " | ".join(active_tasks)
@@ -1944,8 +1954,8 @@ def cmd_runs(args) -> int:
              f"  stage      : {event['stage']} ({event['status']})\n"
              f"  progress   : {event['completed']}/{event['total']} "
              f"({event['percent']:.1f}%)\n"
-             f"  stage time : {event['elapsed_seconds']:.1f}s\n"
-             f"  total time : {event.get('total_elapsed_seconds', event['elapsed_seconds']):.1f}s\n"
+             f"  stage time : {format_duration(event['elapsed_seconds'])}\n"
+             f"  total time : {format_duration(event.get('total_elapsed_seconds', event['elapsed_seconds']))}\n"
              f"  throughput : {event['throughput_per_second']:.2f}/s\n"
              f"  ETA        : {eta}\n"
              f"  failures   : {event['failures']}\n"

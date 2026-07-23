@@ -42,6 +42,7 @@ def test_report_has_grant_readiness_and_residual_risk(ws, tmp_path):
     assert "Engineering status" in md
     paths = report.write_reports(run["run_id"])
     assert Path(paths["html"]).exists()
+    assert Path(paths["report_view"]).exists()
     assert Path(paths["ecm_markdown"]).exists()
     assert Path(paths["ecm_json"]).exists()
     assert Path(paths["ecm_html"]).exists()
@@ -65,12 +66,36 @@ def test_report_has_grant_readiness_and_residual_risk(ws, tmp_path):
     bundle = json.loads(Path(paths["bundle_manifest"]).read_text(encoding="utf-8"))
     assert bundle["kind"] == "aies-report-bundle"
     assert bundle["artifacts"]["executive_html"] == "executive-summary.html"
+    assert bundle["artifacts"]["report_view"] == "report-view.json"
     diagnostics = json.loads(
         Path(paths["diagnostics_json"]).read_text(encoding="utf-8"))
     assert diagnostics["status"] == "unavailable"
     assert diagnostics["qualification_effect"] == "informational-only; no new EV dimension or gate"
     # a small CA-05 run is under the RT3 minimum -> BLOCKED / non-decisional flagged
     assert "BLOCKED" in md and "non-decisional" in md
+
+
+def test_report_bundle_builds_shared_factual_view_once(ws, tmp_path, monkeypatch):
+    from aies import engine, report, report_view
+
+    _register(tmp_path)
+    run = engine.start_qualification(
+        "demo", "enterprise", "RT2", ["CA-05"], repeats=1)
+    _fill_and_aggregate(run["run_id"], score=3)
+    original = report_view.build_context
+    calls = []
+
+    def counted(*args, **kwargs):
+        calls.append(args[0])
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(report_view, "build_context", counted)
+    paths = report.write_reports(run["run_id"])
+    assert calls == [run["run_id"]]
+    stored = json.loads(Path(paths["report_view"]).read_text(encoding="utf-8"))
+    assert stored["kind"] == "aies-run-report-view"
+    assert stored["areas"][0]["readiness"]["verdict"] in {
+        "THRESHOLD MET", "BLOCKED"}
 
 
 def test_grant_readiness_uses_threshold_met_vocabulary_and_missing_is_not_failure():

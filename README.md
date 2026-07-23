@@ -374,12 +374,17 @@ products without changing the underlying observations.
   opportunities.
 - Generate Engineering Assessment Results, evidence packages, ECM artifacts,
   Engineering Fit Guidance, reports, and compatible run comparisons.
+- Consume the versioned, read-only `report-view.json` contract shared by
+  Markdown, HTML, safe exports, and `GET /runs/{id}/report-view`; canonical
+  evidence and legacy report contracts remain intact.
 - Use automated judges for complete non-blocking evaluation; preserve optional
   human evaluation as a separately attributed column and evidence source.
 - Reserve formal qualification for explicit `--formal-qualification` runs and
   named human qualification authorities.
 - Show live stage, current work, completed/total items, active worker count,
-  elapsed time, rate, and ETA for long-running CLI operations.
+  elapsed time, rate, and ETA for long-running CLI operations, including a
+  one-second heartbeat during long model calls and honest
+  calculating/declared/observed ETA states.
 - Evaluate the platform's own scenario corpus for coverage, calibration
   metadata, behavioral diversity, duplication, and empirical maturity through
   `aies corpus`.

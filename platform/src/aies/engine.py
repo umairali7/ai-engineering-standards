@@ -73,6 +73,19 @@ def _new_run_id(model_id: str) -> str:
     return f"run-{stamp}-{model_id}-{uuid.uuid4().hex[:6]}"
 
 
+def _global_task_label(current: str, offset: int, total_items: int) -> str:
+    """Translate a suite-local Task X/Y label into its run-wide ordinal."""
+    prefix, separator, detail = current.partition(" · ")
+    if prefix.startswith("Task ") and "/" in prefix:
+        ordinal_text = prefix[5:].split("/", 1)[0]
+        try:
+            ordinal = offset + int(ordinal_text)
+            return f"Task {ordinal}/{total_items}{separator}{detail}"
+        except ValueError:
+            pass
+    return current
+
+
 def start_qualification(
     model_id: str,
     profile_name: str,
@@ -223,6 +236,9 @@ def start_qualification(
     progress.update(run_id, "response-collection", 0, total_items,
                     message=f"collecting across {workers} worker(s)",
                     parallelism=max(1, workers),
+                    estimated_seconds_per_request=(
+                        (entry.get("planning") or {}).get(
+                            "estimated_seconds_per_request")),
                     callback=progress_callback)
 
     def _collection_progress(_done, _total, current, status):
@@ -243,10 +259,22 @@ def start_qualification(
                             callback=progress_callback)
 
     try:
+        suite_offset = 0
         for (definition, scenarios, suite_version), area in zip(all_scenarios, areas):
+            suite_items = len(scenarios) * (repeats or 1)
+
+            def _suite_progress(done, total, current, status, *,
+                                _offset=suite_offset):
+                # execute_suite numbers tasks within one competency suite.
+                # Present run-wide ordinals so a multi-area assessment remains
+                # understandable (for example Task 58/147, not Task 1/30).
+                current = _global_task_label(current, _offset, total_items)
+                _collection_progress(done, total, current, status)
+
             runner.execute_suite(run_id, entry, adapter, scenarios, suite_version, fp,
                                  repeats=repeats, parameters=gen_params, workers=workers,
-                                 progress_callback=_collection_progress)
+                                 progress_callback=_suite_progress)
+            suite_offset += suite_items
     except Exception as exc:
         manifest["status"] = "collection-partial" if completed_items > failures else "collection-failed"
         workspace.write_json(workspace.run_dir(run_id) / "manifest.json", manifest, overwrite=True)

@@ -183,8 +183,8 @@ and one hosted pilot remain outstanding**.
 
 | Milestone | Status | Remaining boundary |
 |---|---|---|
-| Runtime, canonical artifacts, progress/resume, and contract governance | **Done** | Continue compatibility maintenance |
-| Automated Engineering Evaluation and linked report bundle | **Done** | Continue usability and performance hardening |
+| Runtime, canonical artifacts, progress/resume, and contract governance | **Done** | One-second long-call heartbeat, honest declared/observed ETA, and shared versioned workspace/run/report consumer contracts are implemented; continue compatibility maintenance |
+| Automated Engineering Evaluation and linked report bundle | **Done** | Markdown, HTML, API, safe export, and future frontend use one per-run factual report contract while legacy artifacts remain compatible; continue usability and performance hardening |
 | ECM, grounding diagnostics, fit guidance, and compatible comparison | **Implemented** | Ratify AIES-ECM-01 and validate task mappings empirically |
 | RT2 — Moderate distinct-instrument breadth and human design review | **Done** | Empirical panel calibration, protected hold-outs, and RT1/RT3/RT4 growth remain |
 | Repository conformance/practice audit | **Implemented** | Deeper architecture, code-quality, correctness, and controlled task evidence remain |

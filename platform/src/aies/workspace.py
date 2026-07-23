@@ -24,7 +24,8 @@ DERIVED_SNAPSHOT_FILES = frozenset({
     "evidence-package.json", "assessment-result.json", "review-package.json",
 })
 REGENERABLE_VIEW_FILES = frozenset({
-    "report.md", "report.json", "report.html", "engineering-evaluation.json",
+    "report.md", "report.json", "report.html", "report-view.json",
+    "engineering-evaluation.json",
     "engineering-capability-matrix.md", "engineering-capability-matrix.json",
     "engineering-capability-matrix.html", "deployment-guidance.md",
     "deployment-guidance.json", "deployment-guidance.html",

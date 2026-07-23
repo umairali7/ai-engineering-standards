@@ -68,6 +68,7 @@ Every artifact carries a schema version; envelopes are field-append-only
 | Report Bundle Index | `report_bundle_schema` | `1` | complete report bundle |
 | Workspace Overview | `schema_version` | `1` | `aies overview` / `GET /overview` / dashboard |
 | Run Detail View | `schema_version` | `1` | `aies runs show` / `GET /runs/{id}` |
+| Run Report View | `schema_version` | `1` | complete bundle / `GET /runs/{id}/report-view` |
 | API Error | `schema_version` | `1` | failed read-only REST requests |
 
 The result's `metadata` records both `decision_engine_version` (which software)
@@ -85,7 +86,7 @@ not imply one universal mutation rule.
 | Append-only record | responses, rating observations, resolutions, human-rater records, Qualification Records and lifecycle events, audit records | Created once; replacement is rejected. Corrections are new records or events. |
 | Derived canonical snapshot | `evidence-package.json`, `assessment-result.json`, `review-package.json` | Recomputed only when its recorded source evidence changes; the schema and source provenance remain explicit. |
 | Mutable working state | `manifest.json`, `scoresheet.json`, `progress.json`, latest fingerprint | May be replaced by its owning workflow while work progresses. |
-| Regenerable view | Markdown/JSON/HTML reports, Engineering Assessment Result, ECM, Engineering Fit/Deployment Guidance, Executive Summary, Grounding Diagnostics, dashboard, bundle index | May be replaced at any time from canonical records; never treated as source evidence. |
+| Regenerable view | Markdown/JSON/HTML reports, `report-view.json`, Engineering Assessment Result, ECM, Engineering Fit/Deployment Guidance, Executive Summary, Grounding Diagnostics, dashboard, bundle index | May be replaced at any time from canonical records; never treated as source evidence. |
 | Mutable configuration | deployment registry entries | Updated only through the registry workflow; identity changes trigger qualification verification. |
 
 `workspace.artifact_class`, `workspace.write_json`, and

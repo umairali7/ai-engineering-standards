@@ -21,6 +21,7 @@ _ARTIFACTS = {
     "progress": ("progress.json", None),
     "canonical_evidence": ("evidence-package.json", "evidence"),
     "engineering_report": ("report.json", "report"),
+    "shared_report_view": ("report-view.json", "report-view"),
     "report_bundle": ("report-bundle.json", "bundle"),
     "engineering_evaluation": (
         "engineering-evaluation.json", "engineering-evaluation"),

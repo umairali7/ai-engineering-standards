@@ -48,6 +48,14 @@ RUN_VIEW_KEYS = {
     "artifacts", "links", "limitations",
 }
 
+REPORT_VIEW_KEYS = {
+    "kind", "schema_version", "platform_version", "authority", "run_id",
+    "run_purpose", "formal_qualification_requested", "title", "subject",
+    "scope", "status", "engineering_evaluation", "grounding_diagnostics",
+    "human_review", "qualification", "environment", "areas",
+    "engineering_capability_matrix", "provenance", "artifacts", "limitations",
+}
+
 
 def _result(evidence_schema=1, profile_version="1.0.0"):
     from aies import decision
@@ -120,7 +128,7 @@ def test_engineering_evaluation_summary_is_separately_versioned(ws_run):
 
 
 def test_read_only_consumer_view_envelopes_are_pinned(ws_run):
-    from aies import overview, run_view
+    from aies import overview, report_view, run_view
 
     workspace_summary = overview.build()
     assert workspace_summary["schema_version"] == overview.SCHEMA_VERSION == 1
@@ -130,6 +138,13 @@ def test_read_only_consumer_view_envelopes_are_pinned(ws_run):
     assert run_summary["schema_version"] == run_view.SCHEMA_VERSION == 1
     assert set(run_summary) == RUN_VIEW_KEYS
     assert run_summary["authority"] == "informational-read-only"
+
+    report_summary = report_view.build(ws_run)
+    assert report_summary["schema_version"] == report_view.SCHEMA_VERSION == 1
+    assert set(report_summary) == REPORT_VIEW_KEYS
+    assert report_summary["authority"] == "informational-read-only"
+    assert report_summary["areas"][0]["code"] == "CA-05"
+    assert report_summary["areas"][0]["dimensions"][0]["sources"]["human"]["n"] > 0
 
 
 import pytest  # noqa: E402

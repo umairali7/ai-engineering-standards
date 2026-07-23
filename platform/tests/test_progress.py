@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import io
 import json
+import re
 import sys
+import time
 from argparse import Namespace
 from pathlib import Path
 
@@ -95,9 +97,135 @@ def test_cli_progress_renders_dynamic_parallel_active_tasks():
             "active_count": 2,
             "active_tasks": ["Task 4/30 · API Design", "Task 5/30 · Testing"]})
     output = stream.getvalue()
-    assert "Active tasks 2/8" in output
+    assert "Active 2/8" in output
     assert "Task 4/30 · API Design" in output
-    assert "Task 5/30 · Testing" in output
+    assert "(+1 more)" in output
+
+
+def test_cli_progress_heartbeat_refreshes_elapsed_time_during_long_call():
+    from aies.progress import CliProgress
+
+    class TtyStream(io.StringIO):
+        def isatty(self):
+            return True
+
+    stream = TtyStream()
+    render = CliProgress(
+        stream, refresh_interval=0.05, terminal_width=240)
+    render({"stage": "response-collection", "status": "running",
+            "completed": 0, "total": 30, "percent": 0.0,
+            "elapsed_seconds": 0.0, "total_elapsed_seconds": 0.0,
+            "throughput_per_second": 0.0, "eta_seconds": None,
+            "failures": 0, "current": "", "current_index": None,
+            "activity": "Executing task", "parallelism": 2,
+            "active_tasks": ["Task 1/30 · API Design", "Task 2/30 · Testing"]})
+    time.sleep(0.13)
+    render({"stage": "response-collection", "status": "completed",
+            "completed": 30, "total": 30, "percent": 100.0,
+            "elapsed_seconds": 0.2, "total_elapsed_seconds": 0.2,
+            "throughput_per_second": 150.0, "eta_seconds": 0.0,
+            "failures": 0, "current": "", "current_index": None,
+            "activity": "", "parallelism": 2, "active_tasks": []})
+    output = stream.getvalue()
+    assert output.count("[response-collection]") >= 3
+    assert "ETA calculating (first completion)" in output
+    assert "\033[2K" in output
+
+
+def test_cli_progress_bounds_tty_line_to_terminal_width():
+    from aies.progress import CliProgress
+
+    class TtyStream(io.StringIO):
+        def isatty(self):
+            return True
+
+    stream = TtyStream()
+    render = CliProgress(stream, terminal_width=100)
+    render({"stage": "response-collection", "status": "running",
+            "completed": 0, "total": 147, "percent": 0.0,
+            "elapsed_seconds": 0.0, "total_elapsed_seconds": 0.0,
+            "throughput_per_second": 0.0, "eta_seconds": None,
+            "failures": 0, "current": "", "current_index": None,
+            "activity": "Executing task", "parallelism": 4,
+            "active_tasks": ["Task 1/147 · " + "long task " * 30]})
+    visible = stream.getvalue().split("\033[2K", 1)[1]
+    visible = re.sub(r"\x1b\[[0-9;]*m", "", visible)
+    assert len(visible) <= 100
+    assert visible.endswith("…")
+
+
+def test_declared_eta_is_available_before_first_completion(tmp_path, monkeypatch):
+    monkeypatch.setenv("AIES_WORKSPACE", str(tmp_path / "ws"))
+    from aies import progress
+
+    event = progress.update(
+        "run-declared", "response-collection", 0, 20, parallelism=4,
+        estimated_seconds_per_request=10)
+    assert event["eta_seconds"] == 50.0
+    assert event["eta_basis"] == "deployment-declaration"
+
+
+def test_multi_area_task_label_uses_run_wide_ordinal():
+    from aies.engine import _global_task_label
+
+    assert _global_task_label(
+        "Task 1/30 · Testing — Exercise", 57, 147
+    ) == "Task 58/147 · Testing — Exercise"
+
+
+def test_progress_durations_are_human_readable():
+    from aies.progress import format_duration
+
+    assert format_duration(42) == "42s"
+    assert format_duration(125) == "2m 5s"
+    assert format_duration(10949) == "3h 2m"
+
+
+def test_interactive_progress_uses_semantic_color(monkeypatch):
+    from aies.progress import CliProgress
+
+    class TtyStream(io.StringIO):
+        def isatty(self):
+            return True
+
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    monkeypatch.setenv("TERM", "xterm-256color")
+    stream = TtyStream()
+    render = CliProgress(stream, terminal_width=240)
+    render({"stage": "judge-review", "status": "running",
+            "completed": 4, "total": 30, "percent": 13.3,
+            "elapsed_seconds": 60.0, "total_elapsed_seconds": 60.0,
+            "throughput_per_second": 0.067, "eta_seconds": 388.0,
+            "eta_basis": "observed-throughput", "failures": 1,
+            "current": "", "current_index": None,
+            "activity": "Scoring task", "parallelism": 4,
+            "active_tasks": ["Task 5/30 · Security Review"]})
+    output = stream.getvalue()
+    assert "\033[36m[judge-review]\033[0m" in output
+    assert "\033[31mfailures 1\033[0m" in output
+    assert "\033[35mActive 1/4\033[0m" in output
+
+
+def test_interactive_progress_respects_no_color(monkeypatch):
+    from aies.progress import CliProgress
+
+    class TtyStream(io.StringIO):
+        def isatty(self):
+            return True
+
+    monkeypatch.setenv("NO_COLOR", "1")
+    stream = TtyStream()
+    render = CliProgress(stream)
+    render({"stage": "response-collection", "status": "completed",
+            "completed": 1, "total": 1, "percent": 100.0,
+            "elapsed_seconds": 1.0, "total_elapsed_seconds": 1.0,
+            "throughput_per_second": 1.0, "eta_seconds": 0.0,
+            "eta_basis": "completed", "failures": 0,
+            "current": "", "current_index": None,
+            "activity": "", "parallelism": 1, "active_tasks": []})
+    output = stream.getvalue()
+    assert "\033[36m" not in output
+    assert "\033[32m" not in output
 
 
 def test_engine_persists_completed_collection_progress(tmp_path, monkeypatch):

@@ -51,6 +51,10 @@ disappears without notice.
 - **Artifacts and consumer views** carry a schema version (`evidence_schema`,
   `result_schema`, assessment `schema`, profile `version`, or view
   `schema_version`). Bump on any breaking change.
+- `report.json` retains its historical formal/engineering contracts.
+  `report-view.json` is the additive, audience-neutral per-run consumer
+  contract; clients that need one factual model across Markdown, HTML, API,
+  and a future frontend should use its `schema_version`.
 - **Decision semantics** version (`decision_semantics_version`) changes only when
   the normative outcome policy changes — an AESQS revision, never a rebuild.
 - **Engine** version (`decision_engine_version`) tracks the software build.

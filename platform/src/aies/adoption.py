@@ -41,6 +41,7 @@ SHAREABLE_VIEWS = (
     "report.html",
     "report.md",
     "report.json",
+    "report-view.json",
     "report-bundle.json",
 )
 

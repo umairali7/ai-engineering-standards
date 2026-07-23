@@ -233,6 +233,12 @@ identifies the task currently being scored across EV1 — Correctness through
 EV6 — Traceability. Parallel execution reports the dynamic active set and the
 effective worker capacity (`active N/<parallelism>`); neither value is
 hard-coded, so the display follows `--parallel N` or the configured default.
+Interactive terminals receive a one-second heartbeat during long inference
+calls, with a terminal-width-bounded active-task line. ETA is labelled as
+calculating until the first measured completion (or uses an explicitly
+declared deployment estimate), then updates from observed throughput.
+Semantic color highlights stage, progress, ETA state, failures, and active
+capacity without replacing their text labels; `NO_COLOR=1` disables color.
 
 An automated judge can complete an **Engineering Evaluation** and generate the
 entire report/ECM bundle without human review. Reports display `Human

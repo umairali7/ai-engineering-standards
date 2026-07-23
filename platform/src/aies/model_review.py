@@ -251,6 +251,9 @@ def run_model_review(run_id: str, reviewer_deployment: str,
                     message=(f"reviewer {reviewer_deployment}; {len(existing)} "
                              "existing ratings reused"),
                     parallelism=max(1, workers),
+                    estimated_seconds_per_request=(
+                        (entry.get("planning") or {}).get(
+                            "estimated_seconds_per_request")),
                     callback=progress_callback)
 
     def _review_progress(delta: int, current: str, failed: int = 0) -> None:

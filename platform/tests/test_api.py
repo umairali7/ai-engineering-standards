@@ -55,6 +55,7 @@ def test_health_and_index():
     assert "/runs/{id}/result" in body["endpoints"]
     assert "/runs/{id}" in body["endpoints"]
     assert "/runs/{id}/ecm" in body["endpoints"]
+    assert "/runs/{id}/report-view" in body["endpoints"]
     assert "/support" in body["endpoints"]
     assert "/overview" in body["endpoints"]
 
@@ -115,6 +116,7 @@ def test_run_product_endpoints_serve_stored_artifacts_verbatim(api_ws):
     routes = {
         "evidence": "evidence-package.json",
         "report": "report.json",
+        "report-view": "report-view.json",
         "bundle": "report-bundle.json",
         "engineering-evaluation": "engineering-evaluation.json",
         "ecm": "engineering-capability-matrix.json",

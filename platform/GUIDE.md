@@ -149,6 +149,12 @@ Useful operating habits:
 - `aies runs progress <run>` observes durable progress from a second terminal;
   the originating long-running command already shows task, elapsed time,
   throughput, failures, and ETA.
+- Interactive progress heartbeats once per second while a model call is in
+  flight. ETA is labelled as calculating until the first completion, uses a
+  declared deployment estimate when one exists, and then updates from observed
+  throughput. Interactive terminals use semantic color while retaining text
+  labels; set `NO_COLOR=1` or `AIES_COLOR=never` to disable it. Redirected CI
+  output remains plain and throttled.
 - `--parallel N` sets concurrent calls. Lower it for rate limiting; it cannot
   repair an API project with insufficient quota.
 - Use `--resume-collection` after interrupted inference and `--resume` after
@@ -349,6 +355,7 @@ Search order (first found wins): `$AIES_ENV_FILE`, `./.env`,
 | `AIES_OPENAI_API_KEY` | API key if the endpoint needs one | *(none)* |
 | `AIES_REQUEST_TIMEOUT_S` | per-request inference timeout | `300` |
 | `AIES_PARALLEL` | default concurrent inference calls | `1` |
+| `AIES_COLOR` / `NO_COLOR` | semantic interactive CLI color (`auto`, `always`, or `never`); `NO_COLOR` disables it | `auto` |
 | `AIES_TEMPERATURE`, `AIES_MAX_TOKENS`, `AIES_TOP_P`, `AIES_SEED` | generation defaults (a deployment's `parameters_default` overrides these) | *(model default)* |
 
 Precedence: CLI flag / deployment manifest → real env var → `.env` →
@@ -503,6 +510,14 @@ Markdown, JSON, and HTML views are generated for each audience-facing product,
 with `report-bundle.json` as the machine-readable index. The command prints the
 primary paths; if any artifact cannot be rendered, it fails rather than claiming
 completion.
+
+The bundle also writes `report-view.json`
+(`kind: aies-run-report-view`, `schema_version: 1`). It is the shared,
+read-only factual model used by the Markdown and HTML report renderers and is
+available at `GET /runs/{id}/report-view`. Use it for integrations and future
+frontends that need report facts without parsing presentation markup.
+`report.json` keeps its historical compatibility contract; the Evidence
+Package remains canonical evidence and neither report file can decide or grant.
 
 These files do not all have the same storage semantics. Responses, rating
 observations, resolutions, human-rater records, Qualification Records, and
