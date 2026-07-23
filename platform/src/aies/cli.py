@@ -1867,14 +1867,12 @@ def cmd_benchmark(args) -> int:
 
 
 def cmd_compare(args) -> int:
-    from . import compare
+    from . import compare, comparison_report
     try:
         refs = list(getattr(args, "refs", []) or [])
         if not refs:
             refs = [args.a, args.b]
-        if len(refs) < 2:
-            raise compare.CompareError(
-                "provide at least two run ids or deployment ids")
+        compare.validate_reference_count(refs)
         repository_refs = [compare.is_audit_ref(ref) for ref in refs]
         if any(repository_refs) and not all(repository_refs):
             raise compare.CompareError(
@@ -1902,11 +1900,6 @@ def cmd_compare(args) -> int:
                     "--area-summary accepts exactly two references; omit it "
                     "for the multi-subject ECM comparison")
             cmp = compare.compare(refs[0], refs[1])
-        elif len(refs) == 2:
-            cmp = compare.compare_ecm(
-                refs[0], refs[1],
-                formal_qualification=getattr(
-                    args, "formal_qualification", False))
         else:
             cmp = compare.compare_ecm_many(
                 refs,
@@ -1914,20 +1907,47 @@ def cmd_compare(args) -> int:
                     args, "formal_qualification", False),
                 sort_by=getattr(args, "sort", "task"),
                 only_comparable=getattr(args, "only_comparable", False))
+        cmp = comparison_report.with_identity(cmp)
+        if getattr(args, "save", False):
+            cmp = comparison_report.record(cmp)
+        bundle_paths = None
+        if getattr(args, "out", None):
+            bundle_paths = comparison_report.write_bundle(cmp, args.out)
+        output_cmp = dict(cmp)
+        if bundle_paths:
+            output_cmp["report_bundle"] = bundle_paths
         if args.json or args.format == "json":
-            _out(cmp, True)
-        else:
-            print(compare.render_markdown(cmp)
-                  if getattr(args, "area_summary", False)
-                  else (compare.render_repository_comparison(cmp)
-                        if repository_comparison
-                        else compare.render_ecm_markdown(cmp)
-                        if len(refs) == 2
-                        else compare.render_ecm_many_markdown(cmp)))
+            _out(output_cmp, True)
+        elif args.format == "html":
+            if bundle_paths:
+                print(f"HTML comparison: {bundle_paths['html']}")
+            else:
+                print(comparison_report.render_html(cmp))
+            if getattr(args, "save", False):
+                print(
+                    "Saved comparison: "
+                    f"{cmp['comparison_id']} "
+                    f"(GET /comparisons/{cmp['comparison_id']})")
             print(
                 "\nNext: inspect the comparison boundary and plan any missing "
                 "matching evidence: aies starter show compare-coding-deployments")
-    except compare.CompareError as e:
+        else:
+            print(comparison_report.render_markdown(cmp))
+            if bundle_paths:
+                print("\nReport bundle:")
+                for name, path in bundle_paths.items():
+                    print(f"  {name:8} {path}")
+            if getattr(args, "save", False):
+                print(
+                    "\nSaved comparison: "
+                    f"{cmp['comparison_id']} "
+                    f"(GET /comparisons/{cmp['comparison_id']})")
+            print(
+                "\nNext: inspect the comparison boundary and plan any missing "
+                "matching evidence: aies starter show compare-coding-deployments")
+    except (
+            compare.CompareError, FileExistsError, NotADirectoryError,
+            ValueError) as e:
         _emit_failure(
             e,
             operation="engineering-capability-comparison",
@@ -3564,9 +3584,10 @@ def build_parser() -> argparse.ArgumentParser:
         "stored repository assessments"))
     cp.add_argument(
         "refs", nargs="+",
-        help="two or more run ids, deployment ids, or repository audit ids; "
+        help="2 to 5 run ids, deployment ids, or repository audit ids; "
              "do not mix repository and deployment evidence")
-    cp.add_argument("--format", choices=("markdown", "json"), default="markdown",
+    cp.add_argument("--format", choices=("markdown", "json", "html"),
+                    default="markdown",
                     help="output representation (default: markdown)")
     cp.add_argument("--ecm", action="store_true",
                     help="compatibility alias; task-level ECM comparison is now the default")
@@ -3584,6 +3605,13 @@ def build_parser() -> argparse.ArgumentParser:
     cp.add_argument(
         "--only-comparable", action="store_true",
         help="hide tasks that cannot support a like-for-like comparison")
+    cp.add_argument(
+        "--out", metavar="DIRECTORY",
+        help="write an immutable comparison.json, Markdown, HTML, and bundle index")
+    cp.add_argument(
+        "--save", action="store_true",
+        help="persist the derived comparison as an append-only workspace record "
+             "for GET /comparisons; comparison remains informational")
     cp.set_defaults(func=cmd_compare)
 
     rn = common(sub.add_parser(

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aies.dev/contracts/comparison-report-v2.schema.json",
+  "title": "AIES Comparison Report v2",
+  "type": "object",
+  "required": [
+    "kind",
+    "schema",
+    "subject_family",
+    "layout",
+    "reference_policy",
+    "compatible",
+    "subjects",
+    "checks",
+    "summary",
+    "caveats",
+    "next_actions",
+    "claim_boundary"
+  ],
+  "properties": {
+    "kind": {
+      "enum": [
+        "ecm-multi-comparison",
+        "aies-repository-comparison",
+        "comparison"
+      ]
+    },
+    "schema": {
+      "enum": [
+        "aies-engineering-comparison/v2",
+        "aies-repository-comparison/v2",
+        "aies-area-comparison/v2"
+      ]
+    },
+    "comparison_id": {"type": "string"},
+    "recorded_at": {"type": "string"},
+    "subject_family": {
+      "enum": ["ai-deployment", "repository"]
+    },
+    "layout": {"enum": ["pair", "matrix"]},
+    "reference_policy": {
+      "type": "object",
+      "required": ["minimum", "maximum", "received"],
+      "properties": {
+        "minimum": {"const": 2},
+        "maximum": {"const": 5},
+        "received": {"type": "integer", "minimum": 2, "maximum": 5}
+      }
+    },
+    "compatible": {"type": "boolean"},
+    "subjects": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 5,
+      "items": {"type": "object"}
+    },
+    "checks": {"type": "object"},
+    "summary": {"type": "object"},
+    "caveats": {"type": "array", "items": {"type": "string"}},
+    "next_actions": {"type": "array", "items": {"type": "string"}},
+    "claim_boundary": {"type": "string", "minLength": 1}
+  }
+}

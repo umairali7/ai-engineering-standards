@@ -16,6 +16,7 @@ from . import config
 
 APPEND_ONLY_DIRECTORIES = frozenset({
     "responses", "ratings", "resolutions", "events", "raters", "audits",
+    "comparisons",
 })
 MUTABLE_WORKING_FILES = frozenset({
     "manifest.json", "scoresheet.json", "progress.json", "latest.json",
@@ -49,7 +50,7 @@ def root() -> Path:
 
 def ensure() -> Path:
     ws = root()
-    for sub in ("registry", "fingerprints", "runs"):
+    for sub in ("registry", "fingerprints", "runs", "comparisons"):
         (ws / sub).mkdir(parents=True, exist_ok=True)
     return ws
 
@@ -67,7 +68,12 @@ def runs_dir() -> Path:
 
 
 def run_dir(run_id: str) -> Path:
-    return runs_dir() / run_id
+    canonical = runs_dir() / run_id
+    nested_package = canonical / run_id
+    if (not (canonical / "manifest.json").is_file()
+            and (nested_package / "manifest.json").is_file()):
+        return nested_package
+    return canonical
 
 
 def validate_run_id(run_id: str) -> str:

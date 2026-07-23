@@ -32,6 +32,13 @@ def test_artifact_storage_classes_and_writers(tmp_path, monkeypatch):
     workspace.write_json(response, {"value": 1})
     with pytest.raises(PermissionError, match="append-only"):
         workspace.write_json(response, {"value": 2}, overwrite=True)
+    comparison = (
+        workspace.root() / "comparisons" / "comparison-fixture.json")
+    workspace.write_json(comparison, {"kind": "comparison"})
+    assert workspace.artifact_class(comparison) == "append-only-record"
+    with pytest.raises(PermissionError, match="append-only"):
+        workspace.write_json(
+            comparison, {"kind": "replacement"}, overwrite=True)
     with pytest.raises(ValueError, match="not classified"):
         workspace.write_view(response, "replacement")
 
@@ -48,6 +55,28 @@ def test_external_run_identifiers_cannot_be_paths():
     for unsafe in ("..", ".", "../run", r"..\run", "/run", "run/name", ""):
         with pytest.raises(ValueError):
             workspace.validate_run_id(unsafe)
+
+
+def test_nested_copied_run_package_is_readable_without_being_moved(
+        tmp_path, monkeypatch):
+    from aies import workspace
+
+    monkeypatch.setenv("AIES_WORKSPACE", str(tmp_path / "ws"))
+    run_id = "run-copied"
+    wrapper = workspace.runs_dir() / run_id
+    package = wrapper / run_id
+    package.mkdir(parents=True)
+    manifest = package / "manifest.json"
+    manifest.write_text('{"run_id":"run-copied"}', encoding="utf-8")
+
+    assert workspace.run_dir(run_id) == package
+    assert manifest.is_file()
+    diagnostic = workspace.diagnose_debris()
+    finding = next(
+        item for item in diagnostic["findings"]
+        if item["category"] == "nested-run-package")
+    assert finding["path"] == f"runs/{run_id}"
+    assert "evidence-bearing" in finding["recoverability"]
 
 
 def test_workspace_debris_diagnostic_is_read_only_and_evidence_aware(tmp_path):

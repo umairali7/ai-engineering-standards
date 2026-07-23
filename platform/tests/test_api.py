@@ -59,6 +59,7 @@ def test_health_and_index():
     assert "/support" in body["endpoints"]
     assert "/overview" in body["endpoints"]
     assert "/audits" in body["endpoints"]
+    assert "/comparisons" in body["endpoints"]
 
 
 def test_collections_are_served(api_ws):
@@ -157,7 +158,9 @@ def test_conformance_endpoint(api_ws):
 
 
 def test_repository_assessment_endpoints_serve_stored_artifact(api_ws):
-    from aies import api, executors, workspace
+    from aies import (
+        api, compare, comparison_report, executors, workspace,
+    )
 
     repository = workspace.root() / "api-repository"
     repository.mkdir(exist_ok=True)
@@ -174,6 +177,20 @@ def test_repository_assessment_endpoints_serve_stored_artifact(api_ws):
         workspace.root() / "audits" / f"{result['audit_id']}.json")
     assert detail["engineering_analysis"]["schema"] == (
         "aies-repository-analysis/v1")
+
+    comparison = compare.compare_repositories(
+        [result["audit_id"], result["audit_id"]])
+    saved = comparison_report.record(comparison)
+    status, listing = api.route("/comparisons")
+    assert status == 200
+    assert listing["comparisons"][0]["comparison_id"] == (
+        saved["comparison_id"])
+    status, detail = api.route(
+        f"/comparisons/{saved['comparison_id']}")
+    assert status == 200
+    assert detail == workspace.read_json(
+        workspace.root() / "comparisons"
+        / f"{saved['comparison_id']}.json")
 
 
 def test_unknown_path_is_404_and_missing_run_is_404(api_ws):

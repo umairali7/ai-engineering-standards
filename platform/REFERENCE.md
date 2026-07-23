@@ -72,6 +72,8 @@ Every artifact carries a schema version; envelopes are field-append-only
 | Repository Engineering Analysis | `schema` | `aies-repository-analysis/v1` | `aies audit` |
 | Repository Assessment | `schema` | `aies-repository-assessment/v1` | `aies audit` / `GET /audits/{id}` |
 | Repository Assessment Bundle | `schema` | `1` | `aies audit --out DIRECTORY` |
+| Comparison Report | `schema` | `aies-engineering-comparison/v2`, `aies-repository-comparison/v2`, or `aies-area-comparison/v2` | `aies compare` |
+| Comparison Bundle Index | `schema` | `1` | `aies compare --out DIRECTORY` |
 | API Error | `schema_version` | `1` | failed read-only REST requests |
 
 The result's `metadata` records both `decision_engine_version` (which software)
@@ -86,7 +88,7 @@ not imply one universal mutation rule.
 
 | Class | Examples | Mutation contract |
 |---|---|---|
-| Append-only record | responses, rating observations, resolutions, human-rater records, Qualification Records and lifecycle events, audit records | Created once; replacement is rejected. Corrections are new records or events. |
+| Append-only record | responses, rating observations, resolutions, human-rater records, Qualification Records and lifecycle events, audit records, explicitly saved comparison records | Created once; replacement is rejected. Corrections are new records or events. |
 | Derived canonical snapshot | `evidence-package.json`, `assessment-result.json`, `review-package.json` | Recomputed only when its recorded source evidence changes; the schema and source provenance remain explicit. |
 | Mutable working state | `manifest.json`, `scoresheet.json`, `progress.json`, latest fingerprint | May be replaced by its owning workflow while work progresses. |
 | Regenerable view | Markdown/JSON/HTML reports, `report-view.json`, Engineering Assessment Result, ECM, Engineering Fit/Deployment Guidance, Executive Summary, Grounding Diagnostics, dashboard, bundle index | May be replaced at any time from canonical records; never treated as source evidence. |
@@ -126,7 +128,7 @@ append-only records. Grouped as in `aies --help`.
 | `snapshot` | Responsive terminal Evidence → Capability → Assurance → Engineering Decisions projection over canonical ECM/Fit facts; supports `--sort task\|performance\|breadth\|evidence\|status` and `--ascending` | `aies snapshot latest --sort performance` |
 | `assessment` | `result <run>` renders non-blocking engineering status; `--formal-qualification` selects the formal outcome | `aies assessment result run-2031` |
 | `review` | Automated review, optional human-evaluation record, implicit live progress, and refreshed report bundle | `aies review run-2031 --model-reviewer rev` |
-| `compare` | Compatible observed ECM scores compare by default without human review; `--formal-qualification` additionally requires demonstrated status/protocol before a winner claim; `--area-summary` selects the legacy aggregate | `aies compare run-a run-b` |
+| `compare` | Compare 2–5 compatible deployment/model runs or 2–5 stored repository assessments. Pair/matrix output supports Markdown, JSON, sortable HTML, immutable bundles, optional append-only saving, sorting and comparable-only filtering. `--formal-qualification` adds demonstrated/human-protocol requirements; `--area-summary` is the legacy two-run aggregate | `aies compare run-a run-b run-c --sort spread --out comparison` |
 | `guidance` | Engineering Fit Guidance by default; `--qualification QUAL-id` selects qualification-bounded Deployment Guidance | `aies guidance run-2031 --write` |
 | `runs list` / `runs show` / `runs progress` / `transcript` | List runs, inspect one versioned read-only run/artifact view, optionally observe another command's durable progress from a second terminal, or render a whole run. The originating command shows stage and command timing, measured item rate, ETA, and the current task or judge batch/task span. | `aies runs show run-2031 --json` |
 
@@ -182,6 +184,8 @@ GET /deployments               registered deployments
 GET /runs                      run history
 GET /audits                    repository assessment history
 GET /audits/{id}               stored repository assessment, served verbatim
+GET /comparisons               explicitly saved comparison history
+GET /comparisons/{id}          stored comparison, served verbatim
 GET /runs/{id}                 versioned read-only run + artifact summary
 GET /runs/{id}/evidence        the Evidence Package
 GET /runs/{id}/result          primary Engineering or legacy Formal Result

@@ -22,10 +22,13 @@ def test_audit_human_output_ends_with_exact_rerun(tmp_path, capsys):
 
 def test_compare_human_output_points_to_compatible_evidence_starter(
         monkeypatch, capsys):
-    from aies import cli, compare
+    from aies import cli, compare, comparison_report
 
-    monkeypatch.setattr(compare, "compare_ecm", lambda *a, **k: {"tasks": []})
-    monkeypatch.setattr(compare, "render_ecm_markdown", lambda result: "# comparison")
+    monkeypatch.setattr(
+        compare, "compare_ecm_many", lambda *a, **k: {"tasks": []})
+    monkeypatch.setattr(
+        comparison_report, "render_markdown",
+        lambda result: "# comparison")
     code = cli.cmd_compare(Namespace(
         a="run-a", b="run-b", formal_qualification=False,
         area_summary=False, json=False, format="markdown",

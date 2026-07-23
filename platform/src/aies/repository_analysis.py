@@ -18,13 +18,17 @@ import platform
 import re
 import subprocess
 import sys
-import tomllib
 import xml.etree.ElementTree as ET
 from collections import Counter, defaultdict
 from functools import lru_cache
 from pathlib import Path
 
 import yaml
+
+try:  # Python 3.11+ standard library; conditional dependency on 3.10.
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - exercised by the 3.10 CI job
+    import tomli as tomllib
 
 from . import evidence_events, subjects
 
@@ -326,6 +330,52 @@ def _node_dependencies(path: str, text: str) -> list[dict]:
     return output
 
 
+def _sbom_summaries(
+    ctx,
+    paths: list[str],
+) -> tuple[list[dict], list[str]]:
+    summaries = []
+    failures = []
+    for path in paths:
+        if not path.lower().endswith(".json"):
+            continue
+        try:
+            data = json.loads(ctx.read(path))
+            if data.get("bomFormat") == "CycloneDX":
+                vulnerabilities = data.get("vulnerabilities") or []
+                severities = Counter()
+                for vulnerability in vulnerabilities:
+                    ratings = vulnerability.get("ratings") or []
+                    if ratings:
+                        severities.update(
+                            str(rating.get("severity", "unknown")).lower()
+                            for rating in ratings)
+                    else:
+                        severities["unknown"] += 1
+                summaries.append({
+                    "artifact": path,
+                    "format": "CycloneDX",
+                    "spec_version": data.get("specVersion"),
+                    "components": len(data.get("components") or []),
+                    "vulnerabilities": len(vulnerabilities),
+                    "severity_counts": dict(sorted(severities.items())),
+                })
+            elif data.get("spdxVersion"):
+                summaries.append({
+                    "artifact": path,
+                    "format": "SPDX",
+                    "spec_version": data.get("spdxVersion"),
+                    "components": len(data.get("packages") or []),
+                    "vulnerabilities": None,
+                    "severity_counts": {},
+                })
+            else:
+                failures.append(path)
+        except (json.JSONDecodeError, ValueError, TypeError):
+            failures.append(path)
+    return summaries, failures
+
+
 def _dependencies(ctx) -> dict:
     manifests, locks = _dependency_files(ctx)
     dependencies = []
@@ -343,6 +393,14 @@ def _dependencies(ctx) -> dict:
         path for path in ctx.files
         if any(token in path.lower() for token in ("sbom", "cyclonedx", ".spdx"))
     ]
+    sbom_summaries, sbom_failures = _sbom_summaries(ctx, sbom)
+    sbom_components = sum(
+        item["components"] for item in sbom_summaries)
+    sbom_vulnerabilities = sum(
+        item["vulnerabilities"] or 0 for item in sbom_summaries)
+    sbom_high_critical = sum(
+        item["severity_counts"].get(level, 0)
+        for item in sbom_summaries for level in ("high", "critical"))
     findings = []
     if not manifests:
         findings.append(_finding(
@@ -359,6 +417,18 @@ def _dependencies(ctx) -> dict:
             f"{len(unpinned)} direct declaration(s) are not exactly pinned",
             sorted({item["source"] for item in unpinned}),
             "This is a declaration signal; lockfiles may still pin resolution."))
+    if sbom_high_critical:
+        findings.append(_finding(
+            "DEP-004", "high", "dependency",
+            f"Retained SBOM evidence identifies {sbom_high_critical} "
+            "high/critical vulnerability record(s)",
+            [
+                item["artifact"] for item in sbom_summaries
+                if any(item["severity_counts"].get(level, 0)
+                       for level in ("high", "critical"))
+            ],
+            "Retained vulnerability records require owner triage; AIES "
+            "preserves source severity and does not establish exploitability."))
     return {
         "status": "observed" if manifests else "not-observed",
         "metrics": {
@@ -367,20 +437,29 @@ def _dependencies(ctx) -> dict:
             "unpinned_direct_declarations": len(unpinned),
             "update_automation_files": len(update_automation),
             "sbom_files": len(sbom),
+            "structured_sbom_artifacts": len(sbom_summaries),
+            "sbom_components": sbom_components,
+            "sbom_vulnerabilities": sbom_vulnerabilities,
+            "sbom_high_critical_vulnerabilities": sbom_high_critical,
         },
         "evidence": {
             "manifests": manifests, "lockfiles": locks,
             "update_automation": update_automation, "sbom": sbom,
-            "parse_failures": parse_failures,
+            "sbom_summaries": sbom_summaries,
+            "parse_failures": parse_failures + sbom_failures,
         },
         "findings": findings,
         "confidence": _confidence(
-            structured=len(manifests) + len(locks),
+            structured=(
+                len(manifests) + len(locks) + len(sbom_summaries)),
             heuristic=len(update_automation) + len(sbom),
-            coverage=1.0 if not parse_failures else 0.7,
+            coverage=(
+                1.0 if not parse_failures and not sbom_failures else 0.7),
             limitations=[
                 "Dependency declarations are inventoried; packages are not "
                 "resolved, downloaded, or vulnerability-scanned.",
+                "CycloneDX and SPDX JSON are summarized when retained; source "
+                "vulnerability semantics are not normalized into an AIES score.",
                 "Cross-language dependency health is not normalized into a score.",
             ]),
     }
@@ -604,6 +683,61 @@ def _function_complexity(tree: ast.AST, path: str) -> list[dict]:
     return rows
 
 
+def _quality_tool_summaries(ctx) -> tuple[list[dict], list[str]]:
+    """Read bounded Ruff/ESLint JSON results without executing either tool."""
+    summaries = []
+    failures = []
+    for path in ctx.files:
+        name = Path(path).name.lower()
+        if not name.endswith(".json"):
+            continue
+        tool = (
+            "ruff" if "ruff" in name
+            else "eslint" if "eslint" in name
+            else None)
+        if not tool or not any(
+                marker in name for marker in (
+                    "result", "report", "finding", "output")):
+            continue
+        try:
+            data = json.loads(ctx.read(path))
+            if not isinstance(data, list):
+                raise ValueError("expected a result list")
+            if tool == "ruff":
+                errors = len(data)
+                warnings = 0
+                rules = sorted({
+                    str(item.get("code")) for item in data
+                    if isinstance(item, dict) and item.get("code")
+                })
+            else:
+                messages = [
+                    message
+                    for file_result in data
+                    if isinstance(file_result, dict)
+                    for message in file_result.get("messages") or []
+                    if isinstance(message, dict)
+                ]
+                errors = sum(
+                    message.get("severity") == 2 for message in messages)
+                warnings = sum(
+                    message.get("severity") == 1 for message in messages)
+                rules = sorted({
+                    str(message.get("ruleId")) for message in messages
+                    if message.get("ruleId")
+                })
+            summaries.append({
+                "artifact": path,
+                "tool": tool,
+                "errors": errors,
+                "warnings": warnings,
+                "rules": rules[:100],
+            })
+        except (json.JSONDecodeError, ValueError, TypeError):
+            failures.append(path)
+    return summaries, failures
+
+
 def _code_quality(ctx, source_files: list[str]) -> dict:
     total_lines = 0
     test_lines = 0
@@ -658,6 +792,9 @@ def _code_quality(ctx, source_files: list[str]) -> dict:
         "golangci", "clippy")
     type_configs = ctx.matching(
         "mypy.ini", "pyrightconfig", "tsconfig.json", "strict")
+    tool_results, tool_result_failures = _quality_tool_summaries(ctx)
+    retained_errors = sum(item["errors"] for item in tool_results)
+    retained_warnings = sum(item["warnings"] for item in tool_results)
     findings = []
     for index, item in enumerate(complex_functions[:50], start=1):
         findings.append(_finding(
@@ -677,6 +814,17 @@ def _code_quality(ctx, source_files: list[str]) -> dict:
             f"{len(duplicates)} repeated normalized block(s) across files",
             sorted({item["artifact"] for group in duplicates for item in group}),
             "Lexical duplication requires semantic review before consolidation."))
+    if retained_errors:
+        findings.append(_finding(
+            "QUALITY-TOOL-001", "medium", "code-quality",
+            f"Retained quality-tool results contain {retained_errors} "
+            "error-level finding(s)",
+            [
+                item["artifact"] for item in tool_results
+                if item["errors"]
+            ],
+            "Native tool findings retain their source meaning and require "
+            "repository-owner triage."))
     return {
         "status": "observed" if source_files else "not-observed",
         "metrics": {
@@ -694,6 +842,9 @@ def _code_quality(ctx, source_files: list[str]) -> dict:
                 if python_functions else None),
             "lint_configuration_files": len(lint_configs),
             "type_check_configuration_files": len(type_configs),
+            "structured_quality_result_artifacts": len(tool_results),
+            "retained_quality_errors": retained_errors,
+            "retained_quality_warnings": retained_warnings,
         },
         "evidence": {
             "lint_configuration": lint_configs,
@@ -703,16 +854,20 @@ def _code_quality(ctx, source_files: list[str]) -> dict:
             "large_source_files": large_files,
             "duplicate_blocks": duplicates,
             "todo_fixme_locations": todo_locations[:100],
+            "quality_tool_results": tool_results,
+            "quality_tool_parse_failures": tool_result_failures,
         },
         "findings": findings,
         "confidence": _confidence(
-            structured=len(lint_configs) + len(type_configs),
+            structured=(
+                len(lint_configs) + len(type_configs) + len(tool_results)),
             heuristic=len(source_files),
             coverage=(len(source_files) - len(parse_failures))
             / max(1, len(source_files)),
             limitations=[
                 "Complexity and duplication are bounded static signals; native "
-                "linter, type-checker, and duplication reports are not executed.",
+                "linter, type-checker, and duplication reports are not executed; "
+                "retained Ruff and ESLint JSON results are summarized.",
                 "No cross-language maintainability score is produced.",
                 "Dead-code and trend claims require language-native historical evidence.",
             ]),

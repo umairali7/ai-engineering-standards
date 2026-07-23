@@ -3,7 +3,8 @@
 A **consumer, not a decider** (CONFORMANCE-POLICY.md §4): the API serves
 artifacts the engine already produced and versioned inventories over their
 availability — deployments, runs, evidence packages, Engineering Assessment
-Results, optional Formal Assessment Results, and conformance — as JSON. It
+Results, optional Formal Assessment Results, explicitly saved comparisons,
+and conformance — as JSON. It
 computes no outcome and re-derives no decision; product endpoints return
 exactly the stored artifact. It is intentionally read-only (no mutation) and
 dependency-free (stdlib `http.server`), keeping the platform's only runtime
@@ -34,6 +35,7 @@ _RUN_EXECUTIVE = re.compile(r"^/runs/([^/]+)/executive-summary$")
 _RUN_DIAGNOSTICS = re.compile(r"^/runs/([^/]+)/diagnostics$")
 _RUN_DETAIL = re.compile(r"^/runs/([^/]+)$")
 _AUDIT_DETAIL = re.compile(r"^/audits/([^/]+)$")
+_COMPARISON_DETAIL = re.compile(r"^/comparisons/([^/]+)$")
 
 
 def _error(status: int, code: str, message: str, *,
@@ -68,6 +70,7 @@ def route(path: str) -> tuple[int, dict]:
                                    "/runs/{id}/executive-summary",
                                    "/runs/{id}/diagnostics",
                                    "/audits", "/audits/{id}",
+                                   "/comparisons", "/comparisons/{id}",
                                    "/assessments", "/qualifications", "/conformance"]}
     if path == "/overview":
         from . import overview
@@ -100,6 +103,9 @@ def route(path: str) -> tuple[int, dict]:
                 "href": f"/audits/{value.get('audit_id') or artifact.stem}",
             })
         return 200, {"audits": rows}
+    if path == "/comparisons":
+        from . import comparison_report
+        return 200, {"comparisons": comparison_report.list_records()}
     if path == "/assessments":
         from . import assessments
         return 200, {"assessments": assessments.list_assessments()}
@@ -186,6 +192,21 @@ def route(path: str) -> tuple[int, dict]:
                 404, "audit-not-found",
                 f"repository assessment {audit_id!r} was not found",
                 hint="list available repository assessments with GET /audits")
+        return 200, workspace.read_json(artifact)
+    m = _COMPARISON_DETAIL.match(path)
+    if m:
+        comparison_id = m.group(1)
+        try:
+            workspace.validate_run_id(comparison_id)
+        except ValueError as error:
+            return _error(400, "invalid-comparison-id", str(error))
+        artifact = (
+            workspace.root() / "comparisons" / f"{comparison_id}.json")
+        if not artifact.exists():
+            return _error(
+                404, "comparison-not-found",
+                f"comparison {comparison_id!r} was not found",
+                hint="list saved comparisons with GET /comparisons")
         return 200, workspace.read_json(artifact)
 
     return _error(

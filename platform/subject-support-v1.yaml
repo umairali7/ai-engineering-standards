@@ -80,13 +80,14 @@ subjects:
     instruments:
       - CA-01 through CA-12 repository-practice checks
       - Architecture topology, cycles, declared layers, and ADR traceability
-      - Code-quality, retained test and coverage, SARIF, and dependency evidence
+      - Code-quality, retained Ruff and ESLint, test and coverage, SARIF, dependency, CycloneDX, and SPDX evidence
     decision_products:
       - Repository Practice Maturity Scorecard
       - Repository Engineering Analysis
       - Evidence-Linked Remediation Plan
       - Markdown, JSON, and HTML Repository Assessment Bundle
-    entry_points: [aies audit]
+      - Adaptive 2–5 Repository Evidence Comparison
+    entry_points: [aies audit, aies compare]
     limitations:
       - Repository maturity is not an AESQS competency score or model capability claim.
       - SARIF findings remain tool findings and are never converted into maturity, correctness, or conformance.

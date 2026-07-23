@@ -986,13 +986,14 @@ The default report deliberately contains two separate layers.
    - Python-aware internal topology, cycles, fan-out, declared layer
      violations, and ADR-to-source references;
    - bounded complexity, size, duplication, documentation, lint/type
-     configuration, and testability signals;
+     configuration, testability signals, and retained Ruff/ESLint JSON results;
    - retained JUnit execution, coverage, mutation/property/contract-test
      signals and explicit failure evidence;
    - security policy/scanner signals and retained SARIF 2.1.0 findings without
      changing their severity or meaning;
-   - dependency manifests, lockfiles, pinning, update automation, and SBOM
-     evidence;
+   - dependency manifests, lockfiles, pinning, update automation, and retained
+     CycloneDX/SPDX JSON SBOM evidence, including source-preserved vulnerability
+     counts where the artifact provides them;
    - evidence confidence and limitations per perspective; and
    - a priority-sorted, evidence-linked remediation plan with acceptance
      signals, owner boundary, reassessment trigger, and exact rerun command.
@@ -1001,9 +1002,9 @@ The analyzer does not execute repository code, tests, scanners, linters, or
 dependency resolution. Test presence is not execution evidence, passing tests
 do not prove correctness, coverage does not measure test quality, an empty scan
 does not prove security, and structural signals are not architecture verdicts.
-The proposed
+The accepted
 [ADR-0016 — Repository Engineering Analysis Layers](../adr/ADR-0016-Repository-Engineering-Analysis-Layers.md)
-governs this separation; acceptance is still required before freezing it.
+governs this separation and its prohibited-claim boundaries.
 
 An optional `aies-repository-analysis.yaml` can declare enforceable layers:
 
@@ -1025,18 +1026,34 @@ attestation file for the separate maturity layer mirrors the conformance model:
 ```
 
 Every assessment is retained under its collision-safe `audit-...` identifier
-and served verbatim through `GET /audits/{id}`. Compare two or more compatible
+and served verbatim through `GET /audits/{id}`. Compare 2–5 compatible
 repository snapshots with the same command used for deployment evidence:
 
 ```text
 aies compare audit-... audit-... --sort spread
 aies compare audit-... audit-... audit-... --only-comparable
+aies compare audit-... audit-... --out comparison --save
 ```
 
 Repository comparison checks assessment/analysis schema, analyzer version,
 language and build scope, complete content snapshots, and evidence-adapter
 profiles. It reports perspective-specific metric values and deltas but emits no
 composite score, winner, correctness claim, security claim, or authorization.
+The same 2–5 input limit applies to deployment/model runs. Two subjects use a
+pair layout; three through five use a matrix layout. All use the same
+compatibility engine, sorting, evidence-confidence display, coverage summary,
+caveats, and deterministic next actions. `--out` writes immutable
+`comparison.md`, `comparison.json`, `comparison.html`, and
+`comparison-bundle.json`; `--save` explicitly retains an append-only comparison
+record available through `GET /comparisons/{id}`. Without `--save`, comparison
+remains a read-only derivation over existing evidence.
+
+When a copied run arrives as `runs/RUN/RUN/manifest.json`, commands resolve the
+inner package in place so inspection and comparison can continue without
+moving or overwriting evidence. `aies doctor` still reports the wrapper as an
+evidence-bearing nested package. The canonical `runs/RUN/manifest.json` layout
+remains preferred; a future verified run-import workflow will normalize
+cross-machine transfers explicitly.
 
 #### Adopt the audit in CI without an implicit gate
 

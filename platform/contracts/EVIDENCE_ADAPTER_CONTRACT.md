@@ -30,7 +30,8 @@ The shipped `aies-repository-conformance/v1` profile preserves verified,
 asserted, and gap practice evidence for ML0 — Absent through ML4 — Optimizing
 repository maturity only. The shipped
 `aies-repository-analysis/v1` profile observes bounded source structure and
-retained JUnit, coverage, SARIF, dependency, policy, and configuration
-artifacts. Its perspective metrics, confidence, findings, and remediation are
-informational; none are converted into AIES evaluation-dimension scores,
-correctness, security, conformance, qualification, or authorization.
+retained JUnit, coverage, SARIF, Ruff/ESLint JSON, CycloneDX/SPDX JSON,
+dependency, policy, and configuration artifacts. Its perspective metrics,
+confidence, findings, and remediation are informational; none are converted
+into AIES evaluation-dimension scores, correctness, security, conformance,
+qualification, or authorization.

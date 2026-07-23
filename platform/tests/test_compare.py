@@ -112,7 +112,7 @@ def test_cross_tier_comparison_refused(ws, tmp_path):
 
 def test_multi_run_ecm_comparison_aligns_tasks_and_exposes_confidence(
         ws, tmp_path):
-    from aies import compare
+    from aies import compare, comparison_report
 
     runs = []
     for model_id, score in (
@@ -121,6 +121,10 @@ def test_multi_run_ecm_comparison_aligns_tasks_and_exposes_confidence(
         runs.append(_qualified_run(tmp_path, model_id, score))
     result = compare.compare_ecm_many(runs, sort_by="spread")
     assert len(result["subjects"]) == 3
+    assert result["schema"] == "aies-engineering-comparison/v2"
+    assert result["layout"] == "matrix"
+    assert result["reference_policy"] == {
+        "minimum": 2, "maximum": 5, "received": 3}
     assert result["summary"]["subjects"] == 3
     comparable = [row for row in result["tasks"] if row["comparable"]]
     assert comparable
@@ -130,5 +134,40 @@ def test_multi_run_ecm_comparison_aligns_tasks_and_exposes_confidence(
     assert all(row["leaders"] == ["C"] for row in comparable)
     markdown = compare.render_ecm_many_markdown(result)
     assert "3 subjects" in markdown
+    assert "Coverage summary" in markdown
     assert "performance / confidence" in markdown
     assert "higher observed: C" in markdown
+    html = comparison_report.render_html(result)
+    assert "Engineering Capability Matrix Comparison" in html
+    assert "Evidence-driven next actions" in html
+    paths = comparison_report.write_bundle(
+        result, tmp_path / "comparison-bundle")
+    assert set(paths) == {"json", "markdown", "html", "bundle"}
+    assert Path(paths["html"]).is_file()
+
+
+def test_comparison_accepts_two_through_five_references_and_rejects_more(
+        ws, tmp_path, capsys):
+    from aies import cli, compare
+
+    _register(tmp_path, "model-a")
+    run = _qualified_run(tmp_path, "model-a", 3)
+    pair = compare.compare_ecm_many([run, run])
+    maximum = compare.compare_ecm_many([run] * 5)
+    assert pair["layout"] == "pair"
+    assert len(maximum["subjects"]) == 5
+    assert maximum["layout"] == "matrix"
+    assert any("protocol self-check" in item for item in maximum["caveats"])
+    output = tmp_path / "cli-comparison"
+    assert cli.main([
+        "compare", run, run, "--sort", "spread",
+        "--out", str(output), "--save",
+    ]) == 0
+    rendered = capsys.readouterr().out
+    assert "pair layout" in rendered
+    assert "Saved comparison:" in rendered
+    assert (output / "comparison.html").is_file()
+    with pytest.raises(compare.CompareError, match="at most 5"):
+        compare.compare_ecm_many([run] * 6)
+    with pytest.raises(compare.CompareError, match="at most 5"):
+        compare.compare_repositories(["missing"] * 6)

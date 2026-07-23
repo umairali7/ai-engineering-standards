@@ -8,6 +8,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Adaptive 2–5 subject comparison reports**: `aies compare` now uses one
+  compatibility engine for two through five deployment/model runs and a
+  parallel perspective-native engine for two through five repository
+  assessments. Two inputs render as a pair and three through five as a matrix;
+  every layout exposes subject/run identity, protocol checks, task performance
+  beside evidence confidence and breadth, coverage gaps, caveats, and
+  deterministic next actions. `--sort` and `--only-comparable` apply
+  consistently, while repository evidence rejects leader sorting and never
+  emits a composite winner. `--out DIRECTORY` writes an immutable
+  Markdown/JSON/sortable-HTML bundle, and explicit `--save` creates an
+  append-only record served verbatim by `GET /comparisons/{id}`. The new
+  `comparison-report-v2` contract caps presentation at five subjects so reports
+  remain readable and larger studies use declared compatible cohorts. Copied
+  `runs/RUN/RUN/manifest.json` packages are resolved in place without moving or
+  overwriting evidence, while `aies doctor` continues to flag the non-canonical
+  wrapper for a future verified import workflow.
+- **Python 3.10 repository-analysis compatibility**: repository TOML parsing
+  uses standard-library `tomllib` on Python 3.11+ and the conditionally
+  installed `tomli` backport on Python 3.10, preventing the repository audit,
+  CI integration, API, and comparison paths from failing at import time.
 - **Multi-perspective repository engineering assessment**: `aies audit`
   preserves its verified/asserted/gap ML0 — Absent through ML4 — Optimizing
   practice-maturity layer and now adds a separate, read-only Repository
@@ -25,10 +45,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   action, acceptance signal, authority, reassessment trigger, and command.
   Repository assessments emit typed events, persist collision-safe records,
   expose read-only `/audits` API inventory/detail, and optionally write a
-  linked Markdown/JSON/HTML bundle with `aies audit --out`. Proposed ADR-0016 —
-  Repository Engineering Analysis Layers records the boundary pending human
-  acceptance. `aies compare` now also accepts two or more stored repository
-  audit ids, checks schema/analyzer/language/build/snapshot/adapter
+  linked Markdown/JSON/HTML bundle with `aies audit --out`. Accepted ADR-0016 —
+  Repository Engineering Analysis Layers records the boundary with Umair Ali
+  as repository-owner decider. Retained Ruff/ESLint JSON and CycloneDX/SPDX
+  JSON now add source-preserved quality and dependency/SBOM evidence without
+  becoming AIES quality or security scores. `aies compare` accepts stored
+  repository audit ids, checks schema/analyzer/language/build/snapshot/adapter
   compatibility, and renders perspective metric deltas without a composite
   repository score or winner.
 - **Subject-neutral execution and typed-evidence foundation**: new

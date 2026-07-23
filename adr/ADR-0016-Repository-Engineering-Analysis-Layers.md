@@ -67,4 +67,4 @@ benchmarks, semantic model review, historical trends, and cross-repository
 comparison require separate profiles and compatibility rules. The contracts
 remain experimental until their documented compatibility and exit criteria
 are satisfied, but the separation and prohibited-claim boundaries are now the
-acc
+accepted platform architecture.

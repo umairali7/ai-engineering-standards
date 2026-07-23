@@ -150,8 +150,9 @@ REPOSITORY_ANALYSIS = declaration(
     profile="aies-repository-analysis/v1",
     version="1.0.0",
     source_format=(
-        "Repository source plus retained JUnit, coverage, SARIF, manifest, "
-        "lockfile, policy, and configuration artifacts"),
+        "Repository source plus retained JUnit, coverage, SARIF, Ruff/ESLint "
+        "JSON, CycloneDX/SPDX JSON, manifest, lockfile, policy, and "
+        "configuration artifacts"),
     source_versions=["aies-repository-analysis/v1"],
     modalities=["repository-static-analysis"],
     event_types=["observation"],

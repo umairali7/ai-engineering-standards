@@ -11,6 +11,8 @@ requires-python = ">=3.10"
 license = "LicenseRef-AIES-Pending"
 dependencies = [
     "PyYAML>=6.0",
+    # tomllib entered the standard library in Python 3.11.
+    "tomli>=2.0; python_version < '3.11'",
     # CA bundle for TLS verification of HTTPS endpoints. Without it, a
     # freshly-installed Python (notably python.org builds on macOS) cannot
     # verify certs and every HTTPS call fails with CERTIFICATE_VERIFY_FAILED.

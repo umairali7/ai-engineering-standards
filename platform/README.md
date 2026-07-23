@@ -219,9 +219,11 @@ aies runs progress <run-id>   # durable live stage, %, elapsed, rate, ETA, failu
 aies runs events <run-id>     # validate and replay typed evidence events
 aies runs events <legacy-run> --migrate
                               # append typed projections; never rewrite source records
-aies compare <run-a> <run-b> <run-c>
-                              # compatible multi-subject ECM comparison
+aies compare <run-a> <run-b> [run-c ... run-e]
+                              # compatible 2–5 subject ECM comparison
 aies compare <run-a> <run-b> <run-c> --sort spread --only-comparable
+aies compare <run-a> <run-b> --out comparison --save
+                              # Markdown/JSON/sortable HTML + saved API record
                               # focus on the largest defensible differences
 aies suites validate          # validate suite catalog before publishing changes
 ```

@@ -481,13 +481,13 @@ retain repository-assessment evidence and annotations
 
 compare two or more compatible deployment runs or stored repository assessments
 
-**Usage:** `aies compare [-h] [--json] [--format {markdown,json}] [--ecm] [--area-summary] [--formal-qualification] [--sort {task,confidence,spread,leader}] [--only-comparable] refs [refs ...]`
+**Usage:** `aies compare [-h] [--json] [--format {markdown,json,html}] [--ecm] [--area-summary] [--formal-qualification] [--sort {task,confidence,spread,leader}] [--only-comparable] [--out DIRECTORY] [--save] refs [refs ...]`
 
-**Prerequisites:** At least two references resolve either to aggregated deployment runs or to stored repository audit ids; subject types cannot be mixed. Deployment leaders and repository deltas require their respective scope/protocol compatibility checks.
+**Prerequisites:** Between two and five references resolve either to aggregated deployment runs or to stored repository audit ids; subject types cannot be mixed. Deployment leaders and repository deltas require their respective scope/protocol compatibility checks.
 
-**Result and side effects:** Builds a multi-subject ECM table for deployments or a no-winner perspective/metric delta table for repository assessments. Both disclose compatibility and support task/confidence/spread sorting where meaningful.
+**Result and side effects:** Builds an adaptive pair/matrix ECM for deployments or a no-winner perspective/metric matrix for repositories, with compatibility, confidence, coverage, next actions, optional report bundles, and explicit persistence.
 
-**Recommended next step:** Use `--only-comparable --sort spread` for the strongest scoped signals; do not treat them as qualification, authorization, universal ranking, or proof of repository quality.
+**Recommended next step:** Use `--only-comparable --sort spread --out comparison`; add `--save` only when an append-only API-visible record is wanted. Do not treat the output as qualification, authorization, universal ranking, or proof of repository quality.
 
 ### Parameters and options
 
@@ -495,13 +495,15 @@ compare two or more compatible deployment runs or stored repository assessments
 |---|---|---|---|
 | `-h`, `--help` | optional | show this help message and exit | — |
 | `--json` | optional | machine-readable output | — |
-| `<REFS>` | required | two or more run ids, deployment ids, or repository audit ids; do not mix repository and deployment evidence | values: + |
-| `--format` | optional | output representation (default: markdown) | choices: `markdown`, `json`; default: `markdown` |
+| `<REFS>` | required | 2 to 5 run ids, deployment ids, or repository audit ids; do not mix repository and deployment evidence | values: +; Accepts 2–5 compatible deployment/run references or 2–5 stored repository-audit ids. Repository and deployment evidence cannot be mixed. |
+| `--format` | optional | output representation (default: markdown) | choices: `markdown`, `json`, `html`; default: `markdown` |
 | `--ecm` | optional | compatibility alias; task-level ECM comparison is now the default | Compatibility alias; ECM comparison is the default. |
-| `--area-summary` | optional | render the legacy competency-area aggregate comparison instead of ECM | Selects the legacy competency-area aggregate instead of the default ECM comparison. |
+| `--area-summary` | optional | render the legacy competency-area aggregate comparison instead of ECM | Selects the legacy two-run competency-area aggregate instead of the default ECM comparison. |
 | `--formal-qualification` | optional | require demonstrated tasks and the human-rater protocol; default ECM comparison uses compatible observed engineering evidence | Switches from compatible observed-score comparison to demonstrated, human-protocol-qualified comparison; it cannot be combined with `--area-summary`. |
-| `--sort` | optional | multi-run task ordering (default: stable task taxonomy order) | choices: `task`, `confidence`, `spread`, `leader`; default: `task` |
-| `--only-comparable` | optional | hide tasks that cannot support a like-for-like comparison | — |
+| `--sort` | optional | multi-run task ordering (default: stable task taxonomy order) | choices: `task`, `confidence`, `spread`, `leader`; default: `task`; Orders pair or matrix rows by stable task/metric identity, confidence, evidence-backed spread, or compatible higher-observed subject. Repository comparisons do not support leader sorting. |
+| `--only-comparable` | optional | hide tasks that cannot support a like-for-like comparison | Hides rows with mismatched or missing evidence; the summary still discloses that coverage was filtered. |
+| `--out` | optional | write an immutable comparison.json, Markdown, HTML, and bundle index | Writes an immutable comparison Markdown/JSON/sortable-HTML bundle plus its bundle index without changing source evidence. |
+| `--save` | optional | persist the derived comparison as an append-only workspace record for GET /comparisons; comparison remains informational | Explicitly creates an append-only workspace comparison record for the read-only `/comparisons` API. Without it, comparison is not persisted. |
 
 ## `aies completion`
 

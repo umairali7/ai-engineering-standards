@@ -74,7 +74,7 @@ and optional human evaluation—as different facts.
 | Assess a repository from multiple engineering perspectives | `aies audit . --out aies-repository-report` | Separate practice maturity, architecture, code-quality, correctness-assurance, security, dependency, confidence, limitation, and evidence-linked remediation views |
 | Add advisory repository evidence to CI | `aies ci audit . --rt 2` | Retained JSON/Markdown evidence and annotations without an implicit merge gate |
 | Run without a host Python install | `docker build -f platform/Dockerfile -t aies:local .` | Non-root container for demo, audit, conformance, and networked evaluations |
-| Compare compatible deployment runs or repository snapshots | `aies compare REF_A REF_B [REF_C ...] --sort spread` | Task-level deployment evidence or perspective-level repository deltas without a fake universal winner |
+| Compare 2–5 compatible deployment runs or repository snapshots | `aies compare REF_A REF_B [REF_C ...] --sort spread --out comparison` | Adaptive pair/matrix evidence in Markdown, JSON, and sortable HTML without a fake universal winner |
 | Integrate an evaluation tool | `aies bridge inspect-import …` | Source-bound imported ratings and an explicit loss report |
 | Integrate static analysis | `aies bridge sarif-import …` | Preserved SARIF findings that remain distinct from correctness claims |
 | Apply formal governance | `--formal-qualification` | A separate human-governed qualification path |
@@ -333,12 +333,20 @@ The project does **not** aim to:
 
 AIES does support evidence-compatible comparison of scoped assessment runs.
 Those comparisons are engineering selection inputs, not universal rankings.
-`aies compare` accepts two or more runs or deployment IDs and places observed
-performance beside direct scenario breadth. It emits a higher-observed leader
+`aies compare` accepts 2–5 runs or deployment IDs, or 2–5 stored repository
+assessment IDs, without mixing subject families. It places observed performance
+beside direct scenario breadth for deployments and preserves perspective-native
+metrics for repositories. It emits a higher-observed leader
 or tie only when risk tier, subject kind, profile, task mapping, scoring
 semantics, rater protocol, suite versions, repeat structure, evidence-adapter
 profiles, and task instruments are compatible. Use `--sort spread` to find the
 largest supported differences or `--only-comparable` to hide evidence gaps.
+`--out DIRECTORY` writes an immutable Markdown/JSON/sortable-HTML bundle;
+`--save` explicitly records the derived comparison for the read-only
+`/comparisons` API. Pair and matrix reports expose compatibility failures,
+coverage gaps, caveats, and evidence-driven next actions. They remain selection
+inputs rather than selection, qualification, deployment, or authorization
+decisions.
 AIES defines **engineering standards** that remain applicable regardless of the
 underlying AI technology.
 

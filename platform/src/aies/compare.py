@@ -16,6 +16,26 @@ class CompareError(Exception):
     pass
 
 
+MIN_COMPARISON_SUBJECTS = 2
+MAX_COMPARISON_SUBJECTS = 5
+
+
+def validate_reference_count(
+    refs: list[str],
+    *,
+    label: str = "comparison",
+) -> None:
+    count = len(refs)
+    if count < MIN_COMPARISON_SUBJECTS:
+        raise CompareError(
+            f"{label} requires at least {MIN_COMPARISON_SUBJECTS} references")
+    if count > MAX_COMPARISON_SUBJECTS:
+        raise CompareError(
+            f"{label} accepts at most {MAX_COMPARISON_SUBJECTS} references; "
+            f"received {count}. Split larger studies into compatible cohorts "
+            "and retain the cohort definition.")
+
+
 def _audit_path(ref: str):
     return workspace.root() / "audits" / f"{ref}.json"
 
@@ -45,8 +65,7 @@ def compare_repositories(
     sort_by: str = "task",
 ) -> dict:
     """Compare stored repository evidence without emitting a quality winner."""
-    if len(refs) < 2:
-        raise CompareError("repository comparison requires at least two audit ids")
+    validate_reference_count(refs, label="repository comparison")
     if sort_by == "leader":
         raise CompareError(
             "--sort leader is unavailable for repository evidence because "
@@ -89,6 +108,11 @@ def compare_repositories(
             analysis["perspectives"][perspective]["metrics"]
             for analysis in analyses
         ]
+        confidence_values = [
+            analysis["perspectives"][perspective]["confidence"].get(
+                "coverage_percent", 0)
+            for analysis in analyses
+        ]
         shared = sorted(set.intersection(*[set(item) for item in metrics]))
         for metric in shared:
             values = [item.get(metric) for item in metrics]
@@ -102,6 +126,9 @@ def compare_repositories(
                 "perspective": perspective,
                 "metric": metric,
                 "values": values,
+                "evidence_confidence_percent": confidence_values,
+                "minimum_evidence_confidence_percent": min(
+                    confidence_values),
                 "deltas_from_a": [
                     None if value is None or values[0] is None
                     else round(value - values[0], 3)
@@ -114,15 +141,25 @@ def compare_repositories(
                 "interpretation": _repository_metric_interpretation(
                     perspective, metric),
             }
-            if not only_comparable or comparable:
-                rows.append(row)
+            rows.append(row)
+    all_metric_rows = list(rows)
+    total_metric_rows = len(all_metric_rows)
+    comparable_metric_rows = sum(
+        row["comparable"] for row in all_metric_rows)
+    filtered_metric_rows = (
+        sum(not row["comparable"] for row in all_metric_rows)
+        if only_comparable else 0)
+    if only_comparable:
+        rows = [row for row in rows if row["comparable"]]
     if sort_by == "spread":
         rows.sort(key=lambda row: (
             row["spread"] is not None, row["spread"] or 0,
             row["perspective"], row["metric"]), reverse=True)
     elif sort_by == "confidence":
         rows.sort(key=lambda row: (
-            row["comparable"], row["perspective"], row["metric"]), reverse=True)
+            row["minimum_evidence_confidence_percent"],
+            row["comparable"], row["perspective"], row["metric"]),
+            reverse=True)
     else:
         rows.sort(key=lambda row: (row["perspective"], row["metric"]))
     same_subject = _all_equal([
@@ -141,12 +178,31 @@ def compare_repositories(
         })
     return {
         "kind": "aies-repository-comparison",
-        "schema": 1,
+        "schema": "aies-repository-comparison/v2",
+        "subject_family": "repository",
+        "layout": "pair" if len(subjects) == 2 else "matrix",
+        "reference_policy": {
+            "minimum": MIN_COMPARISON_SUBJECTS,
+            "maximum": MAX_COMPARISON_SUBJECTS,
+            "received": len(subjects),
+        },
         "compatible": compatible,
         "same_subject_over_time": same_subject,
         "checks": checks,
         "subjects": subjects,
         "metrics": rows,
+        "summary": {
+            "subjects": len(subjects),
+            "metrics": total_metric_rows,
+            "rows_returned": len(rows),
+            "filtered_noncomparable_metrics": filtered_metric_rows,
+            "comparable_metrics": comparable_metric_rows,
+            "not_comparable_metrics": (
+                total_metric_rows - comparable_metric_rows),
+            "perspectives": sorted({
+                row["perspective"] for row in all_metric_rows
+            }),
+        },
         "caveats": [
             value for value in (
                 None if compatible else
@@ -155,13 +211,53 @@ def compare_repositories(
                 None if same_subject else
                 "Assessments identify different repository subjects; this is a "
                 "descriptive evidence comparison, not a trend.",
+                "A repeated reference is a protocol self-check, not independent "
+                "comparative evidence." if len(set(refs)) != len(refs) else None,
             ) if value
         ],
+        "next_actions": _comparison_next_actions(
+            compatible=compatible,
+            failed_checks=[
+                name for name, passed in checks.items() if not passed
+            ],
+            comparable=comparable_metric_rows,
+            total=total_metric_rows,
+            evidence_kind="repository metrics",
+        ),
         "claim_boundary": (
             "Metric deltas retain their perspective-specific meaning. No "
             "composite score, winner, repository quality verdict, correctness "
             "claim, security claim, or authorization is emitted."),
     }
+
+
+def _comparison_next_actions(
+    *,
+    compatible: bool,
+    failed_checks: list[str],
+    comparable: int,
+    total: int,
+    evidence_kind: str,
+) -> list[str]:
+    actions = []
+    if not compatible:
+        actions.append(
+            "Align " + ", ".join(
+                check.replace("_", " ") for check in failed_checks)
+            + " before interpreting deltas as like-for-like.")
+    if comparable < total:
+        actions.append(
+            f"Collect matching evidence for the {total - comparable} "
+            f"non-comparable {evidence_kind} row(s).")
+    if compatible and comparable:
+        actions.append(
+            "Review the largest evidence-backed spreads together with each "
+            "row's confidence and interpretation before making a selection.")
+    if not actions:
+        actions.append(
+            "No comparable evidence rows are available; inspect subject scope "
+            "and collect a matching assessment protocol.")
+    return actions
 
 
 def _repository_metric_interpretation(
@@ -170,9 +266,11 @@ def _repository_metric_interpretation(
         "dependency_cycles", "layer_violations", "python_parse_failures",
         "complex_or_long_functions", "large_source_files",
         "duplicate_block_groups", "todo_fixme_markers",
+        "retained_quality_errors", "retained_quality_warnings",
         "test_failures_or_errors", "sarif_error_findings",
         "sensitive_configuration_filenames",
-        "unpinned_direct_declarations",
+        "unpinned_direct_declarations", "sbom_vulnerabilities",
+        "sbom_high_critical_vulnerabilities",
     }
     higher_assurance = {
         "retained_test_pass_percent", "retained_line_coverage_percent",
@@ -199,8 +297,16 @@ def render_repository_comparison(cmp: dict) -> str:
         "> **INFORMATIONAL — NO COMPOSITE SCORE OR WINNER.**",
         "",
         f"{len(subjects)} repository assessment(s) · "
-        f"{sum(row['comparable'] for row in cmp['metrics'])}/"
-        f"{len(cmp['metrics'])} metric rows comparable",
+        f"{cmp['summary']['comparable_metrics']}/"
+        f"{cmp['summary']['metrics']} metric rows comparable · "
+        f"{cmp.get('layout', 'matrix')} layout",
+        (
+            f"Rows shown: {cmp['summary']['rows_returned']}/"
+            f"{cmp['summary']['metrics']} "
+            f"({cmp['summary']['filtered_noncomparable_metrics']} "
+            "non-comparable filtered)"
+            if cmp["summary"]["filtered_noncomparable_metrics"] else
+            f"Rows shown: {cmp['summary']['rows_returned']}"),
         "",
         "| | " + " | ".join(item["column"] for item in subjects) + " |",
         "|---|" + "|".join("---" for _ in subjects) + "|",
@@ -212,14 +318,31 @@ def render_repository_comparison(cmp: dict) -> str:
             f"`{item['snapshot']['scope_digest'][:23]}…`"
             for item in subjects) + " |",
         "",
+        "## Protocol compatibility",
+        "",
+        "| Check | Result |",
+        "|---|---|",
+        *[
+            f"| {name.replace('_', ' ').title()} | "
+            f"{'compatible' if passed else '**mismatch**'} |"
+            for name, passed in cmp["checks"].items()
+        ],
+        "",
+        "## Evidence matrix",
+        "",
         "| Perspective / metric | " + " | ".join(
-            item["column"] for item in subjects)
+            item["column"] + " value / evidence confidence"
+            for item in subjects)
         + " | Comparable | Interpretation |",
         "|---|" + "|".join("---:" for _ in subjects) + "|---|---|",
     ]
     for row in cmp["metrics"]:
-        values = ["—" if value is None else str(value)
-                  for value in row["values"]]
+        values = [
+            ("—" if value is None else str(value))
+            + f" / {confidence:.0f}%"
+            for value, confidence in zip(
+                row["values"], row["evidence_confidence_percent"])
+        ]
         lines.append(
             f"| {row['perspective'].replace('_', ' ').title()} / "
             f"{row['metric'].replace('_', ' ').capitalize()} | "
@@ -228,6 +351,11 @@ def render_repository_comparison(cmp: dict) -> str:
             + row["interpretation"] + " |")
     for caveat in cmp["caveats"]:
         lines += ["", f"> **Caveat:** {caveat}"]
+    lines += ["", "## Evidence-driven next actions", ""]
+    lines += [
+        f"{index}. {action}"
+        for index, action in enumerate(cmp.get("next_actions") or [], 1)
+    ]
     lines += ["", cmp["claim_boundary"], ""]
     return "\n".join(lines)
 
@@ -237,7 +365,7 @@ def list_runs(model: str | None = None) -> list[dict]:
     out = []
     rdir = workspace.runs_dir()
     for d in sorted(rdir.iterdir(), reverse=True):
-        manifest_path = d / "manifest.json"
+        manifest_path = workspace.run_dir(d.name) / "manifest.json"
         if not d.is_dir() or not manifest_path.exists():
             continue
         m = workspace.read_json(manifest_path)
@@ -323,10 +451,35 @@ def compare(ref_a: str, ref_b: str) -> dict:
                 == b["environment_fingerprint"].get("fingerprint_hash"))
     return {
         "kind": "comparison",
+        "schema": "aies-area-comparison/v2",
+        "subject_family": "ai-deployment",
+        "layout": "pair",
+        "reference_policy": {
+            "minimum": 2, "maximum": 2, "received": 2,
+        },
+        "compatible": bool(areas) and not incomparable,
         "a": {"run_id": a["run_id"], "model": a["model"]["registry_id"],
               "profile": a["profile"]},
         "b": {"run_id": b["run_id"], "model": b["model"]["registry_id"],
               "profile": b["profile"]},
+        "subjects": [
+            {"column": "A", "subject": a["model"]["registry_id"],
+             "run_id": a["run_id"], "profile": a["profile"],
+             "risk_tier": a["risk_tier"]},
+            {"column": "B", "subject": b["model"]["registry_id"],
+             "run_id": b["run_id"], "profile": b["profile"],
+             "risk_tier": b["risk_tier"]},
+        ],
+        "checks": {
+            "risk_tier": True,
+            "common_areas": bool(common),
+            "suite_versions": not incomparable,
+        },
+        "summary": {
+            "subjects": 2,
+            "areas": len(areas),
+            "incomparable_areas": len(incomparable),
+        },
         "risk_tier": a["risk_tier"],
         "same_environment_fingerprint": same_env,
         "profiles_differ": a["profile"] != b["profile"],
@@ -345,6 +498,18 @@ def compare(ref_a: str, ref_b: str) -> dict:
                 "one or both runs are NON-DECISIONAL (AIES-AESQS-CS-01 §6)",
             ) if c
         ],
+        "next_actions": _comparison_next_actions(
+            compatible=bool(areas) and not incomparable,
+            failed_checks=(
+                ["suite_versions"] if incomparable else []),
+            comparable=len(areas),
+            total=len(areas) + len(incomparable),
+            evidence_kind="competency areas",
+        ),
+        "claim_boundary": (
+            "Area deltas are presentation over existing qualification evidence. "
+            "They are not a model selection, deployment, qualification, or "
+            "authorization grant."),
     }
 
 
@@ -391,9 +556,16 @@ def render_markdown(cmp: dict) -> str:
             a(f"- **{C.competency_label(x['area'])}**: {x['reason']} (`{x['suite_a']}` vs `{x['suite_b']}`) "
               "- results on different suite versions are never diffed")
         a("")
+    a("## Evidence-driven next actions")
+    a("")
+    for index, action in enumerate(cmp.get("next_actions") or [], 1):
+        a(f"{index}. {action}")
+    a("")
     a("---")
-    a("A comparison is presentation over existing evidence; it makes no "
-      "additional claims (PLATFORM.md §9).")
+    a(cmp.get(
+        "claim_boundary",
+        "A comparison is presentation over existing evidence; it makes no "
+        "additional claims (PLATFORM.md §9)."))
     a("")
     return "\n".join(lines)
 
@@ -448,8 +620,8 @@ def compare_ecm_many(
     """
     from . import ecm
 
-    if len(refs) < 2:
-        raise CompareError("compare requires at least two run or deployment references")
+    validate_reference_count(
+        refs, label="deployment or model comparison")
     if sort_by not in {"task", "confidence", "spread", "leader"}:
         raise CompareError(
             "comparison sort must be task, confidence, spread, or leader")
@@ -552,6 +724,13 @@ def compare_ecm_many(
                 round(max(numeric) - min(numeric), 3)
                 if task_comparable and numeric else None),
         })
+    all_task_rows = list(rows)
+    total_task_rows = len(all_task_rows)
+    comparable_task_rows = sum(
+        row["comparable"] for row in all_task_rows)
+    filtered_task_rows = (
+        sum(not row["comparable"] for row in all_task_rows)
+        if only_comparable else 0)
     if only_comparable:
         rows = [row for row in rows if row["comparable"]]
     if sort_by == "confidence":
@@ -583,6 +762,14 @@ def compare_ecm_many(
         })
     return {
         "kind": "ecm-multi-comparison",
+        "schema": "aies-engineering-comparison/v2",
+        "subject_family": "ai-deployment",
+        "layout": "pair" if len(subject_rows) == 2 else "matrix",
+        "reference_policy": {
+            "minimum": MIN_COMPARISON_SUBJECTS,
+            "maximum": MAX_COMPARISON_SUBJECTS,
+            "received": len(subject_rows),
+        },
         "comparison_mode": (
             "formal-qualification" if formal_qualification
             else "engineering-observed"),
@@ -592,12 +779,43 @@ def compare_ecm_many(
         "tasks": rows,
         "summary": {
             "subjects": len(subject_rows),
-            "tasks": len(rows),
-            "comparable_tasks": sum(row["comparable"] for row in rows),
-            "not_comparable_tasks": sum(
-                not row["comparable"] for row in rows),
+            "tasks": total_task_rows,
+            "rows_returned": len(rows),
+            "filtered_noncomparable_tasks": filtered_task_rows,
+            "comparable_tasks": comparable_task_rows,
+            "not_comparable_tasks": total_task_rows - comparable_task_rows,
             "sole_leads": leader_counts,
+            "assessed_tasks_by_subject": {
+                subject_rows[index]["column"]: sum(
+                    row["scores"][index] is not None
+                    for row in all_task_rows)
+                for index in range(len(subject_rows))
+            },
+            "evidence_gaps_by_subject": {
+                subject_rows[index]["column"]: sum(
+                    row["scores"][index] is None
+                    for row in all_task_rows)
+                for index in range(len(subject_rows))
+            },
         },
+        "caveats": [
+            value for value in (
+                "A repeated reference is a protocol self-check, not independent "
+                "comparative evidence." if len(set(refs)) != len(refs) else None,
+                None if compatible else
+                "At least one protocol-level compatibility check failed; "
+                "task leaders are suppressed.",
+            ) if value
+        ],
+        "next_actions": _comparison_next_actions(
+            compatible=compatible,
+            failed_checks=[
+                name for name, passed in checks.items() if not passed
+            ],
+            comparable=comparable_task_rows,
+            total=total_task_rows,
+            evidence_kind="engineering tasks",
+        ),
         "claim_boundary": (
             "Leaders identify higher compatible observed scores only. They are "
             "not a selection, deployment, qualification, or authorization grant."),
@@ -640,7 +858,14 @@ def render_ecm_many_markdown(cmp: dict) -> str:
         f"Mode: **{cmp['comparison_mode']}** · "
         f"{len(subjects)} subjects · "
         f"{cmp['summary']['comparable_tasks']}/{cmp['summary']['tasks']} "
-        "tasks comparable",
+        f"tasks comparable · {cmp.get('layout', 'matrix')} layout",
+        (
+            f"Rows shown: {cmp['summary']['rows_returned']}/"
+            f"{cmp['summary']['tasks']} "
+            f"({cmp['summary']['filtered_noncomparable_tasks']} "
+            "non-comparable filtered)"
+            if cmp["summary"]["filtered_noncomparable_tasks"] else
+            f"Rows shown: {cmp['summary']['rows_returned']}"),
         "",
         "| | " + " | ".join(subject["column"] for subject in subjects) + " |",
         "|---|" + "|".join("---" for _ in subjects) + "|",
@@ -650,6 +875,25 @@ def render_ecm_many_markdown(cmp: dict) -> str:
             f"`{subject['run_id']}`" for subject in subjects) + " |",
         "| Evidence adapters | " + " | ".join(
             ", ".join(subject["adapter_profiles"]) for subject in subjects) + " |",
+        "",
+        "## Coverage summary",
+        "",
+        "| | " + " | ".join(
+            subject["column"] for subject in subjects) + " |",
+        "|---|" + "|".join("---:" for _ in subjects) + "|",
+        "| Assessed tasks | " + " | ".join(
+            str(cmp["summary"]["assessed_tasks_by_subject"][
+                subject["column"]])
+            for subject in subjects) + " |",
+        "| Evidence gaps | " + " | ".join(
+            str(cmp["summary"]["evidence_gaps_by_subject"][
+                subject["column"]])
+            for subject in subjects) + " |",
+        "| Sole higher-observed rows | " + " | ".join(
+            str(cmp["summary"]["sole_leads"][subject["column"]])
+            for subject in subjects) + " |",
+        "",
+        "## Task matrix",
         "",
         "| Engineering task | " + " | ".join(
             f"{subject['column']} performance / confidence"
@@ -684,5 +928,12 @@ def render_ecm_many_markdown(cmp: dict) -> str:
             "**Protocol mismatch:** " + ", ".join(failed)
             + ". No task leader is emitted until evidence is compatible.",
         ]
+    for caveat in cmp.get("caveats") or []:
+        lines += ["", f"> **Caveat:** {caveat}"]
+    lines += ["", "## Evidence-driven next actions", ""]
+    lines += [
+        f"{index}. {action}"
+        for index, action in enumerate(cmp.get("next_actions") or [], 1)
+    ]
     lines += ["", cmp["claim_boundary"], ""]
     return "\n".join(lines)

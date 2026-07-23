@@ -53,6 +53,21 @@ def test_calculate():
             "results": [{"level": "error", "message": {"text": "finding"}}],
         }],
     }))
+    _write(root, "ruff-results.json", json.dumps([{
+        "code": "F401",
+        "filename": "src/core.py",
+        "location": {"row": 1, "column": 1},
+        "message": "unused import",
+    }]))
+    _write(root, "cyclonedx-sbom.json", json.dumps({
+        "bomFormat": "CycloneDX",
+        "specVersion": "1.6",
+        "components": [{"type": "library", "name": "requests"}],
+        "vulnerabilities": [{
+            "id": "CVE-fixture",
+            "ratings": [{"severity": "high"}],
+        }],
+    }))
     _write(root, ".github/dependabot.yml", "version: 2\n")
     _write(root, "SECURITY.md", "# Reporting\n")
     _write(root, "aies-repository-analysis.yaml", """
@@ -110,6 +125,17 @@ def test_retained_tool_results_do_not_become_correctness_or_security_pass(
     assert security["metrics"]["sarif_error_findings"] == 1
     assert any(finding["id"] == "SECURITY-003"
                for finding in security["findings"])
+    quality = analysis["perspectives"]["code_quality"]
+    assert quality["metrics"]["structured_quality_result_artifacts"] == 1
+    assert quality["metrics"]["retained_quality_errors"] == 1
+    assert any(finding["id"] == "QUALITY-TOOL-001"
+               for finding in quality["findings"])
+    dependencies = analysis["perspectives"]["dependencies"]
+    assert dependencies["metrics"]["structured_sbom_artifacts"] == 1
+    assert dependencies["metrics"]["sbom_components"] == 1
+    assert dependencies["metrics"]["sbom_high_critical_vulnerabilities"] == 1
+    assert any(finding["id"] == "DEP-004"
+               for finding in dependencies["findings"])
     assert "does not execute code" in analysis["claim_boundary"]
 
 
@@ -229,10 +255,17 @@ def test_repository_assessments_compare_without_fake_winner(
         if row["metric"] == "test_failures_or_errors")
     assert failure_row["values"] == [1, 0]
     assert failure_row["deltas_from_a"] == [0, -1]
+    assert len(failure_row["evidence_confidence_percent"]) == 2
+    assert failure_row["minimum_evidence_confidence_percent"] >= 0
     assert "winner" not in result
     rendered = compare.render_repository_comparison(result)
     assert "NO COMPOSITE SCORE OR WINNER" in rendered
     assert "Test failures or errors" in rendered
+    assert "Protocol compatibility" in rendered
+    maximum = compare.compare_repositories([before["audit_id"]] * 5)
+    assert len(maximum["subjects"]) == 5
+    assert maximum["layout"] == "matrix"
+    assert maximum["reference_policy"]["maximum"] == 5
 
 
 def test_repository_contracts_are_versioned_machine_readable_documents():
@@ -243,6 +276,9 @@ def test_repository_contracts_are_versioned_machine_readable_documents():
     assessment = json.loads(
         (contracts / "repository-assessment-v1.schema.json").read_text(
             encoding="utf-8"))
+    comparison = json.loads(
+        (contracts / "comparison-report-v2.schema.json").read_text(
+            encoding="utf-8"))
     assert analysis["$schema"].endswith("draft/2020-12/schema")
     assert assessment["$schema"].endswith("draft/2020-12/schema")
     assert analysis["properties"]["schema"]["const"] == (
@@ -250,6 +286,12 @@ def test_repository_contracts_are_versioned_machine_readable_documents():
     assert assessment["properties"]["schema"]["const"] == (
         "aies-repository-assessment/v1")
     assert "engineering_analysis" in assessment["required"]
+    assert comparison["properties"]["reference_policy"]["properties"][
+        "received"]["maximum"] == 5
+    packaging = (
+        Path(__file__).resolve().parent.parent / "pyproject.toml"
+    ).read_text(encoding="utf-8")
+    assert '"tomli>=2.0; python_version < \'3.11\'"' in packaging
 
 
 def test_audit_cli_defaults_to_engineering_analysis_and_can_opt_out(

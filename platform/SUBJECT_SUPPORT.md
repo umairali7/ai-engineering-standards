@@ -9,7 +9,7 @@
 | Subject kind | Descriptor kind | Status | Implemented assessment path | Entry point |
 |---|---|---|---|---|
 | `ai-deployment` — AI Deployment or Served AI System | `ai_deployment` | implemented | Automated Engineering Evaluation<br>Human-Governed Formal Qualification | `aies evaluate`<br>`aies qualify`<br>`aies benchmark` |
-| `repository` — Software Repository | `repository` | implemented | Repository Engineering-Practice Conformance Audit | `aies audit` |
+| `repository` — Software Repository | `repository` | implemented | Repository Engineering-Practice Conformance Audit | `aies audit`<br>`aies compare` |
 | `human` — Human Engineer | `human` | planned | — | — |
 | `team` — Engineering Team | `team` | planned | — | — |
 | `human-ai-pair` — Human–AI Engineering Pair | `composite` | planned | — | — |
@@ -44,7 +44,7 @@
 
 **Evidence adapters:** `repository-conformance` — Repository Practice Evidence Adapter (implemented); `repository-analysis` — Repository Engineering Analysis Adapter (implemented); `sarif` — SARIF 2.1.0 Findings Bridge (experimental).
 
-**Decision products:** Repository Practice Maturity Scorecard; Repository Engineering Analysis; Evidence-Linked Remediation Plan; Markdown, JSON, and HTML Repository Assessment Bundle.
+**Decision products:** Repository Practice Maturity Scorecard; Repository Engineering Analysis; Evidence-Linked Remediation Plan; Markdown, JSON, and HTML Repository Assessment Bundle; Adaptive 2–5 Repository Evidence Comparison.
 
 **Limitations:**
 
