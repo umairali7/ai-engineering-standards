@@ -15,7 +15,8 @@ class TaskMappingError(ValueError):
 
 
 def registry_path() -> Path:
-    return Path(__file__).resolve().parent.parent.parent / "task_mappings" / "engineering-tasks-v1.yaml"
+    from .resources import data_root
+    return data_root() / "task_mappings" / "engineering-tasks-v1.yaml"
 
 
 def load() -> dict:

@@ -538,6 +538,11 @@ def write_reports(run_id: str) -> dict[str, str]:
     bundle = {
         "kind": "aies-report-bundle", "report_bundle_schema": 1,
         "run_id": run_id, "status": "informational-index",
+        "measurement_claims": {
+            "contract": "aies-measurement-claims/v1",
+            "status": "draft",
+            "documentation": "MEASUREMENT_CLAIMS.md",
+        },
         "artifacts": {key: Path(path).name for key, path in paths.items()},
         "audience_boundaries": {
             "engineering_report": "evaluation results for engineers and reviewers",

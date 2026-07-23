@@ -1,14 +1,70 @@
 # AI Engineering Standards (AIES)
 
-> **The vendor-neutral standard and executable assessment system for trustworthy AI-native software engineering.**
+> **Turn AI engineering behavior into evidence you can inspect, compare, and act on.**
 
 ![Status](https://img.shields.io/badge/Status-Active%20Development-blue)
 ![License](https://img.shields.io/badge/License-Open%20dual--license%20(proposed)-lightgrey)
 ![Contributions](https://img.shields.io/badge/Contributions-Welcome-brightgreen)
 
-**New here? Start with [GETTING_STARTED.md](GETTING_STARTED.md)** — role-based reading paths and a six-step adoption guide.
+![AIES — Evidence to capability to engineering decisions](docs/assets/aies-social-preview.png)
 
-**Want to see the platform run in minutes?** [QUICKSTART.md](QUICKSTART.md) — the complete workflow, fully offline (`make demo`, or step by step).
+Models, coding assistants, agents, and engineering platforms are often chosen
+from anecdotes or one opaque benchmark number. AIES produces a traceable
+Engineering Capability Matrix (ECM): what the assessed subject did well, where
+the evidence is thin, what was not assessed, and where engineering review is
+appropriate.
+
+### Try the complete product offline
+
+```powershell
+cd platform
+python -m pip install -e .
+aies demo --open
+```
+
+No model server. No API key. No Make or Bash. No mandatory human-review loop.
+The command executes the real collection, batched scoring, analysis, ECM,
+Engineering Fit, and linked HTML report pipeline using deterministic mock
+deployments.
+
+```text
+Engineering Capability Matrix
+
+Architecture Design   █████████░  observed — limited confidence
+Code Generation       █████████░  observed — limited confidence
+Refactoring           ██████████  observed — limited confidence
+Testing               █████████░  observed — limited confidence
+Security Review       █████████░  observed — limited confidence
+Unassessed tasks      unknown     no claim made
+```
+
+That confidence label matters: AIES separates observed performance from
+evidence breadth instead of hiding both inside one score.
+
+**Start here:** [60-second offline trial](QUICKSTART.md) ·
+[choose a path by role](GETTING_STARTED.md) ·
+[see every CLI command](platform/CLI_REFERENCE.md) ·
+[review the public roadmap](ROADMAP.md) ·
+[see the adoption and launch plan](docs/ADOPTION_AND_LAUNCH_PLAN.md) ·
+[help build it](CONTRIBUTING.md)
+
+### What can you use today?
+
+| You want to… | Start with | You receive |
+|---|---|---|
+| See the idea without setup | `aies demo --open` | Executive Summary, ECM, fit guidance, diagnostics, and full report |
+| Understand one registered AI deployment | `aies evaluate DEPLOYMENT --plan-only` | No-cost call plan, limitations, and exact execution path |
+| Evaluate it automatically | `aies evaluate DEPLOYMENT --judge JUDGE` | Completed non-blocking Engineering Evaluation and report bundle |
+| Assess repository engineering practice | `aies audit .` | Evidence-backed maturity gaps and ranked remediation |
+| Compare compatible runs | `aies compare RUN_A RUN_B` | Task-by-task observed differences without a fake universal winner |
+| Integrate an evaluation tool | `aies bridge inspect-import …` | Source-bound imported ratings and an explicit loss report |
+| Integrate static analysis | `aies bridge sarif-import …` | Preserved SARIF findings that remain distinct from correctness claims |
+| Apply formal governance | `--formal-qualification` | A separate human-governed qualification path |
+
+Current implemented subjects are AI deployments and repositories. The
+subject-neutral contracts for agents, MCP servers, RAG systems, pipelines, and
+platforms are experimental until their dedicated executors and instruments are
+implemented and validated.
 
 ---
 
@@ -406,7 +462,7 @@ Individual documents carry a lifecycle status only (Draft → Review → Approve
   expansion remain in progress under
   [ADR-0009](adr/ADR-0009-Engineering-Assessment-Platform-Identity.md).
 - **Verified baseline:** 484 scenarios across 12 competency areas with zero
-  suite warnings/errors; 228 platform tests passing at the latest local
+  suite warnings/errors; 235 platform tests passing at the latest local
   verification. Empirical panel calibration and an independent pilot remain
   open.
 - **ECM standardization:** The ECM implementation and ET-01 through ET-15

@@ -1,0 +1,80 @@
+schema: aies-measurement-claims/v1
+status: draft
+scope: informational decision products generated from canonical assessment evidence
+unit_of_analysis: one resolved observation per distinct scenario and mapped engineering task
+claims:
+  engineering_evaluation:
+    subject: the exact assessed subject descriptor and environment fingerprint
+    target_population: the selected versioned scenario instruments under the recorded protocol
+    sampling_frame: scenarios explicitly included in the immutable run manifest
+    outcome: six rubric dimension scores from zero through four
+    aggregation: profile-weighted decision values over resolved evidence items
+    uncertainty: ninety-percent intervals where the report supplies them
+    exclusions:
+      - unscored responses
+      - unparseable automated ratings
+      - evidence outside the declared run scope
+    intended_decision: diagnose observed engineering behavior under the assessed conditions
+    does_not_mean:
+      - universal model or system quality
+      - field reliability outside the assessed conditions
+      - a qualification grant
+  engineering_capability_matrix:
+    subject: the exact assessed subject descriptor and environment fingerprint
+    target_population: scenarios directly mapped to each versioned ET engineering task
+    sampling_frame: distinct scored mapped scenarios in the run
+    outcome: normalized observed task performance and separately reported evidence confidence
+    aggregation: one resolved item per distinct task scenario under ECM schema semantics
+    uncertainty: task-specific interval and effective sample where available
+    exclusions:
+      - exact repeats as additional breadth
+      - indirect or unreviewed task mappings
+      - human qualification status
+    intended_decision: identify evidenced strengths, gaps, and unknowns for engineering use
+    does_not_mean:
+      - predictive field performance without a validation study
+      - comparability across incompatible protocols
+      - a universal leaderboard
+  engineering_fit_guidance:
+    subject: the exact assessed subject descriptor and environment fingerprint
+    target_population: the workload represented by observed task evidence
+    sampling_frame: ECM task rows and recorded limitations
+    outcome: strong observed fit, observed fit with review, limited evidence, or not assessed
+    aggregation: deterministic rules over observed performance, evidence confidence, and limitations
+    uncertainty: inherited from the ECM rather than replaced by the fit label
+    exclusions:
+      - formal autonomy authorization
+      - unsupported task extrapolation
+    intended_decision: support a human deployment or workload-selection decision
+    does_not_mean:
+      - permission for autonomous production action
+      - safety certification
+  comparison:
+    subject: two or more exact assessed subject descriptors
+    target_population: only mutually compatible task/protocol intersections
+    sampling_frame: comparable ECM task rows with disclosed missingness
+    outcome: scoped observed differences
+    aggregation: task-by-task comparison; no universal winner
+    uncertainty: retained per subject and task
+    exclusions:
+      - incompatible protocols
+      - unassessed tasks
+      - cross-run differences not controlled by the protocol
+    intended_decision: inform subject selection for a declared workload
+    does_not_mean:
+      - global rank
+      - statistically significant superiority unless separately tested
+  formal_qualification:
+    subject: the exact governed qualification scope tuple
+    target_population: the selected framework, competency, tier, and validity scope
+    sampling_frame: admitted evidence satisfying the formal protocol
+    outcome: formal conformance result recorded for a named human authority
+    aggregation: normative gates and human-governed evidence admission
+    uncertainty: decision values and intervals required by the applicable standard
+    exclusions:
+      - automated-only advisory ratings as sole decisional evidence
+      - scope outside the qualification record
+    intended_decision: inform a named human qualification authority
+    does_not_mean:
+      - platform-issued approval
+      - perpetual or transferable authorization

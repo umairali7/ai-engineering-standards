@@ -7,9 +7,12 @@ here (PLATFORM.md §4). Data-producing verbs support --json where applicable.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import dataclasses
+import io
 import json
 import math
+import os
 import sys
 from pathlib import Path
 
@@ -68,6 +71,274 @@ def cmd_doctor(args) -> int:
             print(f"    [{mark}] {r['runtime']}{ver}: {r['detail']}")
         print(f"  ready     : {'yes' if record['ready'] else 'NO'}")
     return 0 if record["ready"] else 1
+
+
+def cmd_init(args) -> int:
+    from . import adoption
+    try:
+        result = adoption.initialize(Path(args.path))
+        if getattr(args, "starter_manifest", False):
+            starter = adoption.starter_deployment(
+                Path(args.path) / "deployment.example.yaml")
+            result["starter_manifest"] = str(starter)
+        if args.json:
+            _out(result, True)
+        else:
+            print(f"AIES workspace ready: {result['workspace']}")
+            print(f"  created : {len(result['created'])} item(s)")
+            print(f"  existing: {len(result['existing'])} item(s), left unchanged")
+            print("  secrets : none written")
+            if result.get("starter_manifest"):
+                print(f"  starter : {result['starter_manifest']} (contains no secret)")
+            print("\nSet this workspace for the current shell:")
+            print(f"  PowerShell: $env:AIES_WORKSPACE='{result['workspace']}'")
+            print(f"  bash/zsh : export AIES_WORKSPACE='{result['workspace']}'")
+            print("\nNext:")
+            print("  aies discover")
+            print("  aies deployment list")
+            if result.get("starter_manifest"):
+                print(f"  aies deployment add \"{result['starter_manifest']}\"")
+        return 0
+    except adoption.AdoptionError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+
+
+def cmd_open(args) -> int:
+    from . import adoption
+    try:
+        result = adoption.open_result(args.run, launch=not args.no_browser)
+        if args.export_redacted is not None:
+            destination = (None if args.export_redacted == "AUTO"
+                           else Path(args.export_redacted))
+            result["redacted_export"] = adoption.export_redacted(
+                args.run, destination)
+        _out(
+            result,
+            args.json,
+            f"result: {result['view']}\n"
+            f"link  : {result['uri']}"
+            + (f"\nshare : {result['redacted_export']['archive']}"
+               if result.get("redacted_export") else ""),
+        )
+        return 0
+    except adoption.AdoptionError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+
+
+def cmd_bridge(args) -> int:
+    from . import interop
+    try:
+        if args.bridge_cmd == "inspect-import":
+            result = interop.import_inspect(
+                args.run, Path(args.file), source=args.source)
+            human = (
+                f"Inspect evidence imported: {result['imported']} item(s), "
+                f"{result['skipped_samples']} skipped\n"
+                f"  source digest: {result['source_digest']}\n"
+                f"  loss report  : {result['loss_report']}\n"
+                f"Next: aies qualify --resume {args.run}"
+            )
+        elif args.bridge_cmd == "inspect-export":
+            result = interop.export_inspect(args.run, Path(args.out))
+            human = (
+                f"Inspect JSON profile exported: {result['samples']} sample(s)\n"
+                f"  artifact: {result['artifact']}\n"
+                f"  digest  : {result['source_digest']}"
+            )
+        elif args.bridge_cmd == "sarif-import":
+            result = interop.import_sarif(
+                Path(args.file), destination=Path(args.out) if args.out else None)
+            human = (
+                f"SARIF evidence normalized: {result['findings']} finding(s)\n"
+                f"  artifact: {result['artifact']}\n"
+                "Static-analysis findings remain informational and do not prove "
+                "correctness or conformance."
+            )
+        elif args.bridge_cmd == "sarif-export":
+            result = interop.export_sarif(Path(args.file), Path(args.out))
+            human = (
+                f"SARIF 2.1.0 exported: {result['findings']} finding(s)\n"
+                f"  artifact: {result['artifact']}\n"
+                "The export retains the limitation that findings do not prove "
+                "correctness or conformance."
+            )
+        _out(result, args.json, human)
+        return 0
+    except (interop.InteropError, OSError, ValueError) as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+
+
+def _evaluate_argv(args) -> list[str]:
+    argv = ["qualify", args.subject]
+    assessment = args.assessment or (
+        "coder" if not args.all_areas and not args.area else None)
+    if assessment:
+        argv += ["--assessment", assessment]
+    elif args.all_areas:
+        argv += ["--all-areas"]
+    for area in args.area or []:
+        argv += ["--area", area]
+    argv += ["--rt", str(args.rt), "--parallel", str(args.parallel)]
+    if args.judge:
+        argv += ["--judge", args.judge]
+    if args.runtime:
+        argv += ["--runtime", args.runtime]
+    if args.reviewer_runtime:
+        argv += ["--reviewer-runtime", args.reviewer_runtime]
+    if args.judge_batch_size:
+        argv += ["--judge-batch-size", str(args.judge_batch_size)]
+    if args.json:
+        argv += ["--json"]
+    return argv
+
+
+def cmd_evaluate(args) -> int:
+    """Beginner entry point over the canonical no-repeat qualify pipeline."""
+    from . import assessments, config, engine, registry
+    try:
+        judge = args.judge or config.default_judge()
+        if not judge and not args.plan_only:
+            raise ValueError(
+                "automated evaluation needs a judge deployment; pass "
+                "--judge ID or set AIES_JUDGE. No run or cost was started."
+            )
+        assessment_name = args.assessment or (
+            "coder" if not args.all_areas and not args.area else None)
+        if assessment_name:
+            resolved = assessments.resolve(assessments.load(assessment_name))
+            areas = resolved["areas"]
+        elif args.all_areas:
+            from . import runner
+            areas = runner.all_area_codes()
+        else:
+            areas = args.area or ["CA-05"]
+        registry.resolve(args.subject, runtime=args.runtime)
+        plan = engine.plan_qualification(
+            f"RT{args.rt}", areas, subject_kind="ai", repeats=1)
+        batch = args.judge_batch_size or config.judge_batch_size()
+        plan.update({
+            "subject": args.subject,
+            "assessment": assessment_name,
+            "candidate_calls": plan["planned_items"],
+            "estimated_judge_calls": (
+                math.ceil(plan["planned_items"] / batch) if judge else 0),
+            "judge_batch_size": batch,
+            "parallel": args.parallel,
+            "repeats": 1,
+            "cost_estimate": "unavailable: no pricing declared by the deployments",
+            "duration_estimate": "unavailable until endpoint throughput is observed",
+            "limitations": [
+                "scenario observations do not establish field performance",
+                "unassessed tasks remain unknown",
+                "automated scoring is sufficient for Engineering Evaluation but "
+                "does not itself grant Formal Qualification",
+            ],
+        })
+        if args.plan_only:
+            _out(
+                plan,
+                args.json,
+                "Evaluation plan (nothing executed)\n"
+                f"  subject         : {args.subject}\n"
+                f"  scope           : {assessment_name or ', '.join(areas)}\n"
+                f"  risk tier       : RT{args.rt}\n"
+                f"  distinct calls  : {plan['candidate_calls']}\n"
+                f"  exact repeats   : 0\n"
+                f"  judge calls     : ~{plan['estimated_judge_calls']} "
+                f"(batch up to {batch})\n"
+                f"  concurrency     : {args.parallel}\n"
+                f"  cost estimate   : {plan['cost_estimate']}\n"
+                f"  duration        : {plan['duration_estimate']}\n"
+                "Run by removing --plan-only.",
+            )
+            return 0
+        args.judge = judge
+        if args.json:
+            return main(_evaluate_argv(args))
+        # The beginner command keeps detailed live progress on stderr, then
+        # leads with the result rather than dumping the entire Markdown report
+        # into the terminal. The full artifact is one click away.
+        with contextlib.redirect_stdout(io.StringIO()):
+            code = main(_evaluate_argv(args))
+        if code == 0 and not args.json:
+            from . import adoption
+            opened = adoption.open_result("latest", launch=args.open)
+            print("\nYour Engineering Evaluation is ready.")
+            print(f"  Open: {opened['uri']}")
+            print(f"  Share safely: aies open {opened['run_id']} --export-redacted")
+        return code
+    except Exception as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+
+
+def cmd_demo(args) -> int:
+    """Run a portable offline story through the real assessment pipeline."""
+    from . import adoption, workspace
+    old_workspace = os.environ.get("AIES_WORKSPACE")
+    target = Path(args.workspace).expanduser().resolve()
+    try:
+        os.environ["AIES_WORKSPACE"] = str(target)
+        adoption.initialize(target)
+        print("AIES offline demo — subject → evidence → ECM → engineering fit")
+        print(f"workspace: {target}")
+        # The demo intentionally registers only the built-in mock deployments.
+        # General discovery probes every installed adapter and can wait on local
+        # model servers, which would make an offline trial unnecessarily slow.
+        from . import registry
+        from .adapters.mock import MockAdapter
+        demo_deployments = [
+            registry.create_from_discovery(item)
+            for item in MockAdapter.discover_deployments()
+        ]
+        print("offline deployments: "
+              + ", ".join(item["id"] for item in demo_deployments))
+        # Keep the live progress stream visible but replace the full technical
+        # report dump with a concise demo conclusion and direct artifact link.
+        with contextlib.redirect_stdout(io.StringIO()):
+            code = main([
+                "evaluate", "mock-mock-small", "--assessment", "coder",
+                "--rt", "1", "--judge", "mock-mock-large",
+                "--parallel", str(args.parallel),
+            ])
+        if code:
+            return code
+        result = adoption.open_result("latest", launch=args.open)
+        print("\nDEMO COMPLETE")
+        print("  Automated Engineering Evaluation: complete")
+        print("  Human evaluation: optional and not required")
+        matrix_path = Path(result["view"]).parent / "engineering-capability-matrix.json"
+        if matrix_path.is_file():
+            matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
+            observed = [
+                task for task in matrix.get("tasks", [])
+                if task.get("observed_performance") is not None
+            ]
+            print("\nENGINEERING CAPABILITY SNAPSHOT  (offline mock evidence)")
+            for task in observed[:6]:
+                performance = round(float(task["observed_performance"]) * 25)
+                confidence = round(float(task["engineering_confidence_percent"]))
+                bars = min(10, max(0, round(performance / 10)))
+                bar = "█" * bars + "░" * (10 - bars)
+                print(f"  {task['task'][:24]:24} {bar} {performance:3}%  "
+                      f"evidence confidence {confidence}%")
+            print("  Unassessed tasks remain unknown; performance and evidence "
+                  "confidence are separate.")
+        print(f"  Executive Summary: {result['view']}")
+        print(f"  Open: {result['uri']}")
+        print(f"  Share safely: aies open {result['run_id']} --export-redacted")
+        print("\nReady to test your own deployment?")
+        print("  aies init")
+        print("  aies evaluate SUBJECT --judge REVIEWER --plan-only")
+        return 0
+    finally:
+        if old_workspace is None:
+            os.environ.pop("AIES_WORKSPACE", None)
+        else:
+            os.environ["AIES_WORKSPACE"] = old_workspace
 
 
 def cmd_registry(args) -> int:
@@ -1531,9 +1802,18 @@ def _not_yet(milestone: str):
 
 
 _EPILOG = """\
+TRY AIES NOW
+  aies demo --open                            complete offline product tour; no key/server
+  aies init                                   safe workspace + exact next commands
+  aies evaluate SUBJECT --judge JUDGE --plan-only
+                                               preview scope/calls/limits; execute nothing
+  aies evaluate SUBJECT --judge JUDGE          automated evaluation -> ECM + fit + reports
+  aies open latest                             open the result
+
 commands by stage (each group alphabetical):
-  setup & discovery   completion · deployment · discover · doctor · runtime
-  engineering eval    assessment · benchmark · capabilities · compare · export · import · qualify · review · runs · score · transcript
+  setup & discovery   completion · demo · deployment · discover · doctor · init · runtime
+  engineering eval    assessment · benchmark · capabilities · compare · evaluate · export · import · open · qualify · review · runs · score · transcript
+  interoperability    bridge inspect-import · bridge sarif-import
   judging             judge available · judge history · judge list   (the judge pool + track record)
   governance & audit  audit · conform · corpus · dashboard · grant · qualification · report · serve · verify
   reference           index · journey · plugins · profile · suites
@@ -1631,11 +1911,120 @@ def build_parser() -> argparse.ArgumentParser:
         sp.add_argument("--json", action="store_true", help="machine-readable output")
         return sp
 
+    init = common(sub.add_parser(
+        "init", help="create a safe AIES workspace and print exact next steps"))
+    init.add_argument(
+        "path", nargs="?", default="aies-workspace",
+        help="workspace directory to create (default: ./aies-workspace)")
+    init.add_argument(
+        "--starter-manifest", action="store_true",
+        help="also create a non-secret OpenAI-compatible deployment example")
+    init.set_defaults(func=cmd_init)
+
+    demo = common(sub.add_parser(
+        "demo", help="run the complete offline Engineering Evaluation story"))
+    demo.add_argument(
+        "--workspace", default="aies-demo-workspace",
+        help="persistent demo workspace (default: ./aies-demo-workspace)")
+    demo.add_argument(
+        "--parallel", type=int, default=8, metavar="N",
+        help="maximum concurrent mock calls (default: 8)")
+    demo.add_argument(
+        "--open", action="store_true",
+        help="open the Executive Summary in the default browser when complete")
+    demo.set_defaults(func=cmd_demo)
+
     common(sub.add_parser("doctor", help="validate the environment and detect runtimes")
            ).set_defaults(func=cmd_doctor)
 
     common(sub.add_parser("discover", help="scan runtimes and register the "
                           "deployments they serve")).set_defaults(func=cmd_discover)
+
+    evaluate = common(sub.add_parser(
+        "evaluate", help="plan and run a beginner-friendly automated Engineering Evaluation"))
+    evaluate.add_argument("subject", help="registered deployment id or unambiguous model name")
+    scope = evaluate.add_mutually_exclusive_group()
+    scope.add_argument(
+        "--assessment", default=None, metavar="NAME",
+        help="bounded assessment (default: coder unless --area/--all-areas is used)")
+    scope.add_argument(
+        "--all-areas", action="store_true",
+        help="evaluate all CA-01 through CA-12 areas")
+    evaluate.add_argument(
+        "--area", action="append", default=None, metavar="CA-NN",
+        help="evaluate one competency area; repeat for more")
+    evaluate.add_argument(
+        "--rt", type=int, choices=(1, 2, 3, 4), default=1,
+        help="risk tier (default RT1 — Minimal for a bounded first run)")
+    evaluate.add_argument(
+        "--judge", default=None, metavar="DEPLOYMENT",
+        help="automated reviewer deployment (default: AIES_JUDGE)")
+    evaluate.add_argument(
+        "--judge-batch-size", type=int, default=None, metavar="N",
+        help="responses per reviewer call (default 8 or AIES_JUDGE_BATCH_SIZE)")
+    evaluate.add_argument(
+        "--parallel", type=int, default=1, metavar="N",
+        help="maximum concurrent candidate and judge calls (default: 1)")
+    evaluate.add_argument(
+        "--runtime", default=None,
+        help="disambiguate the assessed deployment runtime")
+    evaluate.add_argument(
+        "--reviewer-runtime", default=None,
+        help="disambiguate the reviewer deployment runtime")
+    evaluate.add_argument(
+        "--plan-only", action="store_true",
+        help="show calls, concurrency, estimates, and limitations without executing")
+    evaluate.add_argument(
+        "--open", action="store_true",
+        help="open the Executive Summary in the default browser after completion")
+    evaluate.set_defaults(func=cmd_evaluate)
+
+    opn = common(sub.add_parser(
+        "open", help="open a run result or export share-safe derived views"))
+    opn.add_argument(
+        "run", nargs="?", default="latest",
+        help="run id or 'latest' (default: latest)")
+    opn.add_argument(
+        "--no-browser", action="store_true",
+        help="print the local result link without launching a browser")
+    opn.add_argument(
+        "--export-redacted", nargs="?", const="AUTO", default=None,
+        metavar="ZIP",
+        help="also create an immutable redacted ZIP at ZIP or the default exports path")
+    opn.set_defaults(func=cmd_open)
+
+    bridge = common(sub.add_parser(
+        "bridge", help="import versioned external evidence with provenance and loss reports"))
+    bridge_sub = bridge.add_subparsers(dest="bridge_cmd", required=True)
+    inspect_import = bridge_sub.add_parser(
+        "inspect-import", help="import an AIES-profiled Inspect EvalLog JSON")
+    inspect_import.add_argument("run", help="existing AIES run receiving EV observations")
+    inspect_import.add_argument("file", help="Inspect EvalLog JSON export")
+    inspect_import.add_argument(
+        "--source", default=None,
+        help="optional source/rater label (default binds filename and digest)")
+    inspect_import.add_argument(
+        "--json", action="store_true", help="emit machine-readable JSON")
+    inspect_export = bridge_sub.add_parser(
+        "inspect-export", help="export a run to the AIES Inspect JSON profile")
+    inspect_export.add_argument("run", help="AIES run to export")
+    inspect_export.add_argument("--out", required=True, help="new JSON output path")
+    inspect_export.add_argument(
+        "--json", action="store_true", help="emit machine-readable JSON")
+    sarif_import = bridge_sub.add_parser(
+        "sarif-import", help="normalize SARIF 2.1.0 findings without claim inflation")
+    sarif_import.add_argument("file", help="SARIF 2.1.0 JSON file")
+    sarif_import.add_argument(
+        "--out", default=None, help="output artifact (default: workspace imports)")
+    sarif_import.add_argument(
+        "--json", action="store_true", help="emit machine-readable JSON")
+    sarif_export = bridge_sub.add_parser(
+        "sarif-export", help="export normalized repository findings as SARIF 2.1.0")
+    sarif_export.add_argument("file", help="aies-sarif-evidence/v1 JSON artifact")
+    sarif_export.add_argument("--out", required=True, help="new SARIF output path")
+    sarif_export.add_argument(
+        "--json", action="store_true", help="emit machine-readable JSON")
+    bridge.set_defaults(func=cmd_bridge)
 
     reg = common(sub.add_parser("registry", help="manage candidate deployment entries"))
     regsub = reg.add_subparsers(dest="registry_cmd", required=True)

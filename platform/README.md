@@ -98,8 +98,25 @@ pytest tests/ -q --durations=15  # conformance + ranked performance feedback
 aies suites validate      # suites + shipped assessments (one gate; CI runs it)
 ```
 
+First useful result:
+
+```
+aies demo --open
+```
+
+The installed command is cross-platform and needs no API key, model server,
+Make, or Bash. For a real deployment, use the guided path:
+
+```
+aies init
+aies discover
+aies evaluate <deployment> --judge <reviewer> --plan-only
+aies evaluate <deployment> --judge <reviewer> --parallel 4
+aies open latest
+```
+
 The warm-cache full-suite performance budget on the recorded Windows reference
-workstation is **180 seconds**. The current 228-test baseline is **104.76
+workstation is **180 seconds**. The current 235-test baseline is **109.82
 seconds**. A run above budget or a greater-than-25% regression should be
 profiled before merge; use the ranked durations rather than guessing. Scenario
 YAML and suite digests are cached by path, modification time, and size, return
@@ -112,7 +129,8 @@ YAML/JSON: diffable, reviewable, tool-independent.
 ## See the whole thing run (one command, fully offline)
 
 ```
-make demo        # core workflow (or: bash scripts/demo.sh)
+aies demo --open # cross-platform installed-CLI trial (recommended)
+make demo        # contributor compatibility path (or: bash scripts/demo.sh)
 make demo-full   # comprehensive one-process tour of the whole platform
 ```
 

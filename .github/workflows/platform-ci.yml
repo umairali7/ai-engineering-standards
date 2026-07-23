@@ -42,6 +42,38 @@ on:
       - ".github/workflows/platform-ci.yml"
 
 jobs:
+  install-and-first-use:
+    name: Installed package + first use (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    defaults:
+      run:
+        working-directory: platform
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up supported Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build wheel and source distribution
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+          python -c "import glob; assert len(glob.glob('dist/*.whl')) == 1; assert len(glob.glob('dist/*.tar.gz')) == 1"
+      - name: Install the built wheel, not the checkout
+        run: python -c "import glob,subprocess,sys; subprocess.check_call([sys.executable,'-m','pip','install','--force-reinstall',glob.glob('dist/*.whl')[0]])"
+      - name: Validate shipped data from the installed package
+        run: python -m aies suites validate
+      - name: First-use offline demo from the installed package
+        run: python -m aies demo --workspace "${{ runner.temp }}/aies-demo" --parallel 8
+      - name: Uninstall cleanly
+        run: |
+          python -m pip uninstall aies-platform -y
+          python -c "import importlib.util; assert importlib.util.find_spec('aies') is None"
+
   conformance:
     runs-on: ubuntu-latest
     strategy:

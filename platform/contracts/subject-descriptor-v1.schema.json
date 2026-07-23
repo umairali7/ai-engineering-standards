@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aies.example/contracts/subject-descriptor-v1.schema.json",
+  "title": "AIES Subject Descriptor v1 (experimental)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "kind", "display_name", "privacy"],
+  "properties": {
+    "schema": {"const": "aies-subject-descriptor/v1"},
+    "id": {"type": "string", "minLength": 1},
+    "kind": {
+      "enum": ["human", "team", "repository", "ai_deployment", "ai_system",
+        "agent", "agent_swarm", "mcp_server", "coding_assistant",
+        "prompt_library", "rag_system", "pipeline", "platform", "composite"]
+    },
+    "display_name": {"type": "string", "minLength": 1},
+    "version": {"type": ["string", "null"]},
+    "components": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "environment_fingerprint": {"type": ["string", "null"], "pattern": "^(sha256:[0-9a-f]{64})?$"},
+    "provenance": {"type": "array", "items": {"type": "object"}},
+    "privacy": {"enum": ["public", "internal", "confidential", "restricted"]},
+    "extensions": {"type": "object"}
+  }
+}

@@ -36,7 +36,8 @@ def profile_version(profile: dict) -> str:
 
 
 def shipped_dir() -> Path:
-    return Path(__file__).resolve().parent.parent.parent / "profiles"
+    from .resources import data_root
+    return data_root() / "profiles"
 
 
 def _load_yaml(path: Path) -> dict:

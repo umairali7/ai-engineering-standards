@@ -12,6 +12,34 @@ Specification: [AIES-DOC-06 — Engineering Assessment Platform Specification](.
 
 ---
 
+## Try before configuring anything
+
+```text
+aies demo --open
+```
+
+This installed-CLI path is fully offline and cross-platform. It runs the real
+collection, batched scoring, analysis, ECM, Engineering Fit, and report
+pipeline with deterministic mock deployments. It requires no API key, model
+server, Make, Bash, or human review.
+
+For a real deployment, initialize a workspace, discover deployments, and plan
+before execution:
+
+```text
+aies init
+aies discover
+aies evaluate SUBJECT --judge REVIEWER --plan-only --parallel 4
+aies evaluate SUBJECT --judge REVIEWER --parallel 4
+aies open latest
+```
+
+`evaluate` is the beginner entry point over the same canonical `qualify`
+engine. It schedules each selected instrument once, reports optimized judge
+calls, and generates the complete non-blocking Engineering Evaluation bundle.
+Advanced qualification, benchmark, journey, and governance commands remain
+available without being prerequisites for first value.
+
 ## 0. Navigate the CLI
 
 Use the three levels of built-in and generated help:
@@ -231,7 +259,7 @@ aies doctor                 # fingerprint + runtimes + read-only workspace-debri
 ```
 
 For local verification, the recorded warm-cache Windows budget is 180 seconds
-for the complete suite; the 2026-07-23 baseline is 228 tests in 104.76 seconds.
+for the complete suite; the 2026-07-23 baseline is 235 tests in 109.82 seconds.
 Treat a budget breach or greater-than-25% regression as a profiling trigger.
 This is a feedback budget, not a reason to skip correctness gates on slower CI
 hardware.

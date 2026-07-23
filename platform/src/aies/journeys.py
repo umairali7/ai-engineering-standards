@@ -38,7 +38,8 @@ class JourneyError(Exception):
 
 
 def journeys_dir() -> Path:
-    return Path(__file__).resolve().parent.parent.parent / "journeys"
+    from .resources import data_root
+    return data_root() / "journeys"
 
 
 def load_journey(journey_id: str) -> tuple[dict, str]:

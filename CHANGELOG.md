@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Cross-platform adoption surface and evidence bridges**: added
+  `aies demo`, `aies init`, beginner-facing `aies evaluate --plan-only`, and
+  `aies open` with immutable anonymized derived-view exports. The installed
+  wheel now carries all 484 scenarios, assessments, profiles, mappings,
+  journeys, calibration ledger, measurement claims, and experimental
+  contracts; an isolated Windows wheel install passes suite validation and the
+  complete offline demo. Added versioned decision-product measurement claims,
+  proposed ADR-0015, experimental Subject Descriptor and typed Evidence Event
+  schemas, and Inspect/SARIF import-export bridges with source hashes, explicit
+  loss, duplicate protection, and no claim inflation. Reworked the root README
+  and Quickstart around a 60-second proof, concrete outcomes, persona paths,
+  and honest supported scope; added the research-backed AIES-DOC-15 Adoption
+  and Launch Plan plus a demand-generation/community-conversion backlog and
+  claim-review gate. Added an evidence-to-ECM social-preview/README hero that
+  illustrates the product architecture without presenting fictional scores as
+  an assessment claim.
 - **Vision-aligned project entry point**: revised the main README to present
   AIES as a subject-neutral engineering standard and assessment system, explain
   the separation between non-blocking Engineering Evaluation, the Engineering
@@ -38,7 +54,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   distribution; added release, measurement, interoperability, subject-expansion,
   and selection dependency tracks; and added estimand, judge validation,
   predictive validity, sensitivity, contamination, and post-deployment
-  monitoring requirements. Added a fourteen-step executable tranche separating
+  monitoring requirements. Added a fifteen-step executable tranche separating
   work that can proceed immediately from external evidence, independent review,
   adoption, release-governance, and subject-expansion dependencies.
 - **Non-blocking engineering evaluation across the platform**: named automated
@@ -79,7 +95,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   copies. Read-only API tests reuse one immutable module fixture, and the judge
   concurrency test delays only the reviewer behavior it measures. The complete
   suite retains all assertions while removing repeated setup and unrelated
-  sleeps: the expanded 228-test suite completes in 104.76 seconds on the
+  sleeps: the expanded 235-test suite completes in 109.82 seconds on the
   Windows verification host, below the 180-second budget.
 - **Empirical-panel admission preflight**: `aies suites empirical
   --preflight-runs` now checks that real runs use distinct subjects, identical

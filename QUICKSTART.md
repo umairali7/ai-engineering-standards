@@ -1,73 +1,81 @@
-# AIES in 5 Minutes
+# See AIES Work in 60 Seconds
 
-Experience the **entire workflow** — discover a deployment, run a named
-qualification, auto-score it, get an authoritative outcome, and render a report —
-**fully offline**, with no model, API key, or GPU. Everything below uses the
-built-in `mock` runtime.
+Run the real Engineering Evaluation pipeline fully offline: collect responses,
+score them in optimized batches, generate the Engineering Capability Matrix
+(ECM), derive Engineering Fit, and open the linked report bundle.
 
-## The fastest path (one command)
-
-```bash
-git clone <repo-url> && cd aies/platform
-pip install -e .
-make demo            # or: bash scripts/demo.sh
-```
-
-`make demo` runs all seven stages end-to-end and prints a **PASS**. That's the
-whole platform in one command. Read on to run it yourself, stage by stage.
-
-## Step by step (understand each stage)
-
-```bash
+```powershell
 cd platform
-pip install -e .                      # installs the `aies` command (Python >= 3.10)
-
-aies doctor                           # 1. validate the environment; detect runtimes
-aies discover                         # 2. register the mock deployments
-aies registry list                    #    -> mock-mock-small, mock-mock-large
+python -m pip install -e .
+aies demo --open
 ```
 
-Now run a **declarative assessment** (the `coder` qualification: implementation,
-tests, secure coding), auto-scored by a *different* deployment as judge:
+This works in PowerShell, Bash, and Zsh. It needs Python 3.10 or newer, but no
+model server, GPU, API key, Make, Bash script, or human review. The mock subject
+and reviewer are deterministic; the product path and artifacts are the same
+ones used for a real deployment.
+
+The final screen links to an Executive Summary and shows the exact command for
+creating an anonymized, derived-view-only sharing bundle.
+
+## Try a real deployment
+
+Create a safe workspace and discover supported local runtimes:
+
+```powershell
+aies init
+$env:AIES_WORKSPACE = (Resolve-Path aies-workspace)
+aies discover
+aies deployment list
+```
+
+On Bash or Zsh, set the same variable with:
 
 ```bash
-aies qualify mock-mock-small \
-    --assessment coder \
-    --judge mock-mock-large \
-    --repeats 5                        # 3. collect + auto-score + decide
+export AIES_WORKSPACE="$(pwd)/aies-workspace"
 ```
 
-> **Why these values.** The deployment id is `mock-mock-small` (not bare `mock`).
-> The judge must differ from the candidate — never self-judge. `--repeats 5`
-> gathers enough scored items to clear the RT2 — Moderate statistical minimum, so the result
-> is *decisional* rather than INSUFFICIENT EVIDENCE.
+If discovery cannot find an OpenAI-compatible endpoint, generate a non-secret
+starter manifest:
 
-The command prints the Canonical Assessment Result and the run id. Grab the run:
-
-```bash
-RUN=$(aies runs list --json | python -c "import sys,json; print(json.load(sys.stdin)[0]['run_id'])")
-
-aies assessment result "$RUN"                 # 4. the authoritative outcome (PASS/FAIL/…)
-aies capabilities "$RUN"                       # 5. per-area CL + autonomy, side by side
-aies assessment result "$RUN" --format html --out result.html   # 6. presentation view
-aies conform engine                            # 7. is the decision engine conformant?
+```powershell
+aies init aies-workspace --starter-manifest
+# edit model and base_url; put the API key in AIES_OPENAI_API_KEY, never YAML
+aies deployment add aies-workspace/deployment.example.yaml
 ```
 
-You've now seen composition → evidence → decision → report → conformance.
+Plan before spending time or tokens:
 
-## What just happened
+```powershell
+aies evaluate SUBJECT --judge REVIEWER --plan-only --parallel 4
+```
 
-- **The outcome is decided once, by the engine**, over the assessment's
-  *mandatory* competencies — gate-first, no blended score. Every renderer (the
-  table above, the HTML, a future dashboard) is a *view* of that one result.
-- **Nothing here can masquerade as real qualification evidence** — the mock
-  self-declares in provenance, and under-sampled runs are labelled NON-DECISIONAL.
+The plan shows distinct scenario calls, optimized judge calls, concurrency,
+known cost/duration estimates, and limitations. It schedules no exact repeats.
+When the scope looks right:
 
-## Next steps
+```powershell
+aies evaluate SUBJECT --judge REVIEWER --parallel 4
+aies open latest
+aies open latest --export-redacted
+```
 
-- **A real model:** register a deployment (`aies discover` finds local runtimes,
-  or hand-author one — see [platform/GUIDE.md §5](platform/GUIDE.md)), then
-  `make integration-demo DEPLOYMENT=<id> JUDGE=<id>`.
-- **Compose your own qualification:** [platform/ASSESSMENTS.md](platform/ASSESSMENTS.md).
-- **Everything else:** [platform/REFERENCE.md](platform/REFERENCE.md) — the
-  vocabulary, artifact schemas, and every command.
+Automated scores complete the informational Engineering Evaluation, ECM,
+diagnostics, fit guidance, and reports. Human evaluation is an optional,
+separately visible assurance input. Formal Qualification is a different,
+explicit human-governed workflow and is never forced into ordinary assessment.
+
+## Choose the next path
+
+- Understand every command and parameter: [CLI Reference](platform/CLI_REFERENCE.md)
+- Register real endpoints: [Platform Guide](platform/GUIDE.md)
+- Compare compatible runs: `aies compare RUN_A RUN_B`
+- Analyze repository practice: `aies audit .`
+- Import Inspect evidence: `aies bridge inspect-import RUN FILE`
+- Import SARIF findings: `aies bridge sarif-import FILE`
+- Learn what every metric claims: [Measurement Claims](platform/MEASUREMENT_CLAIMS.md)
+- Enter formal governance intentionally: [AESQS](AESQS/README.md)
+
+If a command fails, AIES preserves completed work where possible. Use
+[Troubleshooting](platform/TROUBLESHOOTING.md) for endpoint, TLS,
+authentication, quota, performance, scoring, and resume guidance.

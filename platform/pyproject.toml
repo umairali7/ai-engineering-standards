@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "AIES Engineering Assessment Platform - executable reference implementation of AESQS (see docs/PLATFORM.md, AIES-DOC-06)"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "License pending selection - see repository LICENSE.md" }
+license = "LicenseRef-AIES-Pending"
 dependencies = [
     "PyYAML>=6.0",
     # CA bundle for TLS verification of HTTPS endpoints. Without it, a
@@ -42,3 +42,39 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 aies = ["py.typed"]
+
+# Assessment instruments are runtime data, not Python modules. Install them
+# under the environment's share/aies directory so normal wheels behave exactly
+# like a source checkout; aies.resources resolves both layouts.
+[tool.setuptools.data-files]
+"share/aies" = ["measurement-claims-v1.yaml", "MEASUREMENT_CLAIMS.md"]
+"share/aies/assessments" = ["assessments/*.yaml"]
+"share/aies/contracts" = ["contracts/*.json", "contracts/*.md"]
+"share/aies/profiles" = ["profiles/*.yaml"]
+"share/aies/journeys" = ["journeys/*.yaml"]
+"share/aies/task_mappings" = ["task_mappings/*.yaml"]
+"share/aies/calibration" = ["calibration/design-review-ledger.json"]
+"share/aies/competencies/CA-01-ai-native-sdlc-foundations" = ["competencies/CA-01-ai-native-sdlc-foundations/*.yaml"]
+"share/aies/competencies/CA-01-ai-native-sdlc-foundations/scenarios" = ["competencies/CA-01-ai-native-sdlc-foundations/scenarios/*.yaml"]
+"share/aies/competencies/CA-02-business-requirements-analysis" = ["competencies/CA-02-business-requirements-analysis/*.yaml"]
+"share/aies/competencies/CA-02-business-requirements-analysis/scenarios" = ["competencies/CA-02-business-requirements-analysis/scenarios/*.yaml"]
+"share/aies/competencies/CA-03-product-experience-definition" = ["competencies/CA-03-product-experience-definition/*.yaml"]
+"share/aies/competencies/CA-03-product-experience-definition/scenarios" = ["competencies/CA-03-product-experience-definition/scenarios/*.yaml"]
+"share/aies/competencies/CA-04-architecture-solution-design" = ["competencies/CA-04-architecture-solution-design/*.yaml"]
+"share/aies/competencies/CA-04-architecture-solution-design/scenarios" = ["competencies/CA-04-architecture-solution-design/scenarios/*.yaml"]
+"share/aies/competencies/CA-05-ai-assisted-implementation" = ["competencies/CA-05-ai-assisted-implementation/*.yaml"]
+"share/aies/competencies/CA-05-ai-assisted-implementation/scenarios" = ["competencies/CA-05-ai-assisted-implementation/scenarios/*.yaml"]
+"share/aies/competencies/CA-06-testing-quality-evaluation" = ["competencies/CA-06-testing-quality-evaluation/*.yaml"]
+"share/aies/competencies/CA-06-testing-quality-evaluation/scenarios" = ["competencies/CA-06-testing-quality-evaluation/scenarios/*.yaml"]
+"share/aies/competencies/CA-07-security-privacy-engineering" = ["competencies/CA-07-security-privacy-engineering/*.yaml"]
+"share/aies/competencies/CA-07-security-privacy-engineering/scenarios" = ["competencies/CA-07-security-privacy-engineering/scenarios/*.yaml"]
+"share/aies/competencies/CA-08-delivery-release-engineering" = ["competencies/CA-08-delivery-release-engineering/*.yaml"]
+"share/aies/competencies/CA-08-delivery-release-engineering/scenarios" = ["competencies/CA-08-delivery-release-engineering/scenarios/*.yaml"]
+"share/aies/competencies/CA-09-operations-observability-reliability" = ["competencies/CA-09-operations-observability-reliability/*.yaml"]
+"share/aies/competencies/CA-09-operations-observability-reliability/scenarios" = ["competencies/CA-09-operations-observability-reliability/scenarios/*.yaml"]
+"share/aies/competencies/CA-10-human-ai-collaboration-oversight" = ["competencies/CA-10-human-ai-collaboration-oversight/*.yaml"]
+"share/aies/competencies/CA-10-human-ai-collaboration-oversight/scenarios" = ["competencies/CA-10-human-ai-collaboration-oversight/scenarios/*.yaml"]
+"share/aies/competencies/CA-11-context-knowledge-engineering" = ["competencies/CA-11-context-knowledge-engineering/*.yaml"]
+"share/aies/competencies/CA-11-context-knowledge-engineering/scenarios" = ["competencies/CA-11-context-knowledge-engineering/scenarios/*.yaml"]
+"share/aies/competencies/CA-12-governance-risk-ai-safety" = ["competencies/CA-12-governance-risk-ai-safety/*.yaml"]
+"share/aies/competencies/CA-12-governance-risk-ai-safety/scenarios" = ["competencies/CA-12-governance-risk-ai-safety/scenarios/*.yaml"]

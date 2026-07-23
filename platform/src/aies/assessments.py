@@ -44,7 +44,8 @@ class AssessmentError(Exception):
 
 
 def assessments_dir() -> Path:
-    return Path(__file__).resolve().parent.parent.parent / "assessments"
+    from .resources import data_root
+    return data_root() / "assessments"
 
 
 def _requirement_type(comp: dict) -> str | None:

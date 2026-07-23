@@ -79,6 +79,7 @@ Accepted ADRs are never edited to change the decision. If circumstances change, 
 | [ADR-0012](ADR-0012-Qualification-Evidence-Rater-Protocol-and-Immutable-Lifecycle.md) | Separate evaluation observations from qualification evidence and use immutable lifecycle events | Accepted |
 | [ADR-0013](ADR-0013-ECM-Task-Decision-Semantics-and-Deployment-Guidance.md) | Govern ECM task decisions and deployment guidance | Accepted |
 | [ADR-0014](ADR-0014-Dual-License-Standards-and-Software.md) | Dual-license open standards and executable software | Proposed |
+| [ADR-0015](ADR-0015-Subject-and-Evidence-Adapter-Contracts.md) | Subject Descriptor, typed evidence events, and Evidence Adapter contracts | Proposed |
 
 ## Related Documents
 

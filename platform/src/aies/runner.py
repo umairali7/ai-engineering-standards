@@ -36,7 +36,8 @@ def scenario_progress_label(sc: dict, repeat: int | None = None) -> str:
 
 
 def competencies_dir() -> Path:
-    return Path(__file__).resolve().parent.parent.parent / "competencies"
+    from .resources import data_root
+    return data_root() / "competencies"
 
 
 def all_area_codes() -> list[str]:

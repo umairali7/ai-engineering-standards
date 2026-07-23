@@ -4,7 +4,10 @@
 __pycache__/
 *.egg-info/
 .pytest_cache/
+build/
+dist/
 aies-workspace/
+aies-demo-workspace/
 
 # platform result index (derived, rebuildable)
 *.sqlite

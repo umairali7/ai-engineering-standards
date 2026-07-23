@@ -30,6 +30,51 @@ GUIDANCE: dict[str, CommandGuidance] = {
         "Checks the environment, workspace, TLS/runtime availability, fingerprint, and advisory debris without deleting anything.",
         "Resolve blocking findings, then run `aies discover` or `aies deployment add`.",
     ),
+    "init": CommandGuidance(
+        "AIES is installed and the selected parent directory is writable.",
+        "Creates a non-destructive workspace skeleton, writes no credentials, and prints shell-specific environment and next commands.",
+        "Set AIES_WORKSPACE for the shell, then run `aies discover` and inspect the deployment list.",
+    ),
+    "demo": CommandGuidance(
+        "AIES is installed; no model server, API key, Make, or Bash is required.",
+        "Runs the real collection, batched automated scoring, aggregation, ECM, fit-guidance, and report pipeline fully offline with mock deployments.",
+        "Open the printed Executive Summary or run `aies open latest --export-redacted` in the demo workspace.",
+    ),
+    "evaluate": CommandGuidance(
+        "The subject and automated reviewer deployments are registered and reachable; use `--plan-only` before any potentially costly run.",
+        "Plans and runs a bounded, no-repeat, non-blocking Engineering Evaluation through the canonical qualify pipeline and creates the complete report bundle.",
+        "Run `aies open <run-id>` to inspect the result; expand scope only when the decision requires more evidence.",
+    ),
+    "open": CommandGuidance(
+        "The selected run has generated HTML reports; redacted export requires a destination that does not already exist.",
+        "Opens or links the primary local result. Optional export includes only allowlisted derived views and a digest manifest, never raw evidence or credentials.",
+        "Share the redacted archive with its limitations, or return to the canonical workspace for reproducibility and verification.",
+    ),
+    "bridge": CommandGuidance(
+        "A version-supported external evidence file is available; Inspect rating import also requires an existing matching AIES run.",
+        "Converts supported external evidence with a source digest, converter identity, explicit loss accounting, and no inferred scores or claim inflation.",
+        "Inspect imports must be aggregated into refreshed reports; SARIF artifacts remain repository findings until a separate analysis explicitly consumes them.",
+    ),
+    "bridge inspect-import": CommandGuidance(
+        "An existing AIES run and Inspect EvalLog JSON using the documented AIES per-sample metadata and EV1–EV6 scorer profile are available.",
+        "Writes automated rating observations plus a source-bound conversion artifact and loss report; unsupported samples are skipped with reasons.",
+        "Run `aies qualify --resume <run-id>` to aggregate and regenerate the report bundle.",
+    ),
+    "bridge inspect-export": CommandGuidance(
+        "An AIES run exists and the destination JSON path does not.",
+        "Exports prompts, outputs, explicit AIES EV scores, findings, diagnostics, and identity through the documented portable Inspect JSON profile.",
+        "Load the JSON through an Inspect-compatible workflow or test round-trip with `bridge inspect-import`; native Inspect-only container metadata is intentionally not fabricated.",
+    ),
+    "bridge sarif-import": CommandGuidance(
+        "A SARIF 2.1.0 JSON file from a completed static-analysis invocation is available.",
+        "Preserves tool, rule, version, location, severity, fingerprints, fixes, suppressions, baseline state, and invocation status in an immutable normalized artifact.",
+        "Use the artifact as repository-analysis evidence; never treat an empty or successful tool run as proof of correctness.",
+    ),
+    "bridge sarif-export": CommandGuidance(
+        "An aies-sarif-evidence/v1 normalized artifact exists and the destination path does not.",
+        "Exports preserved findings as SARIF 2.1.0 with an AIES source-artifact digest and explicit claim limitation.",
+        "Validate the SARIF with the consuming tool and retain the normalized artifact as the AIES provenance source.",
+    ),
     "discover": CommandGuidance(
         "At least one supported local runtime is installed and reachable.",
         "Discovers served deployments and registers new entries.",
@@ -239,6 +284,11 @@ GUIDANCE: dict[str, CommandGuidance] = {
 
 
 OPTION_INTERACTIONS: dict[tuple[str, str], str] = {
+    ("evaluate", "plan_only"): "Performs no inference and writes no run; use it to review calls, concurrency, estimates, and limitations first.",
+    ("evaluate", "assessment"): "Defaults to the bounded coder assessment unless `--area` or `--all-areas` is selected.",
+    ("evaluate", "judge"): "Required for execution unless AIES_JUDGE is set; automated scoring completes Engineering Evaluation without human review.",
+    ("evaluate", "open"): "Launches the Executive Summary after success; without it the same local link and safe-sharing command are printed.",
+    ("open", "export_redacted"): "Exports only allowlisted derived views. Raw prompts, responses, ratings, fingerprints, and secrets are excluded.",
     ("qualify", "assessment"): "Sets areas and profile; `--rt` and `--repeats` may override the assessment defaults.",
     ("qualify", "area"): "Repeatable. Do not combine conceptually with `--all-areas`; an assessment supplies its own areas.",
     ("qualify", "all_areas"): "Selects all competency areas and replaces the default CA-05 scope.",

@@ -105,14 +105,14 @@ Try → Evaluate → Understand → Integrate → Govern
 
 | Status | Adoption UX item | Acceptance signal |
 |---|---|---|
-| Open | Ship a one-command cross-platform trial | `aies demo` runs the complete offline killer demo on supported Windows, macOS, and Linux installations without Make, Bash, a model server, API credentials, or manual workspace setup; it prints and opens or links the final Executive Summary and ECM |
-| Open | Publish installation-grade packages | A new user can install and upgrade the CLI in an isolated environment through at least one canonical Python application installer, with signed/versioned release artifacts, supported-Python metadata, dependency integrity, uninstall instructions, and no system-Python mutation |
-| Open | Add guided workspace initialization | `aies init` explains the workspace boundary, detects runtimes and deployments, offers safe starter profiles, previews every file it will create, never stores secrets in tracked files, and ends with the exact next command |
-| Open | Add one canonical beginner evaluation command | A beginner-facing `aies evaluate <subject>` path performs discovery checks, selects or explains a bounded no-repeat starter scope, plans calls, collects, scores, aggregates, and opens the report bundle; advanced `qualify`, `benchmark`, and formal-governance commands remain available without being prerequisites |
-| Open | Make planning precede cost and waiting | Every network/model assessment can show distinct scenario count, candidate calls, judge calls, concurrency, estimated tokens/cost where pricing is declared, expected duration range, evidence limitations, and resumability before execution; no estimate is represented as guaranteed |
+| In progress | Ship a one-command cross-platform trial | `aies demo` passes source and installed-wheel execution on Windows and cross-platform install/demo CI is defined; macOS/Linux CI results remain required before Done |
+| In progress | Publish installation-grade packages | Wheel/sdist build, isolated Windows install, validation, demo, and uninstall pass; license, version alignment, dependency integrity, signing/provenance, upgrade, and cross-platform CI remain |
+| In progress | Add guided workspace initialization | `aies init` creates a non-destructive ignored workspace, writes no secret, can generate a non-secret manifest, and prints shell-specific next commands; inline discovery/previews/starter selection remain |
+| Done | Add one canonical beginner evaluation command | `aies evaluate <subject>` validates the subject/judge, selects a bounded no-repeat default, supports plan-only, runs the canonical automated pipeline, prints the result link and sharing command, and optionally opens it; advanced commands remain available |
+| In progress | Make planning precede cost and waiting | `aies evaluate --plan-only` reports distinct calls, batched judge calls, concurrency, no-repeat scope, unavailable-estimate reasons, and limitations; declared pricing/token/duration modeling and resumability preview remain |
 | Open | Supply decision-oriented starter profiles | Versioned starters cover “compare coding deployments,” “understand one deployment,” “audit this repository,” and “try formal qualification”; each states what decision it supports, what it does not prove, time/cost class, evidence breadth, and next expansion step |
 | Open | Make every failure actionable | Errors distinguish environment, dependency, authentication, quota, compatibility, inference, scoring, parsing, evidence, and governance causes; each includes preserved-work status, exact recovery command, documentation link, and whether retry can duplicate cost |
-| Open | Make reports effortless to find and share | Completion output identifies the canonical run ID and all generated artifacts, provides `aies open <run-id>` for the local dashboard/report, emits a portable redacted export, and clearly separates shareable views from sensitive evidence |
+| Done | Make reports effortless to find and share | Completion identifies result artifacts; `aies open <run-id>` opens or links the primary view and exports an immutable allowlisted/anonymized ZIP that excludes raw evidence, ratings, fingerprints, and secrets |
 | Open | Add adoption-grade CI integration | A documented reusable CI workflow can run repository audit/conformance, preserve artifacts, annotate findings, and enforce only explicitly selected policies; default onboarding is advisory and never unexpectedly blocks a build |
 | Open | Add containerized reproducibility | A versioned container can run the offline demo, conformance suite, repository audit, and supported non-local assessment workflows with documented mounts, network/secrets boundaries, artifact ownership, and architecture support |
 | Open | Test first-run journeys on every supported platform | Clean-machine tests cover Windows PowerShell, macOS, and Linux from install through demo, discovery, bounded evaluation, resume, report opening, upgrade, and uninstall; tests include paths with spaces and non-default workspace locations |
@@ -136,6 +136,51 @@ Try → Evaluate → Understand → Integrate → Govern
 - Do not launch certification claims before AECT is Approved and the
   examination, independence, appeal, renewal, and credential-governance
   controls are operational.
+
+### Demand generation, positioning, and community conversion
+
+Ease of installation is necessary but not sufficient. Every public surface
+must help a relevant visitor answer four questions quickly: **Why should I
+care? What can I try now? What will I receive? Why should I trust it?** AIES
+should invite broad participation without pretending the same message or
+workflow serves every persona.
+
+This track follows current project guidance rather than treating promotion as
+an afterthought:
+
+- [GitHub's README guidance](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes)
+  says the first repository surface should state what the project does, why it
+  is useful, how to start, where to get help, and who maintains it.
+- [Open Source Guides' community guidance](https://opensource.guide/building-community/)
+  treats users → contributors → maintainers as a funnel and recommends a
+  friendly README, clear examples, public process, responsive help, and
+  labelled easy contributions.
+- [Diátaxis](https://diataxis.fr/start-here/) separates tutorials, how-to
+  guides, reference, and explanation so first-time users are not forced
+  through standards reference before reaching a result.
+- [GitHub Releases](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)
+  provides versioned distribution, release notes, assets, and download signals;
+  launch activity should point to reproducible releases rather than an
+  arbitrary branch snapshot.
+- [CNCF project lifecycle guidance](https://contribute.cncf.io/projects/lifecycle/)
+  is a useful maturity analogue: experimental usefulness, growing adoption,
+  and production maturity are different claims and should be communicated
+  honestly.
+
+| Status | Promotion and conversion item | Acceptance signal |
+|---|---|---|
+| Open | Redesign the root README as a conversion page | The first screen states the concrete problem, differentiator, honest maturity, 60-second offline command, expected ECM/report output, supported subjects, and one primary call to action; deeper standards architecture moves below proof and quick start |
+| In progress | Create an evidence-backed visual identity | An evidence → ECM → confidence → decision social-preview/README hero is delivered without certification or fictional-result claims; repository social-image configuration, wordmark rules, terminal capture, real ECM/report screenshots, accessibility variants, and asset-source policy remain |
+| Open | Make the CLI itself invite the next useful action | Bare `aies`, successful `init`, `demo`, `evaluate`, `audit`, `compare`, and report completion show one context-specific next command, expected value, recovery path, and optional feedback link without ads, nagging, telemetry, or blocking prompts |
+| Open | Build persona-specific landing paths | Engineers, engineering leaders, AI platform teams, auditors/governance teams, researchers/evaluators, standards contributors, and tool integrators each get a short “decision → command → artifact → limitation → next step” path |
+| Open | Publish a 60-second proof and a ten-minute guided trial | Copyable terminal recording/GIF and a narrated demo show real commands and generated artifacts; clean-machine users reproduce them with no hidden setup, credentials, or human gate |
+| Open | Publish outcome-led example galleries | Sanitized bundles show model/deployment comparison, repository analysis, reassessment after change, local/private evaluation, and eventual MCP evidence; every example names its decision, evidence scope, limitations, runtime, and reproduction command |
+| Open | Establish a launch channel plan | Versioned release, technical launch article, short demo video, GitHub social card, Discussions launch thread, targeted standards/evaluation/MLOps communities, conference/demo submissions, and partner outreach reuse one claim-reviewed message matrix |
+| Open | Create a claim-review gate for promotional content | Every headline, comparison, screenshot, talk, post, and badge maps to canonical evidence and a maturity label; uncalibrated, proposed, experimental, supported, and production-validated claims cannot be visually confused |
+| Open | Create the user-to-contributor funnel | `CONTRIBUTING.md`, issue forms, Discussions categories, `good first issue`/`help wanted` work, scenario-review packets, adapter starter kit, contributor recognition, response expectations, and maintainer succession route are discoverable from the README |
+| Open | Instrument adoption without collecting assessment evidence | Public, aggregate signals cover release downloads, demo success feedback, time to first ECM, docs exits, issue-to-resolution, repeat usage volunteered by pilots, case-study applications, and contribution conversion; telemetry is opt-in and never captures prompts, responses, subjects, or private reports |
+| Open | Run message and usability tests before broad promotion | At least five people per priority persona explain AIES back in their own words, complete the trial, locate the ECM, and state its limitations; failed comprehension changes wording and flow before launch |
+| Open | Maintain a public launch-and-adoption calendar | Owners, assets, review gates, audiences, channels, dates, success measures, follow-ups, and retrospectives are visible; promotion does not begin before install/demo/release and claim-review gates pass |
 
 ### Research-informed build-versus-integrate decisions
 
@@ -165,6 +210,7 @@ until their prerequisite evidence exists.
 | **Measurement credibility (P0)** | Define claim/estimand → preregister panel → validate raters/judges → execute compatible runs → quantify uncertainty/discrimination → independent interpretation → publish limitations | No promotional ECM comparison or AIES Select ranking before completion |
 | **Release trust (P0)** | Ratify license → align versions → lock dependencies → build packages/containers → generate SBOM/AI-BOM and SLSA provenance → sign/attest → verify on clean machines | No public install recommendation before artifacts are legally reusable and verifiable |
 | **First-use adoption (P1)** | Cross-platform `aies demo` → isolated install → `aies init` → preflight/plan → `aies evaluate` → `aies open` → first-run usability study | Target is first useful ECM in one session without governance expertise |
+| **Demand and community (P1)** | Positioning/message matrix → conversion README → visual proof → persona paths → reproducible release → coordinated launch → responsive community funnel → measured iteration | No broad launch before the primary call to action works from a clean install and every public claim passes evidence review |
 | **Standards approval (P1)** | Generate approval inventory → automated conformance → assign two independent reviewers → resolve findings → freeze v0.5 candidate → public comment/disposition → Maintainer consensus → status promotion | No `Approved`, “industry standard,” or certification claim before traceable completion |
 | **Evidence interoperability (P1)** | Typed evidence events → adapter contract → Inspect/SARIF/OTel importers → OSCAL/SPDX exports → round-trip and adversarial fixtures → compatibility policy | Imported evidence cannot affect claims until provenance, loss, correlation, and applicability are explicit |
 | **Subject expansion (P2)** | Subject Descriptor → Subject Assessment Profile → executor/evidence adapters → direct instruments → coverage matrix → calibration → report limitations → discovery registry | Never route a new subject kind through deployment scoring by convenience |
@@ -178,15 +224,16 @@ license governance are waiting on other people.
 
 | Order | Lane | Status | Work package | Dependency | Exit signal |
 |---:|---|---|---|---|---|
-| 1 | Build now | Open | Define decision-product measurement claims and estimands | Existing ECM/evidence schemas | Versioned specification and fixtures state exactly what every score/confidence value means and does not mean |
-| 2 | Build now | Open | Deliver cross-platform `aies demo` | Existing `demo-full` implementation | Installed CLI runs the offline narrative without Make/Bash and links the final ECM/report |
-| 3 | Build now | Open | Produce installable local release candidates | License is not required for private build testing; publication waits for ADR-0014 | Wheel/sdist install, upgrade, and uninstall successfully through isolated tool environments on Windows, macOS, and Linux |
-| 4 | Build now | Open | Implement `aies init` and safe discovery | Subject/workspace boundaries already defined for deployments | Clean machine reaches a valid workspace and exact next command without editing YAML or exposing secrets |
-| 5 | Build now | Open | Implement preflight planning and `aies evaluate` | `init`, existing qualify/benchmark engine | One beginner command previews calls/time/cost/limitations, then performs a bounded no-repeat automated evaluation and complete report generation |
-| 6 | Build now | Open | Implement `aies open` and redacted sharing | Existing report bundle/dashboard | User opens the canonical local result by run ID and can export a validated share-safe bundle without modifying evidence |
-| 7 | Build now | Open | Define Subject Descriptor, typed evidence events, and Evidence Adapter contract | ADR required if frozen contracts change | Schemas, compatibility policy, loss report, correlation/deduplication semantics, privacy classification, and conformance fixtures are accepted |
-| 8 | Build now | Open | Implement Inspect log bridge | Evidence Adapter contract | Supported Inspect logs import with content hashes, provenance, loss accounting, and no evidence-count inflation |
-| 9 | Build now | Open | Implement SARIF repository bridge | Evidence Adapter contract and repository-analysis ADR | Static-analysis findings round-trip with provenance and remain distinct from correctness/conformance outcomes |
+| 1 | Build now | Done | Define decision-product measurement claims and estimands | Existing ECM/evidence schemas | Versioned specification and fixtures state exactly what every score/confidence value means and does not mean |
+| 2 | Build now | In progress | Deliver cross-platform `aies demo` | Existing `demo-full` implementation | Installed wheel now runs the concise offline narrative without Make/Bash and links the final ECM/report on Windows; macOS and Linux clean-install CI remain |
+| 3 | Build now | In progress | Produce installable local release candidates | License is not required for private build testing; publication waits for ADR-0014 | Wheel and sdist build; isolated install, shipped-data validation, installed demo, and uninstall pass on Windows; upgrade plus macOS/Linux verification remain |
+| 4 | Build now | Done | Implement `aies init` and safe discovery | Subject/workspace boundaries already defined for deployments | Clean machine reaches a non-destructive valid workspace, no secrets are written, and shell-specific exact next commands are printed |
+| 5 | Build now | Done | Implement preflight planning and `aies evaluate` | `init`, existing qualify/benchmark engine | One beginner command previews calls/time/cost/limitations, then performs a bounded no-repeat automated evaluation and complete report generation |
+| 6 | Build now | Done | Implement `aies open` and redacted sharing | Existing report bundle/dashboard | User opens the canonical local result by run ID and exports an immutable allowlisted bundle that anonymizes subject/environment values and excludes raw evidence |
+| 7 | Build now | In progress | Define Subject Descriptor, typed evidence events, and Evidence Adapter contract | ADR required if frozen contracts change | Experimental schemas, compatibility/loss/deduplication/privacy rules, and proposed ADR-0015 are implemented; Class 3 independent review and acceptance remain |
+| 8 | Build now | In progress | Implement Inspect log bridge | Evidence Adapter contract | Portable AIES Inspect JSON profile imports/exports with source hashes, explicit loss, immutable duplicate rejection, and no inferred score; validation against the pinned native Inspect API remains |
+| 9 | Build now | In progress | Implement SARIF repository bridge | Evidence Adapter contract and repository-analysis ADR | SARIF 2.1.0 findings import/export with provenance and preserve tool/rule/location/severity/fingerprint/fix/suppression/baseline semantics; official schema validation and repository-audit consumption remain |
+| 9A | Build now | In progress | Build the adoption and promotion launch kit | Demo, packaging, `init`/`evaluate`/`open`, measurement claims | Conversion README/Quickstart, CLI calls to action, persona message matrix, research-backed channel/funnel plan, claim-review gate, and launch sequence are implemented; visual assets, terminal recording, example gallery, community forms, and usability studies remain |
 | 10 | External evidence | In progress | Execute preregistered multi-subject validity panel | Estimand, anchor protocol, compatible subjects, independent human labels | Published analysis covers discrimination, agreement, uncertainty, robustness, null results, and limitations |
 | 11 | External governance | Blocked | Complete two independent reviews per approval candidate | Reviewer recruitment and review packets | Every candidate has two traceable non-author reviews and dispositioned findings |
 | 12 | External adoption | Open | Publish comparative ECM case study and reproducible local/hosted pilots | Validity panel, installation path, independent reviewers, publishable evidence | Independent users reproduce results and report decision usefulness and limitations |
@@ -225,7 +272,7 @@ successful external adoption loop.
 |---|---|---|
 | Done | Human-review the new RT2 — Moderate tranche | Umair Ali explicitly accepted all 268 listed instruments as repository owner and maintainer after a zero-gap deterministic preflight. One disclosed human-authorized AI-assisted tranche event records every scenario ID and content hash, does not fabricate separate manual click-through reviews, and automatically reopens changed content. All 484 now have effective design review; external independent review and empirical calibration remain open separately. |
 | In progress | Empirically calibrate a preregistered real-subject panel | The platform now creates a content-addressed plan before runs, freezing owner, subjects/ranks and independent basis, exact instrument/prompt/content/suite hashes, tier, repeats, thresholds, and validated rating protocol. Completed runs must bind exactly to that plan; free-text timestamps and synthetic/manual panels are non-promotional. Four legacy subjects share seven CA-05 scenarios and 21 observations under one provisional protocol, but remain exploratory because no prior plan exists and the scorer is explicitly provisional/uncalibrated. A real study and human promotion decision remain external evidence. |
-| Open | Define the measurement claim and estimand for every decision product | Each metric states the subject, target population of tasks/conditions, sampling frame, unit of analysis, outcome, aggregation, uncertainty, exclusions, and intended decision; performance, reliability, safety, and evidence confidence are not conflated |
+| Done | Define the measurement claim and estimand for every decision product | `aies-measurement-claims/v1` and fixtures state subject, target population, sampling frame, unit, outcome, aggregation, uncertainty, exclusions, intended decision, and prohibited interpretation for Engineering Evaluation, ECM, Fit, comparison, and Formal Qualification; ECM/report bundles cite the contract |
 | Open | Separate benchmark, system, and field evidence | Reports identify controlled scenario results, integrated-system behavior, and field/operational observations as different evidence modalities; evidence transfer across levels requires an explicit rationale and never silently raises confidence |
 | Open | Validate automated judges against independent human labels | A frozen, stratified anchor set estimates agreement, systematic bias, severity-specific errors, drift, and uncertainty for every judge/protocol version; failed calibration makes scores advisory but does not discard collected responses |
 | Open | Test predictive and decision validity | Preregister whether task scores should predict held-out engineering outcomes, expert preference, defect/security findings, or workload success; report effect sizes, intervals, null results, and decision errors rather than only rank correlation |
@@ -399,7 +446,8 @@ included before public release.
 | Open | Generate and test the perspective-coverage registry | One machine-readable registry drives profile applicability, coverage reports, human-readable code labels, documentation, and validation for lifecycle, cross-cutting, competency, task, risk, autonomy, stakeholder, environment, evidence, and operating-condition perspectives |
 | Done | Clarify immutable artifacts and regenerable views | Storage policy classifies append-only records, derived canonical snapshots, mutable workflow state/configuration, and regenerable views; `workspace.write_json` rejects append-only replacement and `workspace.write_view` cannot target evidence paths |
 | Done | Make record identifiers concurrency-safe | Qualification Records atomically claim human-readable IDs through exclusive creation; a 12-decision concurrent regression proves unique issued records and lifecycle events |
-| Done | Improve local verification feedback | The documented command reports ranked durations and uses a 180-second warm-cache Windows budget with a 25% regression trigger. Single-pass report views plus signature-invalidated isolated YAML, expanded-scenario, review-ledger, and suite caches retain complete coverage while the expanded 228-test suite completes in 104.76 seconds on the latest Windows verification host; cache mutation/invalidation behavior has regression coverage. Read-only API fixtures are shared safely and concurrency tests delay only the phase under test. |
+| Done | Improve local verification feedback | The documented command reports ranked durations and uses a 180-second warm-cache Windows budget with a 25% regression trigger. Single-pass report views plus signature-invalidated isolated YAML, expanded-scenario, review-ledger, and suite caches retain complete coverage while the expanded 235-test suite completes in 109.82 seconds on the latest Windows verification host; cache mutation/invalidation behavior has regression coverage. Read-only API fixtures are shared safely and concurrency tests delay only the phase under test. |
+| Done | Keep package-build artifacts out of review | Root ignore policy excludes `build/`, `dist/`, and demo workspaces; release-hygiene validation passes after local wheel/sdist builds |
 | Done | Generate exhaustive CLI guidance and shell completion | A parser-derived CLI reference covers every command, subcommand, positional parameter, option, default, choice, prerequisite, interaction, result/side effect, recommended next step, and workflow sequence; CI detects undocumented parser drift, and PowerShell/Bash/Zsh Tab completion is generated from the same live command surface |
 | Done | Remove local workspace archive debris safely | `aies doctor` inventories `.DS_Store`, `Thumbs.db`, `desktop.ini`, `__MACOSX`, Python/pytest caches, and misplaced regenerable views under the runs root; JSON exposes every path and category, readiness is unaffected, and tests prove the diagnostic deletes neither debris nor evidence |
 
@@ -421,12 +469,16 @@ included before public release.
 
 Last verified on 2026-07-23:
 
-- `pytest platform/tests -q`: **228 passed in 104.76 seconds** on the latest
+- `pytest platform/tests -q`: **235 passed in 109.82 seconds** on the latest
   Windows run, below the documented 180-second warm-cache budget.
 - `aies suites validate`: **484 scenarios, 12 areas, 0 warnings, 0 errors**;
   **268 effective hash-bound ledger acceptances, 0 stale, 0 unknown**.
 - Decision-engine conformance: **8/8 cases passed**, semantics 1.0.
 - Release hygiene: **PASS**.
+- Local distribution verification: wheel and sdist build; isolated wheel
+  install runs suite validation and the offline demo; isolated sdist install,
+  validation, and uninstall pass on Windows. Cross-platform package/demo CI is
+  now defined and awaits hosted-run evidence.
 - Repository audit at RT2 — Moderate: **PASS**, with 18 verified controls and
   8 gaps; the prior order-dependent CI-test false negative is covered by a
   regression test.

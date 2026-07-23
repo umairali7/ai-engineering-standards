@@ -14,6 +14,32 @@ This is a guidance document: it orients you and recommends reading order, but no
 
 The AI Engineering Standards (AIES) project is building a vendor-neutral, engineering-first standard for AI-native software engineering. It defines the shared vocabulary, body of knowledge, qualification methods, operating model, reference architectures, and certification framework that let organizations adopt AI across the full SDLC with governance, evidence, and human accountability. It is to AI engineering what PMBOK is to project management or ISTQB to software testing.
 
+## Experience It Before Reading the Standard
+
+You do not need to study the framework to see the product:
+
+```text
+cd platform
+python -m pip install -e .
+aies demo --open
+```
+
+In about a minute, the offline demo produces a real Engineering Capability
+Matrix, Engineering Fit guidance, diagnostics, Executive Summary, and linked
+report bundle. No model server, API key, Make, Bash, or mandatory human review
+is involved.
+
+Then choose the path that matches your decision:
+
+| Need | Next action |
+|---|---|
+| Understand one AI deployment | `aies evaluate SUBJECT --judge REVIEWER --plan-only` |
+| Compare compatible evidence | `aies compare RUN_A RUN_B` |
+| Analyze repository practice | `aies audit .` |
+| Integrate evaluation/static-analysis evidence | `aies bridge --help` |
+| Adopt the operating standard | Continue with the role-based reading paths below |
+| Contribute or review | Read [CONTRIBUTING.md](CONTRIBUTING.md) and the [launch plan](docs/ADOPTION_AND_LAUNCH_PLAN.md) |
+
 ## How the Pieces Fit
 
 ```

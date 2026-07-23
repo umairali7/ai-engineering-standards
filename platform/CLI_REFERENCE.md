@@ -282,6 +282,119 @@ run a non-blocking engineering benchmark; optionally auto-score and report
 | `--human-evaluation` | optional | optionally record a named human evaluation; never required | — |
 | `--consider-advisory-review` | optional | optionally record that a human considered automated scores | — |
 
+## `aies bridge`
+
+import versioned external evidence with provenance and loss reports
+
+**Usage:** `aies bridge [-h] [--json] {inspect-import,inspect-export,sarif-import,sarif-export} ...`
+
+**Prerequisites:** A version-supported external evidence file is available; Inspect rating import also requires an existing matching AIES run.
+
+**Result and side effects:** Converts supported external evidence with a source digest, converter identity, explicit loss accounting, and no inferred scores or claim inflation.
+
+**Recommended next step:** Inspect imports must be aggregated into refreshed reports; SARIF artifacts remain repository findings until a separate analysis explicitly consumes them.
+
+### Subcommands
+
+| Subcommand | What it does |
+|---|---|
+| `inspect-export` | export a run to the AIES Inspect JSON profile |
+| `inspect-import` | import an AIES-profiled Inspect EvalLog JSON |
+| `sarif-export` | export normalized repository findings as SARIF 2.1.0 |
+| `sarif-import` | normalize SARIF 2.1.0 findings without claim inflation |
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+
+## `aies bridge inspect-export`
+
+export a run to the AIES Inspect JSON profile
+
+**Usage:** `aies bridge inspect-export [-h] --out OUT [--json] run`
+
+**Prerequisites:** An AIES run exists and the destination JSON path does not.
+
+**Result and side effects:** Exports prompts, outputs, explicit AIES EV scores, findings, diagnostics, and identity through the documented portable Inspect JSON profile.
+
+**Recommended next step:** Load the JSON through an Inspect-compatible workflow or test round-trip with `bridge inspect-import`; native Inspect-only container metadata is intentionally not fabricated.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<RUN>` | required | AIES run to export | — |
+| `--out` | required | new JSON output path | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies bridge inspect-import`
+
+import an AIES-profiled Inspect EvalLog JSON
+
+**Usage:** `aies bridge inspect-import [-h] [--source SOURCE] [--json] run file`
+
+**Prerequisites:** An existing AIES run and Inspect EvalLog JSON using the documented AIES per-sample metadata and EV1–EV6 scorer profile are available.
+
+**Result and side effects:** Writes automated rating observations plus a source-bound conversion artifact and loss report; unsupported samples are skipped with reasons.
+
+**Recommended next step:** Run `aies qualify --resume <run-id>` to aggregate and regenerate the report bundle.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<RUN>` | required | existing AIES run receiving EV observations | — |
+| `<FILE>` | required | Inspect EvalLog JSON export | — |
+| `--source` | optional | optional source/rater label (default binds filename and digest) | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies bridge sarif-export`
+
+export normalized repository findings as SARIF 2.1.0
+
+**Usage:** `aies bridge sarif-export [-h] --out OUT [--json] file`
+
+**Prerequisites:** An aies-sarif-evidence/v1 normalized artifact exists and the destination path does not.
+
+**Result and side effects:** Exports preserved findings as SARIF 2.1.0 with an AIES source-artifact digest and explicit claim limitation.
+
+**Recommended next step:** Validate the SARIF with the consuming tool and retain the normalized artifact as the AIES provenance source.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<FILE>` | required | aies-sarif-evidence/v1 JSON artifact | — |
+| `--out` | required | new SARIF output path | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
+## `aies bridge sarif-import`
+
+normalize SARIF 2.1.0 findings without claim inflation
+
+**Usage:** `aies bridge sarif-import [-h] [--out OUT] [--json] file`
+
+**Prerequisites:** A SARIF 2.1.0 JSON file from a completed static-analysis invocation is available.
+
+**Result and side effects:** Preserves tool, rule, version, location, severity, fingerprints, fixes, suppressions, baseline state, and invocation status in an immutable normalized artifact.
+
+**Recommended next step:** Use the artifact as repository-analysis evidence; never treat an empty or successful tool run as proof of correctness.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<FILE>` | required | SARIF 2.1.0 JSON file | — |
+| `--out` | optional | output artifact (default: workspace imports) | — |
+| `--json` | optional | emit machine-readable JSON | — |
+
 ## `aies capabilities`
 
 render the Engineering Capability Matrix for an aggregated run/deployment
@@ -611,6 +724,28 @@ render an HTML dashboard over runs and grants
 | `--json` | optional | machine-readable output | — |
 | `--write` | optional | write dashboard.html into the workspace instead of only printing its path | — |
 
+## `aies demo`
+
+run the complete offline Engineering Evaluation story
+
+**Usage:** `aies demo [-h] [--json] [--workspace WORKSPACE] [--parallel N] [--open]`
+
+**Prerequisites:** AIES is installed; no model server, API key, Make, or Bash is required.
+
+**Result and side effects:** Runs the real collection, batched automated scoring, aggregation, ECM, fit-guidance, and report pipeline fully offline with mock deployments.
+
+**Recommended next step:** Open the printed Executive Summary or run `aies open latest --export-redacted` in the demo workspace.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `--workspace` | optional | persistent demo workspace (default: ./aies-demo-workspace) | default: `aies-demo-workspace` |
+| `--parallel` | optional | maximum concurrent mock calls (default: 8) | default: `8` |
+| `--open` | optional | open the Executive Summary in the default browser when complete | — |
+
 ## `aies deployment`
 
 manage deployments (AI deployment × runtime × config × endpoint)
@@ -824,6 +959,37 @@ validate the environment and detect runtimes
 | `-h`, `--help` | optional | show this help message and exit | — |
 | `--json` | optional | machine-readable output | — |
 
+## `aies evaluate`
+
+plan and run a beginner-friendly automated Engineering Evaluation
+
+**Usage:** `aies evaluate [-h] [--json] [--assessment NAME | --all-areas] [--area CA-NN] [--rt {1,2,3,4}] [--judge DEPLOYMENT] [--judge-batch-size N] [--parallel N] [--runtime RUNTIME] [--reviewer-runtime REVIEWER_RUNTIME] [--plan-only] [--open] subject`
+
+**Prerequisites:** The subject and automated reviewer deployments are registered and reachable; use `--plan-only` before any potentially costly run.
+
+**Result and side effects:** Plans and runs a bounded, no-repeat, non-blocking Engineering Evaluation through the canonical qualify pipeline and creates the complete report bundle.
+
+**Recommended next step:** Run `aies open <run-id>` to inspect the result; expand scope only when the decision requires more evidence.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<SUBJECT>` | required | registered deployment id or unambiguous model name | — |
+| `--assessment` | optional | bounded assessment (default: coder unless --area/--all-areas is used) | Defaults to the bounded coder assessment unless `--area` or `--all-areas` is selected. |
+| `--all-areas` | optional | evaluate all CA-01 through CA-12 areas | — |
+| `--area` | optional | evaluate one competency area; repeat for more | repeatable |
+| `--rt` | optional | risk tier (default RT1 — Minimal for a bounded first run) | choices: `1`, `2`, `3`, `4`; default: `1` |
+| `--judge` | optional | automated reviewer deployment (default: AIES_JUDGE) | Required for execution unless AIES_JUDGE is set; automated scoring completes Engineering Evaluation without human review. |
+| `--judge-batch-size` | optional | responses per reviewer call (default 8 or AIES_JUDGE_BATCH_SIZE) | — |
+| `--parallel` | optional | maximum concurrent candidate and judge calls (default: 1) | default: `1` |
+| `--runtime` | optional | disambiguate the assessed deployment runtime | — |
+| `--reviewer-runtime` | optional | disambiguate the reviewer deployment runtime | — |
+| `--plan-only` | optional | show calls, concurrency, estimates, and limitations without executing | Performs no inference and writes no run; use it to review calls, concurrency, estimates, and limitations first. |
+| `--open` | optional | open the Executive Summary in the default browser after completion | Launches the Executive Summary after success; without it the same local link and safe-sharing command are printed. |
+
 ## `aies export`
 
 export a run's responses+scores to a generic eval-log JSON (round-trips with import)
@@ -968,6 +1134,27 @@ rebuild the result index from run files
 |---|---|---|---|
 | `-h`, `--help` | optional | show this help message and exit | — |
 | `--json` | optional | machine-readable output | — |
+
+## `aies init`
+
+create a safe AIES workspace and print exact next steps
+
+**Usage:** `aies init [-h] [--json] [--starter-manifest] [path]`
+
+**Prerequisites:** AIES is installed and the selected parent directory is writable.
+
+**Result and side effects:** Creates a non-destructive workspace skeleton, writes no credentials, and prints shell-specific environment and next commands.
+
+**Recommended next step:** Set AIES_WORKSPACE for the shell, then run `aies discover` and inspect the deployment list.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<PATH>` | optional | workspace directory to create (default: ./aies-workspace) | default: `aies-workspace` |
+| `--starter-manifest` | optional | also create a non-secret OpenAI-compatible deployment example | — |
 
 ## `aies journey`
 
@@ -1118,6 +1305,28 @@ judges used across all runs, with runs judged, responses scored, and parse rate
 |---|---|---|---|
 | `-h`, `--help` | optional | show this help message and exit | — |
 | `--json` | optional | emit machine-readable JSON | — |
+
+## `aies open`
+
+open a run result or export share-safe derived views
+
+**Usage:** `aies open [-h] [--json] [--no-browser] [--export-redacted [ZIP]] [run]`
+
+**Prerequisites:** The selected run has generated HTML reports; redacted export requires a destination that does not already exist.
+
+**Result and side effects:** Opens or links the primary local result. Optional export includes only allowlisted derived views and a digest manifest, never raw evidence or credentials.
+
+**Recommended next step:** Share the redacted archive with its limitations, or return to the canonical workspace for reproducibility and verification.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<RUN>` | optional | run id or 'latest' (default: latest) | default: `latest` |
+| `--no-browser` | optional | print the local result link without launching a browser | — |
+| `--export-redacted` | optional | also create an immutable redacted ZIP at ZIP or the default exports path | Exports only allowlisted derived views. Raw prompts, responses, ratings, fingerprints, and secrets are excluded. |
 
 ## `aies plugins`
 

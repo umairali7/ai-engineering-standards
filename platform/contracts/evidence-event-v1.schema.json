@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aies.example/contracts/evidence-event-v1.schema.json",
+  "title": "AIES Evidence Event v1 (experimental)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "event_id", "subject_id", "modality", "observed_at",
+    "source", "source_record_id", "source_digest", "classification", "payload"],
+  "properties": {
+    "schema": {"const": "aies-evidence-event/v1"},
+    "event_id": {"type": "string", "minLength": 1},
+    "subject_id": {"type": "string", "minLength": 1},
+    "instrument_id": {"type": ["string", "null"]},
+    "modality": {"enum": ["controlled-scenario", "integrated-system",
+      "field-observation", "repository-static-analysis", "telemetry", "attestation"]},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "source": {"type": "string", "minLength": 1},
+    "source_record_id": {"type": "string", "minLength": 1},
+    "source_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "correlation_id": {"type": ["string", "null"]},
+    "classification": {"enum": ["public", "internal", "confidential", "restricted"]},
+    "payload": {"type": "object"},
+    "extensions": {"type": "object"}
+  }
+}

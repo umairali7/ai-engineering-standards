@@ -359,6 +359,11 @@ def engineering_capability_matrix(ref: str) -> dict:
     return {
         "kind": "engineering-capability-matrix",
         "ecm_schema": ECM_SCHEMA,
+        "measurement_claim": {
+            "contract": "aies-measurement-claims/v1",
+            "claim": "engineering_capability_matrix",
+            "status": "draft",
+        },
         "task_decision_semantics_version": TASK_DECISION_SEMANTICS_VERSION,
         "status": "informational",
         "mapping": {

@@ -32,8 +32,8 @@ class DesignReviewError(ValueError):
 
 def default_ledger_path() -> Path:
     """Return the repository's canonical design-review ledger path."""
-    platform_root = Path(__file__).resolve().parents[2]
-    return platform_root / "calibration" / "design-review-ledger.json"
+    from .resources import data_root
+    return data_root() / "calibration" / "design-review-ledger.json"
 
 
 def canonical_scenario_content(scenario: dict) -> dict:

@@ -188,7 +188,9 @@ and one hosted pilot remain outstanding**.
 | ECM, grounding diagnostics, fit guidance, and compatible comparison | **Implemented** | Ratify AIES-ECM-01 and validate task mappings empirically |
 | RT2 — Moderate distinct-instrument breadth and human design review | **Done** | Empirical panel calibration, protected hold-outs, and RT1/RT3/RT4 growth remain |
 | Repository conformance/practice audit | **Implemented** | Deeper architecture, code-quality, correctness, and controlled task evidence remain |
-| Subject-neutral architecture | **Defined** | Subject Descriptor, Subject Executor, typed evidence events, and non-deployment adapters remain |
+| Subject-neutral architecture | **Experimental implementation** | Proposed ADR-0015, Subject Descriptor, typed evidence event, and adapter/loss contracts exist; independent Class 3 review and subject executors remain |
+| First-use adoption commands | **Implemented on Windows** | `aies demo`, `init`, `evaluate --plan-only`, `open`, and redacted sharing pass source and installed-wheel verification; macOS/Linux clean-install CI remains |
+| Adoption and promotion launch kit | **In progress** | Conversion README/Quickstart, persona/message/channel plan, CLI calls to action, claim-review gate, visual proof assets, and user studies remain before broad launch |
 | Open repository licensing | **In progress** | Complete ADR-0014 governance and install final license artifacts |
 | Independent local/hosted pilots and public adoption | **Open** | Publish reproducible evidence and independent findings |
 
