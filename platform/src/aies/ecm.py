@@ -13,8 +13,8 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
-from . import (compare, constants as C, profiles, rating, runner, scoring,
-               task_mappings, workspace)
+from . import (compare, constants as C, profiles, rating, run_mode, runner,
+               scoring, task_mappings, workspace)
 
 ECM_SCHEMA = 2
 TASK_DECISION_SEMANTICS_VERSION = "1.0"
@@ -172,6 +172,9 @@ def engineering_capability_matrix(ref: str) -> dict:
 
     pkg = compare._resolve_package(ref)
     run_id = pkg["run_id"]
+    manifest = workspace.read_json(
+        workspace.run_dir(run_id) / "manifest.json")
+    purpose = run_mode.purpose(manifest)
     response_dir = workspace.run_dir(run_id) / "responses"
     responses = {p.name: workspace.read_json(p) for p in response_dir.glob("*.json")}
     scenario_index = _scenario_index(set(pkg["areas"]))
@@ -274,6 +277,7 @@ def engineering_capability_matrix(ref: str) -> dict:
         n = len(data["scores"])
         minimum = area_evidence.get("min_sample", 0)
         decisional = bool(area_evidence.get("decisional")) and n >= minimum
+        qualification_adequacy = _adequacy(n, minimum, decisional)
         rows.append({
             "area": area,
             "scenario_family": family,
@@ -283,7 +287,10 @@ def engineering_capability_matrix(ref: str) -> dict:
             "distinct_responses": len(data["response_records"]),
             "rating_observations": n,
             "minimum_observations": minimum,
-            "adequacy": _adequacy(n, minimum, decisional),
+            "adequacy": ("observed" if n else "not assessed")
+                        if purpose == run_mode.ENGINEERING_EVALUATION
+                        else qualification_adequacy,
+            "qualification_adequacy": qualification_adequacy,
             "evidence_mean": round(sum(data["scores"]) / n, 3) if n else None,
             "rater_kinds": sorted(data["rater_kinds"]),
             "raters": sorted(data["raters"]),
@@ -306,7 +313,11 @@ def engineering_capability_matrix(ref: str) -> dict:
                           "areas": [], "distinct_scenarios": 0, "distinct_responses": 0,
                           "rating_observations": 0, "minimum_observations": None,
                           "admitted_rating_observations": 0, "observed_performance": None,
-                          "coverage_percent": None, "status": "not assessed",
+                          "coverage_percent": None,
+                          "engineering_confidence_percent": 0,
+                          "engineering_status": "not assessed",
+                          "qualification_status": "not assessed",
+                          "status": "not assessed",
                           "decision_semantics": TASK_DECISION_SEMANTICS_VERSION,
                           "task_decision": empty_decision,
                           "raters": [], "rater_kinds": []})
@@ -319,6 +330,13 @@ def engineering_capability_matrix(ref: str) -> dict:
         admitted_observations = sum(
             item.get("qualified_human_observation_count", 0)
             for item in data["decision_items"].values())
+        engineering_confidence = round(
+            min(1, len(data["scenario_ids"]) / minimum) * 100)
+        engineering_status = (
+            "observed — high confidence" if engineering_confidence >= 100
+            else "observed — moderate confidence"
+            if engineering_confidence >= 50
+            else "observed — limited confidence")
         tasks.append({"task_id": task_id, "task": task_name,
                       "scenario_ids": sorted(data["scenario_ids"]), "areas": sorted(data["areas"]),
                       "distinct_scenarios": len(data["scenario_ids"]),
@@ -330,6 +348,9 @@ def engineering_capability_matrix(ref: str) -> dict:
                       "observed_performance": performance,
                       "coverage_percent": round(
                           min(1, len(data["decision_items"]) / minimum) * 100),
+                      "engineering_confidence_percent": engineering_confidence,
+                      "engineering_status": engineering_status,
+                      "qualification_status": decision["status"],
                       "status": decision["status"],
                       "decision_semantics": TASK_DECISION_SEMANTICS_VERSION,
                       "task_decision": decision,
@@ -348,6 +369,7 @@ def engineering_capability_matrix(ref: str) -> dict:
             "scope": "versioned scenario-to-Engineering-Task registry",
         },
         "run_id": run_id,
+        "run_purpose": purpose,
         "subject": (pkg.get("subject") or {}).get("id", pkg["model"]["registry_id"]),
         "subject_kind": pkg.get("subject_kind", "ai"),
         "risk_tier": pkg["risk_tier"],
@@ -360,8 +382,8 @@ def engineering_capability_matrix(ref: str) -> dict:
             "Informational only; this matrix is not qualification evidence, a grant, or deployment authorization.",
             "Task rows are derived from the versioned scenario-to-task mapping registry; scenario-family rows remain the traceable source evidence.",
             "Evidence mean is an unweighted inspection statistic, not a competency level or recommendation.",
-            "Task decisions follow ADR-0013; pending mapping review, inadequate breadth, rater-protocol gaps, uncertainty, safety gates, and parent-area failures prevent demonstrated status.",
-            "A non-decisional row requires more independently scored evidence; repeats do not establish task breadth.",
+            "Engineering evidence confidence counts distinct directly mapped scored scenarios; exact repeats do not increase confidence.",
+            "Formal task decisions follow ADR-0013 and remain separate from the observed engineering profile.",
             "Automated ratings can complete the engineering evaluation; optional human evaluation adds assurance but is not required to generate this ECM.",
         ],
     }
@@ -390,53 +412,51 @@ def render_markdown(matrix: dict) -> str:
         "",
         "## Task Capability Profile",
         "",
-        "| Task | Observed performance | Direct evidence sample | Qualification evidence | Status |",
-        "|---|---|---|---:|---|",
+        "| Task | Observed performance | Evidence confidence | Evidence | Engineering status | Human eval |",
+        "|---|---|---|---|---|---|",
     ]
     for task in matrix["tasks"]:
         performance = ("not assessed" if task["observed_performance"] is None
                        else _bar(task["observed_performance"] / 4 * 100)
                             + f" {task['observed_performance'] / 4 * 100:.0f}%")
-        lines.append(f"| {task['task_id']} {task['task']} | {performance} | {_task_sample(task)} | "
-                     f"{_task_evidence(task)} | {_task_status(task)} |")
+        lines.append(
+            f"| {task['task_id']} {task['task']} | {performance} | "
+            f"{_engineering_confidence(task)} | {_task_sample(task)} | "
+            f"{task.get('engineering_status', 'not assessed')} | "
+            f"{_human_evaluation_label(matrix)} |")
     lines.extend([
         "",
-        "Mean reviewer score is an unweighted informational EV mean. Qualification evidence "
-        "counts distinct, resolved, admitted task scenarios against the ADR-0013 task minimum; "
-        "ratings and exact repeats do not increase task breadth. Task decisions use the lower "
-        "90% confidence bound and risk-tier gates shown in the JSON evidence.",
-        "",
-        "## Task decision detail",
+        "Observed performance is the unweighted EV mean. Evidence confidence is "
+        "the share of the task's distinct-scenario target directly exercised by "
+        "scored evidence; exact repeats and additional raters do not increase it.",
         "",
     ])
-    for task in matrix["tasks"]:
-        if task["status"] == "not assessed":
-            continue
-        decision = task["task_decision"]
-        protocol = decision.get("rater_protocol") or {}
+    if matrix.get("run_purpose") == run_mode.FORMAL_QUALIFICATION:
+        lines.extend(["## Formal Qualification Task Decision Detail", ""])
+        for task in matrix["tasks"]:
+            if task["status"] == "not assessed":
+                continue
+            decision = task["task_decision"]
+            protocol = decision.get("rater_protocol") or {}
+            lines.extend([
+                f"### {task['task_id']} — {task['task']}", "",
+                f"- Formal decision status: **{task['status']}**",
+                f"- Distinct admitted scenarios: "
+                f"{decision.get('distinct_admitted_scenarios', 0)}/"
+                f"{decision.get('minimum_distinct_scenarios', 0)}",
+                f"- Human-rater protocol: "
+                f"{'satisfied' if protocol.get('satisfied') else 'incomplete'}",
+            ])
+            if decision.get("reasons"):
+                lines.append("- Reasons: " + "; ".join(decision["reasons"]))
+            lines.append("")
+    else:
         lines.extend([
-            f"### {task['task_id']} — {task['task']}", "",
-            f"- Decision: **{task['status']}**",
-            f"- Distinct admitted scenarios: {decision.get('distinct_admitted_scenarios', 0)}/"
-            f"{decision.get('minimum_distinct_scenarios', 0)}",
-            f"- Mapping review: {'satisfied' if decision.get('mapping_review_satisfied') else 'pending/incomplete'}",
-            f"- Human-rater protocol: {'satisfied' if protocol.get('satisfied') else 'incomplete'}; "
-            f"double-rated {protocol.get('double_rated_items', 0)}/"
-            f"{protocol.get('total_distinct_items', 0)}; adjacent agreement "
-            f"{protocol.get('agreement_fraction', 0):.1%}",
+            "## Formal Qualification Boundary", "",
+            "Formal qualification was **not requested**. Human-rater admission, "
+            "grant readiness, and qualification gates are therefore not statuses "
+            "in this engineering matrix.", "",
         ])
-        if decision.get("reasons"):
-            lines.append("- Reasons: " + "; ".join(decision["reasons"]))
-        lines.extend(["", "| Dimension | n | Mean | 90% CI | Decision value | Gate |", "|---|---:|---:|---:|---:|---|"])
-        gates = {gate["dimension"]: gate for gate in decision.get("gates") or []}
-        for dimension, detail in decision.get("dimensions", {}).items():
-            gate = gates.get(dimension) or {}
-            lines.append(
-                f"| {C.identifier_label(dimension)} | {detail['n']} | {detail['mean']:.3f} | "
-                f"[{detail['ci90_low']:.3f}, {detail['ci90_high']:.3f}] | "
-                f"{detail['decision_value']:.3f} | "
-                f"{'PASS' if gate.get('passed') else 'FAIL'} |")
-        lines.append("")
     lines.extend([
         "## Scenario-family evidence",
         "",
@@ -492,6 +512,15 @@ def _task_sample(task: dict) -> str:
             f"{task['rating_observations']} raw ratings")
 
 
+def _engineering_confidence(task: dict) -> str:
+    percent = task.get("engineering_confidence_percent")
+    if task.get("observed_performance") is None or percent is None:
+        return "not assessed"
+    minimum = task.get("minimum_observations") or 0
+    return (f"{_bar(percent)} {percent:.0f}% "
+            f"({task['distinct_scenarios']}/{minimum} distinct scenarios)")
+
+
 def _task_status(task: dict) -> str:
     if task["status"] == "not assessed":
         return "not assessed"
@@ -516,12 +545,15 @@ def render_html(matrix: dict) -> str:
         "<tr><td>" + html.escape(f"{task['task_id']} {task['task']}") + "</td><td>" +
         html.escape("not assessed" if task["observed_performance"] is None else
                     f"{_bar(task['observed_performance'] / 4 * 100)} {task['observed_performance'] / 4 * 100:.0f}%") +
+        "</td><td>" + html.escape(_engineering_confidence(task)) +
         "</td><td>" + html.escape(_task_sample(task)) +
-        "</td><td>" + html.escape(_task_evidence(task)) +
-        f"</td><td>{html.escape(_task_status(task))}</td></tr>"
+        "</td><td>" + html.escape(task.get("engineering_status", "not assessed")) +
+        "</td><td>" + html.escape(_human_evaluation_label(matrix)) +
+        "</td></tr>"
         for task in matrix["tasks"]
     )
-    task_details = "".join(
+    task_details = ("" if matrix.get("run_purpose") != run_mode.FORMAL_QUALIFICATION
+                    else "".join(
         "<details><summary>" + html.escape(f"{task['task_id']} — {task['task']}: {task['status']}") +
         "</summary><p>" + html.escape("; ".join(
             (task.get("task_decision") or {}).get("reasons") or ["all task-decision controls satisfied"])) +
@@ -533,10 +565,9 @@ def render_html(matrix: dict) -> str:
             f"<td>{detail['decision_value']:.3f}</td></tr>"
             for dimension, detail in (task.get("task_decision") or {}).get("dimensions", {}).items()) +
         "</table></details>"
-        for task in matrix["tasks"] if task["status"] != "not assessed"
-    )
+        for task in matrix["tasks"] if task["status"] != "not assessed"))
     summary = capability_summary(matrix)
-    observed = ", ".join(task["task"] for task in summary["task_observed"]) or "None"
+    observed = ", ".join(task["task"] for task in summary["engineering_assessed_tasks"]) or "None"
     unassessed = ", ".join(task["task"] for task in summary["task_not_assessed"]) or "None"
     automated = sum(task["rating_observations"] for task in matrix["tasks"]
                     if task["admitted_rating_observations"] == 0)
@@ -546,10 +577,10 @@ def render_html(matrix: dict) -> str:
 <style>body{{font:16px system-ui;max-width:1100px;margin:3rem auto;padding:0 1rem;color:#17202a}} table{{border-collapse:collapse;width:100%;margin:.75rem 0}}th,td{{border:1px solid #cbd5e1;padding:.5rem;text-align:left;vertical-align:top}}th{{background:#eaf2f8}}.notice{{padding:.75rem;background:#fff3cd;font-weight:600}}.summary{{padding:.8rem 1rem;background:#f8fafc;border-left:4px solid #64748b}}details{{margin:1.25rem 0}}summary{{cursor:pointer;font-weight:650}}</style>
 <h1>Engineering Capability Matrix (ECM)</h1><p class='notice'>INFORMATIONAL — NOT A QUALIFICATION, GRANT, OR DEPLOYMENT AUTHORIZATION.</p>
 <p><b>Subject:</b> {html.escape(matrix['subject'])}<br><b>Run:</b> {html.escape(matrix['run_id'])}<br><b>Scope:</b> {html.escape(C.risk_tier_label(matrix['risk_tier']))} · {html.escape(matrix['profile'])}<br><b>Human evaluation:</b> {html.escape(human_label)}</p>
-<p class='summary'><strong>At a glance:</strong> {len(summary['task_demonstrated'])} demonstrated, {len(summary['task_observed'])} observed, {len(summary['task_insufficient'])} insufficient, {len(summary['task_failed'])} gate/performance failed, and {len(summary['task_not_assessed'])} not assessed task(s). {automated} automated rating observation(s) remain informational; formal qualification admission is separate.</p>
-<h2>Task Capability Profile</h2><table><thead><tr><th>Task</th><th>Observed performance</th><th>Direct evidence sample</th><th>Qualification evidence</th><th>Status</th></tr></thead><tbody>{task_rows}</tbody></table>
-<p>Observed performance is an unweighted EV mean. Qualification evidence counts distinct resolved task scenarios against the ADR-0013 task minimum; task decisions use lower 90% confidence bounds, risk-tier gates, reviewed mappings, and the human-rater protocol.</p>
-<h2>Task decision detail</h2>{task_details}
+<p class='summary'><strong>At a glance:</strong> {len(summary['engineering_assessed_tasks'])} assessed and {len(summary['task_not_assessed'])} not assessed task(s). {automated} automated rating observation(s) are usable engineering evidence. Human evaluation is optional.</p>
+<h2>Task Capability Profile</h2><table><thead><tr><th>Task</th><th>Observed performance</th><th>Evidence confidence</th><th>Evidence</th><th>Engineering status</th><th>Human eval</th></tr></thead><tbody>{task_rows}</tbody></table>
+<p>Observed performance is an unweighted EV mean. Evidence confidence measures distinct directly mapped scored scenarios against the task target; repeats do not increase it.</p>
+{"<h2>Formal Qualification Task Decision Detail</h2>" + task_details if task_details else "<h2>Formal Qualification Boundary</h2><p>Formal qualification was <strong>not requested</strong>; human-rater admission and grant readiness are not statuses in this engineering matrix.</p>"}
 <h2>Evidence Summary</h2><ul><li><strong>Automated evaluation observations:</strong> {html.escape(observed)}.</li><li><strong>Direct evidence still needed:</strong> {html.escape(unassessed)}.</li><li><strong>Human evaluation:</strong> {html.escape(human_label)}.</li></ul>
 <details><summary>Scenario-family evidence and traceability ({len(matrix['rows'])} rows)</summary><table><thead><tr><th>Evidence family</th><th>Mean EV score</th><th>Scenarios</th><th>Responses</th><th>Ratings</th><th>Adequacy</th></tr></thead><tbody>{rows}</tbody></table></details>
 <h2>Limitations</h2><ul>{limits}</ul></html>"""
@@ -575,6 +606,9 @@ def capability_summary(matrix: dict) -> dict:
     observed = [row for row in rows if row["evidence_mean"] is not None]
     provisional = [row for row in observed if row not in demonstrated]
     task_rows = matrix["tasks"]
+    engineering_assessed_tasks = [
+        task for task in task_rows
+        if task.get("observed_performance") is not None]
     task_demonstrated = [task for task in task_rows if task["status"] == "demonstrated"]
     task_observed = [task for task in task_rows if task["status"] == "observed"]
     task_insufficient = [task for task in task_rows if task["status"] == "insufficient"]
@@ -594,6 +628,7 @@ def capability_summary(matrix: dict) -> dict:
         "task_insufficient": task_insufficient,
         "task_failed": task_failed,
         "task_not_assessed": task_not_assessed,
+        "engineering_assessed_tasks": engineering_assessed_tasks,
         "not_recommended": [
             "Autonomous production changes: this informational matrix cannot authorize deployment.",
             "Any task outside the assessed scenario families: this run contains no direct evidence for it.",
@@ -614,18 +649,24 @@ def render_capability_summary_markdown(matrix: dict) -> str:
         "",
         "### Task Capability Profile",
         "",
-        "| Task | Observed performance | Direct evidence sample | Qualification evidence | Status |",
-        "|---|---|---|---:|---|",
+        "| Task | Observed performance | Evidence confidence | Evidence | Engineering status | Human eval |",
+        "|---|---|---|---|---|---|",
     ]
     for task in matrix["tasks"]:
         performance = ("not assessed" if task["observed_performance"] is None
                        else _bar(task["observed_performance"] / 4 * 100)
                             + f" {task['observed_performance'] / 4 * 100:.0f}%")
-        lines.append(f"| {task['task_id']} {task['task']} | {performance} | {_task_sample(task)} | "
-                     f"{_task_evidence(task)} | {_task_status(task)} |")
+        lines.append(
+            f"| {task['task_id']} {task['task']} | {performance} | "
+            f"{_engineering_confidence(task)} | {_task_sample(task)} | "
+            f"{task.get('engineering_status', 'not assessed')} | "
+            f"{_human_evaluation_label(matrix)} |")
     lines.extend([
         "",
-        "Observed performance is an unweighted EV mean. ADR-0013 task decisions use distinct resolved evidence items, reviewed mappings, lower 90% confidence bounds, risk-tier gates, parent-area outcomes, and the human-rater protocol. Advisory ratings remain informational.",
+        "Observed performance is an unweighted EV mean. Evidence confidence "
+        "measures distinct directly mapped scored scenarios against the task "
+        "target; exact repeats do not increase it. Automated scores are usable "
+        "Engineering Evaluation evidence.",
         "",
         "### Evidence by scenario family",
         "",
@@ -643,68 +684,114 @@ def render_capability_summary_markdown(matrix: dict) -> str:
         lines.append("| No traceable scored scenario-family evidence | — | 0 | 0 | insufficient |")
 
     lines.extend(["", "### Strength patterns", ""])
-    if summary["task_demonstrated"]:
-        for task in summary["task_demonstrated"]:
-            lines.append(f"- **Demonstrated:** `{task['task']}` — observed performance "
-                         f"{task['observed_performance'] / 4 * 100:.0f}% with "
-                         f"{task['rating_observations']} scored observations.")
-    if summary["task_observed"]:
-        for task in summary["task_observed"]:
-            lines.append(f"- **Observed only:** `{task['task']}` — "
-                         f"{task['observed_performance'] / 4 * 100:.0f}% observed performance across "
-                         f"{task['distinct_scenarios']} distinct mapped scenarios. Task-level "
-                         "decision requirements are incomplete; do not treat this as a demonstrated capability.")
-    for task in summary["task_insufficient"]:
-        lines.append(f"- **Insufficient evidence:** `{task['task']}` — "
-                     + "; ".join(task["task_decision"].get("reasons") or []))
-    for task in summary["task_failed"]:
-        lines.append(f"- **Not demonstrated:** `{task['task']}` — "
-                     + "; ".join(task["task_decision"].get("reasons") or []))
-    if not (summary["task_demonstrated"] or summary["task_observed"]
-            or summary["task_insufficient"] or summary["task_failed"]):
+    assessed_tasks = summary["engineering_assessed_tasks"]
+    strong_tasks = [
+        task for task in assessed_tasks
+        if task["observed_performance"] / 4 * 100 >= 75]
+    review_tasks = [
+        task for task in assessed_tasks
+        if 50 <= task["observed_performance"] / 4 * 100 < 75]
+    weak_tasks = [
+        task for task in assessed_tasks
+        if task["observed_performance"] / 4 * 100 < 50]
+    for task in strong_tasks:
+        lines.append(
+            f"- **Strong observed performance:** `{task['task']}` — "
+            f"{task['observed_performance'] / 4 * 100:.0f}% across "
+            f"{task['distinct_scenarios']} distinct mapped scenarios; "
+            f"{task['engineering_confidence_percent']:.0f}% evidence confidence.")
+    for task in review_tasks:
+        lines.append(
+            f"- **Moderate observed performance:** `{task['task']}` — "
+            f"{task['observed_performance'] / 4 * 100:.0f}%; engineering review "
+            "is recommended.")
+    for task in weak_tasks:
+        lines.append(
+            f"- **Weak observed performance:** `{task['task']}` — "
+            f"{task['observed_performance'] / 4 * 100:.0f}%; prioritize "
+            "remediation or alternatives.")
+    if not assessed_tasks:
         lines.append("- No mapped engineering task has traceable scored evidence in this run.")
 
     lines.extend(["", "### Improvement and evidence gaps", ""])
     if summary["task_not_assessed"]:
         lines.append("- **Collect direct evidence before making a claim:** "
                      + ", ".join(f"`{task['task']}`" for task in summary["task_not_assessed"]) + ".")
-    if summary["task_observed"]:
-        lines.append("- **Complete mapping review, breadth, and independent scoring for observed tasks:** "
-                     + ", ".join(f"`{task['task']}`" for task in summary["task_observed"]) + ".")
-    if summary["task_insufficient"]:
-        lines.append("- **Repair task-evidence adequacy:** "
-                     + ", ".join(f"`{task['task']}`" for task in summary["task_insufficient"]) + ".")
-    if summary["task_failed"]:
-        lines.append("- **Address task gate/performance failures before use:** "
-                     + ", ".join(f"`{task['task']}`" for task in summary["task_failed"]) + ".")
+    low_confidence = [
+        task for task in assessed_tasks
+        if task.get("engineering_confidence_percent", 0) < 100]
+    if low_confidence:
+        lines.append(
+            "- **Increase direct scenario coverage for stronger confidence:** "
+            + ", ".join(f"`{task['task']}`" for task in low_confidence) + ".")
+    if weak_tasks:
+        lines.append(
+            "- **Improve observed performance:** "
+            + ", ".join(f"`{task['task']}`" for task in weak_tasks) + ".")
 
     lines.extend(["", "### What the evidence shows", ""])
-    if summary["demonstrated"]:
-        for row in summary["demonstrated"]:
-            lines.append(f"- **Demonstrated:** `{row['label']}` — evidence mean "
-                         f"{row['evidence_mean']:.3f} across {row['distinct_scenarios']} "
-                         "distinct scenarios.")
-    if summary["provisional"]:
-        lines.append("- **Observed, but not demonstrated:** "
-                     + ", ".join(f"`{row['label']}`" for row in summary["provisional"])
-                     + ". These rows are below the required evidence threshold; they are "
-                       "signals for investigation, not capability claims.")
+    if matrix.get("run_purpose") == run_mode.ENGINEERING_EVALUATION:
+        for row in summary["observed"]:
+            lines.append(
+                f"- **Observed:** `{row['label']}` — evidence mean "
+                f"{row['evidence_mean']:.3f} across "
+                f"{row['distinct_scenarios']} distinct scenarios.")
+    else:
+        if summary["demonstrated"]:
+            for row in summary["demonstrated"]:
+                lines.append(
+                    f"- **Demonstrated:** `{row['label']}` — evidence mean "
+                    f"{row['evidence_mean']:.3f} across "
+                    f"{row['distinct_scenarios']} distinct scenarios.")
+        if summary["provisional"]:
+            lines.append(
+                "- **Observed, but not demonstrated:** "
+                + ", ".join(
+                    f"`{row['label']}`" for row in summary["provisional"])
+                + ". These rows are signals for investigation, not formal "
+                  "qualification claims.")
     if summary["unassessed_areas"]:
         lines.append("- **Not assessed in this run:** "
                      + ", ".join(f"`{area}`" for area in summary["unassessed_areas"])
                      + ". No claim is made for these areas.")
 
-    lines.extend(["", "### Deployment Guidance", "", "**Recommended**", ""])
-    lines.append("- None from ECM alone. Use `aies guidance <run> --qualification <QUAL-id>`; "
-                 "an active scoped human Qualification Record is mandatory.")
-    lines.extend(["", "**Optional human validation (adds assurance)**", ""])
-    if summary["task_observed"]:
-        lines.extend(f"- `{task['task']}` — automated evaluation is complete where coverage is complete; human validation remains optional."
-                     for task in summary["task_observed"])
-    else:
+    strong_fit = [task for task in matrix["tasks"]
+                  if task.get("observed_performance") is not None
+                  and task["observed_performance"] / 4 * 100 >= 75]
+    review_fit = [task for task in matrix["tasks"]
+                  if task.get("observed_performance") is not None
+                  and 50 <= task["observed_performance"] / 4 * 100 < 75]
+    weak_fit = [task for task in matrix["tasks"]
+                if task.get("observed_performance") is not None
+                and task["observed_performance"] / 4 * 100 < 50]
+    lines.extend(["", "### Engineering Fit Summary", ""])
+    lines.append("Evidence-derived fit is informational and does not create "
+                 "qualification or deployment authority.")
+    lines.extend(["", "**Strong observed fit**", ""])
+    lines.extend(
+        f"- `{task['task_id']} — {task['task']}`: "
+        f"{task['observed_performance'] / 4 * 100:.0f}% observed performance."
+        for task in strong_fit)
+    if not strong_fit:
         lines.append("- None.")
-    lines.extend(["", "**Not recommended from this evidence**", ""])
-    lines.extend(f"- {item}" for item in summary["not_recommended"])
+    lines.extend(["", "**Use with engineering review**", ""])
+    lines.extend(
+        f"- `{task['task_id']} — {task['task']}`: "
+        f"{task['observed_performance'] / 4 * 100:.0f}% observed performance."
+        for task in review_fit)
+    if not review_fit:
+        lines.append("- None.")
+    lines.extend(["", "**Weak observed fit**", ""])
+    lines.extend(
+        f"- `{task['task_id']} — {task['task']}`: "
+        f"{task['observed_performance'] / 4 * 100:.0f}% observed performance."
+        for task in weak_fit)
+    if not weak_fit:
+        lines.append("- None.")
+    lines.extend(["", "**Human evaluation (optional assurance)**", ""])
+    lines.append(f"- {_human_evaluation_label(matrix)}.")
+    lines.append("- For qualification-bounded operational guidance, supply an "
+                 "active Qualification Record explicitly to `aies guidance`.")
     lines.extend(["", "### Evidence traceability", ""])
     for row in summary["observed"]:
         lines.append(f"- `{row['label']}`: {', '.join(f'`{x}`' for x in row['scenario_ids'])}; "
@@ -720,9 +807,11 @@ def render_capability_summary_html(matrix: dict) -> str:
         "<tr><td>" + html.escape(f"{task['task_id']} {task['task']}") + "</td><td>" +
         html.escape("not assessed" if task["observed_performance"] is None else
                     f"{_bar(task['observed_performance'] / 4 * 100)} {task['observed_performance'] / 4 * 100:.0f}%") +
+        "</td><td>" + html.escape(_engineering_confidence(task)) +
         "</td><td>" + html.escape(_task_sample(task)) +
-        "</td><td>" + html.escape(_task_evidence(task)) +
-        f"</td><td>{html.escape(_task_status(task))}</td></tr>"
+        "</td><td>" + html.escape(task.get("engineering_status", "not assessed")) +
+        "</td><td>" + html.escape(_human_evaluation_label(matrix)) +
+        "</td></tr>"
         for task in matrix["tasks"]
     )
     rows = "".join(
@@ -735,27 +824,42 @@ def render_capability_summary_html(matrix: dict) -> str:
         )) + "</tr>"
         for row in summary["observed"]
     ) or "<tr><td colspan='5'>No traceable scored scenario-family evidence.</td></tr>"
-    observed = ", ".join(task["task"] for task in summary["task_observed"]) or "None"
+    observed = ", ".join(
+        task["task"] for task in summary["engineering_assessed_tasks"]) or "None"
     not_assessed_tasks = ", ".join(task["task"] for task in summary["task_not_assessed"]) or "None"
     unassessed = ", ".join(summary["unassessed_areas"]) or "None"
-    review = "".join(f"<li><code>{html.escape(task['task'])}</code> — automated evaluation is complete where coverage is complete; human validation remains optional.</li>"
-                     for task in summary["task_observed"]) or "<li>None.</li>"
+    strong_fit = [task for task in matrix["tasks"]
+                  if task.get("observed_performance") is not None
+                  and task["observed_performance"] / 4 * 100 >= 75]
+    review_fit = [task for task in matrix["tasks"]
+                  if task.get("observed_performance") is not None
+                  and 50 <= task["observed_performance"] / 4 * 100 < 75]
+    weak_fit = [task for task in matrix["tasks"]
+                if task.get("observed_performance") is not None
+                and task["observed_performance"] / 4 * 100 < 50]
+    def fit_items(tasks):
+        return "".join(
+            f"<li><code>{html.escape(task['task_id'] + ' — ' + task['task'])}</code>: "
+            f"{task['observed_performance'] / 4 * 100:.0f}% observed performance.</li>"
+            for task in tasks) or "<li>None.</li>"
     return f"""
 <h2>Engineering Capability Matrix (ECM)</h2>
 <p class='banner nondec'>INFORMATIONAL — NOT A QUALIFICATION, GRANT, OR DEPLOYMENT AUTHORIZATION.</p>
 <p>Derived solely from the scored scenario evidence in this run. It does not infer capability for tasks that were not assessed.</p>
 <h3>Task Capability Profile</h3>
-<table><tr><th>Task</th><th>Observed performance</th><th>Direct evidence sample</th><th>Qualification evidence</th><th>Status</th></tr>{task_rows}</table>
-<p>Observed performance is an unweighted EV mean. ADR-0013 task decisions use distinct resolved evidence items, reviewed mappings, lower 90% confidence bounds, risk-tier gates, parent-area outcomes, and the human-rater protocol. Advisory ratings remain informational.</p>
+<table><tr><th>Task</th><th>Observed performance</th><th>Evidence confidence</th><th>Evidence</th><th>Engineering status</th><th>Human eval</th></tr>{task_rows}</table>
+<p>Observed performance is an unweighted EV mean. Evidence confidence measures distinct directly mapped scored scenarios against the task target; repeats do not increase it. Automated scores are usable Engineering Evaluation evidence.</p>
 <details><summary>Scenario-family evidence and traceability ({len(summary['observed'])} rows)</summary>
 <table><tr><th>Scenario family</th><th>Evidence mean (0–4)</th><th>Distinct scenarios</th><th>Ratings</th><th>Adequacy</th></tr>{rows}</table>
 </details>
 <h3>Strength patterns and evidence gaps</h3>
-<ul><li><strong>Observed, but not demonstrated:</strong> {html.escape(observed)}.</li><li><strong>Collect direct evidence before making a claim:</strong> {html.escape(not_assessed_tasks)}.</li><li><strong>Unassessed competency areas:</strong> {html.escape(unassessed)}.</li></ul>
-<h3>Deployment Guidance</h3>
-<p><strong>Recommended:</strong> None from ECM alone. An active, matching human Qualification Record is mandatory through <code>aies guidance --qualification</code>.</p>
-<p><strong>Optional human validation (adds assurance):</strong></p><ul>{review}</ul>
-<p><strong>Not recommended from this evidence:</strong> autonomous production changes, or any task outside the assessed scenario families.</p>
+<ul><li><strong>Observed engineering tasks:</strong> {html.escape(observed)}.</li><li><strong>Collect direct evidence before making a claim:</strong> {html.escape(not_assessed_tasks)}.</li><li><strong>Unassessed competency areas:</strong> {html.escape(unassessed)}.</li></ul>
+<h3>Engineering Fit Summary</h3>
+<p>Evidence-derived fit is informational and does not create qualification or deployment authority.</p>
+<p><strong>Strong observed fit:</strong></p><ul>{fit_items(strong_fit)}</ul>
+<p><strong>Use with engineering review:</strong></p><ul>{fit_items(review_fit)}</ul>
+<p><strong>Weak observed fit:</strong></p><ul>{fit_items(weak_fit)}</ul>
+<p><strong>Human evaluation:</strong> {html.escape(_human_evaluation_label(matrix))}. Optional assurance; not a prerequisite for engineering evaluation.</p>
 <p class='muted'>Standalone detail: <a href='engineering-capability-matrix.html'>Engineering Capability Matrix</a>.</p>
 """
 

@@ -2,9 +2,10 @@
 
 A **consumer, not a decider** (CONFORMANCE-POLICY.md §4): the API only *serves*
 artifacts the engine already produced — deployments, runs, evidence packages,
-Canonical Assessment Results, conformance — as JSON. It computes no outcome and
-re-derives no PASS/FAIL; a result endpoint returns exactly the stored
-`assessment-result.json`. It is intentionally read-only (no mutation) and
+Engineering Assessment Results, optional Formal Assessment Results, and
+conformance — as JSON. It computes no outcome and re-derives no decision;
+result endpoints return exactly the stored artifact. It is intentionally
+read-only (no mutation) and
 dependency-free (stdlib `http.server`), keeping the platform's only runtime
 dependency PyYAML.
 
@@ -22,6 +23,7 @@ from . import __version__, workspace
 
 _RUN_RESULT = re.compile(r"^/runs/([^/]+)/result$")
 _RUN_EVIDENCE = re.compile(r"^/runs/([^/]+)/evidence$")
+_RUN_FORMAL_RESULT = re.compile(r"^/runs/([^/]+)/formal-result$")
 
 
 def route(path: str) -> tuple[int, dict]:
@@ -32,6 +34,7 @@ def route(path: str) -> tuple[int, dict]:
         return 200, {"status": "ok", "service": "aies", "version": __version__,
                      "endpoints": ["/health", "/deployments", "/runs",
                                    "/runs/{id}/evidence", "/runs/{id}/result",
+                                   "/runs/{id}/formal-result",
                                    "/assessments", "/qualifications", "/conformance"]}
     if path == "/deployments":
         from . import registry
@@ -57,7 +60,15 @@ def route(path: str) -> tuple[int, dict]:
         return _run_artifact(m.group(1), "evidence-package.json")
     m = _RUN_RESULT.match(path)
     if m:
-        # The stored Canonical Assessment Result — served verbatim, never recomputed.
+        run_id = m.group(1)
+        engineering = workspace.run_dir(
+            run_id) / "engineering-assessment-result.json"
+        return _run_artifact(
+            run_id,
+            "engineering-assessment-result.json"
+            if engineering.exists() else "assessment-result.json")
+    m = _RUN_FORMAL_RESULT.match(path)
+    if m:
         return _run_artifact(m.group(1), "assessment-result.json")
 
     return 404, {"error": f"not found: {path}"}

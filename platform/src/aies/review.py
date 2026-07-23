@@ -1,7 +1,8 @@
-"""Multi-model peer-review orchestration (pipeline stage 6, PLATFORM.md §7).
+"""Multi-model review orchestration (pipeline stage 6, PLATFORM.md §7).
 
-Structure: candidate answers -> reviewer model critiques -> candidate
-revises -> moderator model adjudicates -> human reviews and approves.
+Automated reviewer scores are first-class observations for Engineering
+Evaluation.  The stricter reviewer-admission and human-decision invariants
+below apply only when those observations are used in Formal Qualification.
 
 The invariants this module enforces (D8, AIES-AESQS-PR-01-R09,
 AIES-AESQS-ER-01-R07/R10):
@@ -107,9 +108,11 @@ def assemble_review_package(
     response, flags divergences for human resolution (never averaged),
     and states whether the model rater is admitted or advisory.
     """
-    from . import rating, workspace
+    from . import rating, run_mode, workspace
 
     manifest = workspace.read_json(workspace.run_dir(run_id) / "manifest.json")
+    purpose = run_mode.purpose(manifest)
+    formal_requested = run_mode.is_formal(manifest)
     risk_tier = manifest["risk_tier"]
     ratings = rating.collect_ratings(run_id)
     by_resp: dict[str, dict[str, list[dict]]] = {}
@@ -150,16 +153,53 @@ def assemble_review_package(
             entry["divergences"] = item_divergences
         items.append(entry)
 
+    automated_available = any(
+        (r.get("provenance") or {}).get("rater_kind") != "human"
+        for r in ratings)
+    human_available = any(
+        (r.get("provenance") or {}).get("rater_kind") == "human"
+        for r in ratings)
+    if formal_requested:
+        note = (
+            "Model review assists; a human makes the qualification decision "
+            "(PLATFORM.md D8, AIES-AESQS-PR-01-R09). "
+            + ("Model scores remain visible as automated observations but are "
+               "not admitted as corroborating formal review."
+               if not admitted else
+               "Model scores are admitted as corroborating formal evidence.")
+            + (" Divergences are listed for human resolution against the "
+               "anchors, never averaged." if all_divergences else ""))
+    else:
+        note = (
+            "Automated reviewer scores are recorded engineering-evaluation "
+            "evidence. Human evaluation is optional and formal qualification "
+            "was not requested.")
+
     return {
         "kind": "review-package",
         "run_id": run_id,
+        "run_purpose": purpose,
         "risk_tier": risk_tier,
         "reviewer": {"label": reviewer_label, "admitted": admitted,
-                     "reason": admit_reason, "calibration": calibration},
+                     "reason": admit_reason, "calibration": calibration,
+                     "admission_scope": "formal-qualification-only"},
+        "engineering_evaluation": {
+            "automated_scores_available": automated_available,
+            "automated_scores_usable": automated_available,
+            "human_scores_available": human_available,
+            "human_evaluation_optional": True,
+            "status": "recorded" if automated_available or human_available
+                      else "no-scores",
+        },
+        "formal_qualification": {
+            "requested": formal_requested,
+            "reviewer_admitted": admitted if formal_requested else None,
+            "status": ("review-protocol-evaluated" if formal_requested
+                       else "not-requested"),
+        },
         "human_consideration": {
             "automated_advisory_review": {
-                "available": any((r.get("provenance") or {}).get("rater_kind") == "model"
-                                 for r in ratings),
+                "available": automated_available,
                 "considered": consider_advisory_review,
             },
             "human_evaluation": {"evaluator": human_evaluation},
@@ -169,13 +209,6 @@ def assemble_review_package(
         "summary": {
             "reviewer_admitted": admitted,
             "n_divergences": len(all_divergences),
-            "note": ("Model review assists; a human makes the decision "
-                     "(PLATFORM.md D8, AIES-AESQS-PR-01-R09). "
-                     + ("Model scores remain visible as advisory only automated "
-                        "evidence; they are not admitted as corroborating peer "
-                        "review." if not admitted else
-                        "Model scores are admitted as corroborating evidence.")
-                     + (" Divergences are listed for human resolution against "
-                        "the anchors, never averaged." if all_divergences else "")),
+            "note": note,
         },
     }

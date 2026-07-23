@@ -88,9 +88,10 @@ Most mutating commands consume evidence created by an earlier stage:
 
 ```text
 doctor → discover/deployment add → qualify or benchmark
-benchmark → complete scoresheet → score → resolve if needed → report
-aggregated run → capabilities/ECM → guidance
-decisional human-rated evidence → grant → qualification verify/history
+qualify --judge → Engineering Assessment Result + ECM + fit guidance + reports
+benchmark → complete scoresheet → score (also aggregates/reports)
+aggregated run → capabilities (ECM by default) → guidance (engineering fit)
+explicit formal qualification → governed human protocol → grant → verify/history
 repository → audit → remediation → audit --gate
 empirical plan → frozen subject runs → panel analysis → human promotion decision
 ```
@@ -185,16 +186,16 @@ issue a qualification on its own (D8).
 ```
 stage 1 registration   →  aies registry add  /  aies discover
 stage 2 capability      ┐
-stage 3 environment     ├► aies qualify <deployment> --profile P --rt N --area CA-NN
-stage 4 benchmark       ┘        (writes responses + a scoresheet)
-        (human rates)   →  edit scoresheet.json ; aies score <run>
-        (model review)  →  aies review <run> --reviewer <label> [--calibration f.json]
-stage 5 scoring         →  aies qualify --resume <run>      (gated aggregation)
-        report          →  aies report <run> --format markdown|json|html
-stage 6 peer review     →  (assembled by aies review, above)
-stage 7 decision        →  aies grant <run> --decision grant --authority NAME \
+stage 3 environment     ├► aies qualify <deployment> ... --judge <judge>
+stage 4 benchmark       ┘        (collects responses)
+stage 5 scoring         →  automated judge / imported / optional human ratings
+        analysis        →  ECM + diagnostics + Engineering Fit Guidance
+        report          →  complete Markdown/JSON/HTML bundle
+optional human eval     →  displayed separately; never blocks engineering output
+formal qualification   →  explicit --formal-qualification + governed rater protocol
+formal decision        →  aies grant <run> --decision grant --authority NAME \
                               --assessor-id ID --peer-reviewer NAME --peer-reviewer-id ID ...
-stage 8 role envelope   →  (in the evidence package & Qualification Record)
+deployment envelope    →  (in the Qualification Record)
         re-check        →  aies verify <QR-id>       (invalidates on env change, D7)
         overview        →  aies dashboard --write
 ```
@@ -230,8 +231,7 @@ aies doctor                 # fingerprint + runtimes + read-only workspace-debri
 ```
 
 For local verification, the recorded warm-cache Windows budget is 180 seconds
-for the complete suite; the conservative 2026-07-23 baseline is 225 tests in
-100.16 seconds (latest 81.23 seconds; repeated range 81.23–100.16 seconds).
+for the complete suite; the 2026-07-23 baseline is 228 tests in 104.76 seconds.
 Treat a budget breach or greater-than-25% regression as a profiling trigger.
 This is a feedback budget, not a reason to skip correctness gates on slower CI
 hardware.
@@ -369,11 +369,15 @@ qualifications for that id may no longer describe what now runs — re-check wit
 
 ### 5.2 Run the benchmark — automated scoring (recommended)
 
-Pass a **judge deployment** and `qualify` runs end to end and prints the report
-directly — no manual step:
+Pass a **judge deployment** and either `qualify` or `benchmark` runs end to end
+and prints the engineering report directly — no manual step:
 
 ```
 aies qualify local-qwen --profile coder --rt 2 --area CA-05 \
+    --parallel 4 --judge <a-strong-deployment>
+
+# equivalent benchmark-oriented spelling
+aies benchmark local-qwen --profile coder --rt 2 --area CA-05 \
     --parallel 4 --judge <a-strong-deployment>
 ```
 
@@ -381,11 +385,11 @@ The candidate answers the scenarios; the judge model rates every answer 0–4 on
 EV1–EV6; the run aggregates and the report prints. Set `AIES_JUDGE` in your
 `.env` to make it the default for every run and every profile.
 
-> **Automated ratings are advisory by default.** They remain retained and visible,
-> but are excluded from qualification scoring until the reviewer is admitted by
-> a current review qualification or a recorded human-anchor calibration. Use
-> `aies review <run-id> --calibration <file>` to record that admission, or ingest
-> human scores for qualification evidence.
+> **Automated ratings complete engineering evaluation.** They drive the
+> Engineering Assessment Result, ECM, diagnostics, Engineering Fit Guidance,
+> and reports without human review. “Advisory” applies only at the separate
+> formal-qualification admission boundary; it does not downgrade or block the
+> engineering result.
 
 `--parallel N` applies to **both** phases — collecting the candidate's answers
 *and* the judge's scoring — so a `--judge` run is concurrent end to end. The
@@ -411,10 +415,11 @@ aies qualify --resume <run-id> --judge <judge-id> --parallel 8
 ```
 
 Every successful aggregation or resume writes the complete linked report bundle
-in the run directory: Qualification Evidence Package, Canonical Assessment
+in the run directory: Engineering Evaluation Report, Engineering Assessment
 Result when the run used a declarative assessment, Engineering Capability
-Matrix, source-separated Grounding Diagnostics, qualification-bounded
-Deployment Guidance, and Executive Summary.
+Matrix, source-separated Grounding Diagnostics, Engineering Fit Guidance, and
+Executive Summary. An explicitly formal run instead adds the Canonical Formal
+Assessment Result and qualification-bounded Deployment Guidance.
 Markdown, JSON, and HTML views are generated for each audience-facing product,
 with `report-bundle.json` as the machine-readable index. The command prints the
 primary paths; if any artifact cannot be rendered, it fails rather than claiming
@@ -444,13 +449,16 @@ Record. Human scoresheets and external imports may include the same optional
 
 **Bring external eval results in as evidence.** If you already scored the
 responses with another tool (a custom Inspect/DeepEval task, a second judge, an
-offline pipeline) that emits EV1–EV6, import them as automated-kind ratings
-(subject to the same calibration gate):
+offline pipeline) that emits EV1–EV6, import them as automated-kind ratings.
+They are immediately usable for Engineering Evaluation; formal qualification
+applies its separate admission protocol:
 
 ```
 aies import <run-id> eval.json --source inspect:my-task
-aies qualify --resume <run-id>
 ```
+
+`import` validates, ingests, aggregates, and refreshes the complete bundle in
+that one command.
 
 The file is `{"source": "...", "items": [{"scenario_id": "SC-CA05-001",
 "repeat": 1, "scores": {"EV1": 3, …, "EV6": 3}, "findings": [...]}]}`. Items that
@@ -566,8 +574,7 @@ aies rater register --id alice --name "Alice Example" \
   --calibration-valid-until 2027-06-30T00:00:00Z \
   --anchor-version anchors-2026-07 --registered-by "Registry Authority"
 
-aies score <run-id>              # ingest the scores you wrote
-aies qualify --resume <run-id>   # aggregate -> report
+aies score <run-id>              # ingest + aggregate + complete report bundle
 ```
 
 An unregistered human may still contribute optional engineering feedback, but
@@ -604,7 +611,7 @@ the peer-review package. The platform drives the reviewer for you:
 
 ```
 aies review <run> --model-reviewer local-gpt-oss \
-  --consider-advisory-review --human-evaluation "Your Name"
+  --parallel 4
 ```
 
 `--model-reviewer` sends each candidate response to that deployment, asks for
@@ -612,20 +619,24 @@ structured EV1–EV6 scores, and ingests the parseable ones as `model`-kind
 ratings (a reviewer that won't follow the contract simply contributes fewer
 ratings — nothing is fabricated). It also immediately refreshes `report.md`,
 `report.html`, and the ECM. Those reports show **Automated review** and
-**Human review (optional)** separately for every EV dimension. An unqualified
-or uncalibrated reviewer is still visible as **advisory automated evidence**;
-it is not admitted as corroborating peer review and cannot justify a grant.
-`--reviewer-qualified` or bootstrap calibration against human-scored anchors
-(`--calibration`) admits it for that corroborating peer-review role; it does
-not promote the model's scores into automated-only qualification evidence.
+**Human review (optional)** separately for every EV dimension. Automated
+reviewer scores are immediately usable for Engineering Evaluation, ECM,
+diagnostics, fit guidance, comparison, and reporting. They do not require
+reviewer qualification or human approval.
+
+Only the separate Formal Qualification protocol asks whether a reviewer is
+admitted as corroborating peer review. `--reviewer-qualified` or bootstrap
+calibration against human-scored anchors (`--calibration`) may establish that
+formal role; it does not turn model scores into human qualification evidence.
 Divergences of ≥ 2
 points between the human and the model are surfaced for you to resolve — never
 averaged (§7). Re-running the same reviewer reuses already-recorded scores
 instead of making duplicate API/model calls.
 
-This command records the named human's evidence consideration in the review
-package and report. It is available even for a non-decisional run; it is a
-review record, **not** a grant.
+Optionally add `--human-evaluation "Name"` or
+`--consider-advisory-review` to record human consideration separately. Neither
+flag is a prerequisite for engineering results, and the review record is not a
+grant.
 
 ### One-command automated evaluation
 
@@ -634,8 +645,8 @@ responses, scores them, and writes the complete report and ECM bundle in one
 command. Human evaluation is optional for this Engineering Evaluation: the
 report records either `☐ Not reviewed (optional)` or `☑ Reviewed — <name>`.
 Automated scoring completeness, rather than a human-review declaration, closes
-the evaluation workflow. Formal qualification/grant readiness is displayed
-separately and applies ADR-0012's human protocol.
+the evaluation workflow. Formal qualification is shown as **not requested**;
+it has no blocking verdict unless the user explicitly selects that workflow.
 
 ```
 aies qualify <deployment> --profile enterprise --rt 2 --area CA-05 \
@@ -664,8 +675,10 @@ demonstrate RT1 — Minimal, RT3 — Significant, or RT4 — Critical capability
 separately scoped runs, which must remain visibly tier-labelled until a future
 all-tier orchestrator presents them together.
 
-Before collection, `qualify` warns when the selected **distinct-scenario** plan
-is below an area's AESQS minimum. `--decisional` verifies that every selected
+Before collection, an explicit formal or `--decisional` run warns when the
+selected **distinct-scenario** plan is below an area's AESQS minimum. Ordinary
+engineering evaluations report actual coverage without a qualification
+warning. `--decisional` verifies that every selected
 area has enough distinct instruments; it rejects a thin suite instead of
 padding it with repeats (for example, `aies qualify local-qwen --all-areas --rt
 2 --decisional --judge <judge>`). Exact reruns occur only when `--repeats` is
@@ -677,10 +690,12 @@ scenario evidence was collected for that task. It is unknown, not a failure or
 a low score. ADR-0013 task decisions count one resolved admitted item per
 distinct mapped scenario, apply task-specific RT minimums, lower 90% confidence
 bounds, risk-tier gates, mapping review, parent-area outcomes, and the human
-rater protocol. **Demonstrated** means all controls pass. Deployment Guidance
-still emits no `Use` from ECM alone: supply an active matching human record with
-`aies guidance <run> --qualification <QUAL-id>` and optionally request role,
-phase, and autonomy scope.
+rater protocol. **Demonstrated** means all formal controls pass. By default,
+`aies guidance <run>` renders Engineering Fit Guidance from observed evidence
+with strong-fit, engineering-review, weak-fit, and not-assessed categories.
+This needs no human review and creates no deployment authority. Supply an active
+matching human record with `aies guidance <run> --qualification <QUAL-id>` only
+to switch to qualification-bounded Deployment Guidance.
 
 For example, this asks only whether the evidence and record support the stated
 role, phase, and autonomy—not whether the subject is globally suitable:
@@ -702,7 +717,7 @@ calibration or thin-gate risks.
 ### 5.5 Aggregate and report
 
 ```
-aies qualify --resume <run>              # gated, weighted aggregation
+aies qualify --resume <run>              # aggregate + complete report bundle
 aies report  <run> --format markdown     # or json, or html (--write)
 ```
 
@@ -785,29 +800,20 @@ aies doctor                         # ollama -> [OK] endpoint reachable
 aies discover                       # -> created ollama-llama3.1-8b
 aies registry list
 
-# 3. run the benchmark (RT2 — Moderate needs >=30 distinct scored scenarios;
-#    the shipped RT2 suite provides 30 distinct instruments per area)
-aies qualify ollama-llama3.1-8b --profile coder --rt 2 --area CA-05 \
-      --parallel 4
-#    prints a run id, e.g. run-YYYYMMDDT...-ollama-llama3.1-8b-ab12cd
-#    and writes .../runs/<run>/scoresheet.json
+# 3. run the complete automated Engineering Evaluation
+aies benchmark ollama-llama3.1-8b --profile coder --rt 2 --area CA-05 \
+      --parallel 4 --judge <judge-deployment>
+#    collects, scores, analyzes, and writes the linked report bundle.
+#    Human evaluation is optional.
 
-# 4. score the responses (you, the human rater)
-#    open scoresheet.json; for each item set EV1..EV6 to an integer 0-4
-#    against the rubric, add the registered rater id + matching name and a
-#    subject-bound conflict-free declaration, plus a finding for score <= 2.
-#    Formal qualification also needs the tier's independent double-rating.
-aies score <run>
+# 4. inspect engineering decision products
+aies capabilities <run>                    # Engineering Capability Matrix
+aies guidance <run>                        # Engineering Fit Guidance
+aies report <run> --format html --write
 
-# 5. aggregate and read the evidence
-aies qualify --resume <run>
-aies report <run> --format markdown         # or: --format html --write
-
-# 6. (optional) add a second model as reviewer, then assemble the review
-#    aies score <run> --file reviewer-scoresheet.json   # rater.kind = "model"
-aies review <run> --reviewer some-reviewer-model
-
-# 7. the two-human decision -> a scoped Qualification Record
+# 5. only when formal qualification is intentionally required, start a
+#    --formal-qualification run and complete its governed human-rater protocol.
+#    A two-human authority decision can then produce a scoped record:
 #    Use the complete command in §5.6 after both raters are registered.
 aies grant <run> --decision grant --authority "Qualification Authority" \
       --assessor "Alice Example" --assessor-id alice --assessor-conflict-free \
@@ -821,20 +827,20 @@ aies verify QUAL-<...>              # re-checks the deployment fingerprint
 aies dashboard --write              # HTML overview
 ```
 
-What you get: a `report.md` with per-dimension decision values, gate results,
-the aggregate, the score-bounded competency level, and the recommended RT×AL
-envelope; and a Qualification Record (`QR-…`) recording the human grant, bound
-to the exact model+environment it was earned on. Re-run `aies verify` any time
-— if you swap the model, its quantization, or the runtime, the grant is
-invalidated and you re-qualify.
+What you get by default: an Engineering Evaluation Report, ECM, diagnostics,
+Engineering Fit Guidance, and Executive Summary. Formal qualification adds
+gate decisions, competency levels, autonomy envelopes, and—only after the
+governed human decision—a Qualification Record bound to the assessed subject
+and deployment fingerprint.
 
 Every other runtime is identical — just start its server and use the matching
 deployment name (`lmstudio-…`, `llamacpp-…`, `mlx-…`).
 
 ### 5.8 Audit a repository (a different subject)
 
-Everything above qualifies a **model**. `aies audit` assesses a **repository and
-the engineering practice in it** against the twelve competency areas
+The deployment workflow above assesses one current subject adapter. `aies
+audit` assesses a **repository and the engineering practice in it** against the
+twelve competency areas
 ([ADR-0004](../adr/ADR-0004-Repository-Conformance-Audit.md)) — the executable
 form of [conformance](../docs/CONFORMANCE.md).
 
@@ -863,23 +869,29 @@ conformance model:
 ### 5.9 Run a named assessment (composition as data)
 
 Instead of listing areas and a profile by hand, run a **declarative assessment**
-— a named qualification (enterprise, coder, security, architecture) whose
+— a named engineering composition (enterprise, coder, security, architecture) whose
 competency composition lives in `assessments/*.yaml`
 ([ADR-0005](../adr/ADR-0005-Assessment-as-Code.md), authoring guide
 [ASSESSMENTS.md](ASSESSMENTS.md)):
 
 ```
 aies assessment list                                        # what's shipped
-aies qualify local-qwen --assessment enterprise --judge <judge>   # compose, score, decide
-aies assessment result <run>                                # re-decide a run (no inference)
+aies qualify local-qwen --assessment enterprise --judge <judge>   # compose, score, analyze
+aies assessment result <run>                                # engineering result; exit 0
 aies assessment result <run> --format html --out result.html   # presentation-grade view
+
+# Explicit, separately governed formal result:
+aies qualify local-qwen --assessment enterprise --formal-qualification
+aies assessment result <run> --formal-qualification
 ```
 
-Markdown, JSON, and HTML are **views of the same Canonical Assessment Result** —
-they never re-decide; the outcome is verbatim from the frozen decision engine.
+By default, Markdown, JSON, and HTML are views of the same non-blocking
+Engineering Assessment Result: `COMPLETE`, `PARTIAL`, or `NOT SCORED`, with
+automated coverage and optional human-evaluation columns.
 
-`--assessment` selects the competency set, profile, risk tier, and sampling. After
-scoring, the platform decides an **authoritative outcome** —
+`--assessment` selects the competency set, profile, risk tier, and sampling.
+Only `--formal-qualification` invokes the frozen decision engine's
+**authoritative formal outcome** —
 `PASS / FAIL / INCONCLUSIVE / INSUFFICIENT EVIDENCE` — over the assessment's
 **mandatory** competencies. It is **gate-first**: a strong competency never
 offsets a failing one, and there is **no blended score**. Advisory competencies

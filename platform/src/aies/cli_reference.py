@@ -71,9 +71,9 @@ GUIDANCE: dict[str, CommandGuidance] = {
         "Correct provenance failures before using the artifact for trusted assessment.",
     ),
     "benchmark": CommandGuidance(
-        "The target deployment is registered and reachable; suites and the selected profile are valid.",
-        "Collects scenario responses and creates a run plus scoresheet; it does not score or aggregate.",
-        "Complete the scoresheet and run `aies score`, or use `aies qualify --judge` for an automated one-command evaluation.",
+        "The target deployment is registered and reachable; suites and the selected profile are valid. `--judge` requires a reachable reviewer deployment.",
+        "Runs a non-blocking Engineering Evaluation. Without a judge it collects responses and a scoresheet; with `--judge` it also scores, analyzes, and writes the complete report bundle.",
+        "Inspect the generated ECM/report, or score the collected run later with `aies review <run> --model-reviewer <judge>`.",
     ),
     "qualify": CommandGuidance(
         "For a new run, the target deployment is registered and reachable. `--judge` requires a reachable reviewer deployment. `--resume` requires scored evidence; `--resume-collection` requires an existing partial run.",
@@ -82,8 +82,8 @@ GUIDANCE: dict[str, CommandGuidance] = {
     ),
     "score": CommandGuidance(
         "A collected run and completed scoresheet exist; human qualification ratings require registered, in-scope, currently calibrated rater metadata.",
-        "Ingests rating observations, resolves eligible evidence items, aggregates when possible, and refreshes reports.",
-        "Add the required independent rating, resolve divergences, then generate the final report or proceed to human qualification.",
+        "Ingests rating observations, aggregates the engineering evaluation, and refreshes the complete report bundle in one command.",
+        "Inspect the generated report; human evaluation is optional unless formal qualification was explicitly requested.",
     ),
     "rater": CommandGuidance(
         "AIES has a writable workspace. Registration requires evidence-backed human qualification, scope, calibration, expiry, and a named registry authority.",
@@ -97,13 +97,13 @@ GUIDANCE: dict[str, CommandGuidance] = {
     ),
     "review": CommandGuidance(
         "A collected run exists. `--model-reviewer` requires a registered reviewer deployment; qualification/calibration flags must be evidence-backed.",
-        "Adds advisory model-review observations and refreshes the report bundle; optional human evaluation remains separately visible.",
-        "Resolve material findings with humans; advisory review alone cannot support a qualification grant.",
+        "Records model-review scores, completes or refreshes engineering analysis, and keeps optional human evaluation separately visible.",
+        "Inspect engineering results; resolve material findings only when needed, and use formal qualification separately.",
     ),
     "import": CommandGuidance(
         "A collected run exists and the external eval JSON follows the documented EV1–EV6 schema.",
-        "Appends parseable external automated-rating observations; invalid items are reported rather than fabricated.",
-        "Aggregate/report the run and review the imported evidence limitations.",
+        "Appends parseable external automated-rating observations, aggregates them, and refreshes the complete report bundle.",
+        "Inspect the generated engineering results and imported-evidence limitations.",
     ),
     "export": CommandGuidance(
         "A run with response records exists.",
@@ -127,13 +127,13 @@ GUIDANCE: dict[str, CommandGuidance] = {
     ),
     "capabilities": CommandGuidance(
         "An aggregated run exists; deployment ids resolve to their latest aggregated run.",
-        "Renders per-area capability or, with `--ecm`, the informational Engineering Capability Matrix.",
-        "Use `aies guidance` for bounded use advice or `aies compare --ecm` for compatible task comparison.",
+        "Renders the Engineering Capability Matrix by default; `--qualification-profile` selects the separate formal CL/autonomy view.",
+        "Use `aies guidance` for bounded use advice or `aies compare` for compatible task comparison.",
     ),
     "guidance": CommandGuidance(
-        "An aggregated ECM-capable run exists. A `Use` recommendation requires a current matching human Qualification Record.",
-        "Renders bounded Use / Use with human review / No recommendation / Avoid guidance and its constraints.",
-        "Apply the recorded human decision and reassess when scope, fingerprint, conditions, or validity changes.",
+        "An aggregated ECM-capable run exists. `--qualification` additionally requires a matching Qualification Record.",
+        "Renders non-blocking Engineering Fit Guidance by default. Supplying `--qualification` explicitly selects qualification-bounded Deployment Guidance.",
+        "Use engineering fit as an evidence-backed selection input; use qualification guidance only for governed deployment scope.",
     ),
     "grant": CommandGuidance(
         "The run is decisional and gate-passing for a grant, required human ratings and divergence dispositions are complete, and assessor/peer identities and conflict declarations satisfy the protocol.",
@@ -162,8 +162,8 @@ GUIDANCE: dict[str, CommandGuidance] = {
     ),
     "compare": CommandGuidance(
         "Both references resolve to aggregated runs with compatible protocols; ECM comparison requires compatible task mappings and evidence semantics.",
-        "Reports only valid comparisons and withholds winners for incompatible evidence.",
-        "Use the evidence in a scoped human selection decision; do not treat it as a global leaderboard.",
+        "Compares compatible observed engineering scores without human review. It identifies the higher observation but reserves a formal winner claim for explicit `--formal-qualification` comparison.",
+        "Use the observed comparison as a scoped selection input; do not treat it as a qualification or global leaderboard.",
     ),
     "assessment": CommandGuidance(
         "Shipped or supplied assessment YAML is available; result rendering additionally requires an aggregated assessment run.",
@@ -192,8 +192,8 @@ GUIDANCE: dict[str, CommandGuidance] = {
     ),
     "assessment result": CommandGuidance(
         "The run was composed under a validated declarative assessment and has aggregated evidence.",
-        "Computes the canonical PASS / FAIL / INCONCLUSIVE / INSUFFICIENT EVIDENCE result over mandatory competencies.",
-        "Address structured reasons; a PASS still does not create a qualification grant.",
+        "Renders the non-blocking Engineering Assessment Result by default; `--formal-qualification` explicitly invokes the governed PASS / FAIL / INCONCLUSIVE / INSUFFICIENT EVIDENCE decision.",
+        "Use the engineering result for analysis; enter the formal workflow only when qualification is intentionally required.",
     ),
     "corpus": CommandGuidance(
         "The shipped or selected competencies directory is readable; semantic review additionally requires a reviewer deployment.",
@@ -244,12 +244,18 @@ OPTION_INTERACTIONS: dict[tuple[str, str], str] = {
     ("qualify", "all_areas"): "Selects all competency areas and replaces the default CA-05 scope.",
     ("qualify", "decisional"): "Requires enough distinct scenarios; repeats never satisfy breadth.",
     ("qualify", "judge"): "Enables automated scoring and complete report generation; automated evidence remains informational for qualification.",
+    ("qualify", "formal_qualification"): "Opt-in only. Without it, the run is a non-blocking engineering evaluation and human evaluation is optional.",
     ("qualify", "resume"): "Uses an existing scored run; the model positional argument is not required.",
     ("qualify", "resume_collection"): "Uses an existing partial run and collects only missing responses; the model positional argument is not required.",
-    ("capabilities", "write"): "Meaningful with `--ecm`; writes the ECM artifacts beside the run.",
-    ("guidance", "qualification"): "Required before any evidence can become an operational `Use` recommendation.",
+    ("capabilities", "qualification_profile"): "Switches from the default ECM to the separate formal CL/autonomy qualification view.",
+    ("capabilities", "write"): "Writes the default ECM artifact beside the run.",
+    ("compare", "ecm"): "Compatibility alias; ECM comparison is the default.",
+    ("compare", "area_summary"): "Selects the legacy competency-area aggregate instead of the default ECM comparison.",
+    ("compare", "formal_qualification"): "Switches from compatible observed-score comparison to demonstrated, human-protocol-qualified comparison; it cannot be combined with `--area-summary`.",
+    ("guidance", "qualification"): "Switches from default Engineering Fit Guidance to qualification-bounded Deployment Guidance.",
     ("audit", "gate"): "Implies RT2 — Moderate when `--rt` is omitted.",
     ("assessment result", "out"): "Applies to HTML output; JSON is selected independently with `--json`.",
+    ("assessment result", "formal_qualification"): "Opt-in formal gate; without it the command renders Engineering Assessment Result and succeeds when the artifact is generated.",
     ("review", "model_reviewer"): "Required for live reviewer inference; without it the command assembles from existing review evidence.",
     ("review", "reviewer_qualified"): "A declaration that must be supported by a current CA-06 — Testing, Quality & Evaluation Engineering qualification.",
     ("review", "calibration"): "Bootstrap evidence for an otherwise unqualified reviewer; does not make model ratings human qualification evidence.",
@@ -280,17 +286,18 @@ aies doctor
 ```text
 aies qualify <deployment> --all-areas --rt 2 --judge <judge>
   → aies report <run> --format html --write
-  → aies capabilities <run> --ecm --format html --write
+  → aies capabilities <run> --format html --write
   → aies guidance <run> --write
 ```
 
-Automated ratings can complete an informational Engineering Evaluation. They
-cannot by themselves become formal qualification evidence.
+Automated ratings complete the Engineering Evaluation, Engineering Assessment
+Result, ECM, diagnostics, and Engineering Fit Guidance. Human evaluation is
+optional. Formal qualification is a separate explicit workflow.
 
 ### Human-rated qualification
 
 ```text
-aies benchmark <deployment> ...
+aies qualify <deployment> ... --formal-qualification
   → aies rater register ...                 # each qualified human rater
   → complete scoresheet.json
   → aies score <run>

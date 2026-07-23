@@ -54,9 +54,12 @@ footer { margin-top: 3rem; color: var(--muted); font-size: .8rem;
 
 
 def render_html(run_id: str, *, matrix: dict | None = None) -> str:
-    from . import evaluation as evaluation_view
+    from . import evaluation as evaluation_view, run_mode
 
-    pkg = workspace.read_json(workspace.run_dir(run_id) / "evidence-package.json")
+    rdir = workspace.run_dir(run_id)
+    pkg = workspace.read_json(rdir / "evidence-package.json")
+    manifest = workspace.read_json(rdir / "manifest.json")
+    formal = run_mode.is_formal(manifest)
     fp = pkg["environment_fingerprint"]
     from .report import (_human_evaluation_label, _human_review_record,
                          _score_sources, _source_cell)
@@ -69,10 +72,12 @@ def render_html(run_id: str, *, matrix: dict | None = None) -> str:
 
     w("<!doctype html><html lang=en><head><meta charset=utf-8>")
     w("<meta name=viewport content='width=device-width, initial-scale=1'>")
-    w(f"<title>AIES Evidence Package — {_esc(subject_id)}</title>")
+    title = ("AIES Qualification Evidence Package" if formal
+             else "AIES Engineering Evaluation Report")
+    w(f"<title>{title} — {_esc(subject_id)}</title>")
     w(f"<style>{_CSS}</style></head><body>")
 
-    w("<h1>AIES Qualification Evidence Package</h1>")
+    w(f"<h1>{title}</h1>")
     w(f"<div class=muted>Run <code>{_esc(pkg['run_id'])}</code></div>")
     w(f"<p><strong>Subject:</strong> <code>{_esc(subject_id)}</code> "
       f"({_esc(subject.get('kind', 'ai_deployment'))}; executor: "
@@ -82,9 +87,13 @@ def render_html(run_id: str, *, matrix: dict | None = None) -> str:
       f"&middot; <strong>Scoped risk tier:</strong> {_esc(C.risk_tier_label(pkg['risk_tier']))} "
       f"&middot; <strong>Subject class:</strong> {_esc(pkg['subject_kind'])}</p>")
 
-    w(f"<div class='banner grant'>{_esc(pkg['grant_status'])}</div>")
+    evaluation = evaluation_view.summarize(run_id)
+    banner = (pkg["grant_status"] if formal else
+              "ENGINEERING EVALUATION " +
+              str(evaluation.get("status", "not-scored")).upper())
+    w(f"<div class='banner grant'>{_esc(banner)}</div>")
     admission = pkg.get("rating_admission") or {}
-    if admission.get("advisory_ratings", 0):
+    if formal and admission.get("advisory_ratings", 0):
         reason = admission.get("reviewer_reason") or "reviewer admission not recorded"
         w("<div class='banner nondec'><strong>ADVISORY AUTOMATED REVIEW</strong> "
           f"&mdash; {admission['advisory_ratings']} automated rating(s) are excluded from "
@@ -92,18 +101,17 @@ def render_html(run_id: str, *, matrix: dict | None = None) -> str:
           "not automated-only qualification evidence. "
           f"{_esc(reason)} (AIES-AESQS-ER-01-R10; ADR-0012)</div>")
     nondec = [a for a, d in pkg["areas"].items() if not d["decisional"]]
-    if nondec:
+    if formal and nondec:
         w(f"<div class='banner nondec'>NON-DECISIONAL — sample below the AESQS "
           f"minimum for {_esc(', '.join(C.competency_label(area) for area in nondec))} (AIES-AESQS-CS-01 §6). "
           "These results must not be presented as qualification evidence.</div>")
 
-    evaluation = evaluation_view.summarize(run_id)
     w("<h2>Engineering Evaluation</h2>")
     w(f"<p><strong>Evaluation status: {_esc(str(evaluation.get('status', 'not-scored')).upper())}</strong>"
       f" &middot; <strong>Human evaluation:</strong> {_esc(_human_evaluation_label(evaluation))}</p>")
     w("<p class=muted>Automated scores are sufficient to complete this informational "
       "engineering evaluation and its ECM decision products. Human evaluation is "
-      "optional here; formal qualification and grants use the separate protocol below.</p>")
+      "optional here; formal qualification and grants use a separate explicit protocol.</p>")
     w("<table><tr><th>Area</th><th>Automated score coverage</th>"
       "<th>Observed automated mean</th><th>Human eval</th><th>Evaluation status</th></tr>")
     for area, evaluation_area in (evaluation.get("areas") or {}).items():
@@ -119,6 +127,55 @@ def render_html(run_id: str, *, matrix: dict | None = None) -> str:
           f"<td>{_esc(_human_evaluation_label(evaluation))}</td>"
           f"<td><strong>{_esc(status)}</strong></td></tr>")
     w("</table>")
+
+    if not formal:
+        w("<h2>Automated Score Detail</h2>")
+        w("<p class=muted>These are observed reviewer measurements. Human "
+          "evaluation is optional and appears separately when supplied.</p>")
+        for area in evaluation.get("areas") or {}:
+            w(f"<h3>{_esc(C.competency_label(area))}</h3>")
+            w("<table><tr><th>Dimension</th><th>Automated review</th>"
+              "<th>Human eval (optional)</th></tr>")
+            for dim in C.DIMENSIONS:
+                automated = _source_cell(
+                    source_scores.get(area, {}), "automated", dim)
+                human = _source_cell(
+                    source_scores.get(area, {}), "human", dim)
+                w(f"<tr><td>{_esc(C.identifier_label(dim))}</td>"
+                  f"<td>{_esc(automated)}</td><td>{_esc(human)}</td></tr>")
+            w("</table>")
+        if human_review:
+            evaluator = (
+                (human_review.get("human_evaluation") or {}).get("evaluator"))
+            w("<h2>Optional Human Evaluation</h2><p>" +
+              _esc(f"Reviewed — {evaluator}" if evaluator
+                   else "Not reviewed (optional)") + "</p>")
+        w("<h2>Environment Fingerprint</h2><table class=env>")
+        for key in ("machine", "cpu", "gpu", "ram_gb", "os", "python"):
+            w(f"<tr><td>{key}</td><td>{_esc(fp.get(key, 'unknown'))}</td></tr>")
+        runtime = fp.get("runtime", {})
+        w(f"<tr><td>runtime</td><td>{_esc(runtime.get('id','?'))} "
+          f"v{_esc(runtime.get('version','?'))}</td></tr>")
+        w(f"<tr><td>fingerprint</td><td><code>"
+          f"{_esc(fp.get('fingerprint_hash','unknown'))}</code></td></tr></table>")
+        from . import diagnostics, ecm
+        w(diagnostics.render_report_section_html(diagnostics.summarize(run_id)))
+        matrix = matrix or ecm.engineering_capability_matrix(run_id)
+        w(ecm.render_capability_summary_html(matrix))
+        w("<h2>Optional Formal Qualification</h2><p>Formal qualification was "
+          "<strong>not requested</strong> and therefore has no readiness verdict "
+          "in this report. Invoke the explicit formal-qualification path only "
+          "when that governed decision is intended.</p>")
+        w("<p><a href='executive-summary.html'>Executive Summary</a> &middot; "
+          "<a href='engineering-assessment-result.html'>Engineering Assessment Result</a> &middot; "
+          "<a href='engineering-fit-guidance.html'>Engineering Fit Guidance</a> &middot; "
+          "<a href='grounding-diagnostics.html'>Grounding Diagnostics</a> &middot; "
+          "<a href='engineering-capability-matrix.html'>Engineering Capability Matrix</a></p>")
+        w("<footer>Raters: " + _esc(", ".join(pkg["raters"])) +
+          f" &middot; Aggregated {_esc(pkg['aggregated_at'])} &middot; "
+          "Generated by AIES Engineering Assessment Platform.</footer>")
+        w("</body></html>")
+        return "".join(p)
 
     from .report import _area_verdict, _gate_status, _overall_readiness
     w("<h2>Grant Readiness (Formal Qualification)</h2>")

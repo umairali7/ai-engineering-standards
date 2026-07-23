@@ -134,7 +134,7 @@ def test_uncalibrated_reviewer_is_advisory_only(ws, tmp_path):
     _score(run["run_id"], "reviewer-model", "model", 1)  # disagrees hard
     pkg = review.assemble_review_package(run["run_id"], reviewer_label="reviewer-model")
     assert pkg["reviewer"]["admitted"] is False
-    assert "advisory only" in pkg["summary"]["note"]
+    assert "not admitted as corroborating formal review" in pkg["summary"]["note"]
     # divergences (human 3 vs model 1 = delta 2) surfaced, not averaged
     assert pkg["summary"]["n_divergences"] > 0
 

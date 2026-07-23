@@ -1,8 +1,7 @@
-"""Qualification Engine: orchestrates the pipeline (PLATFORM.md §4).
+"""Engineering assessment engine: orchestrates the evidence pipeline.
 
-M1 scope: stages 2-5 for a single model against one profile and one
-risk-tier scope. Peer review (stage 6) arrives in M4; the decision
-(stage 7) is always human — the engine assembles evidence only.
+The default CLI purpose is engineering evaluation. Formal qualification is a
+separate explicit purpose with human-governed admission and grant semantics.
 """
 
 from __future__ import annotations
@@ -76,6 +75,7 @@ def start_qualification(
     workers: int | None = None,
     assessment: dict | None = None,
     decisional: bool = False,
+    run_purpose: str = "formal-qualification",
     progress_callback=None,
 ) -> dict:
     """Stages 2-4: discovery, environment, benchmark execution.
@@ -181,6 +181,7 @@ def start_qualification(
         "sample_plan": plan,
         "sample_adequacy_policy": "distinct-scenarios-v1",
         "decisional_target": decisional,
+        "run_purpose": run_purpose,
         "scoped_areas": list(areas),  # the CA codes as requested (for resume-collection)
         # The assessment this run was composed under (ADR-0005), if any — the
         # decision engine reads this to compute the assessment outcome. Recording
@@ -352,6 +353,7 @@ def start_journey(
     repeats: int | None = None,
     subject_kind: str = "ai",
     runtime: str | None = None,
+    run_purpose: str = "formal-qualification",
     progress_callback=None,
 ) -> dict:
     """Run a multi-phase journey (journeys.py) against a deployment.
@@ -380,6 +382,7 @@ def start_journey(
     manifest = {
         "run_id": run_id,
         "kind": "journey",
+        "run_purpose": run_purpose,
         "journey": {"id": journey["id"], "title": journey.get("title", ""),
                     "version": jversion,
                     "steps": [{"id": s["id"], "area": s["area"],
@@ -452,8 +455,10 @@ def aggregate(run_id: str) -> dict:
     ratings = rating.collect_ratings(run_id)
     if not ratings:
         raise EngineError(
-            f"run {run_id!r} has no ratings — fill the scoresheet and run "
-            "`aies score` first (M1 human scoring hook)"
+            f"run {run_id!r} has no ratings — score its existing responses "
+            "automatically with `aies review <run> --model-reviewer <judge>`, "
+            "import external scores with `aies import`, or complete and ingest "
+            "the scoresheet with `aies score`"
         )
     profile = profiles.load(manifest["profile"])
     adjustments = profile.get("dimension_weight_adjustments") or {}

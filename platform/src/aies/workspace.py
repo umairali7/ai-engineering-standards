@@ -28,7 +28,11 @@ REGENERABLE_VIEW_FILES = frozenset({
     "engineering-capability-matrix.html", "deployment-guidance.md",
     "deployment-guidance.json", "deployment-guidance.html",
     "executive-summary.md", "executive-summary.json", "executive-summary.html",
-    "assessment-result.md", "assessment-result.html", "report-bundle.json",
+    "assessment-result.md", "assessment-result.html",
+    "engineering-assessment-result.md", "engineering-assessment-result.json",
+    "engineering-assessment-result.html",
+    "engineering-fit-guidance.md", "engineering-fit-guidance.json",
+    "engineering-fit-guidance.html", "report-bundle.json",
     "grounding-diagnostics.md", "grounding-diagnostics.json",
     "grounding-diagnostics.html", "dashboard.html",
 })

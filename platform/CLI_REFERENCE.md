@@ -24,17 +24,18 @@ aies doctor
 ```text
 aies qualify <deployment> --all-areas --rt 2 --judge <judge>
   → aies report <run> --format html --write
-  → aies capabilities <run> --ecm --format html --write
+  → aies capabilities <run> --format html --write
   → aies guidance <run> --write
 ```
 
-Automated ratings can complete an informational Engineering Evaluation. They
-cannot by themselves become formal qualification evidence.
+Automated ratings complete the Engineering Evaluation, Engineering Assessment
+Result, ECM, diagnostics, and Engineering Fit Guidance. Human evaluation is
+optional. Formal qualification is a separate explicit workflow.
 
 ### Human-rated qualification
 
 ```text
-aies benchmark <deployment> ...
+aies qualify <deployment> ... --formal-qualification
   → aies rater register ...                 # each qualified human rater
   → complete scoresheet.json
   → aies score <run>
@@ -117,7 +118,7 @@ aies report run-123 --format <Tab>    # html, json, markdown
 
 ## `aies assessment`
 
-declarative assessments (ADR-0005): list/show/validate, and decide a run's outcome (PASS/FAIL/INCONCLUSIVE/INSUFFICIENT EVIDENCE)
+declarative assessments (ADR-0005): list/show/validate and render engineering or formal results
 
 **Usage:** `aies assessment [-h] [--json] {list,show,validate,result} ...`
 
@@ -132,7 +133,7 @@ declarative assessments (ADR-0005): list/show/validate, and decide a run's outco
 | Subcommand | What it does |
 |---|---|
 | `list` | list shipped assessments and their validity |
-| `result` | decide the outcome of an aggregated run composed under an assessment (no inference) |
+| `result` | render a non-blocking engineering assessment result (use --formal-qualification for the governed qualification decision) |
 | `show` | print a validated assessment |
 | `validate` | validate an assessment (name or path) |
 
@@ -164,15 +165,15 @@ list shipped assessments and their validity
 
 ## `aies assessment result`
 
-decide the outcome of an aggregated run composed under an assessment (no inference)
+render a non-blocking engineering assessment result (use --formal-qualification for the governed qualification decision)
 
-**Usage:** `aies assessment result [-h] [--format {markdown,html}] [--out OUT] [--json] run`
+**Usage:** `aies assessment result [-h] [--format {markdown,html}] [--out OUT] [--formal-qualification] [--json] run`
 
 **Prerequisites:** The run was composed under a validated declarative assessment and has aggregated evidence.
 
-**Result and side effects:** Computes the canonical PASS / FAIL / INCONCLUSIVE / INSUFFICIENT EVIDENCE result over mandatory competencies.
+**Result and side effects:** Renders the non-blocking Engineering Assessment Result by default; `--formal-qualification` explicitly invokes the governed PASS / FAIL / INCONCLUSIVE / INSUFFICIENT EVIDENCE decision.
 
-**Recommended next step:** Address structured reasons; a PASS still does not create a qualification grant.
+**Recommended next step:** Use the engineering result for analysis; enter the formal workflow only when qualification is intentionally required.
 
 ### Parameters and options
 
@@ -182,6 +183,7 @@ decide the outcome of an aggregated run composed under an assessment (no inferen
 | `<RUN>` | required | aggregated run composed under an assessment | — |
 | `--format` | optional | render the canonical result as markdown (default) or HTML | choices: `markdown`, `html`; default: `markdown` |
 | `--out` | optional | write HTML to this file instead of stdout | Applies to HTML output; JSON is selected independently with `--json`. |
+| `--formal-qualification` | optional | render the canonical human-governed PASS/FAIL/INCONCLUSIVE/INSUFFICIENT EVIDENCE result and use it as the command exit gate | Opt-in formal gate; without it the command renders Engineering Assessment Result and succeeds when the artifact is generated. |
 | `--json` | optional | emit machine-readable JSON | — |
 
 ## `aies assessment show`
@@ -250,15 +252,15 @@ audit a repository's conformance to AIES engineering practices (maturity per are
 
 ## `aies benchmark`
 
-execute scenario suites only (stage 4)
+run a non-blocking engineering benchmark; optionally auto-score and report
 
-**Usage:** `aies benchmark [-h] [--json] [--profile PROFILE] [--rt {1,2,3,4}] [--area AREA] [--all-areas] [--repeats REPEATS] [--parallel N] [--runtime RUNTIME] model`
+**Usage:** `aies benchmark [-h] [--json] [--profile PROFILE] [--rt {1,2,3,4}] [--area AREA] [--all-areas] [--repeats REPEATS] [--parallel N] [--runtime RUNTIME] [--judge DEPLOYMENT] [--judge-batch-size N] [--reviewer-runtime REVIEWER_RUNTIME] [--human-evaluation NAME] [--consider-advisory-review] model`
 
-**Prerequisites:** The target deployment is registered and reachable; suites and the selected profile are valid.
+**Prerequisites:** The target deployment is registered and reachable; suites and the selected profile are valid. `--judge` requires a reachable reviewer deployment.
 
-**Result and side effects:** Collects scenario responses and creates a run plus scoresheet; it does not score or aggregate.
+**Result and side effects:** Runs a non-blocking Engineering Evaluation. Without a judge it collects responses and a scoresheet; with `--judge` it also scores, analyzes, and writes the complete report bundle.
 
-**Recommended next step:** Complete the scoresheet and run `aies score`, or use `aies qualify --judge` for an automated one-command evaluation.
+**Recommended next step:** Inspect the generated ECM/report, or score the collected run later with `aies review <run> --model-reviewer <judge>`.
 
 ### Parameters and options
 
@@ -274,18 +276,23 @@ execute scenario suites only (stage 4)
 | `--repeats` | optional | repeat each scenario for a stability study; repeats do not add breadth | — |
 | `--parallel` | optional | maximum concurrent inference calls (default: 1 or AIES_PARALLEL) | — |
 | `--runtime` | optional | runtime name used to disambiguate the deployment | — |
+| `--judge` | optional | auto-score with this judge and complete analysis/reporting (or 'self'; defaults to $AIES_JUDGE) | — |
+| `--judge-batch-size` | optional | responses per automated judge request (default 8, or $AIES_JUDGE_BATCH_SIZE) | — |
+| `--reviewer-runtime` | optional | disambiguate the judge deployment's runtime | — |
+| `--human-evaluation` | optional | optionally record a named human evaluation; never required | — |
+| `--consider-advisory-review` | optional | optionally record that a human considered automated scores | — |
 
 ## `aies capabilities`
 
-per-area capability profile of an aggregated run/deployment (planner/coder/security…, one CL + autonomy level per area)
+render the Engineering Capability Matrix for an aggregated run/deployment
 
-**Usage:** `aies capabilities [-h] [--json] [--ecm] [--format {markdown,json,html}] [--write] ref`
+**Usage:** `aies capabilities [-h] [--json] [--ecm] [--qualification-profile] [--format {markdown,json,html}] [--write] ref`
 
 **Prerequisites:** An aggregated run exists; deployment ids resolve to their latest aggregated run.
 
-**Result and side effects:** Renders per-area capability or, with `--ecm`, the informational Engineering Capability Matrix.
+**Result and side effects:** Renders the Engineering Capability Matrix by default; `--qualification-profile` selects the separate formal CL/autonomy view.
 
-**Recommended next step:** Use `aies guidance` for bounded use advice or `aies compare --ecm` for compatible task comparison.
+**Recommended next step:** Use `aies guidance` for bounded use advice or `aies compare` for compatible task comparison.
 
 ### Parameters and options
 
@@ -294,21 +301,22 @@ per-area capability profile of an aggregated run/deployment (planner/coder/secur
 | `-h`, `--help` | optional | show this help message and exit | — |
 | `--json` | optional | machine-readable output | — |
 | `<REF>` | required | run id, or deployment id (its latest aggregated run) | — |
-| `--ecm` | optional | render the informational Engineering Capability Matrix with mapped engineering tasks | — |
+| `--ecm` | optional | compatibility alias; ECM is now the default capability view | — |
+| `--qualification-profile` | optional | render the separate formal per-area CL/autonomy qualification view | Switches from the default ECM to the separate formal CL/autonomy qualification view. |
 | `--format` | optional | ECM output format (default: markdown) | choices: `markdown`, `json`, `html`; default: `markdown` |
-| `--write` | optional | write ECM output beside the run (use with --ecm) | Meaningful with `--ecm`; writes the ECM artifacts beside the run. |
+| `--write` | optional | write ECM output beside the run | Writes the default ECM artifact beside the run. |
 
 ## `aies compare`
 
-compare two runs/deployments on identical suite versions
+compare two runs/deployments using compatible observed ECM evidence
 
-**Usage:** `aies compare [-h] [--json] [--format {markdown,json}] [--ecm] a b`
+**Usage:** `aies compare [-h] [--json] [--format {markdown,json}] [--ecm] [--area-summary] [--formal-qualification] a b`
 
 **Prerequisites:** Both references resolve to aggregated runs with compatible protocols; ECM comparison requires compatible task mappings and evidence semantics.
 
-**Result and side effects:** Reports only valid comparisons and withholds winners for incompatible evidence.
+**Result and side effects:** Compares compatible observed engineering scores without human review. It identifies the higher observation but reserves a formal winner claim for explicit `--formal-qualification` comparison.
 
-**Recommended next step:** Use the evidence in a scoped human selection decision; do not treat it as a global leaderboard.
+**Recommended next step:** Use the observed comparison as a scoped selection input; do not treat it as a qualification or global leaderboard.
 
 ### Parameters and options
 
@@ -319,7 +327,9 @@ compare two runs/deployments on identical suite versions
 | `<A>` | required | run id or model registry id (latest aggregated run) | — |
 | `<B>` | required | run id or model registry id (latest aggregated run) | — |
 | `--format` | optional | output representation (default: markdown) | choices: `markdown`, `json`; default: `markdown` |
-| `--ecm` | optional | compare task-level ECM evidence only when protocols match | — |
+| `--ecm` | optional | compatibility alias; task-level ECM comparison is now the default | Compatibility alias; ECM comparison is the default. |
+| `--area-summary` | optional | render the legacy competency-area aggregate comparison instead of ECM | Selects the legacy competency-area aggregate instead of the default ECM comparison. |
+| `--formal-qualification` | optional | require demonstrated tasks and the human-rater protocol; default ECM comparison uses compatible observed engineering evidence | Switches from compatible observed-score comparison to demonstrated, human-protocol-qualified comparison; it cannot be combined with `--area-summary`. |
 
 ## `aies completion`
 
@@ -877,15 +887,15 @@ record a human qualification decision
 
 ## `aies guidance`
 
-render bounded deployment guidance from ECM evidence
+render engineering fit from ECM evidence; supply a Qualification Record for bounded deployment guidance
 
 **Usage:** `aies guidance [-h] [--json] [--qualification QUAL-ID] [--role {ROLE-01,ROLE-02,ROLE-03,ROLE-04,ROLE-05,ROLE-06,ROLE-07,ROLE-08,ROLE-09,ROLE-10,ROLE-11,ROLE-12,ROLE-13,ROLE-14}] [--phase {P01,P02,P03,P04,P05,P06,P07,P08,P09,P10,P11,P12,P13,P14,P15,P16}] [--autonomy {0,1,2,3,4}] [--write] ref`
 
-**Prerequisites:** An aggregated ECM-capable run exists. A `Use` recommendation requires a current matching human Qualification Record.
+**Prerequisites:** An aggregated ECM-capable run exists. `--qualification` additionally requires a matching Qualification Record.
 
-**Result and side effects:** Renders bounded Use / Use with human review / No recommendation / Avoid guidance and its constraints.
+**Result and side effects:** Renders non-blocking Engineering Fit Guidance by default. Supplying `--qualification` explicitly selects qualification-bounded Deployment Guidance.
 
-**Recommended next step:** Apply the recorded human decision and reassess when scope, fingerprint, conditions, or validity changes.
+**Recommended next step:** Use engineering fit as an evidence-backed selection input; use qualification guidance only for governed deployment scope.
 
 ### Parameters and options
 
@@ -894,7 +904,7 @@ render bounded deployment guidance from ECM evidence
 | `-h`, `--help` | optional | show this help message and exit | — |
 | `--json` | optional | machine-readable output | — |
 | `<REF>` | required | aggregated run id, or deployment id | — |
-| `--qualification` | optional | active human Qualification Record that bounds any Use recommendation | Required before any evidence can become an operational `Use` recommendation. |
+| `--qualification` | optional | active human Qualification Record; switches from engineering fit to governed Deployment Guidance | Switches from default Engineering Fit Guidance to qualification-bounded Deployment Guidance. |
 | `--role` | optional | requested engineering role; must match the qualification scope | choices: `ROLE-01`, `ROLE-02`, `ROLE-03`, `ROLE-04`, `ROLE-05`, `ROLE-06`, `ROLE-07`, `ROLE-08`, `ROLE-09`, `ROLE-10`, `ROLE-11`, `ROLE-12`, `ROLE-13`, `ROLE-14` |
 | `--phase` | optional | requested SDLC phase; repeat for additional phases | choices: `P01`, `P02`, `P03`, `P04`, `P05`, `P06`, `P07`, `P08`, `P09`, `P10`, `P11`, `P12`, `P13`, `P14`, `P15`, `P16`; repeatable |
 | `--autonomy` | optional | requested autonomy level number (for example 2 for AL2 — Collaborative) | choices: `0`, `1`, `2`, `3`, `4` |
@@ -926,9 +936,9 @@ import external eval results (EV1–EV6 JSON) into a run as automated ratings
 
 **Prerequisites:** A collected run exists and the external eval JSON follows the documented EV1–EV6 schema.
 
-**Result and side effects:** Appends parseable external automated-rating observations; invalid items are reported rather than fabricated.
+**Result and side effects:** Appends parseable external automated-rating observations, aggregates them, and refreshes the complete report bundle.
 
-**Recommended next step:** Aggregate/report the run and review the imported evidence limitations.
+**Recommended next step:** Inspect the generated engineering results and imported-evidence limitations.
 
 ### Parameters and options
 
@@ -1551,9 +1561,9 @@ show one qualification record
 
 ## `aies qualify`
 
-run qualification evidence collection for one deployment
+run engineering evaluation for one deployment; formal qualification is explicit
 
-**Usage:** `aies qualify [-h] [--json] [--runtime RUNTIME] [--assessment NAME] [--profile PROFILE] [--rt {1,2,3,4}] [--area AREA] [--all-areas] [--decisional] [--journey JOURNEY_ID] [--judge DEPLOYMENT] [--judge-batch-size N] [--consider-advisory-review] [--human-evaluation NAME] [--reviewer-runtime REVIEWER_RUNTIME] [--repeats REPEATS] [--parallel N] [--resume RUN_ID] [--resume-collection RUN_ID] [model]`
+**Usage:** `aies qualify [-h] [--json] [--runtime RUNTIME] [--assessment NAME] [--profile PROFILE] [--rt {1,2,3,4}] [--area AREA] [--all-areas] [--decisional] [--formal-qualification] [--journey JOURNEY_ID] [--judge DEPLOYMENT] [--judge-batch-size N] [--consider-advisory-review] [--human-evaluation NAME] [--reviewer-runtime REVIEWER_RUNTIME] [--repeats REPEATS] [--parallel N] [--resume RUN_ID] [--resume-collection RUN_ID] [model]`
 
 **Prerequisites:** For a new run, the target deployment is registered and reachable. `--judge` requires a reachable reviewer deployment. `--resume` requires scored evidence; `--resume-collection` requires an existing partial run.
 
@@ -1575,6 +1585,7 @@ run qualification evidence collection for one deployment
 | `--area` | optional | competency area (repeatable); default CA-05 | repeatable; Repeatable. Do not combine conceptually with `--all-areas`; an assessment supplies its own areas. |
 | `--all-areas` | optional | qualify across ALL competency areas CA-01…CA-12 (a full SDLC capability profile; see `aies capabilities`) | Selects all competency areas and replaces the default CA-05 scope. |
 | `--decisional` | optional | require the distinct-scenario plan for every selected area to meet the AESQS sample minimum when admitted ratings are available | Requires enough distinct scenarios; repeats never satisfy breadth. |
+| `--formal-qualification` | optional | explicitly run the human-governed formal qualification path; without this flag, automated engineering evaluation is non-blocking | Opt-in only. Without it, the run is a non-blocking engineering evaluation and human evaluation is optional. |
 | `--journey` | optional | run a multi-phase journey instead of area suites | — |
 | `--judge` | optional | auto-score responses with this judge deployment (or 'self') and print the report directly — no manual scoring. Defaults to $AIES_JUDGE. | Enables automated scoring and complete report generation; automated evidence remains informational for qualification. |
 | `--judge-batch-size` | optional | responses per automated judge request (default 8, or $AIES_JUDGE_BATCH_SIZE; automatically bounded by context) | — |
@@ -1844,9 +1855,9 @@ assemble a multi-deployment peer-review package
 
 **Prerequisites:** A collected run exists. `--model-reviewer` requires a registered reviewer deployment; qualification/calibration flags must be evidence-backed.
 
-**Result and side effects:** Adds advisory model-review observations and refreshes the report bundle; optional human evaluation remains separately visible.
+**Result and side effects:** Records model-review scores, completes or refreshes engineering analysis, and keeps optional human evaluation separately visible.
 
-**Recommended next step:** Resolve material findings with humans; advisory review alone cannot support a qualification grant.
+**Recommended next step:** Inspect engineering results; resolve material findings only when needed, and use formal qualification separately.
 
 ### Parameters and options
 
@@ -2004,9 +2015,9 @@ ingest a filled scoresheet (human or model rater)
 
 **Prerequisites:** A collected run and completed scoresheet exist; human qualification ratings require registered, in-scope, currently calibrated rater metadata.
 
-**Result and side effects:** Ingests rating observations, resolves eligible evidence items, aggregates when possible, and refreshes reports.
+**Result and side effects:** Ingests rating observations, aggregates the engineering evaluation, and refreshes the complete report bundle in one command.
 
-**Recommended next step:** Add the required independent rating, resolve divergences, then generate the final report or proceed to human qualification.
+**Recommended next step:** Inspect the generated report; human evaluation is optional unless formal qualification was explicitly requested.
 
 ### Parameters and options
 

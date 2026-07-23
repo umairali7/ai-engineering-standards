@@ -23,7 +23,7 @@ generated [CLI Reference](CLI_REFERENCE.md); for the specification see
 | **Deployment** | The unit under assessment: model × runtime × config × endpoint (never a bare model — PLATFORM.md D11). Registered in the registry. |
 | **Runtime / Adapter** | The vendor-aware code that talks to a deployment (`ollama`, `openai-compat`, `mock`, …). The **only** vendor-specific layer (D9); frozen contract v1.0 (semantic core stable, additive surface). |
 | **Profile** | A weighting preset — per-area and per-dimension emphasis. Versioned (semver). Cannot express gates or minimums (D3). |
-| **Assessment** | Declarative composition ([ADR-0005](../adr/ADR-0005-Assessment-as-Code.md)): which competencies compose a named qualification, mandatory vs advisory, weights, profile, risk tier, sampling. Data, not code. |
+| **Assessment** | Declarative composition ([ADR-0005](../adr/ADR-0005-Assessment-as-Code.md)): competencies, mandatory vs advisory status, weights, profile, risk tier, and sampling. It drives engineering evaluation by default and formal qualification only when explicitly requested. |
 | **Competency Area (CA-01…CA-12)** | The twelve areas of AI-engineering capability (SDLC foundations, implementation, testing, security, governance, …). |
 | **Risk Tier (RT1 — Minimal through RT4 — Critical)** | The stakes of the scope. Higher tiers demand higher gates and larger samples. |
 | **Dimension (EV1–EV6)** | The six scored qualities: Correctness, Completeness, Safety & Security, Maintainability, Efficiency, Traceability. 0–4 integer anchors. |
@@ -33,10 +33,11 @@ generated [CLI Reference](CLI_REFERENCE.md); for the specification see
 | **Gate** | A hard per-dimension minimum (esp. EV3). A failed gate denies the tier; no profile can express or relax one. |
 | **Decisional / NON-DECISIONAL** | Whether a result met the statistical minimum sample (20/30/50/100 for AI by tier). Under-sampled results can never look like qualification evidence. |
 | **Evidence Package** | The aggregated, immutable record of a run's responses, ratings, and per-area results. Independently versioned (`evidence_schema`); can be replayed through a future engine. |
-| **Canonical Assessment Result** | The single machine-readable object the decision engine produces: `{metadata, evidence, decisions, diagnostics, analytics}`. Versioned (`result_schema`). Every renderer is a view of it. |
+| **Engineering Assessment Result** | Default non-blocking named-assessment artifact: `COMPLETE`, `PARTIAL`, or `NOT SCORED`, with automated coverage and optional human evaluation. |
+| **Canonical Formal Assessment Result** | Explicit formal-qualification object from the decision engine: `{metadata, evidence, decisions, diagnostics, analytics}`. Versioned (`result_schema`). |
 | **Outcome** | `PASS` / `FAIL` / `INCONCLUSIVE` / `INSUFFICIENT EVIDENCE`, decided over **mandatory** competencies; precedence `FAIL > INCONCLUSIVE > INSUFFICIENT EVIDENCE > PASS`. No blended score. |
 | **Reason kind** | Why a mandatory competency did not pass: `mandatory-gate`, `min-cl`, `insufficient-evidence`, `assessment-error`. |
-| **Judge / Reviewer** | A model deployment that auto-scores another's responses. Its scores are advisory unless calibrated; never self-judge for a trustworthy read. |
+| **Judge / Reviewer** | A deployment that auto-scores another's responses. Its scores complete engineering evaluation; formal qualification admission is separately governed. Never self-judge for a trustworthy read. |
 | **Grant / Qualification Record** | The formal, revocable human decision recording a scoped qualification. **The platform never grants** — a named human authority does (D8). |
 | **Conformance corpus** | Golden Evidence Packages + expected outcomes; the data-first arbiter that verifies any decision engine ([CONFORMANCE-POLICY.md](../CONFORMANCE-POLICY.md)). |
 
@@ -54,13 +55,15 @@ Every artifact carries a schema version; envelopes are field-append-only
 | Qualification Record | `qualification_schema` | `2` | `grant` (human authority) |
 | Qualification Lifecycle Event | `event_schema` | `1` | `qualifications event` / `verify` |
 | Engineering Evaluation Summary | `evaluation_schema` | `1` | every complete report bundle (`engineering-evaluation.json`) |
-| Canonical Assessment Result | `result_schema` | `1` | the decision engine |
+| Engineering Assessment Result | `engineering_assessment_schema` | `1` | default named engineering assessment |
+| Canonical Formal Assessment Result | `result_schema` | `1` | explicit formal decision engine |
 | Decision semantics | `decision_semantics_version` | `1.0` (AESQS CS-01 §8) | the standard |
 | Engineering Task Mapping *(review-stage)* | `schema` | `2` | authored (`task_mappings/*.yaml`) |
-| Engineering Capability Matrix *(review-stage)* | `ecm_schema` | `2` | `capabilities --ecm` / report bundle |
+| Engineering Capability Matrix *(review-stage)* | `ecm_schema` | `2` | `capabilities` / report bundle |
 | ECM task-decision semantics *(review-stage)* | `task_decision_semantics_version` | `1.0` | ADR-0013 |
 | Deployment Guidance *(review-stage)* | `guidance_schema` | `2` | `guidance` |
-| Executive Summary | `executive_summary_schema` | `1` | complete report bundle |
+| Engineering Fit Guidance | `engineering_fit_schema` | `1` | default `guidance` / report bundle |
+| Executive Summary | `executive_summary_schema` | `2` | complete report bundle |
 | Grounding Diagnostics | `diagnostic_schema` | `1` | complete report bundle; structured reviewer observations |
 | Report Bundle Index | `report_bundle_schema` | `1` | complete report bundle |
 
@@ -79,7 +82,7 @@ not imply one universal mutation rule.
 | Append-only record | responses, rating observations, resolutions, human-rater records, Qualification Records and lifecycle events, audit records | Created once; replacement is rejected. Corrections are new records or events. |
 | Derived canonical snapshot | `evidence-package.json`, `assessment-result.json`, `review-package.json` | Recomputed only when its recorded source evidence changes; the schema and source provenance remain explicit. |
 | Mutable working state | `manifest.json`, `scoresheet.json`, `progress.json`, latest fingerprint | May be replaced by its owning workflow while work progresses. |
-| Regenerable view | Markdown/JSON/HTML reports, ECM, Deployment Guidance, Executive Summary, Grounding Diagnostics, dashboard, bundle index | May be replaced at any time from canonical records; never treated as source evidence. |
+| Regenerable view | Markdown/JSON/HTML reports, Engineering Assessment Result, ECM, Engineering Fit/Deployment Guidance, Executive Summary, Grounding Diagnostics, dashboard, bundle index | May be replaced at any time from canonical records; never treated as source evidence. |
 | Mutable configuration | deployment registry entries | Updated only through the registry workflow; identity changes trigger qualification verification. |
 
 `workspace.artifact_class`, `workspace.write_json`, and
@@ -100,21 +103,21 @@ append-only records. Grouped as in `aies --help`.
 | `deployment` / `registry` | Manage deployment entries: add/show/update/remove/`verify-artifact` | `aies deployment verify-artifact local-qwen --artifact model.bin` |
 | `runtime` | Inspect installed runtime adapters | `aies runtime list` |
 
-### Qualification
+### Engineering evaluation and optional qualification
 
 | Command | Contract | Example |
 |---|---|---|
 | `qualify` | Full pipeline for a deployment → engineering evaluation and evidence package. Live progress is implicit; an automated judge can complete the evaluation without human review. `--assessment`, `--judge`, `--all-areas`, `--journey`, `--parallel`, `--repeats`, `--resume`, `--resume-collection` | `aies qualify local-qwen --assessment enterprise --judge gpt-oss` |
-| `benchmark` | Execute scenario suites only (stage 4) | `aies benchmark acme-7b --area CA-05 --repeats 5` |
-| `score` | Ingest a filled scoresheet (human/model rater) | `aies score run-2031` |
+| `benchmark` | Run a non-blocking engineering benchmark; without `--judge` it collects responses, while `--judge` also scores, analyzes, and writes the complete bundle | `aies benchmark acme-7b --area CA-05 --judge gpt-oss` |
+| `score` | Ingest a filled scoresheet, aggregate, and refresh the complete engineering report bundle | `aies score run-2031` |
 | `rater` | Register/list/show durable human identity, competency/risk scope, qualification, and calibration | `aies rater register --id alice --name "Alice" --area CA-05 --rt 2 ...` |
 | `resolve` | Append a named, reasoned human disposition for a materially divergent evidence item | `aies resolve run-2031 SC-CA05-001-r1.json --scores 4 4 3 4 3 4 ...` |
-| `import` / `export` | Bring external eval results in as EV evidence / round-trip out | `aies import run-2031 eval.json` |
-| `capabilities` | Per-area CL + autonomy + gate + decisional status; `--ecm` renders a traceable task matrix whose `demonstrated` state requires ADR-0013 controls | `aies capabilities run-2031 --ecm --format html --write` |
-| `assessment` | `list` / `show` / `validate` / `result <run>` (Markdown/JSON/`--format html`) | `aies assessment result run-2031` |
+| `import` / `export` | Import external EV results plus aggregate/report in one command / round-trip out | `aies import run-2031 eval.json` |
+| `capabilities` | ECM task performance/evidence/confidence by default; `--qualification-profile` selects formal CL/autonomy/gates | `aies capabilities run-2031 --format html --write` |
+| `assessment` | `result <run>` renders non-blocking engineering status; `--formal-qualification` selects the formal outcome | `aies assessment result run-2031` |
 | `review` | Automated review, optional human-evaluation record, implicit live progress, and refreshed report bundle | `aies review run-2031 --model-reviewer rev` |
-| `compare` | Task deltas only when evidence and decision protocols are compatible; incompatible rows emit no winner | `aies compare a b --profile coder` |
-| `guidance` | Qualification-bounded informational Deployment Guidance; optional role, phase, and autonomy flags narrow the requested scope | `aies guidance run-2031 --qualification QUAL-2026-001 --role ROLE-06 --phase P09 --autonomy 3 --write` |
+| `compare` | Compatible observed ECM scores compare by default without human review; `--formal-qualification` additionally requires demonstrated status/protocol before a winner claim; `--area-summary` selects the legacy aggregate | `aies compare run-a run-b` |
+| `guidance` | Engineering Fit Guidance by default; `--qualification QUAL-id` selects qualification-bounded Deployment Guidance | `aies guidance run-2031 --write` |
 | `runs list` / `runs progress` / `transcript` | List runs, optionally observe another command's durable progress from a second terminal, or render a whole run. The originating command already shows stage and total timing, ETA, plus the current human-readable task and task ordinal. | `aies runs progress run-2031` |
 
 ### Judging
@@ -165,7 +168,8 @@ GET /health                    service + version
 GET /deployments               registered deployments
 GET /runs                      run history
 GET /runs/{id}/evidence        the Evidence Package
-GET /runs/{id}/result          the Canonical Assessment Result (verbatim)
+GET /runs/{id}/result          primary Engineering or legacy Formal Result
+GET /runs/{id}/formal-result   explicit Canonical Formal Assessment Result
 GET /assessments               shipped assessments
 GET /qualifications            Qualification Records
 GET /conformance               decision-engine conformance report
@@ -179,7 +183,7 @@ by the engine, never by a consumer.
 | Code | Meaning |
 |---|---|
 | `0` | success (and, where applicable, PASS / conformant / substantiated) |
-| `1` | a decided negative (e.g. `assessment result` outcome is not PASS) |
+| `1` | an explicitly requested formal/CI gate decided negative; default Engineering Assessment Result rendering does not use human readiness as an exit gate |
 | `2` | usage / not-found / invalid input |
 | `5` | a gate failed (unsupported conformance claim, non-conformant engine, audit gate) |
 

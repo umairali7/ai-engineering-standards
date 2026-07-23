@@ -1,9 +1,4 @@
-"""One-process comprehensive AIES demo (offline, deterministic mock runtime).
-
-The shell entry point delegates here so the demo pays Python import and corpus
-initialization costs once. This is executable documentation: every expected
-non-zero governance outcome is asserted rather than ignored.
-"""
+"""One-process comprehensive AIES engineering-evaluation demo."""
 
 from __future__ import annotations
 
@@ -11,6 +6,7 @@ import contextlib
 import io
 import json
 import os
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -105,17 +101,7 @@ def main() -> int:
     (demo_ws / "qualification-transcript.md").write_text(transcript, encoding="utf-8")
     print(f"run: {run_id}")
 
-    calibration_path = demo_ws / "mock-judge-calibration.json"
-    calibration_path.write_text(json.dumps({
-        "model": [{f"EV{i}": 4 for i in range(1, 7)}],
-        "human_anchor": [{f"EV{i}": 4 for i in range(1, 7)}],
-    }), encoding="utf-8")
-    require(invoke("review", run_id, "--reviewer", f"model:{judge}",
-                   "--calibration", str(calibration_path), quiet=True)[0],
-            "synthetic judge calibration")
-    print("mock judge admitted through a synthetic bootstrap-calibration fixture (offline CI only)")
-
-    hr("5. Engineering Evaluation COMPLETE; Formal Qualification remains separate")
+    hr("5. Engineering Evaluation COMPLETE — no human prerequisite")
     evaluation = workspace.read_json(run_dir / "engineering-evaluation.json")
     print("Automated coverage is enough to complete the informational Engineering Evaluation:")
     print("  status:", evaluation["status"].upper())
@@ -124,11 +110,9 @@ def main() -> int:
     for area, value in evaluation["areas"].items():
         print(" ", area, value["status"].upper(), "by", value.get("completed_by") or "mixed")
     code, result_md, _ = invoke("assessment", "result", run_id, capture=True)
-    if code not in (0, 1):
-        raise SystemExit(f"demo failed: assessment result exited {code}")
-    print("\nThe Canonical Assessment Result answers the stricter formal-qualification question.")
+    require(code, "engineering assessment result")
+    print()
     first_lines(result_md, 26)
-    print(f"formal result exit {code} is expected and contained by the demo")
 
     hr("6. Engineering Capability Matrix — observed capability and explicit unknowns")
     matrix = workspace.read_json(run_dir / "engineering-capability-matrix.json")
@@ -138,27 +122,28 @@ def main() -> int:
         performance = ("not assessed" if task["observed_performance"] is None else
                        f"{task['observed_performance'] / 4 * 100:.0f}% observed")
         print(f"  {task['task_id']} {task['task']:<28} {performance:<16} {task['status']}")
-    print("Pending mapping review remains visible; observed evidence is never promoted into demonstrated capability.")
+    print("Observed capability, evidence breadth, and unknowns remain explicit.")
 
-    hr("7. Per-area qualification profile (formal evidence, separate from ECM)")
-    require(invoke("capabilities", run_id)[0], "capabilities")
+    hr("7. Evidence-derived Engineering Fit Guidance")
+    code, fit_output, _ = invoke("guidance", run_id, capture=True)
+    require(code, "engineering fit guidance")
+    first_lines(fit_output, 35)
 
-    hr("8. Qualification-bounded Deployment Guidance")
-    guidance = workspace.read_json(run_dir / "deployment-guidance.json")
+    hr("8. Engineering fit is actionable without becoming deployment authority")
+    guidance = workspace.read_json(run_dir / "engineering-fit-guidance.json")
     counts: dict[str, int] = {}
     for task in guidance["tasks"]:
-        counts[task["guidance"]] = counts.get(task["guidance"], 0) + 1
-    print("  qualification record:", guidance["qualification_record"] or "not supplied")
+        counts[task["fit"]] = counts.get(task["fit"], 0) + 1
     for name, count in sorted(counts.items()):
         print(" ", name, count)
-    print("No human Qualification Record was supplied, so guidance emits no Use recommendation.")
+    print("Human evaluation is optional; operational authorization remains a separate governed action.")
 
     hr("9. Protocol-compatible ECM comparison (same evidence fixture, no invented winner)")
     code, output, _ = invoke("compare", run_id, run_id, "--ecm", "--json", capture=True)
     require(code, "ECM comparison")
     comparison = json.loads(output)
     print("  global protocol compatible:", comparison["compatible"])
-    print("  comparable demonstrated task rows:",
+    print("  comparable observed task rows:",
           sum(1 for task in comparison["tasks"] if task["comparable"]))
     print("  winners emitted:", sum(1 for task in comparison["tasks"] if task["winner"]))
 
@@ -173,35 +158,30 @@ def main() -> int:
 
     hr("11. Presentation-grade renders (same evidence; no hidden inference)")
     presentations = (
-        "assessment-result.html", "report.html", "engineering-capability-matrix.html",
-        "deployment-guidance.html", "executive-summary.html", "grounding-diagnostics.html")
+        "engineering-assessment-result.html", "report.html",
+        "engineering-capability-matrix.html", "engineering-fit-guidance.html",
+        "executive-summary.html", "grounding-diagnostics.html")
     missing = [name for name in presentations if not (run_dir / name).is_file()
                or not (run_dir / name).stat().st_size]
     if missing:
         raise SystemExit("demo failed: missing presentation artifacts: " + ", ".join(missing))
     print("verified six presentation-grade HTML artifacts from the generated bundle")
 
-    hr("12. Formal grant boundary (expected refusal on automated-only evidence)")
-    code, _, error = invoke(
-        "grant", run_id, "--decision", "grant",
-        "--authority", "A. Architect (ROLE-13)", "--second", "P. Peer (ROLE-14)",
-        capture=True)
-    expected = "cannot grant on NON-DECISIONAL evidence"
-    if code == 0 or expected not in error:
-        raise SystemExit("demo failed: grant was not refused for the expected boundary:\n" + error)
-    print("grant correctly refused for non-decisional evidence; Engineering Evaluation remains complete")
-    print(next(line for line in error.splitlines() if expected in line))
-
-    hr("13. Decision-engine CONFORMANCE (the standard as a subject)")
+    hr("12. Decision-engine CONFORMANCE (the standard as a subject)")
     print("Does the reference engine reproduce AESQS decision semantics on the golden corpus?")
-    require(invoke("conform", "engine")[0], "reference conformance")
+    code, output, _ = invoke("conform", "engine", capture=True)
+    require(code, "reference conformance")
+    first_lines(output, 4)
     print("\n-- and a FOREIGN package-free reimplementation verifies on the same corpus --")
+    foreign_engine = (
+        Path(__file__).resolve().parents[2] / "conformance" / "example_engine.py")
     code, output, _ = invoke(
-        "conform", "engine", "--engine", "python ../conformance/example_engine.py", capture=True)
+        "conform", "engine", "--engine",
+        f'"{sys.executable}" "{foreign_engine}"', capture=True)
     require(code, "foreign-engine conformance")
     first_lines(output, 4)
 
-    hr("14. Empirical calibration harness (ready for a real-subject panel)")
+    hr("13. Empirical calibration harness (ready for a real-subject panel)")
     print("Design-time calibration is done; empirical calibration needs a representative panel.")
     panel_path = demo_ws / "panel.json"
     panel_path.write_text(json.dumps({
@@ -215,12 +195,12 @@ def main() -> int:
     }), encoding="utf-8")
     require(invoke("suites", "empirical", str(panel_path))[0], "empirical harness")
 
-    hr("15. Repository conformance AUDIT (a different subject)")
+    hr("14. Repository conformance AUDIT (a different subject)")
     code, output, _ = invoke("audit", "..", capture=True)
     require(code, "repository audit")
     first_lines(output, 10)
 
-    hr("16. The platform reviews its OWN corpus (advisory; no single grade)")
+    hr("15. The platform reviews its OWN corpus (advisory; no single grade)")
     code, output, _ = invoke("corpus", "health", capture=True)
     require(code, "corpus health")
     first_lines(output, 18)
@@ -232,8 +212,8 @@ def main() -> int:
 
     hr("DEMO COMPLETE")
     print("Subjects assessed: deployment + repository + standard")
-    print("Also shown: live progress, ECM strengths/gaps, bounded guidance, comparison,")
-    print("             linked reports, qualification boundary, and empirical harness.")
+    print("Also shown: live progress, ECM strengths/gaps, evidence-derived guidance, comparison,")
+    print("             linked reports, engineering fit, and empirical harness.")
     print("Read-only JSON API: aies serve --port 8722")
     print(f"workspace: {demo_ws}")
     print(f"total demo time: {time.monotonic() - STARTED:.1f}s")

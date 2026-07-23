@@ -8,6 +8,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Vision-aligned project entry point**: revised the main README to present
+  AIES as a subject-neutral engineering standard and assessment system, explain
+  the separation between non-blocking Engineering Evaluation, the Engineering
+  Capability Matrix, Engineering Fit Guidance, and optional Formal
+  Qualification, document the ET-01 through ET-15 task taxonomy and current
+  platform workflow, distinguish shipped subject executors from planned
+  adapters, and state the verified corpus/test baseline without claiming
+  empirical calibration.
+- **Non-blocking engineering evaluation across the platform**: named automated
+  assessments now produce `COMPLETE/PARTIAL/NOT SCORED` Engineering Assessment
+  Results instead of implicitly invoking formal qualification. `qualify
+  --judge`, `review --model-reviewer`, `score`, and `import` generate or refresh
+  the complete analysis/report bundle without human review; human evaluation is
+  an optional column. Capabilities default to ECM, guidance defaults to
+  evidence-derived Engineering Fit Guidance, reports say formal qualification
+  `not requested`, and `--formal-qualification` explicitly selects the existing
+  human-gated decision path. The read-only API serves the engineering result as
+  the run's primary result, while `/formal-result` exposes the formal artifact.
+  `benchmark --judge` now uses the same one-command automated path. ECM and
+  Executive Summary views calculate engineering evidence confidence from
+  distinct directly mapped scored scenarios and no longer present absent human
+  qualification admission as an engineering failure; formal task readiness is
+  retained as a separate explicit layer. `compare` now defaults to compatible
+  observed ECM evidence; the legacy area aggregate is explicit
+  (`--area-summary`) and formal winner claims remain opt-in.
 - **Exhaustive parser-derived CLI guidance and shell completion**: added a
   generated CLI reference covering every command, subcommand, positional
   parameter, option, default, choice, prerequisite, interaction, side effect,
@@ -29,9 +54,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   copies. Read-only API tests reuse one immutable module fixture, and the judge
   concurrency test delays only the reviewer behavior it measures. The complete
   suite retains all assertions while removing repeated setup and unrelated
-  sleeps: 225 tests complete in a repeated 81.23–100.16-second range on the
-  Windows verification host, down from the preceding 219-test 155.38-second
-  baseline.
+  sleeps: the expanded 228-test suite completes in 104.76 seconds on the
+  Windows verification host, below the 180-second budget.
 - **Empirical-panel admission preflight**: `aies suites empirical
   --preflight-runs` now checks that real runs use distinct subjects, identical
   scenario/repeat sets, prompt hashes and suite versions, one shared validated

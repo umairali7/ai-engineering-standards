@@ -3,7 +3,7 @@
 id: architecture
 version: 1.0.0
 schema: 1
-description: Architecture & solution design qualification.
+description: Architecture & solution design engineering assessment.
 profile: architect
 default_risk_tier: RT2
 competencies:

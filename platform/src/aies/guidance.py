@@ -12,6 +12,157 @@ class GuidanceError(ValueError):
     pass
 
 
+def engineering_fit(ref: str, *, matrix: dict | None = None) -> dict:
+    """Derive non-authorizing engineering fit from observed task evidence.
+
+    This is intentionally not Deployment Guidance. It helps engineers interpret
+    automated evaluations without requiring a Qualification Record and cannot
+    create operational authority.
+    """
+    matrix = matrix or ecm.engineering_capability_matrix(ref)
+    rows = []
+    for task in matrix["tasks"]:
+        observed = task.get("observed_performance")
+        percent = round(observed / 4 * 100, 1) if observed is not None else None
+        distinct = task.get("distinct_scenarios", 0)
+        minimum = task.get("minimum_observations") or 0
+        confidence = round(min(1.0, distinct / minimum) * 100, 1) if minimum else 0.0
+        if percent is None:
+            fit = "not-assessed"
+            explanation = "no directly mapped scored scenario evidence"
+        elif percent >= 75:
+            fit = "strong-observed-fit"
+            explanation = "strong observed performance; validate against the intended workload"
+        elif percent >= 50:
+            fit = "review-recommended"
+            explanation = "moderate observed performance; engineering review is recommended"
+        else:
+            fit = "weak-observed-fit"
+            explanation = "weak observed performance; prefer alternatives or add controls"
+        rows.append({
+            "task_id": task["task_id"],
+            "task": task["task"],
+            "fit": fit,
+            "observed_performance_percent": percent,
+            "evidence_confidence_percent": confidence,
+            "distinct_scenarios": distinct,
+            "rating_observations": task.get("rating_observations", 0),
+            "explanation": explanation,
+        })
+    return {
+        "kind": "engineering-fit-guidance",
+        "engineering_fit_schema": 1,
+        "status": "informational",
+        "run_id": matrix["run_id"],
+        "subject": matrix["subject"],
+        "risk_tier": matrix["risk_tier"],
+        "profile": matrix["profile"],
+        "human_evaluation": (matrix.get("engineering_evaluation") or {}).get(
+            "human_evaluation"),
+        "tasks": rows,
+        "authority_boundary": (
+            "Engineering fit interprets observed evidence only. It is not a "
+            "qualification, deployment recommendation, grant, or authorization."),
+    }
+
+
+def render_fit_markdown(result: dict) -> str:
+    human = result.get("human_evaluation") or {}
+    human_label = (
+        f"Reviewed — {human.get('evaluator') or 'named human'}"
+        if human.get("status") == "reviewed" else "Not reviewed (optional)")
+    sections = (
+        ("Strong observed fit", "strong-observed-fit"),
+        ("Use with engineering review", "review-recommended"),
+        ("Weak observed fit", "weak-observed-fit"),
+        ("Not assessed", "not-assessed"),
+    )
+    lines = [
+        "# AIES Engineering Fit Guidance", "",
+        "> **INFORMATIONAL — NOT A QUALIFICATION, GRANT, DEPLOYMENT "
+        "RECOMMENDATION, OR AUTHORIZATION.**", "",
+        f"Subject: `{result['subject']}`  ",
+        f"Run: `{result['run_id']}`  ",
+        f"Scope: {C.risk_tier_label(result['risk_tier'])} · "
+        f"{result['profile']} profile  ",
+        f"Human evaluation: {human_label}", "",
+    ]
+    for title, code in sections:
+        lines.extend([f"## {title}", ""])
+        selected = [row for row in result["tasks"] if row["fit"] == code]
+        if not selected:
+            lines.append("- None.")
+        for row in selected:
+            performance = (
+                "not assessed" if row["observed_performance_percent"] is None
+                else f"{row['observed_performance_percent']:.1f}% observed performance")
+            lines.append(
+                f"- `{row['task_id']} — {row['task']}`: {performance}; "
+                f"{row['evidence_confidence_percent']:.1f}% evidence confidence "
+                f"({row['distinct_scenarios']} distinct scenarios). "
+                f"{row['explanation']}.")
+        lines.append("")
+    lines.extend([
+        "## Boundary", "",
+        "- Human evaluation is optional for engineering fit and is displayed when supplied.",
+        "- Use `aies guidance <run> --qualification <QUAL-ID>` for separately "
+        "governed, qualification-bounded Deployment Guidance.",
+        "- This artifact cannot create or expand authority.", "",
+    ])
+    return "\n".join(lines)
+
+
+def render_fit_html(result: dict) -> str:
+    human = result.get("human_evaluation") or {}
+    human_label = (
+        f"Reviewed — {human.get('evaluator') or 'named human'}"
+        if human.get("status") == "reviewed" else "Not reviewed (optional)")
+    labels = {
+        "strong-observed-fit": "Strong observed fit",
+        "review-recommended": "Use with engineering review",
+        "weak-observed-fit": "Weak observed fit",
+        "not-assessed": "Not assessed",
+    }
+    sections = []
+    for code, label in labels.items():
+        selected = [row for row in result["tasks"] if row["fit"] == code]
+        items = "".join(
+            "<li><code>" + html.escape(f"{row['task_id']} — {row['task']}") +
+            "</code>: " +
+            html.escape(
+                "not assessed" if row["observed_performance_percent"] is None
+                else f"{row['observed_performance_percent']:.1f}% observed performance") +
+            f"; {row['evidence_confidence_percent']:.1f}% evidence confidence "
+            f"({row['distinct_scenarios']} distinct scenarios). " +
+            html.escape(row["explanation"]) + ".</li>"
+            for row in selected) or "<li>None.</li>"
+        sections.append(f"<h2>{html.escape(label)}</h2><ul>{items}</ul>")
+    return f"""<!doctype html><html><head><meta charset='utf-8'><title>AIES Engineering Fit Guidance</title>
+<style>body{{font:16px system-ui;max-width:960px;margin:40px auto;padding:0 24px;color:#18202a}}.banner{{padding:12px;background:#e8f5e9;border-left:5px solid #1a7f37}}</style></head><body>
+<h1>AIES Engineering Fit Guidance</h1><p class='banner'><strong>INFORMATIONAL — NOT A QUALIFICATION, GRANT, DEPLOYMENT RECOMMENDATION, OR AUTHORIZATION.</strong></p>
+<p><strong>Subject:</strong> <code>{html.escape(result['subject'])}</code><br>
+<strong>Scope:</strong> {html.escape(C.risk_tier_label(result['risk_tier']))} · {html.escape(result['profile'])} profile<br>
+<strong>Human evaluation:</strong> {html.escape(human_label)}</p>
+{''.join(sections)}
+<h2>Boundary</h2><p>Human evaluation is optional. Supply a Qualification Record to the CLI for separately governed Deployment Guidance.</p>
+</body></html>"""
+
+
+def write_fit_artifacts(ref: str, *, matrix: dict | None = None) -> dict[str, str]:
+    matrix = matrix or ecm.engineering_capability_matrix(ref)
+    result = engineering_fit(ref, matrix=matrix)
+    rdir = workspace.run_dir(matrix["run_id"])
+    paths = {
+        "markdown": rdir / "engineering-fit-guidance.md",
+        "json": rdir / "engineering-fit-guidance.json",
+        "html": rdir / "engineering-fit-guidance.html",
+    }
+    workspace.write_view(paths["markdown"], render_fit_markdown(result))
+    workspace.write_view(paths["json"], json.dumps(result, indent=2) + "\n")
+    workspace.write_view(paths["html"], render_fit_html(result))
+    return {format: str(path) for format, path in paths.items()}
+
+
 def _autonomy_cap(task: dict, record: dict, risk_tier: str) -> str:
     caps = [(task.get("task_decision") or {}).get("al_envelope", {}).get(risk_tier)]
     for area in task.get("areas") or []:

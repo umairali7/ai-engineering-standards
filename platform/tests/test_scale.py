@@ -36,9 +36,10 @@ def test_report_has_grant_readiness_and_residual_risk(ws, tmp_path):
     md = report.render_markdown(run["run_id"])
     assert "## Grant Readiness" in md and "### Residual risk" in md
     assert "## Engineering Capability Matrix (ECM)" in md
-    assert "### Deployment Guidance" in md
+    assert "### Engineering Fit Summary" in md
     assert "engineering-capability-matrix.md" in md
-    assert "Direct evidence sample" in md
+    assert "Evidence confidence" in md
+    assert "Engineering status" in md
     paths = report.write_reports(run["run_id"])
     assert Path(paths["html"]).exists()
     assert Path(paths["ecm_markdown"]).exists()
@@ -60,7 +61,7 @@ def test_report_has_grant_readiness_and_residual_risk(ws, tmp_path):
     assert summary["deployment_guidance_counts"]["no-recommendation"] == 15
     executive_html = Path(paths["executive_html"]).read_text(encoding="utf-8")
     assert "Automated grounding diagnostic:" in executive_html
-    assert "Human evaluation: reviewed" in executive_html
+    assert "Human evaluation:</strong> reviewed" in executive_html
     bundle = json.loads(Path(paths["bundle_manifest"]).read_text(encoding="utf-8"))
     assert bundle["kind"] == "aies-report-bundle"
     assert bundle["artifacts"]["executive_html"] == "executive-summary.html"

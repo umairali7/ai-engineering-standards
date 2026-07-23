@@ -41,9 +41,15 @@ def test_every_command_and_parameter_has_explanatory_help():
     top = next(a for a in parser._actions
                if isinstance(a, argparse._SubParsersAction))
     qualify_help = top.choices["qualify"].format_help()
+    benchmark_help = top.choices["benchmark"].format_help()
+    compare_help = top.choices["compare"].format_help()
     assert "workflow guidance:" in qualify_help
     assert "prerequisites :" in qualify_help
     assert "next          :" in qualify_help
+    assert "--judge" in benchmark_help
+    assert "non-blocking Engineering Evaluation" in benchmark_help
+    assert "compatibility alias" in compare_help
+    assert "--area-summary" in compare_help
 
 
 def test_checked_in_cli_reference_matches_live_parser():

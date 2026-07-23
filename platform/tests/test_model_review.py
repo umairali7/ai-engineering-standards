@@ -215,7 +215,7 @@ def test_review_command_refreshes_reports_and_keeps_human_score_optional(
     """A model review is an actionable evidence update, not a dead-end file.
 
     The resulting report separates automated reviewer observations from an
-    optional human score, while retaining the no-grant boundary.
+    optional human score without surfacing formal admission as a blocker.
     """
     from argparse import Namespace
     from aies import cli, engine, workspace
@@ -231,7 +231,9 @@ def test_review_command_refreshes_reports_and_keeps_human_score_optional(
             usage={}, raw={})
     monkeypatch.setattr(mockmod.MockAdapter, "generate", judge_generate)
 
-    run = engine.start_qualification("cand", "coder", "RT2", ["CA-05"], repeats=1)
+    run = engine.start_qualification(
+        "cand", "coder", "RT2", ["CA-05"], repeats=1,
+        run_purpose="engineering-evaluation")
     args = Namespace(run=run["run_id"], model_reviewer="reviewer",
                      reviewer_runtime=None, parallel=1, json=False,
                      reviewer="reviewer-model", reviewer_qualified=False,
@@ -241,14 +243,23 @@ def test_review_command_refreshes_reports_and_keeps_human_score_optional(
     captured = capsys.readouterr()
     for stage in ("judge-review", "aggregation", "report-generation"):
         assert f"[{stage}]" in captured.err
+    assert "automated reviewer scores: RECORDED" in captured.out
+    assert "automated scores are usable" in captured.out
+    assert "formal qualification: not requested" in captured.out
+    assert "not admitted" not in captured.out
     rdir = workspace.run_dir(run["run_id"])
     text = (rdir / "report.md").read_text(encoding="utf-8")
     assert "Automated review" in text
     assert "Human eval (optional)" in text
-    assert "Optional Human Evaluation Record" in text
     assert "☑ Reviewed — Human reviewer" in text
     assert "Human reviewer" in text
+    assert "Grant Readiness" not in text
+    assert "BLOCKED" not in text
+    package = workspace.read_json(rdir / "review-package.json")
+    assert package["engineering_evaluation"]["automated_scores_usable"] is True
+    assert package["formal_qualification"]["status"] == "not-requested"
     assert (rdir / "report.html").exists()
+    assert (rdir / "engineering-fit-guidance.html").exists()
 
 
 def test_repeating_same_model_reviewer_reuses_append_only_ratings(ws, tmp_path, monkeypatch):

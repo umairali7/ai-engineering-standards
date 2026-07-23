@@ -1,8 +1,8 @@
-"""Report Generator: Markdown and JSON renderings of an evidence package.
+"""Report generator for engineering evaluation and formal qualification views.
 
-Every report states suite versions, sample sizes, and decisional status;
-non-decisional results carry a banner and a package without a
-human-recorded grant renders as evidence-only (PLATFORM.md §9).
+New runs declare their purpose. Engineering evaluation is non-blocking and
+human evaluation is optional; formal qualification retains its governed
+admission, decision, and grant-readiness semantics.
 """
 
 from __future__ import annotations
@@ -129,21 +129,50 @@ def _human_evaluation_label(evaluation_summary: dict) -> str:
 
 
 def render_json(run_id: str) -> str:
-    pkg = workspace.read_json(workspace.run_dir(run_id) / "evidence-package.json")
-    return json.dumps(pkg, indent=2)
+    from . import evaluation as evaluation_view, run_mode
+
+    rdir = workspace.run_dir(run_id)
+    pkg = workspace.read_json(rdir / "evidence-package.json")
+    manifest = workspace.read_json(rdir / "manifest.json")
+    if run_mode.is_formal(manifest):
+        return json.dumps(pkg, indent=2)
+    return json.dumps({
+        "kind": "engineering-evaluation-report",
+        "engineering_report_schema": 1,
+        "run_id": run_id,
+        "status": evaluation_view.summarize(run_id)["status"],
+        "run_purpose": run_mode.purpose(manifest),
+        "engineering_evaluation": evaluation_view.summarize(run_id),
+        "formal_qualification": {"status": "not-requested"},
+        "canonical_evidence": {
+            "artifact": "evidence-package.json",
+            "rating_observations": pkg.get("rating_observations") or {},
+            "raters": pkg.get("raters") or [],
+            "suite_versions": pkg.get("suite_versions") or {},
+            "environment_fingerprint": pkg.get("environment_fingerprint") or {},
+            "note": (
+                "The canonical artifact preserves rating provenance for replay. "
+                "Formal admission fields in that artifact are not an engineering-"
+                "evaluation verdict."),
+        },
+    }, indent=2)
 
 
 def render_markdown(run_id: str, *, matrix: dict | None = None) -> str:
-    from . import diagnostics, evaluation as evaluation_view
+    from . import diagnostics, evaluation as evaluation_view, run_mode
 
-    pkg = workspace.read_json(workspace.run_dir(run_id) / "evidence-package.json")
+    rdir = workspace.run_dir(run_id)
+    pkg = workspace.read_json(rdir / "evidence-package.json")
+    manifest = workspace.read_json(rdir / "manifest.json")
+    formal = run_mode.is_formal(manifest)
     fp = pkg["environment_fingerprint"]
     source_scores = _score_sources(run_id)
     human_review = _human_review_record(run_id)
     lines: list[str] = []
     a = lines.append
 
-    a("# AIES Qualification Evidence Package")
+    a("# AIES Qualification Evidence Package" if formal
+      else "# AIES Engineering Evaluation Report")
     a("")
     a(f"**Run:** `{pkg['run_id']}`  ")
     subject = pkg.get("subject") or {}
@@ -155,10 +184,12 @@ def render_markdown(run_id: str, *, matrix: dict | None = None) -> str:
     a(f"**Profile:** {pkg['profile']} | **Scoped risk tier:** {C.risk_tier_label(pkg['risk_tier'])} | "
       f"**Assessment subject class:** {pkg['subject_kind']}")
     a("")
-    a(f"> **{pkg['grant_status'].upper()}**")
+    a(f"> **{pkg['grant_status'].upper()}**" if formal
+      else f"> **ENGINEERING EVALUATION "
+           f"{evaluation_view.summarize(run_id)['status'].upper()}**")
     a("")
 
-    if (pkg.get("rating_admission") or {}).get("advisory_ratings", 0):
+    if formal and (pkg.get("rating_admission") or {}).get("advisory_ratings", 0):
         a("> **SCORES ARE JUDGE-PRODUCED (automated).** A judge model rated these "
           "responses; scores reflect the judge's opinion, not ground truth. "
           "Automated ratings are retained as engineering-evaluation and "
@@ -167,7 +198,7 @@ def render_markdown(run_id: str, *, matrix: dict | None = None) -> str:
         a("")
 
     nondecisional = [area for area, d in pkg["areas"].items() if not d["decisional"]]
-    if nondecisional:
+    if formal and nondecisional:
         a("> **NON-DECISIONAL** - sample below the AESQS minimum for "
           f"{', '.join(C.competency_label(area) for area in nondecisional)} (AIES-AESQS-CS-01 §6). These results "
           "MUST NOT be presented as qualification evidence.")
@@ -181,7 +212,7 @@ def render_markdown(run_id: str, *, matrix: dict | None = None) -> str:
     a("")
     a("Automated scores are sufficient to complete this informational engineering "
       "evaluation and its ECM decision products. Human evaluation is optional here; "
-      "formal qualification and grants use the separate protocol below.")
+      "formal qualification and grants use a separate explicit protocol.")
     a("")
     a("| Area | Automated score coverage | Observed automated mean | Human eval | Evaluation status |")
     a("|---|---|---|---|---|")
@@ -201,6 +232,56 @@ def render_markdown(run_id: str, *, matrix: dict | None = None) -> str:
     a(diagnostics.render_report_section_markdown(
         diagnostics.summarize(run_id)).rstrip())
     a("")
+
+    if not formal:
+        a("## Automated Score Detail")
+        a("")
+        a("Scores below are observed reviewer measurements. Human evaluation is "
+          "optional and appears in a separate column when supplied.")
+        a("")
+        for area in evaluation.get("areas") or {}:
+            a(f"### {C.competency_label(area)}")
+            a("")
+            a("| Dimension | Automated review | Human eval (optional) |")
+            a("|---|---:|---:|")
+            for dim in C.DIMENSIONS:
+                a(f"| {C.identifier_label(dim)} | "
+                  f"{_source_cell(source_scores.get(area, {}), 'automated', dim)} | "
+                  f"{_source_cell(source_scores.get(area, {}), 'human', dim)} |")
+            a("")
+        a("## Environment Fingerprint")
+        a("")
+        a("| Field | Value |")
+        a("|---|---|")
+        for key in ("machine", "cpu", "gpu", "ram_gb", "os", "python"):
+            a(f"| {key} | {fp.get(key, 'unknown')} |")
+        rt_fp = fp.get("runtime", {})
+        a(f"| runtime | {rt_fp.get('id', '?')} v{rt_fp.get('version', '?')} |")
+        a(f"| fingerprint | `{fp.get('fingerprint_hash', 'unknown')}` |")
+        a("")
+        from . import ecm
+        matrix = matrix or ecm.engineering_capability_matrix(run_id)
+        a(ecm.render_capability_summary_markdown(matrix).rstrip())
+        a("")
+        a("## Optional Formal Qualification")
+        a("")
+        a("Formal qualification was **not requested** and therefore has no "
+          "readiness verdict in this report. To intentionally apply the "
+          "human-governed protocol, start the run with `--formal-qualification` "
+          "or render the separate formal result explicitly.")
+        a("")
+        a("Decision products: [Engineering Assessment Result]"
+          "(engineering-assessment-result.md) · [Engineering Capability Matrix]"
+          "(engineering-capability-matrix.md) · [Engineering Fit Guidance]"
+          "(engineering-fit-guidance.md) · [Executive Summary]"
+          "(executive-summary.md).")
+        a("")
+        a("---")
+        a(f"Raters: {', '.join(pkg['raters'])} | Aggregated: "
+          f"{pkg['aggregated_at']} | Generated by AIES Engineering Assessment "
+          "Platform (see docs/PLATFORM.md, AIES-DOC-06)")
+        a("")
+        return "\n".join(lines)
 
     # Grant-readiness summary (synthesis of the per-area detail below).
     a("## Grant Readiness (Formal Qualification)")
@@ -357,8 +438,8 @@ def write_reports(run_id: str) -> dict[str, str]:
     part of the evidence-package presentation bundle alongside the Markdown,
     JSON, and standalone Engineering Capability Matrix (ECM) views.
     """
-    from . import (decision, diagnostics, ecm, evaluation, executive_summary, guidance,
-                   report_html)
+    from . import (decision, diagnostics, ecm, engineering_assessment, evaluation,
+                   executive_summary, guidance, report_html, run_mode)
 
     rdir = workspace.run_dir(run_id)
     matrix = ecm.engineering_capability_matrix(run_id)
@@ -390,22 +471,33 @@ def write_reports(run_id: str) -> dict[str, str]:
     assessment_result = None
     manifest = workspace.read_json(rdir / "manifest.json")
     if manifest.get("assessment"):
-        assessment_result = decision.assess_run(run_id)
-        assessment_md = rdir / "assessment-result.md"
-        assessment_html = rdir / "assessment-result.html"
-        workspace.write_view(assessment_md, decision.render_markdown(assessment_result))
-        workspace.write_view(assessment_html, decision.render_html(assessment_result))
-        assessment_paths = {
-            "assessment_markdown": str(assessment_md),
-            "assessment_json": str(rdir / "assessment-result.json"),
-            "assessment_html": str(assessment_html),
-        }
+        if run_mode.is_formal(manifest):
+            assessment_result = decision.assess_run(run_id)
+            assessment_md = rdir / "assessment-result.md"
+            assessment_html = rdir / "assessment-result.html"
+            workspace.write_view(
+                assessment_md, decision.render_markdown(assessment_result))
+            workspace.write_view(
+                assessment_html, decision.render_html(assessment_result))
+            assessment_paths = {
+                "assessment_markdown": str(assessment_md),
+                "assessment_json": str(rdir / "assessment-result.json"),
+                "assessment_html": str(assessment_html),
+            }
+        else:
+            assessment_result, assessment_paths = (
+                engineering_assessment.write_artifacts(run_id))
 
-    # The default bundle has no Qualification Record and therefore cannot emit
-    # a Use recommendation. A later scoped `aies guidance --qualification ...
-    # --write` refreshes only the guidance artifacts with human authority.
-    guidance_paths = guidance.write_artifacts(run_id, matrix=matrix)
-    guidance_result = workspace.read_json(rdir / "deployment-guidance.json")
+    # Evaluation runs receive non-authorizing Engineering Fit Guidance.
+    # Explicit formal runs retain qualification-bounded Deployment Guidance.
+    if run_mode.is_formal(manifest):
+        guidance_paths = guidance.write_artifacts(run_id, matrix=matrix)
+        guidance_result = workspace.read_json(rdir / "deployment-guidance.json")
+        guidance_prefix = "guidance"
+    else:
+        guidance_paths = guidance.write_fit_artifacts(run_id, matrix=matrix)
+        guidance_result = workspace.read_json(rdir / "engineering-fit-guidance.json")
+        guidance_prefix = "fit_guidance"
     summary = executive_summary.build(
         run_id, matrix, guidance_result, assessment_result=assessment_result)
     executive_paths = {
@@ -438,7 +530,8 @@ def write_reports(run_id: str) -> dict[str, str]:
         "markdown": str(rdir / "report.md"), "json": str(rdir / "report.json"),
         "html": str(html_path), "engineering_evaluation": str(evaluation_path),
         **ecm_paths, **assessment_paths,
-        **{f"guidance_{format}": path for format, path in guidance_paths.items()},
+        **{f"{guidance_prefix}_{format}": path
+           for format, path in guidance_paths.items()},
         **{key: str(path) for key, path in executive_paths.items()},
         **{key: str(path) for key, path in diagnostic_paths.items()},
     }
@@ -447,10 +540,15 @@ def write_reports(run_id: str) -> dict[str, str]:
         "run_id": run_id, "status": "informational-index",
         "artifacts": {key: Path(path).name for key, path in paths.items()},
         "audience_boundaries": {
-            "qualification_evidence": "governance and auditors",
-            "assessment_result": "authoritative assessment outcome when available",
+            "engineering_report": "evaluation results for engineers and reviewers",
+            "assessment_result": (
+                "authoritative formal outcome" if run_mode.is_formal(manifest)
+                else "non-blocking engineering assessment completion"),
             "engineering_capability_matrix": "engineers",
-            "deployment_guidance": "operations and managers; requires human qualification for Use",
+            "guidance": (
+                "qualification-bounded operations guidance"
+                if run_mode.is_formal(manifest)
+                else "engineering fit; no deployment authority"),
             "executive_summary": "leadership",
             "grounding_diagnostics": "source-separated informational reviewer observations",
         },

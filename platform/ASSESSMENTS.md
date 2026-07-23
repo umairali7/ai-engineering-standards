@@ -1,4 +1,4 @@
-# Assessments — Qualification Composition as Code
+# Assessments — Engineering Composition as Code
 
 | | |
 |---|---|
@@ -6,9 +6,9 @@
 | **Status** | Draft |
 | **Audience** | Assessment authors · Assessors · Platform teams |
 
-An **assessment** is a named qualification composed as **declarative data**:
+An **assessment** is a named engineering scope composed as **declarative data**:
 which competencies make it up, whether each is mandatory or advisory, how much
-each weighs, the EV-weighting profile, and sampling. Adding a new qualification
+each weighs, the EV-weighting profile, and sampling. Adding a new assessment
 is `git add assessments/finance.yaml`, not a code change. Design and rationale:
 [ADR-0005](../adr/ADR-0005-Assessment-as-Code.md).
 
@@ -21,24 +21,41 @@ those (the validator enforces a strict allowed-key schema).
 
 ```
 aies assessment list                                  # the shipped assessments
-aies qualify <deployment> --assessment enterprise --judge <judge>   # compose, score, decide
-aies assessment result <run>                          # re-decide an aggregated run (no inference)
-aies assessment result <run> --json                   # the Canonical Assessment Result object
+aies qualify <deployment> --assessment enterprise --judge <judge>   # compose, score, analyze
+aies assessment result <run>                          # Engineering Assessment Result
+aies assessment result <run> --json                   # COMPLETE/PARTIAL/NOT SCORED
 aies assessment result <run> --format html --out result.html   # presentation-grade view
+
+# Explicit formal qualification:
+aies qualify <deployment> --assessment enterprise --formal-qualification
+aies assessment result <run> --formal-qualification
 ```
 
-The Markdown, JSON, and HTML renderers are **views of the same Canonical
-Assessment Result** — they never re-decide. The outcome shown is verbatim from
-the frozen decision engine; the HTML is a single self-contained, theme-aware,
-print-ready file (browser "Save as PDF" gives the PDF deliverable).
+The default Markdown, JSON, and HTML renderers are views of the same
+non-blocking Engineering Assessment Result. Automated coverage can complete it;
+human evaluation is optional and shown separately. The HTML is self-contained,
+theme-aware, and print-ready.
 
 `--assessment` selects the competency set, profile, risk tier, and sampling; the
 resolved assessment is recorded immutably in the run manifest. After scoring +
-aggregation, the platform decides the **outcome** and appends it to the report.
+aggregation, the platform records engineering completion and observed results.
 
-## The outcome (authoritative)
+## Engineering result (default)
 
-An assessment result is one of — decided over the **mandatory** competencies,
+| Status | Meaning |
+|---|---|
+| **COMPLETE** | every mandatory competency has complete automated, human, or mixed score coverage |
+| **PARTIAL** | at least one mandatory competency has scores, but coverage is incomplete |
+| **NOT SCORED** | no mandatory competency has scored evidence |
+
+These statuses describe execution and evidence coverage. They are not a
+qualification, grant, or deployment authorization.
+
+## Formal outcome (explicit)
+
+`--formal-qualification` selects the governed decision engine. Its result is
+one of the following, decided over the **mandatory** competencies:
+
 most-severe wins (`FAIL > INCONCLUSIVE > INSUFFICIENT EVIDENCE > PASS`):
 
 | Outcome | Meaning |
@@ -77,7 +94,7 @@ a conformity framework into a leaderboard.
 id: finance                    # stable identifier
 version: 1.0.0                 # CONTENT version — certifications cite this
 schema: 1                      # file-format version (engine-owned)
-description: Finance-grade AI-native SDLC qualification.
+description: Finance-grade AI-native SDLC engineering assessment.
 profile: enterprise            # an existing profiles/*.yaml (EV weighting)
 default_risk_tier: RT3       # RT3 — Significant
 competencies:

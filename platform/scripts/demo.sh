@@ -1,23 +1,14 @@
 #!/usr/bin/env bash
-# AIES end-to-end demo — the whole platform, fully offline, in one script.
-#
-# Executable documentation (STABILITY/onboarding): a contributor with nothing
-# installed but `aies` can watch the complete workflow run against the mock
-# runtime — discover a deployment, compose a named qualification from an
-# assessment, collect + auto-score evidence with a mock judge, let the frozen
-# decision engine decide the outcome, and render the Canonical Assessment
-# Result. No GPU, no API key, no network.
-#
-# For a run against a REAL deployment, see `make integration-demo`.
+# AIES end-to-end engineering evaluation demo — fully offline.
 set -euo pipefail
 
 WS="$(mktemp -d 2>/dev/null || echo "${TMPDIR:-/tmp}/aies-demo-$$")"
 export AIES_WORKSPACE="$WS"
 CANDIDATE="mock-mock-small"
-JUDGE="mock-mock-large"          # a DIFFERENT deployment — never self-judge
+JUDGE="mock-mock-large"          # a different deployment — never self-judge
 ASSESSMENT="coder"
 
-echo "== AIES demo (offline, mock runtime) =="
+echo "== AIES engineering evaluation demo (offline, mock runtime) =="
 echo "workspace: $WS"
 echo
 
@@ -26,32 +17,39 @@ aies doctor --json > /dev/null && echo "doctor: ok"
 aies discover > /dev/null && echo "discover: registered mock deployments"
 
 echo
-echo "-- 2. the named qualification (declarative) --"
+echo "-- 2. named engineering assessments (declarative composition) --"
 aies assessment list
 
 echo
-echo "-- 3. compose + collect + auto-score + decide --"
+echo "-- 3. compose + collect + auto-score + analyze --"
 RUN=$(aies qualify "$CANDIDATE" --assessment "$ASSESSMENT" --judge "$JUDGE" \
-        --repeats 5 --json | python -c 'import sys,json; print(json.load(sys.stdin)["run_id"])')
+        --parallel 8 --json | python -c 'import sys,json; print(json.load(sys.stdin)["run_id"])')
 echo "run: $RUN"
 
 echo
-echo "-- 4. the Canonical Assessment Result (authoritative outcome) --"
+echo "-- 4. Engineering Assessment Result (human evaluation optional) --"
 aies assessment result "$RUN"
 
 echo
-echo "-- 5. per-area capability profile (planner/coder/security/… side by side) --"
-aies capabilities "$RUN" || true
+echo "-- 5. Engineering Capability Matrix (task strengths and gaps) --"
+aies capabilities "$RUN" --ecm
 
 echo
-echo "-- 6. presentation-grade renders (views of the same result) --"
-aies assessment result "$RUN" --format html --out "$WS/assessment.html" && echo "wrote $WS/assessment.html"
-aies report "$RUN" --format html --write > /dev/null && echo "wrote evidence report (HTML)"
+echo "-- 6. evidence-derived Engineering Fit Guidance --"
+aies guidance "$RUN"
 
 echo
-echo "-- 7. the arbiter: is the decision engine conformant to AESQS semantics? --"
-aies conform engine || true
+echo "-- 7. presentation-grade renders --"
+aies assessment result "$RUN" --format html --out "$WS/assessment.html"
+echo "wrote $WS/assessment.html"
+aies report "$RUN" --format html --write > /dev/null
+echo "wrote Engineering Evaluation Report (HTML)"
+
+echo
+echo "-- 8. decision-engine conformance --"
+aies conform engine
 
 echo
 echo "== demo complete: $WS =="
-echo "tip: 'aies serve' exposes these artifacts as a read-only JSON API."
+echo "Human evaluation was optional and did not block collection, scoring, analysis, assessment, or reporting."
+echo "Formal qualification is available separately with --formal-qualification."

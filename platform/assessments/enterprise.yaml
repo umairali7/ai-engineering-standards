@@ -1,10 +1,10 @@
 # Enterprise assessment (ADR-0005). Declarative: which competencies compose the
-# qualification and how much each matters. The engine owns the decision rules —
+# assessment and how much each matters. The engine owns the formal decision rules —
 # nothing here can weaken a gate, minimum, or AL cap.
 id: enterprise
 version: 1.0.0
 schema: 1
-description: Enterprise-grade AI-native SDLC qualification for regulated delivery.
+description: Enterprise-grade AI-native SDLC engineering assessment for regulated delivery.
 profile: enterprise            # EV-dimension weighting
 default_risk_tier: RT2
 competencies:

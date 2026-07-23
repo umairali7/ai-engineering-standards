@@ -26,17 +26,25 @@ authority records every grant (PLATFORM.md D8). Output is always scoped —
 per-competency-area competency levels and per-tier autonomy envelopes —
 never a global "production ready" verdict (D4).
 
+**Engineering evaluation is the default and does not require human review.**
+Automated scores can complete benchmarking, scoring, analysis, a named
+Engineering Assessment Result, the ECM, Grounding Diagnostics, Engineering Fit
+Guidance, and the complete report bundle. Human evaluation is an optional,
+separately displayed assurance input. Only an explicitly requested
+`--formal-qualification` run applies the human-gated qualification decision
+protocol; grants remain human decisions.
+
 **Milestones M1–M4 shipped** (see [PLATFORM.md §10](../docs/PLATFORM.md)) —
 the full pipeline is runnable end to end:
 `doctor` (runtime-aware), `discover`, `registry`/`deployment` (incl. `update`,
 `remove`, `verify-artifact` for supply-chain provenance), `qualify` (with
 `--parallel`, `--judge` auto-scoring, `--journey`, `--all-areas`), `score`,
 `import` (external eval results), `report` (complete linked Markdown/JSON/HTML
-bundle: qualification evidence, ECM, Grounding Diagnostics, bounded guidance,
-and Executive Summary), `transcript`,
-`capabilities` (per-area SDLC profile; `--ecm` writes an informational,
-task-mapped Engineering Capability Matrix), `judge` (available/list/history),
-`assessment` (declarative qualification composition — list/show/validate/result,
+bundle: Engineering Evaluation Report, ECM, Grounding Diagnostics, Engineering
+Fit Guidance, and Executive Summary), `transcript`,
+`capabilities` (task-mapped ECM by default; `--qualification-profile` selects
+the formal per-area CL/autonomy view), `judge` (available/list/history),
+`assessment` (declarative engineering composition — list/show/validate/result,
 Markdown/JSON/HTML, ADR-0005), `audit` (repository conformance — maturity per
 area, ADR-0004), `corpus` (the platform reviews its **own** assessment corpus —
 health/coverage/duplicates/review; advisory, multidimensional, no single grade),
@@ -71,13 +79,15 @@ a human decides).
 Hit a snag? [TROUBLESHOOTING.md](TROUBLESHOOTING.md) covers the common
 endpoint, TLS, auth, performance, and judge issues.
 
-**The full cycle:** `discover` → `qualify` → `score` (human, and
-optionally a model reviewer) → `review` (assembles the peer-review
-package with the calibration gate) → `qualify --resume` (gated
-aggregation) → `grant` (a **named human authority** records the
-decision, producing a Qualification Record — the platform never
-grants) → `verify` (re-checks the environment fingerprint; an
-environment change invalidates the grant, per D7).
+**Default engineering cycle:** `discover` → `qualify --judge` → completed
+Engineering Assessment Result + ECM + diagnostics + Engineering Fit Guidance +
+reports. No human step is required. `score`, `review --model-reviewer`, and
+`import` also refresh the complete bundle in their own command.
+
+**Optional formal cycle:** start with `qualify --formal-qualification`, complete
+the governed human-rater protocol, then `grant` lets a **named human authority**
+record the decision and `verify` re-checks its environment fingerprint. The
+platform itself never grants.
 
 ## Install
 
@@ -89,7 +99,7 @@ aies suites validate      # suites + shipped assessments (one gate; CI runs it)
 ```
 
 The warm-cache full-suite performance budget on the recorded Windows reference
-workstation is **180 seconds**. The current 219-test baseline is **155.38
+workstation is **180 seconds**. The current 228-test baseline is **104.76
 seconds**. A run above budget or a greater-than-25% regression should be
 profiled before merge; use the ranked durations rather than guessing. Scenario
 YAML and suite digests are cached by path, modification time, and size, return
@@ -106,19 +116,19 @@ make demo        # core workflow (or: bash scripts/demo.sh)
 make demo-full   # comprehensive one-process tour of the whole platform
 ```
 
-`make demo` runs the **core workflow** against the mock runtime — discover a
-deployment, compose a named assessment, collect responses, retain a mock
-judge's scores as automated evaluation observations, and render the Canonical
-Assessment Result as Markdown + HTML. Synthetic mock-judge scores do not become
-qualification evidence.
+`make demo` runs the **core engineering workflow** against the mock runtime:
+discover, compose, collect, auto-score, render a COMPLETE Engineering Assessment
+Result, show the ECM and Engineering Fit Guidance, and produce Markdown/JSON/HTML
+reports. Human evaluation is optional and does not block any stage.
 
 `make demo-full` is the optimized **one-process comprehensive tour** (about 16
 seconds on the recorded Windows baseline): the three subjects AIES can
 assess (a model deployment via `qualify`, a repository via `audit`, and the
 standard itself via `conform engine`), the calibrated measurement instruments,
 a completed automated Engineering Evaluation with optional human-evaluation
-status, the stricter formal qualification/grant boundary, and the Phase-2
-empirical harness. The mock run deliberately does not fabricate a human grant.
+status, actionable engineering fit, and the Phase-2 empirical harness. Formal
+qualification is identified as a separate available workflow, not run as a
+failure-oriented demo stage.
 
 No GPU, no API key, no network. It's **executable documentation** — the core
 path is CI-gated as [`tests/test_demo.py`](tests/test_demo.py) and the
@@ -132,17 +142,27 @@ aies doctor                    # validate environment/runtime; inventory workspa
 aies discover                  # register the deployments each runtime serves
 aies registry list            # see the named deployments (e.g. mock-mock-small)
 
-aies qualify <deployment> --profile enterprise --rt 2 --area CA-05
-                              # stages 2-4: discovery, environment, benchmark
-# ... fill the generated scoresheet.json (integer 0-4 per dimension,
-#     rater name, findings for any score <= 2) ...
-aies score <run-id>           # ingest ratings (append-only records)
-aies qualify --resume <run-id> # stage 5: gated, weighted aggregation
-aies report <run-id> --format markdown         # evidence package
+aies qualify <deployment> --profile enterprise --rt 2 --all-areas \
+  --judge <judge> --parallel 4
+                              # collect, score, analyze, and report in one command
+# `benchmark` has the same non-blocking automated path:
+aies benchmark <deployment> --all-areas --judge <judge> --parallel 4
+aies assessment result <run-id>  # COMPLETE/PARTIAL engineering result; exit 0
+aies capabilities <run-id>       # ECM task strengths, gaps, confidence
+aies guidance <run-id>           # Engineering Fit Guidance
+aies report <run-id> --format html --write
+
+# Optional manual/imported rating paths also finish their own bundle:
+aies score <run-id>                # ingest + aggregate + report
+aies import <run-id> external.json # import + aggregate + report
+
+# Only when formal qualification is actually intended:
+aies qualify <deployment> ... --formal-qualification
+aies assessment result <run-id> --formal-qualification
 
 aies runs list                # result history
 aies runs progress <run-id>   # durable live stage, %, elapsed, rate, ETA, failures
-aies compare <dep-a> <dep-b>  # deltas on identical suite versions only
+aies compare <dep-a> <dep-b>  # compatible observed ECM task comparison
 aies suites validate          # validate suite catalog before publishing changes
 ```
 
@@ -151,7 +171,8 @@ current stage, completed/total work, percentage, elapsed time, throughput, ETA,
 failure count, and current scenario or batch. The same state is written to the
 run's `progress.json`, so another terminal can inspect it with
 `aies runs progress <run-id>` even if the original CLI is still running.
-Progress is implicit in `qualify`, `qualify --resume`, `review`, and `score`;
+Progress is implicit in `qualify`, `benchmark`, `qualify --resume`, `review`,
+and `score`;
 the separate `runs progress` command is only an optional second-terminal view.
 The live line identifies the current human-readable scenario family and
 calibrated task objective with its ordinal—for example, `Executing task 2/30:

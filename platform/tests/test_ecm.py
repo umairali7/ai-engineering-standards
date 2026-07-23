@@ -41,6 +41,9 @@ def test_ecm_groups_existing_families_and_labels_small_samples(tmp_path, monkeyp
     assert code_generation["status"] == "observed"
     assert code_generation["decision_semantics"] == "1.0"
     assert code_generation["coverage_percent"] == 0
+    assert code_generation["engineering_confidence_percent"] > 0
+    assert code_generation["engineering_status"].startswith("observed")
+    assert code_generation["qualification_status"] == "observed"
     assert code_generation["task_decision"]["mapping_review_satisfied"] is False
     assert any(task["status"] == "not assessed" for task in matrix["tasks"])
     assert matrix["rows"]
@@ -71,7 +74,8 @@ def test_ecm_writer_emits_json_markdown_and_html(tmp_path, monkeypatch):
         assert path.exists()
         assert marker in path.read_text(encoding="utf-8")
     html = ecm.render_html(matrix)
-    assert "Direct evidence sample" in html
+    assert "Evidence confidence" in html
+    assert "Engineering status" in html
     assert "Scenario-family evidence and traceability" in html
     assert "Task Capability Profile" in ecm.render_capability_summary_html(matrix)
 

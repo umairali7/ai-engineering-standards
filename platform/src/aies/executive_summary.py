@@ -1,119 +1,182 @@
-"""Leadership-facing summary over existing AIES decision products.
+"""Leadership-facing summary over existing AIES decision products."""
 
-The summary is a presentation artifact. It does not score evidence, decide an
-assessment, qualify a subject, or create deployment authority.
-"""
 from __future__ import annotations
 
 import html
 import json
 
-from . import constants as C, diagnostics, evaluation, workspace
+from . import constants as C, diagnostics, evaluation, run_mode, workspace
 
 
-def build(run_id: str, matrix: dict, deployment_guidance: dict,
+def build(run_id: str, matrix: dict, decision_guidance: dict,
           assessment_result: dict | None = None) -> dict:
-    pkg = workspace.read_json(workspace.run_dir(run_id) / "evidence-package.json")
+    rdir = workspace.run_dir(run_id)
+    pkg = workspace.read_json(rdir / "evidence-package.json")
+    manifest = workspace.read_json(rdir / "manifest.json")
+    formal = run_mode.is_formal(manifest)
     task_counts: dict[str, int] = {}
     for task in matrix["tasks"]:
-        task_counts[task["status"]] = task_counts.get(task["status"], 0) + 1
+        status = (task["status"] if formal else
+                  task.get("engineering_status", "not assessed"))
+        task_counts[status] = task_counts.get(status, 0) + 1
+    guidance_field = (
+        "fit" if decision_guidance.get("kind") == "engineering-fit-guidance"
+        else "guidance")
     guidance_counts: dict[str, int] = {}
-    for task in deployment_guidance["tasks"]:
-        key = task["guidance"]
+    for task in decision_guidance["tasks"]:
+        key = task[guidance_field]
         guidance_counts[key] = guidance_counts.get(key, 0) + 1
     ready = all(
         area.get("decisional") and area.get("gates_passed")
         and (area.get("rater_protocol") or {}).get("satisfied", True)
         for area in pkg["areas"].values())
+
+    assessment = None
+    if assessment_result:
+        assessment = {
+            "kind": assessment_result["kind"],
+            "id": assessment_result["assessment"]["id"],
+            "version": assessment_result["assessment"]["version"],
+            "status": assessment_result.get(
+                "outcome", assessment_result.get("status")),
+        }
+    formal_status = (
+        ("ready-for-human-review" if ready else "not-ready")
+        if formal else "not-requested")
+    fit_mode = decision_guidance.get("kind") == "engineering-fit-guidance"
     return {
         "kind": "executive-summary",
-        "executive_summary_schema": 1,
+        "executive_summary_schema": 2,
         "status": "informational",
         "run_id": run_id,
+        "run_purpose": run_mode.purpose(manifest),
         "subject": matrix["subject"],
         "scope": {
             "risk_tier": matrix["risk_tier"],
             "profile": matrix["profile"],
         },
-        "assessment": ({
-            "id": assessment_result["assessment"]["id"],
-            "version": assessment_result["assessment"]["version"],
-            "outcome": assessment_result["outcome"],
-        } if assessment_result else None),
+        "assessment": assessment,
         "engineering_evaluation": evaluation.summarize(run_id),
         "grounding_diagnostics": diagnostics.summarize(run_id),
-        "formal_qualification_readiness": "ready-for-human-review" if ready else "blocked",
+        "formal_qualification": {
+            "status": formal_status,
+            "requested": formal,
+        },
+        # Compatibility field; evaluation runs now say not-requested, never blocked.
+        "formal_qualification_readiness": formal_status,
         "task_status_counts": task_counts,
-        "deployment_guidance_counts": guidance_counts,
-        "qualification_record": deployment_guidance.get("qualification_record"),
+        "guidance_kind": decision_guidance["kind"],
+        "guidance_counts": guidance_counts,
+        "deployment_guidance_counts": (
+            guidance_counts if not fit_mode else {}),
+        "qualification_record": decision_guidance.get("qualification_record"),
         "artifacts": {
-            "qualification_evidence": {
+            "engineering_report": {
                 "markdown": "report.md", "json": "report.json", "html": "report.html"},
             "assessment_result": ({
-                "markdown": "assessment-result.md", "json": "assessment-result.json",
-                "html": "assessment-result.html"} if assessment_result else None),
+                "markdown": ("assessment-result.md" if formal
+                             else "engineering-assessment-result.md"),
+                "json": ("assessment-result.json" if formal
+                         else "engineering-assessment-result.json"),
+                "html": ("assessment-result.html" if formal
+                         else "engineering-assessment-result.html"),
+            } if assessment_result else None),
             "engineering_capability_matrix": {
                 "markdown": "engineering-capability-matrix.md",
                 "json": "engineering-capability-matrix.json",
                 "html": "engineering-capability-matrix.html"},
-            "deployment_guidance": {
-                "markdown": "deployment-guidance.md", "json": "deployment-guidance.json",
-                "html": "deployment-guidance.html"},
+            "guidance": {
+                "markdown": ("engineering-fit-guidance.md" if fit_mode
+                             else "deployment-guidance.md"),
+                "json": ("engineering-fit-guidance.json" if fit_mode
+                         else "deployment-guidance.json"),
+                "html": ("engineering-fit-guidance.html" if fit_mode
+                         else "deployment-guidance.html"),
+            },
             "grounding_diagnostics": {
-                "markdown": "grounding-diagnostics.md", "json": "grounding-diagnostics.json",
+                "markdown": "grounding-diagnostics.md",
+                "json": "grounding-diagnostics.json",
                 "html": "grounding-diagnostics.html"},
         },
         "limitations": [
             "This summary is informational and does not replace the underlying artifacts.",
-            "No task recommendation creates authority; Deployment Guidance is bounded by a current human Qualification Record.",
-            "An absent Qualification Record means the bundled Deployment Guidance can emit no Use recommendation.",
+            ("Engineering Fit Guidance interprets observed automated evidence and "
+             "does not create deployment authority." if fit_mode else
+             "Deployment Guidance is bounded by a current human Qualification Record."),
+            "Human evaluation is optional for engineering evaluation; formal qualification and grants remain separately governed.",
         ],
     }
 
 
+def _human_label(summary: dict) -> str:
+    human = summary["engineering_evaluation"].get("human_evaluation") or {}
+    return ("reviewed" if human.get("status") == "reviewed"
+            else "not reviewed (optional)")
+
+
 def render_markdown(summary: dict) -> str:
     assessment = summary.get("assessment")
-    evaluation_status = summary["engineering_evaluation"].get("status", "not-scored")
-    human = (summary["engineering_evaluation"].get("human_evaluation") or {})
+    evaluation_status = summary["engineering_evaluation"].get(
+        "status", "not-scored")
     automated_grounding = summary["grounding_diagnostics"]["sources"]["automated"]
-    grounding_reliability = automated_grounding["observed_grounding_reliability_percent"]
+    grounding_reliability = automated_grounding[
+        "observed_grounding_reliability_percent"]
+    formal = summary["formal_qualification"]
+    fit_mode = summary["guidance_kind"] == "engineering-fit-guidance"
     lines = [
         "# AIES Executive Summary", "",
-        "> **INFORMATIONAL — NOT QUALIFICATION EVIDENCE, A GRANT, OR DEPLOYMENT AUTHORIZATION.**", "",
+        "> **INFORMATIONAL — NOT A QUALIFICATION, GRANT, OR DEPLOYMENT AUTHORIZATION.**", "",
         f"**Subject:** `{summary['subject']}`  ",
         f"**Scope:** {C.risk_tier_label(summary['scope']['risk_tier'])} · "
         f"{summary['scope']['profile']} profile  ",
-        f"**Engineering evaluation:** {evaluation_status.upper()} · Human evaluation: "
-        f"{'reviewed' if human.get('status') == 'reviewed' else 'not reviewed (optional)'}  ",
+        f"**Engineering evaluation:** {evaluation_status.upper()} · "
+        f"Human evaluation: {_human_label(summary)}  ",
         f"**Automated grounding diagnostic:** "
         f"{'unavailable' if grounding_reliability is None else f'{grounding_reliability:.1f}% observed reliability'}  ",
-        f"**Formal qualification readiness:** {summary['formal_qualification_readiness'].upper()}", "",
+        f"**Formal qualification:** {formal['status'].upper()}", "",
     ]
     if assessment:
+        title = ("Engineering assessment" if
+                 assessment["kind"] == "engineering-assessment-result"
+                 else "Formal qualification assessment")
         lines.extend([
-            "## Assessment outcome", "",
-            f"**{assessment['id']} v{assessment['version']}: {assessment['outcome']}**", "",
+            f"## {title}", "",
+            f"**{assessment['id']} v{assessment['version']}: "
+            f"{assessment['status']}**", "",
         ])
     else:
-        lines.extend(["## Assessment outcome", "", "No declarative assessment result is available for this run.", ""])
-    lines.extend(["## Engineering task evidence", "",
-                  "| Status | Tasks |", "|---|---:|"])
-    for status in ("demonstrated", "observed", "insufficient", "gate-failed",
-                   "performance-below-threshold", "not assessed"):
-        lines.append(f"| {status} | {summary['task_status_counts'].get(status, 0)} |")
-    lines.extend(["", "## Deployment guidance", "",
-                  "| Guidance | Tasks |", "|---|---:|"])
-    for guidance in ("use", "use-with-review", "no-recommendation", "avoid-for-scoped-use"):
-        lines.append(f"| {guidance} | {summary['deployment_guidance_counts'].get(guidance, 0)} |")
+        lines.extend([
+            "## Engineering assessment", "",
+            "No declarative assessment composition was used for this run.", "",
+        ])
     lines.extend([
-        "", f"Qualification Record: `{summary['qualification_record'] or 'not supplied'}`", "",
-        "## Decision products", "",
-        "- [Qualification Evidence Package](report.html) — governance and auditors.",
-        "- [Canonical Assessment Result](assessment-result.html) — authoritative assessment outcome."
-        if assessment else "- Canonical Assessment Result — not available for this run.",
-        "- [Engineering Capability Matrix](engineering-capability-matrix.html) — engineers.",
-        "- [Grounding Diagnostics](grounding-diagnostics.html) — source-separated hallucination and fabrication observations.",
-        "- [Deployment Guidance](deployment-guidance.html) — operations and managers.",
+        "## Engineering task evidence", "",
+        "| Status | Tasks |", "|---|---:|",
+    ])
+    for status, count in summary["task_status_counts"].items():
+        lines.append(
+            f"| {status} | {count} |")
+    lines.extend([
+        "", "## " + ("Engineering fit" if fit_mode else "Deployment guidance"),
+        "", "| Guidance | Tasks |", "|---|---:|",
+    ])
+    for label, count in summary["guidance_counts"].items():
+        lines.append(f"| {label} | {count} |")
+    lines.extend(["", "## Decision products", ""])
+    lines.append("- [Engineering Evaluation Report](report.html) — complete scored evaluation.")
+    if assessment:
+        artifact = summary["artifacts"]["assessment_result"]["html"]
+        label = ("Engineering Assessment Result" if
+                 assessment["kind"] == "engineering-assessment-result"
+                 else "Canonical Formal Assessment Result")
+        lines.append(f"- [{label}]({artifact}) — assessment composition result.")
+    lines.extend([
+        "- [Engineering Capability Matrix](engineering-capability-matrix.html) — task strengths and gaps.",
+        "- [Grounding Diagnostics](grounding-diagnostics.html) — hallucination and fabrication observations.",
+        ("- [Engineering Fit Guidance](engineering-fit-guidance.html) — "
+         "evidence-derived fit; no deployment authority." if fit_mode else
+         "- [Deployment Guidance](deployment-guidance.html) — "
+         "qualification-bounded operational guidance."),
         "", "## Limitations", "",
     ])
     lines.extend(f"- {item}" for item in summary["limitations"])
@@ -121,45 +184,51 @@ def render_markdown(summary: dict) -> str:
 
 
 def render_html(summary: dict) -> str:
-    evaluation_status = summary["engineering_evaluation"].get("status", "not-scored")
-    human = summary["engineering_evaluation"].get("human_evaluation") or {}
-    automated_grounding = summary["grounding_diagnostics"]["sources"]["automated"]
-    grounding_reliability = automated_grounding["observed_grounding_reliability_percent"]
-    grounding_text = ("unavailable" if grounding_reliability is None
-                      else f"{grounding_reliability:.1f}% observed reliability")
-    markdown_links = [
-        ("Qualification Evidence Package", "report.html"),
-        ("Engineering Capability Matrix", "engineering-capability-matrix.html"),
-        ("Grounding Diagnostics", "grounding-diagnostics.html"),
-        ("Deployment Guidance", "deployment-guidance.html"),
-    ]
-    if summary.get("assessment"):
-        markdown_links.insert(1, ("Canonical Assessment Result", "assessment-result.html"))
-    links = "".join(
-        f"<li><a href='{html.escape(path)}'>{html.escape(label)}</a></li>"
-        for label, path in markdown_links)
+    evaluation_status = summary["engineering_evaluation"].get(
+        "status", "not-scored")
+    automated = summary["grounding_diagnostics"]["sources"]["automated"]
+    reliability = automated["observed_grounding_reliability_percent"]
+    grounding = ("unavailable" if reliability is None
+                 else f"{reliability:.1f}% observed reliability")
+    assessment = summary.get("assessment")
+    assessment_text = (
+        f"{assessment['id']} v{assessment['version']}: {assessment['status']}"
+        if assessment else "No declarative assessment composition was used.")
+    fit_mode = summary["guidance_kind"] == "engineering-fit-guidance"
     task_rows = "".join(
         f"<tr><td>{html.escape(status)}</td><td>{count}</td></tr>"
         for status, count in summary["task_status_counts"].items())
     guidance_rows = "".join(
         f"<tr><td>{html.escape(status)}</td><td>{count}</td></tr>"
-        for status, count in summary["deployment_guidance_counts"].items())
-    assessment = summary.get("assessment")
-    assessment_text = (f"{assessment['id']} v{assessment['version']}: {assessment['outcome']}"
-                       if assessment else "No declarative assessment result is available.")
+        for status, count in summary["guidance_counts"].items())
+    links = [
+        ("Engineering Evaluation Report", "report.html"),
+        ("Engineering Capability Matrix", "engineering-capability-matrix.html"),
+        ("Grounding Diagnostics", "grounding-diagnostics.html"),
+        (("Engineering Fit Guidance", "engineering-fit-guidance.html")
+         if fit_mode else ("Deployment Guidance", "deployment-guidance.html")),
+    ]
+    if assessment:
+        links.insert(1, (
+            "Engineering Assessment Result" if
+            assessment["kind"] == "engineering-assessment-result"
+            else "Canonical Formal Assessment Result",
+            summary["artifacts"]["assessment_result"]["html"]))
+    link_html = "".join(
+        f"<li><a href='{html.escape(path)}'>{html.escape(label)}</a></li>"
+        for label, path in links)
     return f"""<!doctype html><html><head><meta charset='utf-8'><title>AIES Executive Summary</title>
-<style>body{{font:16px system-ui;max-width:960px;margin:40px auto;padding:0 24px;color:#18202a}}table{{border-collapse:collapse;margin:16px 0}}th,td{{border:1px solid #ccd4dd;padding:8px 12px;text-align:left}}.banner{{padding:12px;background:#fff3cd;border-left:5px solid #d99b00}}</style></head><body>
-<h1>AIES Executive Summary</h1><p class='banner'><strong>INFORMATIONAL — NOT QUALIFICATION EVIDENCE, A GRANT, OR DEPLOYMENT AUTHORIZATION.</strong></p>
+<style>body{{font:16px system-ui;max-width:960px;margin:40px auto;padding:0 24px;color:#18202a}}table{{border-collapse:collapse;margin:16px 0}}th,td{{border:1px solid #ccd4dd;padding:8px 12px;text-align:left}}.banner{{padding:12px;background:#e8f5e9;border-left:5px solid #1a7f37}}</style></head><body>
+<h1>AIES Executive Summary</h1><p class='banner'><strong>ENGINEERING EVALUATION {html.escape(evaluation_status.upper())}</strong></p>
 <p><strong>Subject:</strong> <code>{html.escape(summary['subject'])}</code><br>
 <strong>Scope:</strong> {html.escape(C.risk_tier_label(summary['scope']['risk_tier']))} · {html.escape(summary['scope']['profile'])} profile<br>
-<strong>Engineering evaluation:</strong> {html.escape(evaluation_status.upper())} · Human evaluation: {"reviewed" if human.get("status") == "reviewed" else "not reviewed (optional)"}<br>
-<strong>Automated grounding diagnostic:</strong> {html.escape(grounding_text)}<br>
-<strong>Formal qualification readiness:</strong> {html.escape(summary['formal_qualification_readiness'].upper())}</p>
-<h2>Assessment outcome</h2><p><strong>{html.escape(assessment_text)}</strong></p>
+<strong>Human evaluation:</strong> {html.escape(_human_label(summary))}<br>
+<strong>Automated grounding diagnostic:</strong> {html.escape(grounding)}<br>
+<strong>Formal qualification:</strong> {html.escape(summary['formal_qualification']['status'].upper())}</p>
+<h2>Assessment</h2><p><strong>{html.escape(assessment_text)}</strong></p>
 <h2>Engineering task evidence</h2><table><tr><th>Status</th><th>Tasks</th></tr>{task_rows}</table>
-<h2>Deployment guidance</h2><table><tr><th>Guidance</th><th>Tasks</th></tr>{guidance_rows}</table>
-<p>Qualification Record: <code>{html.escape(summary['qualification_record'] or 'not supplied')}</code></p>
-<h2>Decision products</h2><ul>{links}</ul>
+<h2>{'Engineering fit' if fit_mode else 'Deployment guidance'}</h2><table><tr><th>Guidance</th><th>Tasks</th></tr>{guidance_rows}</table>
+<h2>Decision products</h2><ul>{link_html}</ul>
 <h2>Limitations</h2><ul>{''.join(f'<li>{html.escape(item)}</li>' for item in summary['limitations'])}</ul>
 </body></html>"""
 

@@ -10,7 +10,7 @@
 id: security
 version: 1.0.0
 schema: 1
-description: Security & privacy engineering qualification with governance oversight.
+description: Security & privacy engineering assessment with governance coverage.
 profile: security
 default_risk_tier: RT3
 competencies:

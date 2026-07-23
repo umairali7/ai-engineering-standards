@@ -104,8 +104,10 @@ def cmd_qualify(args) -> int:
             _out(summary, args.json,
                  f"filled {summary['filled']} missing response(s) for "
                  f"{summary['run_id']} — now {summary['responses']}/{summary['planned']} "
-                 f"collected.\nnext: aies score {summary['run_id']}  (then "
-                 f"aies qualify --resume {summary['run_id']}), or add --judge by re-running")
+                 f"collected.\nnext (automated): aies review {summary['run_id']} "
+                 "--model-reviewer <judge> --parallel N\n"
+                 "optional alternatives: aies score <run> or aies import <run> <file>; "
+                 "each refreshes analysis and reports")
             return 0
         if args.resume:
             # A resumed run can be fully automatic too: score already-collected
@@ -158,11 +160,13 @@ def cmd_qualify(args) -> int:
                  f"  ECM (Markdown)   : {paths['ecm_markdown']}\n"
                  f"  ECM (JSON)       : {paths['ecm_json']}\n"
                  f"  ECM (HTML)       : {paths['ecm_html']}\n"
-                 f"  Guidance (HTML)  : {paths['guidance_html']}\n"
+                 f"  Guidance (HTML)  : "
+                 f"{paths.get('fit_guidance_html', paths.get('guidance_html'))}\n"
                  f"  Executive (HTML) : {paths['executive_html']}\n"
                  f"  Bundle manifest  : {paths['bundle_manifest']}"
                  + (f"\n\nAssessment '{outcome['assessment']['id']}' "
-                    f"v{outcome['assessment']['version']}: **{outcome['outcome']}**"
+                    f"v{outcome['assessment']['version']}: "
+                    f"**{outcome.get('outcome', outcome.get('status'))}**"
                     if outcome else ""))
             return 0
         from . import config, workspace
@@ -175,12 +179,17 @@ def cmd_qualify(args) -> int:
                 args.model, args.profile, args.journey,
                 repeats=args.repeats, subject_kind="ai",
                 runtime=getattr(args, "runtime", None),
+                run_purpose=("formal-qualification"
+                             if getattr(args, "formal_qualification", False)
+                             else "engineering-evaluation"),
                 progress_callback=live_progress)
         else:
             plan = engine.plan_qualification(f"RT{args.rt}", args.area,
                                               subject_kind="ai", repeats=args.repeats)
             if not args.json:
-                if not plan["all_decisional_if_scored"]:
+                formal_target = getattr(args, "formal_qualification", False)
+                if (formal_target or getattr(args, "decisional", False)) and not plan[
+                        "all_decisional_if_scored"]:
                     blocked = ", ".join(
                         f"{row['area']} ({row['planned_items']}/{row['minimum_items']})"
                         for row in plan["areas"] if not row["decisional_if_scored"])
@@ -215,6 +224,9 @@ def cmd_qualify(args) -> int:
                 workers=workers,
                 assessment=getattr(args, "_assessment", None),
                 decisional=getattr(args, "decisional", False),
+                run_purpose=("formal-qualification"
+                             if getattr(args, "formal_qualification", False)
+                             else "engineering-evaluation"),
                 progress_callback=live_progress,
             )
         run_id = manifest["run_id"]
@@ -272,8 +284,11 @@ def cmd_qualify(args) -> int:
                 # recomputing the corpus-backed matrix for terminal output.
                 print(Path(report_paths["markdown"]).read_text(encoding="utf-8"))
                 if outcome:
-                    from . import decision as _decision
-                    print("\n" + _decision.render_markdown(outcome))
+                    from . import decision as _decision, engineering_assessment as _ea
+                    renderer = (_decision.render_markdown
+                                if outcome.get("kind") == "assessment-result"
+                                else _ea.render_markdown)
+                    print("\n" + renderer(outcome))
                 print(f"\n[auto-scored by judge '{jdep}': {summary['scored']}/"
                       f"{summary['responses']} responses; "
                       f"{summary['unparseable']} unparseable]")
@@ -281,26 +296,30 @@ def cmd_qualify(args) -> int:
                     print("WARNING: the model scored its own output (self-judging) — "
                           "expect inflation/bias. Use --judge <a different deployment> "
                           "for a trustworthy read.")
-                print("Engineering evaluation complete; human evaluation is optional. "
-                      "Formal qualification/grant is a separate governed workflow. "
-                      "When its human protocol is satisfied, record it with:  "
-                      f"aies grant {run_id} --decision grant --authority \"You\" "
-                      "--second \"Peer\"")
+                print("Engineering evaluation complete; human evaluation is optional.")
+                if getattr(args, "formal_qualification", False):
+                    print("This run explicitly requested formal qualification; "
+                          "a named human authority owns any grant.")
+                else:
+                    print("Formal qualification was not requested. Use "
+                          "--formal-qualification only when that separate "
+                          "human-governed workflow is intended.")
             return 0
         sheet = workspace.run_dir(run_id) / "scoresheet.json"
         _out(manifest, args.json,
-             f"run {run_id}: responses collected. Next steps (score, then aggregate):\n"
-             f"    1. Open this file in your editor and score each response:\n"
-             f"         {sheet}\n"
-             f"       For every response set an integer 0-4 on each EV dimension,\n"
-             f"       set \"rater\": {{\"name\": \"You\", \"kind\": \"human\"}}, and add a\n"
-             f"       \"findings\" note for any score <= 2. (This is a file to edit,\n"
-             f"       not a command to run.)\n"
-             f"    2. aies score {run_id}              # ingest your scores\n"
-             f"    3. aies qualify --resume {run_id}   # aggregate + report\n"
+             f"run {run_id}: responses collected; no scorer was selected.\n"
              f"\n"
-             f"  Tip: next time add --parallel N to run inference concurrently (much\n"
-             f"  faster), or --repeats 1 for a quick, smaller (non-decisional) look.")
+             f"  Complete automatically (recommended; no human review required):\n"
+             f"    aies review {run_id} --model-reviewer <judge> --parallel N\n"
+             f"    # records scores, analyzes results, and writes the report bundle\n"
+             f"\n"
+             f"  Or optionally score/import from another source:\n"
+             f"    scoresheet: {sheet}\n"
+             f"    aies score {run_id}                 # completed scoresheet\n"
+             f"    aies import {run_id} <eval.json>    # external EV1–EV6 scores\n"
+             f"\n"
+             f"  Tip: next time pass --judge <deployment> for a one-command benchmark.\n"
+             f"  Human evaluation remains optional for Engineering Evaluation.")
     except Exception as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
@@ -308,9 +327,8 @@ def cmd_qualify(args) -> int:
 
 
 def _assessment_result(run_id):
-    """If the run was composed under an assessment, decide + return its Canonical
-    Result (else None). Used to append the outcome after aggregation."""
-    from . import decision, workspace
+    """Build the result appropriate to the run's explicit purpose."""
+    from . import decision, engineering_assessment, run_mode, workspace
     try:
         manifest = workspace.read_json(workspace.run_dir(run_id) / "manifest.json")
     except Exception:
@@ -318,8 +336,11 @@ def _assessment_result(run_id):
     if not manifest.get("assessment"):
         return None
     try:
-        return decision.assess_run(run_id)
-    except decision.DecisionError:
+        if run_mode.is_formal(manifest):
+            return decision.assess_run(run_id)
+        return engineering_assessment.build(run_id)
+    except (decision.DecisionError,
+            engineering_assessment.EngineeringAssessmentError):
         return None
 
 
@@ -356,18 +377,23 @@ def cmd_assessment(args) -> int:
                 print(f"valid: {args.name}")
             return 0 if not problems else 1
         elif args.assessment_cmd == "result":
-            from . import decision
-            res = decision.assess_run(args.run)
+            from . import decision, engineering_assessment
+            formal = getattr(args, "formal_qualification", False)
+            res = (decision.assess_run(args.run) if formal
+                   else engineering_assessment.build(args.run))
             if getattr(args, "format", "markdown") == "html":
-                html_doc = decision.render_html(res)
+                html_doc = (decision.render_html(res) if formal
+                            else engineering_assessment.render_html(res))
                 if args.out:
                     Path(args.out).write_text(html_doc, encoding="utf-8")
                     print(f"wrote {args.out}")
                 else:
                     print(html_doc)
             else:
-                _out(res, args.json, decision.render_markdown(res))
-            return 0 if res["outcome"] == "PASS" else 1
+                rendered = (decision.render_markdown(res) if formal
+                            else engineering_assessment.render_markdown(res))
+                _out(res, args.json, rendered)
+            return (0 if not formal or res["outcome"] == "PASS" else 1)
     except assessments.AssessmentError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
@@ -381,16 +407,29 @@ def cmd_assessment(args) -> int:
 
 
 def cmd_score(args) -> int:
-    from . import rating, workspace
+    from . import engine, evaluation, rating, report, workspace
     try:
         source = Path(args.file) if args.file else workspace.run_dir(args.run) / "scoresheet.json"
         sheet = json.loads(source.read_text(encoding="utf-8"))
         written = rating.ingest_scores(args.run, sheet,
                                        progress_callback=_live_progress(args))
-        _out({"ratings_written": written}, args.json,
+        package = engine.aggregate(args.run)
+        paths = report.write_reports(args.run)
+        result = _assessment_result(args.run)
+        _out({
+            "ratings_written": written,
+            "engineering_evaluation": evaluation.summarize(args.run),
+            "evidence_package": package,
+            "reports": paths,
+            **({"assessment_result": result} if result else {}),
+        }, args.json,
              f"{len(written)} rating records written for {args.run}\n"
-             f"next: aies qualify --resume {args.run}")
-    except (rating.RatingError, FileNotFoundError, json.JSONDecodeError) as e:
+             f"engineering evaluation and complete report bundle refreshed\n"
+             f"  report: {paths['markdown']}\n"
+             "human evaluation is optional unless formal qualification was "
+             "explicitly requested")
+    except (rating.RatingError, engine.EngineError, FileNotFoundError,
+            json.JSONDecodeError) as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
     return 0
@@ -458,17 +497,22 @@ def cmd_resolve(args) -> int:
 
 
 def cmd_import(args) -> int:
-    from . import evalimport, rating
+    from . import engine, evalimport, evaluation, rating, report
     try:
         summary = evalimport.import_eval(args.run, args.file, source=args.source)
-    except (evalimport.EvalImportError, rating.RatingError) as e:
+        package = engine.aggregate(args.run)
+        paths = report.write_reports(args.run)
+    except (evalimport.EvalImportError, rating.RatingError,
+            engine.EngineError) as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
-    _out(summary, args.json,
+    _out({**summary, "engineering_evaluation": evaluation.summarize(args.run),
+          "evidence_package": package, "reports": paths}, args.json,
          f"imported {summary['imported']}/{summary['items']} items as "
          f"'{summary['source']}' ({summary['skipped']} skipped) into {args.run}\n"
-         f"next: aies qualify --resume {args.run}   # aggregate + report\n"
-         f"      (or `aies review {args.run}` to weigh it against a human rater)")
+         f"engineering evaluation and complete report bundle refreshed\n"
+         f"  report: {paths['markdown']}\n"
+         "human evaluation is optional")
     return 0
 
 
@@ -570,9 +614,9 @@ def cmd_audit(args) -> int:
 
 
 def cmd_capabilities(args) -> int:
-    """Per-area capability profile of an aggregated run/deployment."""
+    """Engineering Capability Matrix by default; formal profile explicitly."""
     from . import capabilities, compare, constants as C, ecm
-    if args.ecm:
+    if not getattr(args, "qualification_profile", False):
         try:
             matrix = ecm.engineering_capability_matrix(args.ref)
         except compare.CompareError as e:
@@ -627,7 +671,7 @@ def cmd_capabilities(args) -> int:
 
 
 def cmd_guidance(args) -> int:
-    """Render bounded deployment guidance from an aggregated run."""
+    """Render engineering fit by default, or qualification-bounded guidance."""
     from . import compare, guidance, qualification
     try:
         options = {
@@ -636,10 +680,23 @@ def cmd_guidance(args) -> int:
             "requested_phases": args.phase,
             "requested_autonomy": f"AL{args.autonomy}" if args.autonomy is not None else None,
         }
-        if args.write:
+        if not args.qualification:
+            if any((args.role, args.phase, args.autonomy is not None)):
+                raise guidance.GuidanceError(
+                    "--role, --phase, and --autonomy require --qualification; "
+                    "engineering fit has no deployment scope")
+            if args.write:
+                paths = guidance.write_fit_artifacts(args.ref)
+                _out({"engineering_fit_guidance": paths}, args.json,
+                     "wrote Engineering Fit Guidance:\n" +
+                     "\n".join(f"  {format}: {path}" for format, path in paths.items()))
+            else:
+                result = guidance.engineering_fit(args.ref)
+                _out(result, args.json, guidance.render_fit_markdown(result))
+        elif args.write:
             paths = guidance.write_artifacts(args.ref, **options)
             _out({"deployment_guidance": paths}, args.json,
-                 "wrote Deployment Guidance:\n" +
+                 "wrote qualification-bounded Deployment Guidance:\n" +
                  "\n".join(f"  {format}: {path}" for format, path in paths.items()))
         else:
             result = guidance.decide(args.ref, **options)
@@ -745,19 +802,32 @@ def cmd_completion(args) -> int:
 
 
 def cmd_benchmark(args) -> int:
-    # Stage-4-only execution: identical to qualify without the scoring hook.
+    # Benchmark is always a non-blocking Engineering Evaluation. With --judge
+    # it completes scoring, analysis, and reporting in the same invocation.
     args.resume = None
+    args.formal_qualification = False
     return cmd_qualify(args)
 
 
 def cmd_compare(args) -> int:
     from . import compare
     try:
-        cmp = compare.compare_ecm(args.a, args.b) if args.ecm else compare.compare(args.a, args.b)
+        if (getattr(args, "formal_qualification", False)
+                and getattr(args, "area_summary", False)):
+            raise compare.CompareError(
+                "--formal-qualification cannot be combined with --area-summary")
+        cmp = (compare.compare(args.a, args.b)
+               if getattr(args, "area_summary", False)
+               else compare.compare_ecm(
+                   args.a, args.b,
+                   formal_qualification=getattr(
+                       args, "formal_qualification", False)))
         if args.json or args.format == "json":
             _out(cmp, True)
         else:
-            print(compare.render_ecm_markdown(cmp) if args.ecm else compare.render_markdown(cmp))
+            print(compare.render_markdown(cmp)
+                  if getattr(args, "area_summary", False)
+                  else compare.render_ecm_markdown(cmp))
     except compare.CompareError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
@@ -835,7 +905,7 @@ def cmd_runs(args) -> int:
 
 
 def cmd_review(args) -> int:
-    from . import rating, review, workspace
+    from . import rating, review, run_mode, workspace
     live_progress = _live_progress(args)
     try:
         report_paths = None
@@ -871,6 +941,9 @@ def cmd_review(args) -> int:
             human_evaluation=getattr(args, "human_evaluation", None))
         (workspace.run_dir(args.run) / "review-package.json").write_text(
             json.dumps(pkg, indent=2), encoding="utf-8")
+        manifest = workspace.read_json(
+            workspace.run_dir(args.run) / "manifest.json")
+        formal = run_mode.is_formal(manifest)
         # A review package changes which rating observations are admitted.  It
         # must therefore refresh canonical evidence and every presentation
         # artifact even when the ratings were collected in an earlier command.
@@ -900,11 +973,16 @@ def cmd_review(args) -> int:
                      if assessment_result else {})}, True)
         else:
             s = pkg["summary"]
-            print(f"review package for {args.run}")
-            print(f"  reviewer {pkg['reviewer']['label']!r}: "
-                  f"{'ADMITTED' if s['reviewer_admitted'] else 'ADVISORY ONLY'}")
-            print(f"  {pkg['reviewer']['reason']}")
-            print(f"  divergences for human resolution: {s['n_divergences']}")
+            print(f"automated engineering review for {args.run}")
+            if scoring:
+                print(f"  automated reviewer scores: RECORDED "
+                      f"({scoring['scored']}/{scoring['responses']})")
+            print("  engineering evaluation: automated scores are usable")
+            print("  human evaluation: optional"
+                  + (f" — {args.human_evaluation}"
+                     if getattr(args, "human_evaluation", None) else
+                     " — not supplied"))
+            print(f"  observed divergences: {s['n_divergences']}")
             for d in pkg["divergences_for_resolution"]:
                 gc = " [gate-changing]" if d["gate_changing"] else ""
                 print(f"    {d['response']} {d['dimension']}: "
@@ -912,16 +990,14 @@ def cmd_review(args) -> int:
                       f"{d.get('right_rater', 'reviewer')} {d['model']} "
                       f"(Δ{d['delta']}){gc}")
             print(f"  {s['note']}")
-            if scoring:
-                print("  engineering evaluation: COMPLETE when every response has an "
-                      "automated score; human evaluation is optional")
-            consideration = pkg["human_consideration"]
-            advisory = consideration["automated_advisory_review"]
-            evaluator = consideration["human_evaluation"]["evaluator"]
-            print(f"  advisory scores: {'considered by human' if advisory['considered'] else 'not declared'}")
-            print(f"  human evaluation: {evaluator or 'not declared'}")
+            if formal:
+                print(f"  formal reviewer admission: "
+                      f"{'corroborating evidence admitted' if s['reviewer_admitted'] else 'not admitted'}")
+                print(f"  formal admission reason: {pkg['reviewer']['reason']}")
+            else:
+                print("  formal qualification: not requested")
             if report_paths:
-                print("  complete evidence report bundle refreshed")
+                print("  complete engineering report bundle refreshed")
                 print("  human scores: optional; shown separately when supplied")
                 print(f"  report: {report_paths['markdown']}")
             else:
@@ -1457,9 +1533,9 @@ def _not_yet(milestone: str):
 _EPILOG = """\
 commands by stage (each group alphabetical):
   setup & discovery   completion · deployment · discover · doctor · runtime
-  qualification       assessment · benchmark · capabilities · compare · export · import · qualify · review · runs · score · transcript
+  engineering eval    assessment · benchmark · capabilities · compare · export · import · qualify · review · runs · score · transcript
   judging             judge available · judge history · judge list   (the judge pool + track record)
-  decision & audit    audit · conform · corpus · dashboard · grant · qualification · report · serve · verify
+  governance & audit  audit · conform · corpus · dashboard · grant · qualification · report · serve · verify
   reference           index · journey · plugins · profile · suites
 
 typical workflow:
@@ -1470,26 +1546,32 @@ typical workflow:
                                                auto-score with a judge model -> report
   aies transcript <run>                        read the whole run: task + answer + score per item
 
-  # manual scoring (a human rates the answers) — omit --judge:
+  # optional manual scoring — omit --judge:
   aies qualify <deployment> --profile enterprise --rt 2 --area CA-05
-  aies score <run>                             ingest the scores you wrote in scoresheet.json
-  aies qualify --resume <run>                  aggregate -> report
+  aies score <run>                             ingest scores -> analysis + report bundle
 
   # re-score a run you already collected (e.g. the judge failed) — no re-collect:
   aies review <run> --model-reviewer <judge> --parallel 8
-  aies qualify --resume <run>                  aggregate -> report
+                                               score -> analysis + report bundle
+
+  # benchmark uses the same non-blocking automated path:
+  aies benchmark <deployment> --all-areas --judge <judge-dep> --parallel 8
 
   # bring external eval results in as EV evidence (automated rater):
-  aies import <run> eval.json                  ingest EV1–EV6 scores from another tool
+  aies import <run> eval.json                  ingest -> analysis + report bundle
 
   # profile a deployment across the whole SDLC (planner/coder/security/…):
   aies qualify <deployment> --all-areas --rt 2 --judge <judge-dep>
-  aies capabilities <run>                      per-area CL + autonomy, side by side
+  aies capabilities <run>                      Engineering Capability Matrix
 
-  # run a declarative assessment (composition as data) -> a PASS/FAIL outcome:
+  # run a declarative assessment -> non-blocking engineering result:
   aies assessment list                         the shipped assessments (enterprise, coder, security, …)
   aies qualify <deployment> --assessment enterprise --judge <judge-dep>
-  aies assessment result <run>                 re-decide an aggregated run (no inference)
+  aies assessment result <run>                 COMPLETE/PARTIAL/NOT SCORED
+
+  # formal qualification is a separate opt-in human-governed workflow:
+  aies qualify <deployment> --assessment enterprise --judge <judge-dep> --formal-qualification
+  aies assessment result <run> --formal-qualification
 
   # see the whole thing run, fully offline (mock runtime + mock judge):
   make demo                                    core workflow (bash scripts/demo.sh)
@@ -1501,7 +1583,7 @@ typical workflow:
   aies corpus duplicates                       twin-aware near-duplicate detector (advisory)
   aies corpus review SC-CA07-015 --reviewer X  critique one scenario as an instrument (never rewrites)
 
-  # optional formal record (a human decision, revocable):
+  # optional formal record after the explicit formal protocol (human decision):
   aies grant <run> --decision grant --authority "Name (ROLE-13)" --second "Name (ROLE-14)"
   aies verify <QUAL-id>                         re-check environment (D7)
   aies conform check statement.yaml            check a conformance claim
@@ -1571,7 +1653,9 @@ def build_parser() -> argparse.ArgumentParser:
                        help="emit machine-readable JSON")
     reg.set_defaults(func=cmd_registry)
 
-    q = common(sub.add_parser("qualify", help="run qualification evidence collection for one deployment"))
+    q = common(sub.add_parser(
+        "qualify", help="run engineering evaluation for one deployment; "
+        "formal qualification is explicit"))
     q.add_argument("model", nargs="?", help="deployment id, or model name")
     q.add_argument("--runtime", default=None,
                    help="disambiguate when a model has several deployments")
@@ -1591,6 +1675,10 @@ def build_parser() -> argparse.ArgumentParser:
     q.add_argument("--decisional", action="store_true",
                    help="require the distinct-scenario plan for every selected area to meet "
                         "the AESQS sample minimum when admitted ratings are available")
+    q.add_argument(
+        "--formal-qualification", action="store_true",
+        help="explicitly run the human-governed formal qualification path; "
+             "without this flag, automated engineering evaluation is non-blocking")
     q.add_argument("--journey", default=None, metavar="JOURNEY_ID",
                    help="run a multi-phase journey instead of area suites")
     q.add_argument("--judge", default=None, metavar="DEPLOYMENT",
@@ -1620,7 +1708,9 @@ def build_parser() -> argparse.ArgumentParser:
                         "run (e.g. after an endpoint failure), then rebuild the scoresheet")
     q.set_defaults(func=lambda a: (_qualify_defaults(a), cmd_qualify(a))[1])
 
-    b = common(sub.add_parser("benchmark", help="execute scenario suites only (stage 4)"))
+    b = common(sub.add_parser(
+        "benchmark", help="run a non-blocking engineering benchmark; "
+        "optionally auto-score and report"))
     b.add_argument("model", help="deployment id, or model name when unambiguous")
     b.add_argument("--profile", default="enterprise",
                    help="EV weighting profile (default: enterprise)")
@@ -1636,6 +1726,18 @@ def build_parser() -> argparse.ArgumentParser:
                    help="maximum concurrent inference calls (default: 1 or AIES_PARALLEL)")
     b.add_argument("--runtime", default=None,
                    help="runtime name used to disambiguate the deployment")
+    b.add_argument("--judge", default=None, metavar="DEPLOYMENT",
+                   help="auto-score with this judge and complete analysis/reporting "
+                        "(or 'self'; defaults to $AIES_JUDGE)")
+    b.add_argument("--judge-batch-size", type=int, default=None, metavar="N",
+                   help="responses per automated judge request (default 8, or "
+                        "$AIES_JUDGE_BATCH_SIZE)")
+    b.add_argument("--reviewer-runtime", default=None,
+                   help="disambiguate the judge deployment's runtime")
+    b.add_argument("--human-evaluation", default=None, metavar="NAME",
+                   help="optionally record a named human evaluation; never required")
+    b.add_argument("--consider-advisory-review", action="store_true",
+                   help="optionally record that a human considered automated scores")
     b.set_defaults(func=lambda a: (_qualify_defaults(a), cmd_benchmark(a))[1])
 
     s = common(sub.add_parser("score", help="ingest a filled scoresheet (human or model rater)"))
@@ -1734,19 +1836,28 @@ def build_parser() -> argparse.ArgumentParser:
                     help="write transcript.md into the run directory")
     tr.set_defaults(func=cmd_transcript)
 
-    cap = common(sub.add_parser("capabilities", help="per-area capability profile "
-                                "of an aggregated run/deployment (planner/coder/"
-                                "security…, one CL + autonomy level per area)"))
+    cap = common(sub.add_parser(
+        "capabilities", help="render the Engineering Capability Matrix for an "
+        "aggregated run/deployment"))
     cap.add_argument("ref", help="run id, or deployment id (its latest aggregated run)")
-    cap.add_argument("--ecm", action="store_true", help="render the informational Engineering Capability Matrix with mapped engineering tasks")
+    cap.add_argument(
+        "--ecm", action="store_true",
+        help="compatibility alias; ECM is now the default capability view")
+    cap.add_argument(
+        "--qualification-profile", action="store_true",
+        help="render the separate formal per-area CL/autonomy qualification view")
     cap.add_argument("--format", choices=("markdown", "json", "html"), default="markdown", help="ECM output format (default: markdown)")
-    cap.add_argument("--write", action="store_true", help="write ECM output beside the run (use with --ecm)")
+    cap.add_argument("--write", action="store_true",
+                     help="write ECM output beside the run")
     cap.set_defaults(func=cmd_capabilities)
 
-    gd = common(sub.add_parser("guidance", help="render bounded deployment guidance from ECM evidence"))
+    gd = common(sub.add_parser(
+        "guidance", help="render engineering fit from ECM evidence; supply a "
+        "Qualification Record for bounded deployment guidance"))
     gd.add_argument("ref", help="aggregated run id, or deployment id")
     gd.add_argument("--qualification", metavar="QUAL-ID",
-                    help="active human Qualification Record that bounds any Use recommendation")
+                    help="active human Qualification Record; switches from "
+                         "engineering fit to governed Deployment Guidance")
     gd.add_argument("--role", choices=tuple(C.ROLE_NAMES),
                     help="requested engineering role; must match the qualification scope")
     gd.add_argument("--phase", action="append", choices=tuple(C.PHASE_NAMES),
@@ -1773,21 +1884,26 @@ def build_parser() -> argparse.ArgumentParser:
     au.set_defaults(func=lambda a: (setattr(a, "rt", a.rt or (2 if a.gate else None)),
                                     cmd_audit(a))[1])
 
-    asm = common(sub.add_parser("assessment", help="declarative assessments "
-                                "(ADR-0005): list/show/validate, and decide a run's "
-                                "outcome (PASS/FAIL/INCONCLUSIVE/INSUFFICIENT EVIDENCE)"))
+    asm = common(sub.add_parser(
+        "assessment", help="declarative assessments (ADR-0005): "
+        "list/show/validate and render engineering or formal results"))
     asmsub = asm.add_subparsers(dest="assessment_cmd", required=True)
     asmsub.add_parser("list", help="list shipped assessments and their validity")
     asm_show = asmsub.add_parser("show", help="print a validated assessment")
     asm_show.add_argument("name", help="assessment name")
     asm_val = asmsub.add_parser("validate", help="validate an assessment (name or path)")
     asm_val.add_argument("name", help="assessment name or YAML path")
-    asm_res = asmsub.add_parser("result", help="decide the outcome of an aggregated "
-                               "run composed under an assessment (no inference)")
+    asm_res = asmsub.add_parser(
+        "result", help="render a non-blocking engineering assessment result "
+        "(use --formal-qualification for the governed qualification decision)")
     asm_res.add_argument("run", help="aggregated run composed under an assessment")
     asm_res.add_argument("--format", choices=("markdown", "html"), default="markdown",
                          help="render the canonical result as markdown (default) or HTML")
     asm_res.add_argument("--out", help="write HTML to this file instead of stdout")
+    asm_res.add_argument(
+        "--formal-qualification", action="store_true",
+        help="render the canonical human-governed PASS/FAIL/INCONCLUSIVE/"
+             "INSUFFICIENT EVIDENCE result and use it as the command exit gate")
     for x in (asm_show, asm_val, asm_res):
         x.add_argument("--json", action="store_true",
                        help="emit machine-readable JSON")
@@ -1819,12 +1935,20 @@ def build_parser() -> argparse.ArgumentParser:
     comp.set_defaults(func=cmd_completion)
 
     cp = common(sub.add_parser(
-        "compare", help="compare two runs/deployments on identical suite versions"))
+        "compare", help="compare two runs/deployments using compatible observed ECM evidence"))
     cp.add_argument("a", help="run id or model registry id (latest aggregated run)")
     cp.add_argument("b", help="run id or model registry id (latest aggregated run)")
     cp.add_argument("--format", choices=("markdown", "json"), default="markdown",
                     help="output representation (default: markdown)")
-    cp.add_argument("--ecm", action="store_true", help="compare task-level ECM evidence only when protocols match")
+    cp.add_argument("--ecm", action="store_true",
+                    help="compatibility alias; task-level ECM comparison is now the default")
+    cp.add_argument(
+        "--area-summary", action="store_true",
+        help="render the legacy competency-area aggregate comparison instead of ECM")
+    cp.add_argument(
+        "--formal-qualification", action="store_true",
+        help="require demonstrated tasks and the human-rater protocol; default "
+             "ECM comparison uses compatible observed engineering evidence")
     cp.set_defaults(func=cmd_compare)
 
     rn = common(sub.add_parser("runs", help="result history: list runs"))

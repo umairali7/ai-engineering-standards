@@ -37,7 +37,7 @@ def demo_ws(tmp_path, monkeypatch):
 
 
 def test_offline_end_to_end_demo(demo_ws, monkeypatch):
-    from aies import decision, workspace, constants, ecm
+    from aies import workspace, ecm
 
     # A report bundle must share one factual ECM view across all renderers.
     # Recomputing it reparses the entire scenario corpus and made the demo
@@ -67,35 +67,24 @@ def test_offline_end_to_end_demo(demo_ws, monkeypatch):
     assert runs, "qualify produced no run"
     run_id = runs[-1].name
 
-    # The mock judge is intentionally advisory until it passes the same
-    # bootstrap-admission path as any other reviewer.  The fixture is synthetic
-    # and only proves the offline workflow; mock provenance prevents a real
-    # qualification claim.
-    calibration = demo_ws / "mock-judge-calibration.json"
-    calibration.write_text(json.dumps({
-        "model": [{f"EV{i}": 4 for i in range(1, 7)}],
-        "human_anchor": [{f"EV{i}": 4 for i in range(1, 7)}],
-    }), encoding="utf-8")
-    assert _cli("review", run_id, "--reviewer", "model:mock-mock-large",
-                "--calibration", str(calibration)) == 0
-    assert len(matrix_calls) == 2
-
-    # 3. the Canonical Assessment Result exists and is well-formed
-    result = json.loads((runs[-1] / "assessment-result.json").read_text(encoding="utf-8"))
-    assert result["outcome"] in decision.OUTCOMES
-    assert result["result_schema"] == decision.RESULT_SCHEMA
-    assert result["metadata"]["profile_version"] == "1.0.0"          # captured, not re-read
-    assert result["metadata"]["evidence_schema"] == constants.EVIDENCE_SCHEMA
-    assert result["metadata"]["decision_semantics_version"] == decision.DECISION_SEMANTICS_VERSION
+    # 3. automated scoring creates a complete, non-blocking Engineering
+    # Assessment Result. Human evaluation remains an optional assurance column.
+    result = json.loads(
+        (runs[-1] / "engineering-assessment-result.json").read_text(
+            encoding="utf-8"))
+    assert result["kind"] == "engineering-assessment-result"
+    assert result["status"] == "COMPLETE"
+    assert result["formal_qualification"]["status"] == "not-requested"
     evaluation = json.loads(
         (runs[-1] / "engineering-evaluation.json").read_text(encoding="utf-8"))
     assert evaluation["status"] == "complete"
     assert evaluation["human_evaluation"]["status"] == "not-reviewed"
     assert evaluation["human_evaluation"]["optional"] is True
-    assert result["outcome"] == "INSUFFICIENT EVIDENCE"
-    for name in ("assessment-result.md", "assessment-result.html",
-                 "deployment-guidance.md", "deployment-guidance.json",
-                 "deployment-guidance.html", "executive-summary.md",
+    assert not (runs[-1] / "assessment-result.json").exists()
+    for name in ("engineering-assessment-result.md",
+                 "engineering-assessment-result.html",
+                 "engineering-fit-guidance.md", "engineering-fit-guidance.json",
+                 "engineering-fit-guidance.html", "executive-summary.md",
                  "executive-summary.json", "executive-summary.html",
                  "grounding-diagnostics.md", "grounding-diagnostics.json",
                  "grounding-diagnostics.html",
@@ -103,32 +92,58 @@ def test_offline_end_to_end_demo(demo_ws, monkeypatch):
         assert (runs[-1] / name).exists(), name
     executive = json.loads(
         (runs[-1] / "executive-summary.json").read_text(encoding="utf-8"))
-    assert executive["assessment"]["outcome"] == result["outcome"]
+    assert executive["assessment"]["status"] == result["status"]
+    assert executive["formal_qualification"]["status"] == "not-requested"
+    report_md = (runs[-1] / "report.md").read_text(encoding="utf-8")
+    report_html = (runs[-1] / "report.html").read_text(encoding="utf-8")
+    report_json = json.loads(
+        (runs[-1] / "report.json").read_text(encoding="utf-8"))
+    assert report_json["kind"] == "engineering-evaluation-report"
+    assert report_json["formal_qualification"]["status"] == "not-requested"
+    assert "qualification_evidence_appendix" not in report_json
+    for blocked_word in ("Overall: BLOCKED", "INSUFFICIENT EVIDENCE",
+                         "Grant Readiness"):
+        assert blocked_word not in report_md
+        assert blocked_word not in report_html
+    fit = json.loads(
+        (runs[-1] / "engineering-fit-guidance.json").read_text(
+            encoding="utf-8"))
+    assert fit["kind"] == "engineering-fit-guidance"
+    assert any(row["fit"] == "strong-observed-fit" for row in fit["tasks"])
+    from aies import compare
+    observed_comparison = compare.compare_ecm(run_id, run_id)
+    assert observed_comparison["comparison_mode"] == "engineering-observed"
+    assert any(row["comparable"] for row in observed_comparison["tasks"])
+    assert not any(row["winner"] for row in observed_comparison["tasks"])
+    formal_comparison = compare.compare_ecm(
+        run_id, run_id, formal_qualification=True)
+    assert not any(row["comparable"] for row in formal_comparison["tasks"])
+    from aies import api
+    status, primary = api.route(f"/runs/{run_id}/result")
+    assert status == 200
+    assert primary["kind"] == "engineering-assessment-result"
+    assert api.route(f"/runs/{run_id}/formal-result")[0] == 404
 
     # Automated-only formal fields are intentionally empty; the human-readable
     # legacy profile must render that state rather than formatting None as a
     # numeric score.  ECM remains the primary engineering-facing artifact.
     assert _cli("capabilities", run_id) == 0
 
-    # 4. re-deciding from the SAME evidence is identical (no inference) — the
-    #    property that makes results reproducible and replayable.
-    replay = decision.decide(
-        workspace.read_json(runs[-1] / "evidence-package.json"),
-        workspace.read_json(runs[-1] / "manifest.json")["assessment"])
-    assert replay["outcome"] == result["outcome"]
-    assert replay["decisions"] == result["decisions"]
-
-    # 5. HTML render is a view (assessment result --format html)
+    # 4. Engineering assessment rendering succeeds regardless of optional human
+    # review status.
     out = demo_ws / "assessment.html"
-    # The command renders the valid result and uses exit 1 as a formal gate
-    # signal.  The demo must assert and contain that expected non-zero status.
-    assert _cli("assessment", "result", run_id) == 1
-    assert _cli("assessment", "result", run_id, "--format", "html", "--out", str(out)) == 1
+    assert _cli("assessment", "result", run_id) == 0
+    assert _cli("assessment", "result", run_id, "--format", "html",
+                "--out", str(out)) == 0
     doc = out.read_text(encoding="utf-8")
-    assert doc.startswith("<!doctype html>") and result["outcome"] in doc
+    assert doc.startswith("<!doctype html>") and result["status"] in doc
 
-    # A completed automated evaluation is useful, but it cannot silently cross
-    # the formal human qualification boundary.
+    # 5. Formal qualification remains available only as an explicit, separately
+    # governed request and cannot silently cross into a grant.
+    assert _cli("assessment", "result", run_id,
+                "--formal-qualification") == 1
+    assert (runs[-1] / "assessment-result.json").exists()
+    assert api.route(f"/runs/{run_id}/formal-result")[0] == 200
     assert _cli("grant", run_id, "--decision", "grant",
                 "--authority", "A. Architect (ROLE-13)",
                 "--second", "P. Peer (ROLE-14)") == 2

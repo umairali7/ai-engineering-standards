@@ -182,8 +182,9 @@ def render_markdown(cmp: dict) -> str:
     return "\n".join(lines)
 
 
-def compare_ecm(ref_a: str, ref_b: str) -> dict:
-    """Compare task evidence only when protocol metadata is compatible."""
+def compare_ecm(ref_a: str, ref_b: str, *,
+                formal_qualification: bool = False) -> dict:
+    """Compare observed task evidence; formal claims are explicit."""
     from . import ecm
     a, b = ecm.engineering_capability_matrix(ref_a), ecm.engineering_capability_matrix(ref_b)
     pa, pb = _resolve_package(ref_a), _resolve_package(ref_b)
@@ -208,35 +209,58 @@ def compare_ecm(ref_a: str, ref_b: str) -> dict:
         right_decision = right.get("task_decision") or {}
         task_checks = {
             "same_scenarios": left.get("scenario_ids") == right.get("scenario_ids"),
-            "demonstrated": left["status"] == right["status"] == "demonstrated",
-            "rater_protocol": (
-                (left_decision.get("rater_protocol") or {}).get("satisfied") is True
-                and (right_decision.get("rater_protocol") or {}).get("satisfied") is True),
+            "both_observed": (
+                left["observed_performance"] is not None
+                and right["observed_performance"] is not None),
             "instrument_maturity": (
                 left_decision.get("instrument_maturity")
                 == right_decision.get("instrument_maturity")),
         }
+        if formal_qualification:
+            task_checks.update({
+                "demonstrated": (
+                    left["status"] == right["status"] == "demonstrated"),
+                "rater_protocol": (
+                    (left_decision.get("rater_protocol") or {}).get(
+                        "satisfied") is True
+                    and (right_decision.get("rater_protocol") or {}).get(
+                        "satisfied") is True),
+            })
         comparable = compatible and all(task_checks.values())
-        winner = None if not comparable or left["observed_performance"] == right["observed_performance"] else (
+        higher_observed = None if not comparable or left["observed_performance"] == right["observed_performance"] else (
             "A" if left["observed_performance"] > right["observed_performance"] else "B")
+        winner = higher_observed if formal_qualification else None
         rows.append({"task": left["task"], "a": left["observed_performance"],
                      "b": right["observed_performance"], "comparable": comparable,
-                     "checks": task_checks, "winner": winner})
-    return {"kind": "ecm-comparison", "compatible": compatible, "checks": checks,
+                     "checks": task_checks,
+                     "higher_observed": higher_observed, "winner": winner})
+    return {"kind": "ecm-comparison",
+            "comparison_mode": ("formal-qualification"
+                                if formal_qualification
+                                else "engineering-observed"),
+            "compatible": compatible, "checks": checks,
             "a": a, "b": b, "tasks": rows}
 
 
 def render_ecm_markdown(cmp: dict) -> str:
     lines = ["# Engineering Capability Matrix Comparison", "",
              "> **INFORMATIONAL — NOT A QUALIFICATION OR SELECTION GRANT.**", "",
+             f"Mode: **{cmp.get('comparison_mode', 'formal-qualification')}**", "",
              f"A: `{cmp['a']['subject']}` · B: `{cmp['b']['subject']}`", "",
              "| Task | A observed performance | B observed performance | Comparison |",
              "|---|---:|---:|---|"]
     for row in cmp["tasks"]:
         av = "—" if row["a"] is None else f"{row['a'] / 4 * 100:.0f}%"
         bv = "—" if row["b"] is None else f"{row['b'] / 4 * 100:.0f}%"
-        result = (f"comparable; winner {row['winner']}" if row["winner"] else
-                  ("comparable; tie" if row["comparable"] else "incomparable / insufficient evidence"))
+        if row["winner"]:
+            result = f"formally comparable; winner {row['winner']}"
+        elif row.get("higher_observed"):
+            result = (
+                f"compatible observed scores; higher {row['higher_observed']}")
+        elif row["comparable"]:
+            result = "compatible observed scores; tie"
+        else:
+            result = "not comparable for this task"
         lines.append(f"| {row['task']} | {av} | {bv} | {result} |")
     if not cmp["compatible"]:
         failed = ", ".join(name for name, ok in cmp["checks"].items() if not ok)
