@@ -12,7 +12,7 @@
     "event_id": {"type": "string", "minLength": 1},
     "event_type": {
       "enum": ["observation", "rating", "review", "environment", "lifecycle",
-        "attestation"]
+        "attestation", "collection-gap"]
     },
     "subject_id": {"type": "string", "minLength": 1},
     "instrument_id": {"type": ["string", "null"]},

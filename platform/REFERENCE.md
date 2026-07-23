@@ -53,7 +53,7 @@ Every artifact carries a schema version; envelopes are field-append-only
 | Assessment | `schema` | `1` | authored (`assessments/*.yaml`) |
 | Profile | `version` | semver | authored (`profiles/*.yaml`) |
 | Subject Assessment Profile | `schema` | `aies-subject-assessment-profile/v1` | authored (`subject_profiles/*.yaml`) |
-| Assessment Coverage Matrix | `schema` | `aies-assessment-coverage/v1` | complete deployment/repository bundle or `aies coverage` |
+| Assessment Coverage Matrix | `schema` | `aies-assessment-coverage/v1` | complete deployment/repository bundle or `aies coverage`; includes collection condition, evidence depth/confidence, freshness, conflicts, correlation, and component boundaries |
 | Evidence Package | `evidence_schema` | `6` | `qualify --resume` / `aggregate` |
 | Human Rater Record | `rater_schema` | `1` | `rater register` |
 | Qualification Record | `qualification_schema` | `2` | `grant` (human authority) |

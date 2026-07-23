@@ -5,6 +5,7 @@ from __future__ import annotations
 import html
 import json
 from collections import Counter, defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
 
 from . import assessment_profiles, subjects, workspace
@@ -15,6 +16,12 @@ RUNTIME_STATES = (
     "assessed", "partially-assessed", "not-assessed",
     "not-applicable", "unsupported",
 )
+COLLECTION_CONDITIONS = (
+    "current", "not-collected", "not-requested", "unavailable",
+    "tool-not-installed", "redacted", "failed-to-collect", "stale",
+    "conflicting", "not-applicable", "unsupported",
+)
+CONFIDENCE_LEVELS = ("none", "low", "moderate", "high")
 
 
 class CoverageError(ValueError):
@@ -31,6 +38,9 @@ def _skeleton(profile: dict, subject: dict, evidence_scope: dict) -> dict:
             status = (
                 "not-assessed" if applicability == "applicable"
                 else applicability)
+            condition = (
+                "not-collected" if applicability == "applicable"
+                else applicability)
             cells.append({
                 "id": item["id"],
                 "title": item["title"],
@@ -40,6 +50,33 @@ def _skeleton(profile: dict, subject: dict, evidence_scope: dict) -> dict:
                 "rationale": item["rationale"],
                 "evidence_refs": [],
                 "evidence_count": 0,
+                "condition_refs": [],
+                "collection_condition": condition,
+                "evidence_depth": {
+                    "direct_events": 0,
+                    "distinct_instruments": 0,
+                    "distinct_sources": 0,
+                    "modalities": [],
+                    "adapters": [],
+                },
+                "evidence_confidence": {
+                    "level": "none",
+                    "scope": "evidence-coverage-only",
+                    "basis": ["No direct evidence is referenced."],
+                },
+                "freshness": {
+                    "status": "not-established",
+                    "latest_observed_at": None,
+                    "age_days": None,
+                    "max_age_days": profile[
+                        "freshness_policy"]["default_max_age_days"],
+                    "change_trigger_evaluated": False,
+                    "basis": (
+                        "Elapsed-age policy only; declared change triggers "
+                        "were not evaluated."),
+                },
+                "conflicts": [],
+                "component_overlap": [],
             })
         categories[category_id] = {
             "title": category["title"],
@@ -55,6 +92,7 @@ def _skeleton(profile: dict, subject: dict, evidence_scope: dict) -> dict:
             "version": profile["version"],
             "status": profile["status"],
             "governed_by": profile["governed_by"],
+            "freshness_policy": profile["freshness_policy"],
         },
         "subject": subject,
         "evidence_scope": evidence_scope,
@@ -62,6 +100,8 @@ def _skeleton(profile: dict, subject: dict, evidence_scope: dict) -> dict:
         "summary": {},
         "blind_spots": [],
         "evidence_reuse": {},
+        "component_evidence": [],
+        "integrity_summary": {},
         "limitations": list(profile["limitations"]),
         "claim_boundary": (
             "Coverage describes direct evidence availability and declared "
@@ -101,6 +141,32 @@ def _observe(
     cell["evidence_refs"] = sorted(set(evidence_refs))
     cell["evidence_count"] = len(cell["evidence_refs"])
     cell["rationale"] = rationale
+    cell["collection_condition"] = "current"
+
+
+def _set_condition(
+    matrix: dict,
+    category_id: str,
+    item_id: str,
+    condition: str,
+    detail: str,
+    *,
+    evidence_ref: str | None = None,
+) -> None:
+    """Attach an explicit collection condition without filling the cell."""
+    if condition not in COLLECTION_CONDITIONS:
+        raise CoverageError(f"unsupported collection condition {condition}")
+    cell = _cell(matrix, category_id, item_id)
+    if cell["applicability"] != "applicable":
+        if condition != cell["applicability"]:
+            raise CoverageError(
+                f"cannot attach {condition} to {cell['applicability']} cell "
+                f"{category_id}/{item_id}")
+        return
+    cell["collection_condition"] = condition
+    cell["rationale"] = detail
+    if evidence_ref:
+        cell["condition_refs"].append(evidence_ref)
 
 
 def _events_by(events: list[dict], key) -> dict[str, list[str]]:
@@ -112,9 +178,119 @@ def _events_by(events: list[dict], key) -> dict[str, list[str]]:
     return grouped
 
 
-def _finalize(matrix: dict) -> dict:
+def _parse_time(value: object) -> datetime | None:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return (
+            parsed.replace(tzinfo=timezone.utc)
+            if parsed.tzinfo is None else parsed.astimezone(timezone.utc))
+    except ValueError:
+        return None
+
+
+def _catalog(events: list[dict], conflict_instruments: dict[str, dict]) -> dict:
+    catalog = {}
+    for event in events:
+        instrument = event.get("instrument_id")
+        catalog[event["event_id"]] = {
+            "kind": "event",
+            "event_type": event.get("event_type"),
+            "subject_id": event.get("subject_id"),
+            "instrument_id": instrument,
+            "modality": event.get("modality"),
+            "source": event.get("source"),
+            "adapter": event.get("adapter_profile"),
+            "observed_at": event.get("observed_at"),
+            "correlation_id": event.get("correlation_id"),
+            "source_digest": event.get("source_digest"),
+            "conflict": conflict_instruments.get(instrument),
+        }
+    return catalog
+
+
+def _component_evidence(descriptor: dict, events: list[dict]) -> list[dict]:
+    counts = Counter(
+        event.get("subject_id") for event in events
+        if event.get("event_type") != "collection-gap")
+    result = []
+    for value in descriptor.get("components") or []:
+        component = (
+            {"subject_id": value, "kind": None, "role": None,
+             "version": None, "fingerprint": None,
+             "evidence_transfer": "none"}
+            if isinstance(value, str) else value)
+        transfer = component.get("evidence_transfer", "none")
+        result.append({
+            "subject_id": component["subject_id"],
+            "kind": component.get("kind"),
+            "role": component.get("role"),
+            "version": component.get("version"),
+            "fingerprint": component.get("fingerprint"),
+            "evidence_transfer": transfer,
+            "observed_event_count": counts[component["subject_id"]],
+            "coverage_use": (
+                "prohibited" if transfer == "none" else
+                "reference-only" if transfer == "reference-only" else
+                "requires-explicit-mapping"),
+            "mapped_into_parent_cells": 0,
+            "rationale": (
+                "Component evidence is disclosed but never fills parent "
+                "coverage without an explicit governed mapping."),
+        })
+    return result
+
+
+def _confidence(
+    cell: dict,
+    *,
+    instruments: set[str],
+    sources: set[str],
+    modalities: set[str],
+) -> dict:
+    basis = []
+    if not cell["evidence_refs"]:
+        return {
+            "level": "none", "scope": "evidence-coverage-only",
+            "basis": ["No direct evidence is referenced."],
+        }
+    if cell["collection_condition"] in (
+            "stale", "conflicting", "redacted", "failed-to-collect"):
+        level = "low"
+        basis.append(
+            f"Collection condition is {cell['collection_condition']}.")
+    elif cell["status"] == "partially-assessed" or len(instruments) < 2:
+        level = "low"
+        basis.append("Evidence is partial or has fewer than two instruments.")
+    elif (cell["status"] == "assessed" and len(instruments) >= 5
+          and len(modalities) >= 2):
+        level = "high"
+        basis.append(
+            "At least five instruments and two direct modalities are present.")
+    else:
+        level = "moderate"
+        basis.append("Multiple direct instruments support the coverage cell.")
+    basis.append(
+        f"{len(sources)} source type(s), {len(instruments)} instrument(s), "
+        f"and {len(modalities)} modality type(s) are represented.")
+    return {
+        "level": level,
+        "scope": "evidence-coverage-only",
+        "basis": basis,
+    }
+
+
+def _finalize(matrix: dict, evidence_catalog: dict | None = None) -> dict:
+    evidence_catalog = evidence_catalog or {}
+    generated_at = datetime.now(timezone.utc)
+    matrix["generated_at"] = generated_at.isoformat()
     evidence_usage: dict[str, list[str]] = defaultdict(list)
+    correlations: dict[str, set[str]] = defaultdict(set)
+    source_digests: dict[str, set[str]] = defaultdict(set)
     overall = Counter()
+    conditions = Counter()
+    confidence_levels = Counter()
     blind_spots = []
     for category_id, category in matrix["categories"].items():
         counts = Counter(cell["status"] for cell in category["cells"])
@@ -134,21 +310,108 @@ def _finalize(matrix: dict) -> dict:
         overall.update(counts)
         for cell in category["cells"]:
             cell_path = f"{category_id}/{cell['id']}"
+            metadata = [
+                evidence_catalog[reference]
+                for reference in cell["evidence_refs"]
+                if reference in evidence_catalog
+            ]
+            direct_events = [
+                item for item in metadata if item.get("kind") == "event"]
+            component_ids = {
+                item["subject_id"]
+                for item in matrix["component_evidence"]}
+            cell["component_overlap"] = sorted({
+                item["subject_id"] for item in direct_events
+                if item.get("subject_id") in component_ids
+            })
+            instruments = {
+                item["instrument_id"] for item in direct_events
+                if item.get("instrument_id")}
+            sources = {
+                item["source"] for item in direct_events
+                if item.get("source")}
+            modalities = {
+                item["modality"] for item in direct_events
+                if item.get("modality")}
+            adapters = {
+                item["adapter"] for item in direct_events
+                if item.get("adapter")}
+            conflicts = {
+                json.dumps(item["conflict"], sort_keys=True)
+                for item in direct_events if item.get("conflict")}
+            cell["conflicts"] = [
+                json.loads(item) for item in sorted(conflicts)]
+            if cell["conflicts"]:
+                cell["collection_condition"] = "conflicting"
+            observed_times = sorted(
+                parsed for parsed in (
+                    _parse_time(item.get("observed_at"))
+                    for item in direct_events)
+                if parsed is not None)
+            latest = observed_times[-1] if observed_times else None
+            max_age = cell["freshness"]["max_age_days"]
+            age_days = (
+                max(0.0, (generated_at - latest).total_seconds() / 86400)
+                if latest else None)
+            freshness_status = "not-established"
+            if latest:
+                freshness_status = (
+                    "stale" if age_days > max_age else "current")
+            cell["freshness"] = {
+                "status": freshness_status,
+                "latest_observed_at": (
+                    latest.isoformat() if latest else None),
+                "age_days": round(age_days, 3) if age_days is not None else None,
+                "max_age_days": max_age,
+                "change_trigger_evaluated": False,
+                "basis": (
+                    "Elapsed-age policy only; declared change triggers were "
+                    "not evaluated."),
+            }
+            if (freshness_status == "stale"
+                    and cell["collection_condition"] == "current"):
+                cell["collection_condition"] = "stale"
+            cell["evidence_depth"] = {
+                "direct_events": len(direct_events),
+                "distinct_instruments": len(instruments),
+                "distinct_sources": len(sources),
+                "modalities": sorted(modalities),
+                "adapters": sorted(adapters),
+            }
+            cell["evidence_confidence"] = _confidence(
+                cell, instruments=instruments, sources=sources,
+                modalities=modalities)
+            conditions[cell["collection_condition"]] += 1
+            confidence_levels[cell["evidence_confidence"]["level"]] += 1
             for reference in cell["evidence_refs"]:
                 evidence_usage[reference].append(cell_path)
-            if cell["status"] in (
-                    "partially-assessed", "not-assessed", "unsupported"):
+                item = evidence_catalog.get(reference) or {}
+                if item.get("correlation_id"):
+                    correlations[item["correlation_id"]].add(reference)
+                if item.get("source_digest"):
+                    source_digests[item["source_digest"]].add(reference)
+            if (cell["status"] in (
+                    "partially-assessed", "not-assessed", "unsupported")
+                    or cell["collection_condition"] in (
+                        "unavailable", "tool-not-installed", "redacted",
+                        "failed-to-collect", "stale", "conflicting")):
                 blind_spots.append({
                     "category": category_id,
                     "category_title": category["title"],
                     "id": cell["id"],
                     "title": cell["title"],
                     "status": cell["status"],
+                    "collection_condition": cell["collection_condition"],
+                    "evidence_confidence": cell["evidence_confidence"]["level"],
                     "rationale": cell["rationale"],
                     "next_evidence": (
                         "Implement a direct evidence path in the Subject "
                         "Assessment Profile."
                         if cell["status"] == "unsupported" else
+                        "Resolve or recollect compromised evidence."
+                        if cell["collection_condition"] in (
+                            "redacted", "failed-to-collect", "stale",
+                            "conflicting") else
                         "Collect distinct direct evidence for this perspective."
                     ),
                 })
@@ -166,12 +429,23 @@ def _finalize(matrix: dict) -> dict:
             if applicable else None
         ),
         "blind_spots": len(blind_spots),
+        "collection_conditions": {
+            condition: conditions[condition]
+            for condition in COLLECTION_CONDITIONS},
+        "evidence_confidence": {
+            level: confidence_levels[level]
+            for level in CONFIDENCE_LEVELS},
     }
     matrix["blind_spots"] = sorted(
         blind_spots,
         key=lambda item: (
             {"unsupported": 0, "not-assessed": 1,
              "partially-assessed": 2}.get(item["status"], 3),
+            {
+                "conflicting": 0, "failed-to-collect": 1, "stale": 2,
+                "redacted": 3, "tool-not-installed": 4,
+                "unavailable": 5,
+            }.get(item["collection_condition"], 6),
             item["category"], item["id"]),
     )
     reused = [
@@ -185,16 +459,47 @@ def _finalize(matrix: dict) -> dict:
         "unique_evidence_refs": len(evidence_usage),
         "reused_evidence_refs": len(reused),
         "reused": reused,
+        "correlated_groups": [
+            {"correlation_id": key, "evidence_refs": sorted(refs),
+             "evidence_count": len(refs)}
+            for key, refs in sorted(correlations.items())
+            if len(refs) > 1
+        ],
+        "shared_source_groups": [
+            {"source_digest": key, "evidence_refs": sorted(refs),
+             "evidence_count": len(refs)}
+            for key, refs in sorted(source_digests.items())
+            if len(refs) > 1
+        ],
         "policy": (
             "One canonical evidence identity may explain multiple cells but "
             "is counted once as unique evidence and cannot inflate assurance."),
+    }
+    matrix["integrity_summary"] = {
+        "stale_cells": conditions["stale"],
+        "conflicting_cells": conditions["conflicting"],
+        "failed_collection_cells": conditions["failed-to-collect"],
+        "redacted_cells": conditions["redacted"],
+        "correlated_evidence_groups": len(
+            matrix["evidence_reuse"]["correlated_groups"]),
+        "shared_source_groups": len(
+            matrix["evidence_reuse"]["shared_source_groups"]),
+        "component_count": len(matrix["component_evidence"]),
+        "component_evidence_refs": sum(
+            item["observed_event_count"]
+            for item in matrix["component_evidence"]),
+        "claim_boundary": (
+            "Confidence describes evidence coverage only. It does not estimate "
+            "subject correctness, capability, safety, or decision certainty. "
+            "Freshness is age-based in this artifact; declared change triggers "
+            "remain unevaluated and may require recollection sooner."),
     }
     return matrix
 
 
 def for_run(run_id: str, *, capability_matrix: dict | None = None) -> dict:
     """Build coverage for a deployment run without changing its evidence."""
-    from . import ecm, evidence_events
+    from . import ecm, evidence_events, rating
 
     rdir = workspace.run_dir(run_id)
     manifest_path = rdir / "manifest.json"
@@ -218,9 +523,31 @@ def for_run(run_id: str, *, capability_matrix: dict | None = None) -> dict:
         # migration adapter in memory; never rewrite the source run merely to
         # render coverage.
         events = evidence_events.migrate_run(run_id, write=False)["events"]
-    by_area = _events_by(events, lambda event: event.get("payload", {}).get("area"))
-    by_scenario = _events_by(events, lambda event: event.get("instrument_id"))
-    by_modality = _events_by(events, lambda event: event.get("modality"))
+    direct_events = [
+        event for event in events
+        if event.get("event_type") != "collection-gap"
+        and event.get("subject_id") == descriptor["id"]]
+    gap_events = [
+        event for event in events
+        if event.get("event_type") == "collection-gap"
+        and event.get("subject_id") == descriptor["id"]]
+    by_area = _events_by(
+        direct_events, lambda event: event.get("payload", {}).get("area"))
+    by_scenario = _events_by(
+        direct_events, lambda event: event.get("instrument_id"))
+    by_modality = _events_by(
+        direct_events, lambda event: event.get("modality"))
+    conflict_instruments = {}
+    if (rdir / "ratings").is_dir():
+        for item in rating.resolve_evidence_items(run_id):
+            if item["status"] == "unresolved-major-divergence":
+                conflict_instruments[item["scenario_id"]] = {
+                    "kind": "unresolved-major-rater-divergence",
+                    "evidence_item_id": item["evidence_item_id"],
+                    "max_dimension_delta": item["max_dimension_delta"],
+                }
+    catalog = _catalog(events, conflict_instruments)
+    matrix["component_evidence"] = _component_evidence(descriptor, events)
 
     package_path = rdir / "evidence-package.json"
     package = workspace.read_json(package_path) if package_path.exists() else None
@@ -282,6 +609,34 @@ def for_run(run_id: str, *, capability_matrix: dict | None = None) -> dict:
                 rationale=(
                     f"{len(set(refs))} canonical event(s) directly use the "
                     f"{item['title']} modality."))
+    if not by_modality.get("human-rating"):
+        _set_condition(
+            matrix, "evidence_modalities", "EM-08", "not-requested",
+            "No human rating was requested or retained; human evaluation is "
+            "optional for Engineering Evaluation and separately governed for "
+            "formal qualification.")
+
+    manifest_status = str(manifest.get("status") or "")
+    if manifest_status in ("collection-partial", "collection-failed"):
+        collected_by_area = Counter(
+            workspace.read_json(path).get("area")
+            for path in (rdir / "responses").glob("*.json"))
+        for area in manifest.get("areas") or []:
+            area_id = area.get("area")
+            planned = int(area.get("planned_items") or 0)
+            collected = collected_by_area[area_id]
+            if area_id and collected < planned:
+                _set_condition(
+                    matrix, "competencies", area_id, "failed-to-collect",
+                    f"Collection stopped after {collected}/{planned} planned "
+                    "response(s); the run remains resumable.")
+    for event in gap_events:
+        payload = event["payload"]
+        target = payload["target"]
+        _set_condition(
+            matrix, target["category"], target["id"],
+            payload["collection_condition"], payload["detail"],
+            evidence_ref=event["event_id"])
 
     product_files = {
         "DP-01": "engineering-evaluation.json",
@@ -302,7 +657,7 @@ def for_run(run_id: str, *, capability_matrix: dict | None = None) -> dict:
         status="assessed",
         evidence_refs=["derived:assessment-coverage"],
         rationale="This coverage and blind-spot product was generated.")
-    return _finalize(matrix)
+    return _finalize(matrix, catalog)
 
 
 def for_repository(result: dict) -> dict:
@@ -318,8 +673,20 @@ def for_repository(result: dict) -> dict:
             "read_only_derivation": True,
         })
     events = result.get("events") or []
-    by_area = _events_by(events, lambda event: event.get("payload", {}).get("area"))
-    by_modality = _events_by(events, lambda event: event.get("modality"))
+    direct_events = [
+        event for event in events
+        if event.get("event_type") != "collection-gap"
+        and event.get("subject_id") == descriptor.get("id")]
+    gap_events = [
+        event for event in events
+        if event.get("event_type") == "collection-gap"
+        and event.get("subject_id") == descriptor.get("id")]
+    by_area = _events_by(
+        direct_events, lambda event: event.get("payload", {}).get("area"))
+    by_modality = _events_by(
+        direct_events, lambda event: event.get("modality"))
+    catalog = _catalog(events, {})
+    matrix["component_evidence"] = _component_evidence(descriptor, events)
     for area_id, area in (result.get("areas") or {}).items():
         refs = by_area.get(area_id, [])
         if refs:
@@ -367,7 +734,14 @@ def for_repository(result: dict) -> dict:
                 "This coverage and blind-spot product was generated."
                 if product_id == "DP-11" else
                 "The repository assessment contains this decision product."))
-    return _finalize(matrix)
+    for event in gap_events:
+        payload = event["payload"]
+        target = payload["target"]
+        _set_condition(
+            matrix, target["category"], target["id"],
+            payload["collection_condition"], payload["detail"],
+            evidence_ref=event["event_id"])
+    return _finalize(matrix, catalog)
 
 
 def for_reference(reference: str) -> dict:
@@ -378,7 +752,9 @@ def for_reference(reference: str) -> dict:
 
 
 def render_markdown(matrix: dict) -> str:
+    """Render coverage, integrity, correlation, and dependency boundaries."""
     summary = matrix["summary"]
+    integrity = matrix["integrity_summary"]
     lines = [
         "# AIES Assessment Coverage & Blind Spots",
         "",
@@ -406,36 +782,77 @@ def render_markdown(matrix: dict) -> str:
         f"**{summary['direct_coverage_percent'] or 0:.1f}%**. "
         "This percentage describes evidence availability only.",
         "",
+        "## Evidence Integrity",
+        "",
+        "| Signal | Count |",
+        "|---|---:|",
+        f"| Stale cells | {integrity['stale_cells']} |",
+        f"| Conflicting cells | {integrity['conflicting_cells']} |",
+        f"| Failed collection cells | {integrity['failed_collection_cells']} |",
+        f"| Redacted cells | {integrity['redacted_cells']} |",
+        f"| Correlated evidence groups | "
+        f"{integrity['correlated_evidence_groups']} |",
+        f"| Shared-source groups | {integrity['shared_source_groups']} |",
+        "",
+        integrity["claim_boundary"],
+        "",
     ]
     for category in matrix["categories"].values():
         lines += [
             f"## {category['title']}",
             "",
-            "| Perspective | Status | Evidence | Rationale |",
-            "|---|---|---:|---|",
+            "| Perspective | Coverage | Collection | Evidence confidence | "
+            "Depth | Evidence | Rationale |",
+            "|---|---|---|---|---|---:|---|",
         ]
         for cell in category["cells"]:
+            depth = cell["evidence_depth"]
             lines.append(
                 f"| `{cell['id']}` — {cell['title']} | "
-                f"{cell['status']} | {cell['evidence_count']} | "
-                f"{cell['rationale']} |")
+                f"{cell['status']} | {cell['collection_condition']} | "
+                f"{cell['evidence_confidence']['level']} | "
+                f"{depth['direct_events']} events / "
+                f"{depth['distinct_instruments']} instruments / "
+                f"{depth['distinct_sources']} sources | "
+                f"{cell['evidence_count']} | {cell['rationale']} |")
         lines.append("")
     reuse = matrix["evidence_reuse"]
     lines += [
-        "## Evidence Reuse",
+        "## Evidence Reuse and Correlation",
         "",
         f"- Cell references: **{reuse['cell_references']}**",
         f"- Unique evidence identities: **{reuse['unique_evidence_refs']}**",
         f"- Evidence identities reused across cells: "
         f"**{reuse['reused_evidence_refs']}**",
+        f"- Correlated evidence groups: "
+        f"**{len(reuse['correlated_groups'])}**",
+        f"- Shared-source evidence groups: "
+        f"**{len(reuse['shared_source_groups'])}**",
         "",
         reuse["policy"],
         "",
-        "## Highest-Priority Blind Spots",
+        "## Component and Dependency Evidence",
         "",
     ]
+    if matrix["component_evidence"]:
+        lines += [
+            "| Component | Role | Transfer | Observed events | Parent use |",
+            "|---|---|---|---:|---|",
+        ]
+        for component in matrix["component_evidence"]:
+            lines.append(
+                f"| `{component['subject_id']}` | "
+                f"{component.get('role') or 'unspecified'} | "
+                f"{component['evidence_transfer']} | "
+                f"{component['observed_event_count']} | "
+                f"{component['coverage_use']} |")
+    else:
+        lines.append("- No component dependencies are declared by this subject.")
+    lines += ["", "## Highest-Priority Blind Spots", ""]
     lines.extend(
-        f"- `{item['id']}` — {item['title']} ({item['status']}): "
+        f"- `{item['id']}` — {item['title']} "
+        f"({item['status']}; {item['collection_condition']}; "
+        f"confidence {item['evidence_confidence']}): "
         f"{item['next_evidence']}"
         for item in matrix["blind_spots"][:25])
     if not matrix["blind_spots"]:
@@ -445,7 +862,7 @@ def render_markdown(matrix: dict) -> str:
 
 
 def render_html(matrix: dict) -> str:
-    markdown = render_markdown(matrix)
+    """Render a sortable-ready complete integrity matrix without inference."""
     rows = []
     for category in matrix["categories"].values():
         for cell in category["cells"]:
@@ -454,15 +871,29 @@ def render_html(matrix: dict) -> str:
                 + "</td><td><code>" + html.escape(cell["id"])
                 + "</code> — " + html.escape(cell["title"])
                 + "</td><td>" + html.escape(cell["status"])
+                + "</td><td>" + html.escape(cell["collection_condition"])
+                + "</td><td>" + html.escape(
+                    cell["evidence_confidence"]["level"])
                 + "</td><td>" + str(cell["evidence_count"])
                 + "</td><td>" + html.escape(cell["rationale"])
                 + "</td></tr>")
     summary = matrix["summary"]
+    integrity = matrix["integrity_summary"]
+    cards = (
+        ("Assessed", summary["assessed"]),
+        ("Partial", summary["partially-assessed"]),
+        ("Not assessed", summary["not-assessed"]),
+        ("Unsupported", summary["unsupported"]),
+        ("Not applicable", summary["not-applicable"]),
+        ("Direct coverage", f"{summary['direct_coverage_percent'] or 0:.1f}%"),
+        ("Stale", integrity["stale_cells"]),
+        ("Conflicting", integrity["conflicting_cells"]),
+    )
     return (
         "<!doctype html><html><head><meta charset='utf-8'><meta "
         "name='viewport' content='width=device-width,initial-scale=1'>"
         "<title>AIES Assessment Coverage</title><style>"
-        "body{font:15px system-ui;max-width:1200px;margin:40px auto;padding:0 20px;"
+        "body{font:15px system-ui;max-width:1300px;margin:40px auto;padding:0 20px;"
         "color:#172033}table{border-collapse:collapse;width:100%}"
         "th,td{padding:8px;border-bottom:1px solid #d8deea;text-align:left;"
         "vertical-align:top}th{position:sticky;top:0;background:#eef3fb}"
@@ -474,23 +905,15 @@ def render_html(matrix: dict) -> str:
         + html.escape(matrix["profile"]["id"]) + "</code> — "
         + html.escape(matrix["profile"]["title"]) + "</p><div class='summary'>"
         + "".join(
-            f"<div class='card'><strong>{html.escape(label)}</strong><br>{value}</div>"
-            for label, value in (
-                ("Assessed", summary["assessed"]),
-                ("Partial", summary["partially-assessed"]),
-                ("Not assessed", summary["not-assessed"]),
-                ("Unsupported", summary["unsupported"]),
-                ("Not applicable", summary["not-applicable"]),
-                ("Direct coverage",
-                 f"{summary['direct_coverage_percent'] or 0:.1f}%"),
-            ))
+            f"<div class='card'><strong>{html.escape(label)}</strong><br>"
+            f"{value}</div>" for label, value in cards)
         + "</div><h2>Complete matrix</h2><table><thead><tr><th>Category</th>"
-        "<th>Perspective</th><th>Status</th><th>Evidence</th><th>Rationale</th>"
+        "<th>Perspective</th><th>Coverage</th><th>Collection</th>"
+        "<th>Evidence confidence</th><th>Evidence</th><th>Rationale</th>"
         "</tr></thead><tbody>" + "".join(rows)
         + "</tbody></table><h2>Claim boundary</h2><p>"
         + html.escape(matrix["claim_boundary"])
-        + "</p><details><summary>Markdown source preview</summary><pre>"
-        + html.escape(markdown[:4000]) + "</pre></details></body></html>"
+        + "</p></body></html>"
     )
 
 

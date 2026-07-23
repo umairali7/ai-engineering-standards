@@ -34,6 +34,8 @@ Version `1.0.0` · status **approved** · governed by `ADR-0018`.
 
 **Decision products:** `DP-01`, `DP-02`, `DP-03`, `DP-04`, `DP-08`, `DP-09`, `DP-11`.
 
+**Freshness policy:** evidence older than 90 days is reported stale; declared change triggers override elapsed age.
+
 **Known limitations:**
 
 - Design review does not establish empirical validity or predictive usefulness.
@@ -50,6 +52,8 @@ Version `1.0.0` · status **approved** · governed by `ADR-0018`.
 
 **Decision products:** `DP-05`, `DP-06`, `DP-07`, `DP-08`, `DP-09`, `DP-11`.
 
+**Freshness policy:** evidence older than 30 days is reported stale; declared change triggers override elapsed age.
+
 **Known limitations:**
 
 - Practice maturity, static findings, and retained tool results do not prove source correctness, security, or fitness.
@@ -63,6 +67,10 @@ Version `1.0.0` · status **approved** · governed by `ADR-0018`.
 - **not assessed** — applicable, but no direct evidence was collected.
 - **unsupported** — the current executor or adapter has no direct evidence path.
 - **not applicable** — the profile explicitly excludes the perspective for this subject kind.
+
+Coverage status is separate from the collection condition. Applicable cells report `current`, `not-collected`, `not-requested`, `unavailable`, `tool-not-installed`, `redacted`, `failed-to-collect`, `stale`, or `conflicting`. Typed collection-gap events explain absence and never count as direct evidence.
+
+Evidence confidence is limited to coverage integrity. It uses direct event depth, distinct instruments, source types, modalities, freshness, and conflicts; it is not confidence in subject quality, correctness, capability, safety, or a decision.
 
 Evidence may be referenced by multiple cells, but the coverage report also counts unique evidence identities and discloses reuse. Coverage is evidence availability—not quality, capability, qualification, deployment readiness, or authorization.
 

@@ -13,7 +13,7 @@ from . import workspace
 EVENT_SCHEMA = "aies-evidence-event/v1"
 EVENT_TYPES = frozenset({
     "observation", "rating", "review", "environment", "lifecycle",
-    "attestation",
+    "attestation", "collection-gap",
 })
 MODALITIES = frozenset({
     "controlled-scenario", "integrated-system", "field-observation",
@@ -23,6 +23,10 @@ MODALITIES = frozenset({
 })
 CLASSIFICATIONS = frozenset({
     "public", "internal", "confidential", "restricted",
+})
+COLLECTION_CONDITIONS = frozenset({
+    "not-collected", "unavailable", "tool-not-installed", "redacted",
+    "failed-to-collect", "stale", "conflicting",
 })
 
 
@@ -132,9 +136,58 @@ def validate(value: object) -> list[str]:
             errors.append("event_id does not match duplicate identity")
     if not isinstance(value.get("payload"), dict):
         errors.append("payload must be an object")
+    elif value.get("event_type") == "collection-gap":
+        payload = value["payload"]
+        if payload.get("collection_condition") not in COLLECTION_CONDITIONS:
+            errors.append(
+                "collection-gap payload.collection_condition is unsupported")
+        target = payload.get("target")
+        if (not isinstance(target, dict)
+                or not isinstance(target.get("category"), str)
+                or not target.get("category")
+                or not isinstance(target.get("id"), str)
+                or not target.get("id")):
+            errors.append(
+                "collection-gap payload.target requires category and id")
+        if not isinstance(payload.get("detail"), str) or not payload["detail"]:
+            errors.append("collection-gap payload.detail is required")
     if not isinstance(value.get("extensions", {}), dict):
         errors.append("extensions must be an object")
     return errors
+
+
+def build_collection_gap(
+    *,
+    subject_id: str,
+    modality: str,
+    source: str,
+    source_record_id: str,
+    source_digest: str,
+    adapter_profile: str,
+    category: str,
+    item_id: str,
+    condition: str,
+    detail: str,
+    observed_at: str | None = None,
+    classification: str = "internal",
+) -> dict:
+    """Build explicit missing-evidence metadata without fabricating evidence."""
+    return build(
+        event_type="collection-gap",
+        subject_id=subject_id,
+        modality=modality,
+        source=source,
+        source_record_id=source_record_id,
+        source_digest=source_digest,
+        adapter_profile=adapter_profile,
+        observed_at=observed_at,
+        classification=classification,
+        payload={
+            "collection_condition": condition,
+            "target": {"category": category, "id": item_id},
+            "detail": detail,
+        },
+    )
 
 
 def append(run_id: str, event: dict) -> Path:

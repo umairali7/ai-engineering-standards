@@ -124,6 +124,18 @@ The matrix distinguishes **assessed**, **partially assessed**, **not
 assessed**, **unsupported**, and **not applicable**. It counts unique evidence
 identities separately from cell references so one observation can inform
 multiple views without masquerading as multiple independent observations.
+Each cell separately reports whether collection is current, not requested, not
+collected, unavailable, blocked by a missing tool, redacted, failed, stale, or
+conflicting. Evidence depth reports direct events, distinct instruments,
+source types, modalities, and adapters. Its low/moderate/high confidence label
+describes coverage integrity only—not confidence that the subject is correct,
+capable, safe, or ready. Profile-declared age windows expose stale evidence;
+fingerprint and change triggers override elapsed age.
+
+Correlation groups and shared source digests make non-independent evidence
+visible. Declared component subjects and their events are inventoried, but
+`none`, `reference-only`, and `explicit-mapping-required` transfer policies
+never silently fill a parent subject's coverage.
 Report bundles generate Markdown, JSON, and HTML coverage artifacts
 automatically. These artifacts report availability and blind spots only; they
 do not measure subject quality or create qualification or deployment

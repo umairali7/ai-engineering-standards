@@ -45,6 +45,23 @@ those boundaries.
 6. Coverage and blind spots are informational decision products. They may
    summarize existing evidence but cannot change scores, gates, qualifications,
    grants, deployment authority, or repository quality conclusions.
+7. Each SAP declares a freshness policy. Elapsed age is reported separately
+   from assessment status, while any fingerprint or declared change trigger
+   overrides a nominal age window and requires reassessment.
+8. Applicable cells carry a collection condition distinct from coverage:
+   `current`, `not-collected`, `not-requested`, `unavailable`,
+   `tool-not-installed`, `redacted`, `failed-to-collect`, `stale`, or
+   `conflicting`. Adapters may emit typed `collection-gap` events; these events
+   explain absence but never count as direct evidence.
+9. Evidence confidence is an evidence-coverage property derived from direct
+   event depth, instrument breadth, source types, modalities, freshness, and
+   conflicts. It is never confidence in subject correctness, capability,
+   safety, or a decision.
+10. Correlated identities, shared source digests, and component-subject
+    evidence are disclosed. Component evidence remains excluded from parent
+    coverage unless a future governed explicit mapping is implemented;
+    `none`, `reference-only`, and `explicit-mapping-required` never imply
+    inheritance.
 
 ## Initial profiles
 

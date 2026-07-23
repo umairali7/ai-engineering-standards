@@ -150,6 +150,18 @@ def main() -> int:
         f"{coverage['evidence_reuse']['unique_evidence_refs']} unique /",
         f"{coverage['evidence_reuse']['cell_references']} cell references.",
     )
+    integrity = coverage["integrity_summary"]
+    print(
+        "Evidence integrity:",
+        f"{integrity['stale_cells']} stale,",
+        f"{integrity['conflicting_cells']} conflicting,",
+        f"{integrity['failed_collection_cells']} collection failures,",
+        f"{integrity['correlated_evidence_groups']} correlated groups,",
+        f"{integrity['component_count']} declared components.",
+    )
+    print(
+        "Freshness boundary: age is evaluated; declared change triggers "
+        "require separate detection.")
 
     hr("9. Protocol-compatible ECM comparison (same evidence fixture, no invented winner)")
     code, output, _ = invoke("compare", run_id, run_id, "--ecm", "--json", capture=True)

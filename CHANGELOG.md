@@ -25,6 +25,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   identities separately from reused cell references. Coverage remains
   informational and cannot become a quality score, qualification, or
   authorization.
+- **Coverage-integrity and dependency analysis**: coverage cells now separate
+  assessment status from collection conditions including unavailable,
+  tool-not-installed, redacted, failed, stale, and conflicting evidence.
+  Profile-declared freshness windows, direct event/instrument/source/modality
+  depth, bounded evidence-coverage confidence, unresolved rating conflicts,
+  correlation groups, shared source digests, and component-event inventories
+  are exposed in JSON, Markdown, and HTML. Typed `collection-gap` events explain
+  collection failure without counting as evidence. Component evidence cannot
+  implicitly fill parent coverage under any declared transfer mode.
 - **Verified cross-machine run portability and compatible cohort discovery**:
   accepted ADR-0017 establishes the non-overwriting transfer boundary.
   `aies runs import DIRECTORY-OR-ZIP [--dry-run]` accepts exactly one valid run,

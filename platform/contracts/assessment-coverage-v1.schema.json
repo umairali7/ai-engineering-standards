@@ -6,7 +6,8 @@
   "additionalProperties": false,
   "required": [
     "kind", "schema", "profile", "subject", "evidence_scope", "categories",
-    "summary", "blind_spots", "evidence_reuse", "limitations",
+    "summary", "blind_spots", "evidence_reuse", "component_evidence",
+    "integrity_summary", "generated_at", "limitations",
     "claim_boundary"
   ],
   "properties": {
@@ -15,6 +16,7 @@
     "profile": {"type": "object"},
     "subject": {"type": "object"},
     "evidence_scope": {"type": "object"},
+    "generated_at": {"type": "string", "format": "date-time"},
     "categories": {
       "type": "object",
       "additionalProperties": {
@@ -29,7 +31,10 @@
               "additionalProperties": false,
               "required": [
                 "id", "title", "applicability", "status", "rationale",
-                "evidence_refs", "evidence_count"
+                "evidence_refs", "evidence_count", "condition_refs",
+                "collection_condition", "evidence_depth",
+                "evidence_confidence", "freshness", "conflicts",
+                "component_overlap"
               ],
               "properties": {
                 "id": {"type": "string", "minLength": 1},
@@ -49,7 +54,27 @@
                   "type": "array", "uniqueItems": true,
                   "items": {"type": "string"}
                 },
-                "evidence_count": {"type": "integer", "minimum": 0}
+                "evidence_count": {"type": "integer", "minimum": 0},
+                "condition_refs": {
+                  "type": "array", "uniqueItems": true,
+                  "items": {"type": "string"}
+                },
+                "collection_condition": {
+                  "enum": [
+                    "current", "not-collected", "not-requested",
+                    "unavailable", "tool-not-installed", "redacted",
+                    "failed-to-collect", "stale", "conflicting",
+                    "not-applicable", "unsupported"
+                  ]
+                },
+                "evidence_depth": {"type": "object"},
+                "evidence_confidence": {"type": "object"},
+                "freshness": {"type": "object"},
+                "conflicts": {"type": "array", "items": {"type": "object"}},
+                "component_overlap": {
+                  "type": "array", "items": {"type": "string"},
+                  "uniqueItems": true
+                }
               }
             }
           },
@@ -60,6 +85,10 @@
     "summary": {"type": "object"},
     "blind_spots": {"type": "array", "items": {"type": "object"}},
     "evidence_reuse": {"type": "object"},
+    "component_evidence": {
+      "type": "array", "items": {"type": "object"}
+    },
+    "integrity_summary": {"type": "object"},
     "limitations": {"type": "array", "items": {"type": "string"}},
     "claim_boundary": {"type": "string", "minLength": 1}
   }

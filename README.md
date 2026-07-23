@@ -94,6 +94,9 @@ defines the assessment semantics behind that boundary. Every complete
 deployment report and repository assessment bundle now includes an
 **Assessment Coverage and Blind-Spot Report**. Coverage is evidence
 availability—not a score, pass, capability, qualification, or authorization.
+It separately exposes collection failures, missing tools, redaction,
+staleness, conflicts, evidence depth and correlation, and component evidence
+that is prohibited from silently inflating the parent subject.
 
 ---
 

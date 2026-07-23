@@ -12,6 +12,13 @@ Adapters must not infer missing scores, silently change units, treat repeats or
 reimports as new breadth, copy secrets, or elevate findings to correctness,
 conformance, qualification, or authorization. Unknown remains unknown.
 
+An adapter that knows why applicable evidence is absent may emit a typed
+`collection-gap` event. Its condition is exactly one of `not-collected`,
+`unavailable`, `tool-not-installed`, `redacted`, `failed-to-collect`, `stale`,
+or `conflicting`, and its payload identifies the governed perspective cell and
+a human-readable detail. A gap event is metadata about missing or compromised
+collection; it is never direct evidence and can never fill a coverage cell.
+
 Duplicate identity is the tuple `(source_digest, source_record_id,
 adapter_profile)`. Major schema incompatibility is an error. Minor additions
 must be preserved under `extensions` or disclosed as loss. An adapter fixture

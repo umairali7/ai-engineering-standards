@@ -25,6 +25,10 @@ scoring:
 human_review:
   engineering_evaluation: optional for contextual interpretation and finding disposition
   formal_qualification: a consequential repository decision remains with its named human authority
+freshness_policy:
+  basis: latest directly referenced evidence timestamp
+  default_max_age_days: 30
+  change_triggers_override_age: true
 decision_products: [DP-05, DP-06, DP-07, DP-08, DP-09, DP-11]
 applicability:
   lifecycle:

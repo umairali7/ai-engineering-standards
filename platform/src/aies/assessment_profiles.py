@@ -157,7 +157,7 @@ def validate_profile(value: object, perspectives: dict | None = None) -> list[st
         "kind", "schema", "id", "title", "version", "status", "governed_by",
         "subject_kinds", "descriptor_schema", "fingerprint_change_triggers",
         "execution", "instruments", "scoring", "human_review",
-        "decision_products", "applicability", "limitations",
+        "freshness_policy", "decision_products", "applicability", "limitations",
     }
     missing = sorted(required - set(value))
     if missing:
@@ -195,6 +195,30 @@ def validate_profile(value: object, perspectives: dict | None = None) -> list[st
         for field in ("executors", "evidence_adapters"):
             if not isinstance(execution.get(field), list) or not execution[field]:
                 errors.append(f"execution.{field} must be a non-empty list")
+    freshness = value.get("freshness_policy")
+    if not isinstance(freshness, dict):
+        errors.append("freshness_policy must be a mapping")
+    else:
+        expected_freshness = {
+            "basis", "default_max_age_days", "change_triggers_override_age"}
+        extra_freshness = sorted(set(freshness) - expected_freshness)
+        missing_freshness = sorted(expected_freshness - set(freshness))
+        if extra_freshness:
+            errors.append(
+                "freshness_policy has unsupported fields: "
+                + ", ".join(extra_freshness))
+        if missing_freshness:
+            errors.append(
+                "freshness_policy is missing: "
+                + ", ".join(missing_freshness))
+        age = freshness.get("default_max_age_days")
+        if not isinstance(age, int) or isinstance(age, bool) or age <= 0:
+            errors.append(
+                "freshness_policy.default_max_age_days must be a positive integer")
+        if not isinstance(
+                freshness.get("change_triggers_override_age"), bool):
+            errors.append(
+                "freshness_policy.change_triggers_override_age must be boolean")
     applicability = value.get("applicability")
     if not isinstance(applicability, dict):
         return errors + ["applicability must be a mapping"]
@@ -400,6 +424,10 @@ def render_markdown() -> str:
             + ", ".join(f"`{item}`" for item in profile["decision_products"])
             + ".",
             "",
+            f"**Freshness policy:** evidence older than "
+            f"{profile['freshness_policy']['default_max_age_days']} days is "
+            "reported stale; declared change triggers override elapsed age.",
+            "",
             "**Known limitations:**",
             "",
         ]
@@ -416,6 +444,17 @@ def render_markdown() -> str:
         "evidence path.",
         "- **not applicable** — the profile explicitly excludes the perspective "
         "for this subject kind.",
+        "",
+        "Coverage status is separate from the collection condition. Applicable "
+        "cells report `current`, `not-collected`, `not-requested`, "
+        "`unavailable`, `tool-not-installed`, `redacted`, "
+        "`failed-to-collect`, `stale`, or `conflicting`. Typed collection-gap "
+        "events explain absence and never count as direct evidence.",
+        "",
+        "Evidence confidence is limited to coverage integrity. It uses direct "
+        "event depth, distinct instruments, source types, modalities, "
+        "freshness, and conflicts; it is not confidence in subject quality, "
+        "correctness, capability, safety, or a decision.",
         "",
         "Evidence may be referenced by multiple cells, but the coverage report "
         "also counts unique evidence identities and discloses reuse. Coverage "

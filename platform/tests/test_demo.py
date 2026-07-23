@@ -113,6 +113,16 @@ def test_offline_end_to_end_demo(demo_ws, monkeypatch):
     assert fit["kind"] == "engineering-fit-guidance"
     assert any(row["fit"] == "limited-evidence" for row in fit["tasks"])
     assert not any(row["fit"] == "strong-observed-fit" for row in fit["tasks"])
+    coverage = json.loads(
+        (runs[-1] / "assessment-coverage.json").read_text(
+            encoding="utf-8"))
+    assert coverage["kind"] == "aies-assessment-coverage-matrix"
+    assert "integrity_summary" in coverage
+    assert coverage["summary"]["collection_conditions"]["current"] > 0
+    assert all(
+        cell["freshness"]["change_trigger_evaluated"] is False
+        for category in coverage["categories"].values()
+        for cell in category["cells"])
     from aies import compare
     observed_comparison = compare.compare_ecm(run_id, run_id)
     assert observed_comparison["comparison_mode"] == "engineering-observed"

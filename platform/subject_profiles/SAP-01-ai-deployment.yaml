@@ -26,6 +26,10 @@ scoring:
 human_review:
   engineering_evaluation: optional and separately disclosed
   formal_qualification: required by the governed rater and authority protocol
+freshness_policy:
+  basis: latest directly referenced evidence timestamp
+  default_max_age_days: 90
+  change_triggers_override_age: true
 decision_products: [DP-01, DP-02, DP-03, DP-04, DP-08, DP-09, DP-11]
 applicability:
   lifecycle:

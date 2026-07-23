@@ -8,7 +8,7 @@
     "kind", "schema", "id", "title", "version", "status", "governed_by",
     "subject_kinds", "descriptor_schema", "fingerprint_change_triggers",
     "execution", "instruments", "scoring", "human_review",
-    "decision_products", "applicability", "limitations"
+    "freshness_policy", "decision_products", "applicability", "limitations"
   ],
   "properties": {
     "kind": {"const": "aies-subject-assessment-profile"},
@@ -41,6 +41,18 @@
     "human_review": {
       "type": "object",
       "required": ["engineering_evaluation", "formal_qualification"]
+    },
+    "freshness_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "basis", "default_max_age_days", "change_triggers_override_age"
+      ],
+      "properties": {
+        "basis": {"type": "string", "minLength": 1},
+        "default_max_age_days": {"type": "integer", "minimum": 1},
+        "change_triggers_override_age": {"type": "boolean"}
+      }
     },
     "decision_products": {
       "type": "array", "items": {"type": "string"}, "uniqueItems": true
