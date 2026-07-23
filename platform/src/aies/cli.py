@@ -1896,6 +1896,23 @@ def cmd_discover(args) -> int:
 
 def cmd_runs(args) -> int:
     from . import compare, workspace
+    if args.runs_cmd == "show":
+        from . import run_view
+        try:
+            summary = run_view.build(args.run)
+        except (FileNotFoundError, ValueError) as error:
+            return _command_failure(
+                error,
+                operation="run-inspection",
+                args=args,
+                run_id=args.run,
+                preserved_work_status="workspace-unchanged",
+                preserved_work_detail=(
+                    "Run inspection is read-only; no evidence changed."),
+                recovery_command="aies runs list",
+            )
+        _out(summary, args.json, run_view.render(summary))
+        return 0
     if args.runs_cmd == "progress":
         path = workspace.run_dir(args.run) / "progress.json"
         if not path.exists():
@@ -3381,13 +3398,19 @@ def build_parser() -> argparse.ArgumentParser:
              "ECM comparison uses compatible observed engineering evidence")
     cp.set_defaults(func=cmd_compare)
 
-    rn = common(sub.add_parser("runs", help="result history: list runs"))
+    rn = common(sub.add_parser(
+        "runs", help="list runs or inspect one run and its durable progress"))
     rnsub = rn.add_subparsers(dest="runs_cmd", required=True)
     rl = rnsub.add_parser("list", help="list recorded runs")
     rl.add_argument("--model", default=None,
                     help="filter by deployment id or model identifier")
     rl.add_argument("--json", action="store_true",
                     help="emit machine-readable JSON")
+    rs = rnsub.add_parser(
+        "show", help="show one versioned read-only run summary and artifact index")
+    rs.add_argument("run", help="run id to inspect")
+    rs.add_argument("--json", action="store_true",
+                    help="emit the aies-run-view JSON contract")
     rp = rnsub.add_parser("progress", help="show detailed durable progress for a run")
     rp.add_argument("run", help="run id whose durable progress will be shown")
     rp.add_argument("--json", action="store_true",
@@ -3500,8 +3523,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="summarize deployments, runs, assessments, support, and records")
     ).set_defaults(func=cmd_overview)
 
-    sv = common(sub.add_parser("serve", help="thin read-only REST API over the "
-                               "canonical artifacts (JSON; computes no outcomes)"))
+    sv = common(sub.add_parser(
+        "serve",
+        help="thin read-only REST API over versioned views and stored canonical "
+             "artifacts (JSON; computes no outcomes)"))
     sv.add_argument("--host", default="127.0.0.1",
                     help="interface to bind (default: 127.0.0.1; use broader binds cautiously)")
     sv.add_argument("--port", type=int, default=8722,

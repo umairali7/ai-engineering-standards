@@ -2196,15 +2196,15 @@ assemble a multi-deployment peer-review package
 
 ## `aies runs`
 
-result history: list runs
+list runs or inspect one run and its durable progress
 
-**Usage:** `aies runs [-h] [--json] {list,progress} ...`
+**Usage:** `aies runs [-h] [--json] {list,show,progress} ...`
 
 **Prerequisites:** The workspace contains runs; progress requires a run with durable `progress.json` state.
 
-**Result and side effects:** Lists run history or displays live/durable run progress without mutating evidence.
+**Result and side effects:** Lists run history, shows a versioned read-only run and artifact summary, or displays live/durable progress without mutating evidence.
 
-**Recommended next step:** Open the run transcript/report or resume incomplete work.
+**Recommended next step:** Use `runs show RUN` to discover available products, then open, compare, inspect, or resume the run.
 
 ### Subcommands
 
@@ -2212,6 +2212,7 @@ result history: list runs
 |---|---|
 | `list` | list recorded runs |
 | `progress` | show detailed durable progress for a run |
+| `show` | show one versioned read-only run summary and artifact index |
 
 ### Parameters and options
 
@@ -2228,9 +2229,9 @@ list recorded runs
 
 **Prerequisites:** The workspace contains runs; progress requires a run with durable `progress.json` state.
 
-**Result and side effects:** Lists run history or displays live/durable run progress without mutating evidence.
+**Result and side effects:** Lists run history, shows a versioned read-only run and artifact summary, or displays live/durable progress without mutating evidence.
 
-**Recommended next step:** Open the run transcript/report or resume incomplete work.
+**Recommended next step:** Use `runs show RUN` to discover available products, then open, compare, inspect, or resume the run.
 
 ### Parameters and options
 
@@ -2248,9 +2249,9 @@ show detailed durable progress for a run
 
 **Prerequisites:** The workspace contains runs; progress requires a run with durable `progress.json` state.
 
-**Result and side effects:** Lists run history or displays live/durable run progress without mutating evidence.
+**Result and side effects:** Lists run history, shows a versioned read-only run and artifact summary, or displays live/durable progress without mutating evidence.
 
-**Recommended next step:** Open the run transcript/report or resume incomplete work.
+**Recommended next step:** Use `runs show RUN` to discover available products, then open, compare, inspect, or resume the run.
 
 ### Parameters and options
 
@@ -2259,6 +2260,26 @@ show detailed durable progress for a run
 | `-h`, `--help` | optional | show this help message and exit | — |
 | `<RUN>` | required | run id whose durable progress will be shown | — |
 | `--json` | optional | emit machine-readable JSON | — |
+
+## `aies runs show`
+
+show one versioned read-only run summary and artifact index
+
+**Usage:** `aies runs show [-h] [--json] run`
+
+**Prerequisites:** The workspace contains runs; progress requires a run with durable `progress.json` state.
+
+**Result and side effects:** Lists run history, shows a versioned read-only run and artifact summary, or displays live/durable progress without mutating evidence.
+
+**Recommended next step:** Use `runs show RUN` to discover available products, then open, compare, inspect, or resume the run.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<RUN>` | required | run id to inspect | — |
+| `--json` | optional | emit the aies-run-view JSON contract | — |
 
 ## `aies runtime`
 
@@ -2348,13 +2369,13 @@ ingest a filled scoresheet (human or model rater)
 
 ## `aies serve`
 
-thin read-only REST API over the canonical artifacts (JSON; computes no outcomes)
+thin read-only REST API over versioned views and stored canonical artifacts (JSON; computes no outcomes)
 
 **Usage:** `aies serve [-h] [--json] [--host HOST] [--port PORT]`
 
 **Prerequisites:** The workspace contains artifacts to expose; choose a safe bind address.
 
-**Result and side effects:** Starts a read-only API exposing the shared `/overview` view model and canonical artifacts; it computes no new decisions.
+**Result and side effects:** Starts a read-only API exposing shared `/overview` and `/runs/{id}` view models plus stored canonical decision products; it computes no new decisions.
 
 **Recommended next step:** Stop the process when finished; use an authenticated reverse proxy before any non-local exposure.
 

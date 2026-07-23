@@ -202,6 +202,11 @@ def test_operational_read_commands_share_actionable_recovery(
     assert "recover: aies runs list" in capability_error
     assert "read-only" in capability_error
 
+    assert cli.main(["runs", "show", "missing-run"]) == 2
+    run_error = capsys.readouterr().err
+    assert "recover: aies runs list" in run_error
+    assert "Run inspection is read-only" in run_error
+
     assert cli.main(["audit", str(tmp_path / "missing-repository")]) == 2
     audit_error = capsys.readouterr().err
     assert "source-unchanged" in audit_error

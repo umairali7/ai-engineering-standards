@@ -262,8 +262,8 @@ GUIDANCE: dict[str, CommandGuidance] = {
     ),
     "runs": CommandGuidance(
         "The workspace contains runs; progress requires a run with durable `progress.json` state.",
-        "Lists run history or displays live/durable run progress without mutating evidence.",
-        "Open the run transcript/report or resume incomplete work.",
+        "Lists run history, shows a versioned read-only run and artifact summary, or displays live/durable progress without mutating evidence.",
+        "Use `runs show RUN` to discover available products, then open, compare, inspect, or resume the run.",
     ),
     "judge": CommandGuidance(
         "Deployments may declare the judge role; history requires prior automated scoring.",
@@ -317,7 +317,7 @@ GUIDANCE: dict[str, CommandGuidance] = {
     ),
     "serve": CommandGuidance(
         "The workspace contains artifacts to expose; choose a safe bind address.",
-        "Starts a read-only API exposing the shared `/overview` view model and canonical artifacts; it computes no new decisions.",
+        "Starts a read-only API exposing shared `/overview` and `/runs/{id}` view models plus stored canonical decision products; it computes no new decisions.",
         "Stop the process when finished; use an authenticated reverse proxy before any non-local exposure.",
     ),
 }

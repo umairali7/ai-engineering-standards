@@ -66,6 +66,9 @@ Every artifact carries a schema version; envelopes are field-append-only
 | Executive Summary | `executive_summary_schema` | `2` | complete report bundle |
 | Grounding Diagnostics | `diagnostic_schema` | `1` | complete report bundle; structured reviewer observations |
 | Report Bundle Index | `report_bundle_schema` | `1` | complete report bundle |
+| Workspace Overview | `schema_version` | `1` | `aies overview` / `GET /overview` / dashboard |
+| Run Detail View | `schema_version` | `1` | `aies runs show` / `GET /runs/{id}` |
+| API Error | `schema_version` | `1` | failed read-only REST requests |
 
 The result's `metadata` records both `decision_engine_version` (which software)
 and `decision_semantics_version` (which policy), plus the `profile_version` and
@@ -121,7 +124,7 @@ append-only records. Grouped as in `aies --help`.
 | `review` | Automated review, optional human-evaluation record, implicit live progress, and refreshed report bundle | `aies review run-2031 --model-reviewer rev` |
 | `compare` | Compatible observed ECM scores compare by default without human review; `--formal-qualification` additionally requires demonstrated status/protocol before a winner claim; `--area-summary` selects the legacy aggregate | `aies compare run-a run-b` |
 | `guidance` | Engineering Fit Guidance by default; `--qualification QUAL-id` selects qualification-bounded Deployment Guidance | `aies guidance run-2031 --write` |
-| `runs list` / `runs progress` / `transcript` | List runs, optionally observe another command's durable progress from a second terminal, or render a whole run. The originating command already shows stage and total timing, ETA, plus the current human-readable task and task ordinal. | `aies runs progress run-2031` |
+| `runs list` / `runs show` / `runs progress` / `transcript` | List runs, inspect one versioned read-only run/artifact view, optionally observe another command's durable progress from a second terminal, or render a whole run. The originating command already shows stage and total timing, ETA, plus the current human-readable task and task ordinal. | `aies runs show run-2031 --json` |
 
 ### Judging
 
@@ -173,16 +176,27 @@ GET /overview                  shared versioned workspace summary
 GET /support                   implemented/experimental/planned subject support
 GET /deployments               registered deployments
 GET /runs                      run history
+GET /runs/{id}                 versioned read-only run + artifact summary
 GET /runs/{id}/evidence        the Evidence Package
 GET /runs/{id}/result          primary Engineering or legacy Formal Result
 GET /runs/{id}/formal-result   explicit Canonical Formal Assessment Result
+GET /runs/{id}/report          stored Engineering Evaluation Report JSON
+GET /runs/{id}/bundle          stored report-bundle index
+GET /runs/{id}/engineering-evaluation
+                               stored source-separated evaluation summary
+GET /runs/{id}/ecm             stored Engineering Capability Matrix
+GET /runs/{id}/guidance        stored Engineering Fit or Deployment Guidance
+GET /runs/{id}/executive-summary
+                               stored leadership-facing summary
+GET /runs/{id}/diagnostics     stored grounding/hallucination diagnostics
 GET /assessments               shipped assessments
 GET /qualifications            Qualification Records
 GET /conformance               decision-engine conformance report
 ```
 
 `POST` is refused (405): mutation goes through the CLI, and outcomes are decided
-by the engine, never by a consumer.
+by the engine, never by a consumer. Errors use the versioned `aies-api-error`
+shape; unsafe path-like run identifiers are rejected with HTTP 400.
 
 ## 5. Exit codes
 

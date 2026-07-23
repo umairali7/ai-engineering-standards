@@ -57,7 +57,7 @@ def render_markdown(record_id: str) -> str:
     a("## Scope of the grant")
     a("")
     a(f"Profile **{scope['profile']}** · scoped risk tier **{C.risk_tier_label(scope['risk_tier'])}** · "
-      f"subject kind **{scope['subject_kind']}**")
+      f"subject kind **{C.identifier_label(scope['subject_kind'])}**")
     a("")
     if scope.get("role"):
         validity = scope.get("validity") or {}

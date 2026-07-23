@@ -85,6 +85,18 @@ def main() -> int:
             raise RuntimeError("evaluation produced no durable run")
         run_id = runs[-1].name
         _run(["qualify", "--resume", run_id], env)
+        overview = json.loads(_run(["overview", "--json"], env).stdout)
+        if not any(item.get("run_id") == run_id and
+                   item.get("href") == f"/runs/{run_id}"
+                   for item in overview.get("runs", [])):
+            raise RuntimeError("workspace overview did not link the completed run")
+        run_view = json.loads(
+            _run(["runs", "show", run_id, "--json"], env).stdout)
+        if (run_view.get("kind") != "aies-run-view"
+                or run_view.get("run_id") != run_id
+                or not run_view.get("artifacts", {}).get(
+                    "engineering_capability_matrix", {}).get("available")):
+            raise RuntimeError("run detail view did not expose the completed bundle")
         opened = json.loads(
             _run(["open", run_id, "--no-browser", "--json"], env).stdout)
         if not Path(opened["view"]).is_file():

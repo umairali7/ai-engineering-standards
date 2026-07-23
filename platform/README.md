@@ -65,6 +65,12 @@ API output.
 CLI JSON/human output, `GET /overview`, and the HTML dashboard. This is the
 stable consumer boundary for integrations and a future frontend; it computes
 no assessment outcome.
+`runs show <run-id>` and `GET /runs/{id}` provide the corresponding
+`aies-run-view` detail contract: subject and human-readable scope, durable
+execution state, available decision-product summaries, artifact storage
+classes, and exact JSON links. Stored ECM, guidance, report, diagnostics,
+executive summary, evaluation, and bundle artifacts have dedicated read-only
+endpoints; missing artifacts remain explicitly unavailable.
 All twelve competency areas
 (CA-01…CA-12) ship demonstration suites; six weighting profiles; a
 frozen v1.0 runtime-adapter contract with an
@@ -143,7 +149,7 @@ aies open latest
 ```
 
 The warm-cache full-suite performance budget on the recorded Windows reference
-workstation is **180 seconds**. The current 293-test baseline is **110.27
+workstation is **180 seconds**. The current 298-test baseline is **115.39
 seconds**. A run above budget or a greater-than-25% regression should be
 profiled before merge; use the ranked durations rather than guessing. Scenario
 YAML and suite digests are cached by path, modification time, and size, return
@@ -206,6 +212,7 @@ aies qualify <deployment> ... --formal-qualification
 aies assessment result <run-id> --formal-qualification
 
 aies runs list                # result history
+aies runs show <run-id>       # versioned run summary + artifact index
 aies runs progress <run-id>   # durable live stage, %, elapsed, rate, ETA, failures
 aies compare <dep-a> <dep-b>  # compatible observed ECM task comparison
 aies suites validate          # validate suite catalog before publishing changes

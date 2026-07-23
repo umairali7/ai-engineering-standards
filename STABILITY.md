@@ -65,6 +65,8 @@ extension is permitted (see COMPATIBILITY.md). A breaking change requires an ADR
 | **Canonical Assessment Result schema** | Platform | `1` | `decision.RESULT_SCHEMA` |
 | **Decision semantics** | Standard (AESQS) | `1.0` | `decision.DECISION_SEMANTICS_VERSION` |
 | **Report Renderer contract** (view-only) | Platform | `v1.0` | `decision.render_*`, `report_html` |
+| **Workspace Overview consumer view** (read-only) | Platform | `1` | `overview.SCHEMA_VERSION` |
+| **Run Detail consumer view** (read-only) | Platform | `1` | `run_view.SCHEMA_VERSION` |
 
 The Engineering Capability Matrix (`ecm_schema: 2`), Engineering Task Mapping
 (`schema: 2`), task-decision semantics (`1.0`), and Deployment Guidance

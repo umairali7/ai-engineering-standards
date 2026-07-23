@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Versioned run-detail consumer contract**: added the informational,
+  read-only `aies-run-view` contract shared by `aies runs show RUN` and
+  `GET /runs/{id}`. The view exposes subject and human-readable scope,
+  execution/progress counts, available decision-product summaries, storage
+  classes, artifact availability, and canonical links without scoring or
+  deciding. The REST API now serves stored report, bundle, evaluation, ECM,
+  guidance, executive-summary, and grounding-diagnostic JSON through explicit
+  run endpoints; all API errors use a versioned machine contract, and
+  externally supplied run identifiers are rejected if they could resolve as
+  paths.
 - **Consistent command surface and shared application overview**: completed
   `aies-cli-failure-v1` coverage across formal governance, rater/resolution,
   assessment, export/transcript, runtime/profile, corpus/journey,
@@ -172,7 +182,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   copies. Read-only API tests reuse one immutable module fixture, and the judge
   concurrency test delays only the reviewer behavior it measures. The complete
   suite retains all assertions while removing repeated setup and unrelated
-  sleeps: the expanded 293-test suite completes in 110.27 seconds on the
+  sleeps: the expanded 298-test suite completes in 115.39 seconds on the
   Windows verification host, below the 180-second budget.
 - **Empirical-panel admission preflight**: `aies suites empirical
   --preflight-runs` now checks that real runs use distinct subjects, identical

@@ -33,6 +33,7 @@ def build() -> dict:
             **item,
             "risk_tier_label": C.risk_tier_label(item.get("risk_tier")),
             "state": "aggregated" if item.get("aggregated") else item.get("status"),
+            "href": f"/runs/{item['run_id']}",
         })
 
     records = []
@@ -82,6 +83,7 @@ def build() -> dict:
             "support": "/support",
             "deployments": "/deployments",
             "runs": "/runs",
+            "run": "/runs/{id}",
             "assessments": "/assessments",
             "qualifications": "/qualifications",
         },

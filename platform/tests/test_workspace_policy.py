@@ -38,6 +38,16 @@ def test_artifact_storage_classes_and_writers(tmp_path, monkeypatch):
     assert report.read_text(encoding="utf-8") == "second"
 
 
+def test_external_run_identifiers_cannot_be_paths():
+    from aies import workspace
+
+    for valid in ("run-1", "run_2", "run.3"):
+        assert workspace.validate_run_id(valid) == valid
+    for unsafe in ("..", ".", "../run", r"..\run", "/run", "run/name", ""):
+        with pytest.raises(ValueError):
+            workspace.validate_run_id(unsafe)
+
+
 def test_workspace_debris_diagnostic_is_read_only_and_evidence_aware(tmp_path):
     from aies import workspace
 

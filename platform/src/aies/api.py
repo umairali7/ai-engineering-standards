@@ -1,11 +1,11 @@
 """Thin, read-only REST API over the canonical artifacts.
 
-A **consumer, not a decider** (CONFORMANCE-POLICY.md §4): the API only *serves*
-artifacts the engine already produced — deployments, runs, evidence packages,
-Engineering Assessment Results, optional Formal Assessment Results, and
-conformance — as JSON. It computes no outcome and re-derives no decision;
-result endpoints return exactly the stored artifact. It is intentionally
-read-only (no mutation) and
+A **consumer, not a decider** (CONFORMANCE-POLICY.md §4): the API serves
+artifacts the engine already produced and versioned inventories over their
+availability — deployments, runs, evidence packages, Engineering Assessment
+Results, optional Formal Assessment Results, and conformance — as JSON. It
+computes no outcome and re-derives no decision; product endpoints return
+exactly the stored artifact. It is intentionally read-only (no mutation) and
 dependency-free (stdlib `http.server`), keeping the platform's only runtime
 dependency PyYAML.
 
@@ -24,6 +24,28 @@ from . import __version__, workspace
 _RUN_RESULT = re.compile(r"^/runs/([^/]+)/result$")
 _RUN_EVIDENCE = re.compile(r"^/runs/([^/]+)/evidence$")
 _RUN_FORMAL_RESULT = re.compile(r"^/runs/([^/]+)/formal-result$")
+_RUN_REPORT = re.compile(r"^/runs/([^/]+)/report$")
+_RUN_BUNDLE = re.compile(r"^/runs/([^/]+)/bundle$")
+_RUN_EVALUATION = re.compile(r"^/runs/([^/]+)/engineering-evaluation$")
+_RUN_ECM = re.compile(r"^/runs/([^/]+)/ecm$")
+_RUN_GUIDANCE = re.compile(r"^/runs/([^/]+)/guidance$")
+_RUN_EXECUTIVE = re.compile(r"^/runs/([^/]+)/executive-summary$")
+_RUN_DIAGNOSTICS = re.compile(r"^/runs/([^/]+)/diagnostics$")
+_RUN_DETAIL = re.compile(r"^/runs/([^/]+)$")
+
+
+def _error(status: int, code: str, message: str, *,
+           hint: str | None = None) -> tuple[int, dict]:
+    body = {
+        "kind": "aies-api-error",
+        "schema_version": 1,
+        "status": status,
+        "code": code,
+        "error": message,
+    }
+    if hint:
+        body["hint"] = hint
+    return status, body
 
 
 def route(path: str) -> tuple[int, dict]:
@@ -34,8 +56,14 @@ def route(path: str) -> tuple[int, dict]:
         return 200, {"status": "ok", "service": "aies", "version": __version__,
                      "endpoints": ["/health", "/overview", "/support",
                                    "/deployments", "/runs",
+                                   "/runs/{id}",
                                    "/runs/{id}/evidence", "/runs/{id}/result",
                                    "/runs/{id}/formal-result",
+                                   "/runs/{id}/report", "/runs/{id}/bundle",
+                                   "/runs/{id}/engineering-evaluation",
+                                   "/runs/{id}/ecm", "/runs/{id}/guidance",
+                                   "/runs/{id}/executive-summary",
+                                   "/runs/{id}/diagnostics",
                                    "/assessments", "/qualifications", "/conformance"]}
     if path == "/overview":
         from . import overview
@@ -77,15 +105,65 @@ def route(path: str) -> tuple[int, dict]:
     m = _RUN_FORMAL_RESULT.match(path)
     if m:
         return _run_artifact(m.group(1), "assessment-result.json")
+    m = _RUN_REPORT.match(path)
+    if m:
+        return _run_artifact(m.group(1), "report.json")
+    m = _RUN_BUNDLE.match(path)
+    if m:
+        return _run_artifact(m.group(1), "report-bundle.json")
+    m = _RUN_EVALUATION.match(path)
+    if m:
+        return _run_artifact(m.group(1), "engineering-evaluation.json")
+    m = _RUN_ECM.match(path)
+    if m:
+        return _run_artifact(
+            m.group(1), "engineering-capability-matrix.json")
+    m = _RUN_GUIDANCE.match(path)
+    if m:
+        run_id = m.group(1)
+        try:
+            workspace.validate_run_id(run_id)
+        except ValueError as error:
+            return _error(400, "invalid-run-id", str(error))
+        fit = workspace.run_dir(run_id) / "engineering-fit-guidance.json"
+        return _run_artifact(
+            run_id,
+            "engineering-fit-guidance.json"
+            if fit.exists() else "deployment-guidance.json")
+    m = _RUN_EXECUTIVE.match(path)
+    if m:
+        return _run_artifact(m.group(1), "executive-summary.json")
+    m = _RUN_DIAGNOSTICS.match(path)
+    if m:
+        return _run_artifact(m.group(1), "grounding-diagnostics.json")
+    m = _RUN_DETAIL.match(path)
+    if m:
+        from . import run_view
+        try:
+            return 200, run_view.build(m.group(1))
+        except ValueError as error:
+            return _error(400, "invalid-run-id", str(error))
+        except FileNotFoundError as error:
+            return _error(
+                404, "run-not-found", str(error),
+                hint="list available runs with GET /runs")
 
-    return 404, {"error": f"not found: {path}"}
+    return _error(
+        404, "route-not-found", f"not found: {path}",
+        hint="GET /health lists the supported read-only endpoints")
 
 
 def _run_artifact(run_id: str, filename: str) -> tuple[int, dict]:
+    try:
+        workspace.validate_run_id(run_id)
+    except ValueError as error:
+        return _error(400, "invalid-run-id", str(error))
     path = workspace.run_dir(run_id) / filename
     if not path.exists():
-        return 404, {"error": f"{filename} not found for run {run_id!r}",
-                     "hint": "the run may not be aggregated/decided yet"}
+        return _error(
+            404, "artifact-not-found",
+            f"{filename} not found for run {run_id!r}",
+            hint="the run may not have reached the stage that creates this artifact")
     return 200, workspace.read_json(path)
 
 
@@ -100,9 +178,11 @@ class _Handler(BaseHTTPRequestHandler):
         self.wfile.write(payload)
 
     def do_POST(self):  # noqa: N802 — read-only API; mutation is refused
-        payload = json.dumps({"error": "read-only API — mutation is not supported "
-                              "(use the CLI; outcomes are decided by the engine, "
-                              "never by a consumer)"}).encode("utf-8")
+        _, body = _error(
+            405, "read-only-api",
+            "mutation is not supported; use the CLI for explicit operations",
+            hint="this API consumes stored artifacts and never decides outcomes")
+        payload = json.dumps(body).encode("utf-8")
         self.send_response(405)
         self.send_header("Content-Type", "application/json")
         self.send_header("Allow", "GET")

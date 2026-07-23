@@ -103,6 +103,11 @@ COMPETENCY_NAMES = {
     "CA-12": "Governance, Risk & AI Safety",
 }
 
+ASSESSMENT_SUBJECT_CLASS_NAMES = {
+    "ai": "AI System",
+    "human": "Human",
+}
+
 
 def risk_tier_label(tier: str | None) -> str:
     """Return the human-readable risk-tier label while retaining its code."""
@@ -128,7 +133,8 @@ def identifier_label(code: str | None) -> str:
     """
     names = (DIMENSION_NAMES | PHASE_NAMES | DOMAIN_NAMES | ROLE_NAMES |
              COMPETENCY_LEVEL_NAMES | ARTIFACT_NAMES | RISK_TIER_NAMES |
-             AUTONOMY_LEVEL_NAMES | COMPETENCY_NAMES)
+             AUTONOMY_LEVEL_NAMES | COMPETENCY_NAMES |
+             ASSESSMENT_SUBJECT_CLASS_NAMES)
     return f"{code} — {names[code]}" if code in names else (code or "-")
 
 # AIES-AESQS-CS-01 §2 — risk-tier dimension weights.

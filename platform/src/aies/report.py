@@ -182,7 +182,7 @@ def render_markdown(run_id: str, *, matrix: dict | None = None) -> str:
     a(f"**Deployment / model evidence:** `{pkg['model']['registry_id']}` "
       f"({pkg['model']['checksum']})  ")
     a(f"**Profile:** {pkg['profile']} | **Scoped risk tier:** {C.risk_tier_label(pkg['risk_tier'])} | "
-      f"**Assessment subject class:** {pkg['subject_kind']}")
+      f"**Assessment subject class:** {C.identifier_label(pkg['subject_kind'])}")
     a("")
     a(f"> **{pkg['grant_status'].upper()}**" if formal
       else f"> **ENGINEERING EVALUATION "

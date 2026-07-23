@@ -66,6 +66,13 @@ they never recompute an assessment decision. A future frontend should consume
 this contract and the linked canonical artifact endpoints rather than reading
 workspace files or duplicating decision logic.
 
+After selecting a run, use `aies runs show <run-id>` or `GET /runs/{id}`.
+Both return the versioned `aies-run-view` contract with subject and
+human-readable scope, durable progress/counts, product availability, storage
+classes, and links to the stored report, assessment result, ECM, guidance,
+executive summary, and grounding diagnostics. This is also informational and
+read-only: missing products remain unavailable, and no outcome is recomputed.
+
 ## 0. Navigate the CLI
 
 Use the three levels of built-in and generated help:
@@ -303,7 +310,7 @@ Never use `--break-system-packages`. If `pipx` or `uv` is already installed,
 application install from this checkout.
 
 For local verification, the recorded warm-cache Windows budget is 180 seconds
-for the complete suite; the 2026-07-23 baseline is 293 tests in 110.27 seconds.
+for the complete suite; the 2026-07-23 baseline is 298 tests in 115.39 seconds.
 Treat a budget breach or greater-than-25% regression as a profiling trigger.
 This is a feedback budget, not a reason to skip correctness gates on slower CI
 hardware.

@@ -41,8 +41,9 @@ def api_ws(tmp_path_factory):
         it["scores"] = {d: 3 for d in ("EV1", "EV2", "EV3", "EV4", "EV5", "EV6")}
     rating.ingest_scores(run_id, sheet)
     engine.aggregate(run_id)
-    from aies import decision
+    from aies import decision, report
     decision.assess_run(run_id)
+    report.write_reports(run_id)
     yield run_id
     monkeypatch.undo()
 
@@ -52,6 +53,8 @@ def test_health_and_index():
     status, body = api.route("/health")
     assert status == 200 and body["status"] == "ok"
     assert "/runs/{id}/result" in body["endpoints"]
+    assert "/runs/{id}" in body["endpoints"]
+    assert "/runs/{id}/ecm" in body["endpoints"]
     assert "/support" in body["endpoints"]
     assert "/overview" in body["endpoints"]
 
@@ -75,6 +78,8 @@ def test_collections_are_served(api_ws):
     assert body["authority"] == "informational-read-only"
     assert body["counts"]["runs"] == 1
     assert body["counts"]["aggregated_runs"] == 1
+    assert body["runs"][0]["href"] == f"/runs/{api_ws}"
+    assert body["links"]["run"] == "/runs/{id}"
 
 
 def test_result_endpoint_serves_stored_result_verbatim(api_ws):
@@ -85,6 +90,58 @@ def test_result_endpoint_serves_stored_result_verbatim(api_ws):
     assert body == stored                       # verbatim — no recomputation
     assert body["result_schema"] == 1 and body["outcome"] in (
         "PASS", "FAIL", "INCONCLUSIVE", "INSUFFICIENT EVIDENCE")
+
+
+def test_run_detail_is_versioned_read_only_consumer_contract(api_ws):
+    from aies import api
+
+    status, body = api.route(f"/runs/{api_ws}")
+    assert status == 200
+    assert body["kind"] == "aies-run-view"
+    assert body["schema_version"] == 1
+    assert body["authority"] == "informational-read-only"
+    assert body["run_id"] == api_ws
+    assert body["scope"]["risk_tier_label"].startswith("RT2 — ")
+    assert body["scope"]["subject_kind_label"] == "ai — AI System"
+    assert body["execution"]["collected_responses"] > 0
+    assert body["artifacts"]["canonical_evidence"]["available"] is True
+    assert body["links"]["self"] == f"/runs/{api_ws}"
+    assert "qualify" in body["limitations"][0]
+
+
+def test_run_product_endpoints_serve_stored_artifacts_verbatim(api_ws):
+    from aies import api, workspace
+
+    routes = {
+        "evidence": "evidence-package.json",
+        "report": "report.json",
+        "bundle": "report-bundle.json",
+        "engineering-evaluation": "engineering-evaluation.json",
+        "ecm": "engineering-capability-matrix.json",
+        "executive-summary": "executive-summary.json",
+        "diagnostics": "grounding-diagnostics.json",
+    }
+    for endpoint, filename in routes.items():
+        status, body = api.route(f"/runs/{api_ws}/{endpoint}")
+        assert status == 200, endpoint
+        assert body == workspace.read_json(workspace.run_dir(api_ws) / filename)
+
+    status, guidance = api.route(f"/runs/{api_ws}/guidance")
+    assert status == 200
+    filename = ("engineering-fit-guidance.json"
+                if (workspace.run_dir(api_ws) /
+                    "engineering-fit-guidance.json").exists()
+                else "deployment-guidance.json")
+    assert guidance == workspace.read_json(workspace.run_dir(api_ws) / filename)
+
+
+def test_runs_show_uses_same_run_view(api_ws, capsys):
+    from aies import cli
+
+    assert cli.main(["runs", "show", api_ws, "--json"]) == 0
+    body = json.loads(capsys.readouterr().out)
+    assert body["kind"] == "aies-run-view"
+    assert body["run_id"] == api_ws
 
 
 def test_conformance_endpoint(api_ws):
@@ -98,5 +155,15 @@ def test_conformance_endpoint(api_ws):
 
 def test_unknown_path_is_404_and_missing_run_is_404(api_ws):
     from aies import api
-    assert api.route("/nope")[0] == 404
-    assert api.route("/runs/does-not-exist/result")[0] == 404
+    status, unknown = api.route("/nope")
+    assert status == 404
+    assert unknown["kind"] == "aies-api-error"
+    assert unknown["code"] == "route-not-found"
+
+    status, missing = api.route("/runs/does-not-exist/result")
+    assert status == 404
+    assert missing["code"] == "artifact-not-found"
+
+    status, unsafe = api.route(r"/runs/..\secret/evidence")
+    assert status == 400
+    assert unsafe["code"] == "invalid-run-id"

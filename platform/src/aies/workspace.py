@@ -8,6 +8,7 @@ nothing here ever rewrites an existing evidence record.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from . import config
@@ -38,6 +39,7 @@ REGENERABLE_VIEW_FILES = frozenset({
 })
 ARCHIVE_DEBRIS_NAMES = frozenset({".DS_Store", "Thumbs.db", "desktop.ini"})
 CACHE_DIRECTORY_NAMES = frozenset({"__MACOSX", "__pycache__", ".pytest_cache"})
+_SAFE_RUN_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
 
 def root() -> Path:
@@ -65,6 +67,21 @@ def runs_dir() -> Path:
 
 def run_dir(run_id: str) -> Path:
     return runs_dir() / run_id
+
+
+def validate_run_id(run_id: str) -> str:
+    """Validate an externally supplied run identifier before path resolution.
+
+    Internal callers historically use ``run_dir`` with either a run id or a
+    deployment reference, so validation is explicit at trust boundaries rather
+    than silently changing that compatibility behavior.
+    """
+    if (not isinstance(run_id, str) or run_id in (".", "..")
+            or not _SAFE_RUN_ID.fullmatch(run_id)):
+        raise ValueError(
+            "run id must contain only letters, numbers, dot, underscore, and "
+            "hyphen, and must not contain a path")
+    return run_id
 
 
 def artifact_class(path: Path) -> str:

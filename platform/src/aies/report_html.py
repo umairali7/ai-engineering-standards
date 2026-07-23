@@ -85,7 +85,8 @@ def render_html(run_id: str, *, matrix: dict | None = None) -> str:
       f"<strong>Deployment / model evidence:</strong> <code>{_esc(pkg['model']['registry_id'])}</code> "
       f"&middot; <strong>Profile:</strong> {_esc(pkg['profile'])} "
       f"&middot; <strong>Scoped risk tier:</strong> {_esc(C.risk_tier_label(pkg['risk_tier']))} "
-      f"&middot; <strong>Subject class:</strong> {_esc(pkg['subject_kind'])}</p>")
+      f"&middot; <strong>Subject class:</strong> "
+      f"{_esc(C.identifier_label(pkg['subject_kind']))}</p>")
 
     evaluation = evaluation_view.summarize(run_id)
     banner = (pkg["grant_status"] if formal else

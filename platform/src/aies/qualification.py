@@ -315,7 +315,8 @@ def record_decision(
         if (expires - starts).total_seconds() > maximum * 86400:
             raise QualificationError(
                 f"validity window exceeds the {maximum}-day maximum for "
-                f"{pkg.get('subject_kind', 'ai')} at {C.risk_tier_label(pkg['risk_tier'])} "
+                f"{C.identifier_label(pkg.get('subject_kind', 'ai'))} at "
+                f"{C.risk_tier_label(pkg['risk_tier'])} "
                 "(AIES-AESQS-QP-01 §7)")
 
     rater_kinds = set(pkg.get("rater_kinds") or [])
