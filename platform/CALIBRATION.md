@@ -69,9 +69,9 @@ Draft  →  Design-time calibrated  →  Empirically calibrated  →  Normative
 
 The current target for the whole corpus is **Design-time calibrated**.
 
-### Review the pending design-time tranche
+### Review and record a design-time tranche
 
-Run the deterministic preflight before independent human review:
+Run the deterministic preflight before accountable human review:
 
 ```text
 aies corpus review-pending
@@ -85,10 +85,28 @@ structural checks used by the single-scenario reviewer, and exposes an explicit
 pending human-disposition record for each item. `corpus review` accepts either
 a standalone YAML path or an effective scenario ID inside a pack.
 
-These commands are preflight and critique tools. They cannot set
-`design_reviewed: true`, bulk-approve a tranche, or substitute a model opinion
-for the named independent human who accepts, revises, or rejects each
-instrument.
+These commands are preflight and critique tools. They cannot make an approval
+decision or substitute a model opinion for a named accountable human. A human
+may decide one instrument at a time or explicitly accept a tranche, but a
+tranche decision is valid only when it enumerates every effective scenario ID
+and its canonical content hash. An opaque approval of a count is not review.
+
+Accepted decisions are recorded in
+`platform/calibration/design-review-ledger.json`. The ledger is append-only in
+practice: preserve historical events and append a new decision if a disposition
+changes. Its hash covers the effective measurement-instrument content while
+excluding workflow-only empirical status flags. If a prompt, rubric, expected
+quality, failure condition, calibration anchor, mapping field, or other scenario
+content changes, the hash no longer matches and that scenario automatically
+returns to pending review. Design-review acceptance never sets
+`empirically_calibrated`.
+
+The current 268-instrument RT2 — Moderate tranche records one disclosed
+human-authorized, AI-assisted decision by Umair Ali. It does **not** claim 268
+separate manual click-through reviews. The ledger preserves the exact accepted
+scope, structural-preflight result, AI-assistance provenance, reviewer identity,
+rationale, timestamp, and all 268 content hashes. External independent review
+and empirical real-subject-panel calibration remain separate future evidence.
 
 ## The design-time criteria
 

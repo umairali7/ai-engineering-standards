@@ -13,8 +13,11 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 
-@pytest.fixture()
-def api_ws(tmp_path, monkeypatch):
+@pytest.fixture(scope="module")
+def api_ws(tmp_path_factory):
+    """Build the immutable API fixture once; every tested route is read-only."""
+    tmp_path = tmp_path_factory.mktemp("api-workspace")
+    monkeypatch = pytest.MonkeyPatch()
     monkeypatch.setenv("AIES_WORKSPACE", str(tmp_path / "ws"))
     monkeypatch.setenv("AIES_ENV_FILE", str(tmp_path / "empty.env"))
     (tmp_path / "empty.env").write_text("", encoding="utf-8")
@@ -40,7 +43,8 @@ def api_ws(tmp_path, monkeypatch):
     engine.aggregate(run_id)
     from aies import decision
     decision.assess_run(run_id)
-    return run_id
+    yield run_id
+    monkeypatch.undo()
 
 
 def test_health_and_index():

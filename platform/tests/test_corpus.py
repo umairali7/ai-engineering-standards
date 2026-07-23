@@ -52,16 +52,16 @@ def test_it_is_advisory_and_versioned():
     assert r["dimensions"]["empirical"]["empirically_calibrated"] == 0
 
 
-def test_coverage_flags_a_thin_assessment_tier_and_reports_review_debt_honestly():
+def test_coverage_flags_a_thin_assessment_tier_and_reports_review_maturity_honestly():
     from aies import corpus
     r = corpus.health()
-    # Calibration metadata is complete, but the new tranche must not be
-    # misrepresented as independently human design-reviewed.
+    # Calibration metadata and named human design review are complete, while
+    # empirical calibration remains a separate, honest zero.
     cal = r["dimensions"]["calibration"]
     assert cal["calibrated"] == cal["total"] and not cal["evidence"]["uncalibrated_areas"]
     assert cal["metadata_complete"] == cal["total"]
-    assert cal["design_reviewed"] == 216 < cal["total"]
-    assert cal["evidence"]["pending_design_review_areas"]
+    assert cal["design_reviewed"] == cal["total"] == 484
+    assert not cal["evidence"]["pending_design_review_areas"]
     rendered = corpus.render(r)
     assert "metadata complete" in rendered and "human design-reviewed" in rendered
     assert "design-time calibrated" not in rendered
@@ -134,17 +134,17 @@ def test_structural_review_resolves_a_packed_scenario_by_id():
     assert r["structural_summary"]["gap"] == 0
 
 
-def test_pending_review_preflight_is_complete_but_never_approves():
+def test_pending_review_preflight_reflects_the_content_bound_human_decision():
     from aies import corpus
     r = corpus.pending_reviews()
     assert r["kind"] == "calibration-design-review-preflight"
-    assert r["pending"] == 268
-    assert r["structurally_ready"] == 268
+    assert r["pending"] == 0
+    assert r["structurally_ready"] == 0
     assert r["with_structural_gaps"] == 0
-    assert r["status"] == "pending-independent-human-review"
+    assert r["status"] == "complete"
     assert all(item["human_disposition"]["status"] == "pending"
                for item in r["items"])
-    assert "Only a named independent human" in r["authority_boundary"]
+    assert "Only a named accountable human" in r["authority_boundary"]
 
 
 def test_structural_review_flags_a_missing_ceiling(tmp_path):

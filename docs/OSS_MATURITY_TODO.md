@@ -55,7 +55,7 @@ and selection remain separate products.
 | Status | Work item | Acceptance signal |
 |---|---|---|
 | Done | Correct Grant Readiness rendering | A fully decisional, gate-passing package renders `Overall: READY`; missing admitted evidence renders gates as not evaluated rather than failed; Markdown and HTML tests cover both paths |
-| Done | Report corpus maturity honestly | Corpus health distinguishes calibration metadata, human design review, and empirical calibration; 268 pending human reviews cannot render as fully design-time calibrated |
+| Done | Report corpus maturity honestly | Corpus health distinguishes calibration metadata, attributable human design review, external independent review, and empirical calibration; hash-bound acceptance cannot be mistaken for model-panel validation |
 | Done | Make repository-audit detection deterministic | CI checks are found regardless of filesystem/YAML ordering; the AIES repository no longer reports its existing pytest CI gate as absent |
 | Done | Align rating admission with AIES-AESQS-ER-01 — Evaluation Rubrics | Accepted ADR-0012 defines the required evidence-item/rater separation; human raters have verified identity, scope, qualification, and current calibration, and automated raters cannot be the sole decisional scoring basis |
 | Done | Model evidence items separately from rater observations | Evidence Package v5 retains every rating observation but sends at most one resolved score per response evidence item into statistics; adjacent human ratings resolve conservatively, major divergences require an immutable named-human disposition, and tests prove a second rating cannot inflate sample size or confidence |
@@ -73,7 +73,7 @@ and selection remain separate products.
 
 | Status | Work item | Acceptance signal |
 |---|---|---|
-| In progress | Human-review the new RT2 — Moderate tranche | Automated preflight confirms all 268 pending instruments are structurally ready with behavioral floor and gaming-resistance anchors, no duplicate candidates, and reviewable packed-scenario IDs; a named independent human must still accept, revise, or reject each instrument individually before all 484 can claim design review |
+| Done | Human-review the new RT2 — Moderate tranche | Umair Ali explicitly accepted all 268 listed instruments as repository owner and maintainer after a zero-gap deterministic preflight. One disclosed human-authorized AI-assisted tranche event records every scenario ID and content hash, does not fabricate separate manual click-through reviews, and automatically reopens changed content. All 484 now have effective design review; external independent review and empirical calibration remain open separately. |
 | Open | Empirically calibrate a preregistered real-subject panel | A versioned panel study reports difficulty, discrimination, repeatability, twin robustness, ceiling reach, and limitations; scenario promotion is a human decision |
 | Open | Establish versioned anchor-artifact libraries | Every competency area has human-consensus anchors across scores 0–4, including subtle AI-produced defects and refresh history |
 | Open | Protect held-out evidence | Public examples, behavioral twins, and genuinely protected held-out instruments are distinct; contamination checks and refresh policy are recorded |
@@ -138,7 +138,7 @@ and selection remain separate products.
 | Open | Consolidate report view models | Markdown, HTML, JSON, dashboard, and API consume shared factual view models; no renderer recomputes decisions |
 | Done | Clarify immutable artifacts and regenerable views | Storage policy classifies append-only records, derived canonical snapshots, mutable workflow state/configuration, and regenerable views; `workspace.write_json` rejects append-only replacement and `workspace.write_view` cannot target evidence paths |
 | Done | Make record identifiers concurrency-safe | Qualification Records atomically claim human-readable IDs through exclusive creation; a 12-decision concurrent regression proves unique issued records and lifecycle events |
-| Done | Improve local verification feedback | The documented command reports ranked durations and uses a 180-second warm-cache Windows budget with a 25% regression trigger. Single-pass report views plus signature-invalidated isolated YAML/suite caches reduce the measured complete run from 216 tests in 491.51 seconds to 219 tests in 155.38 seconds; cache mutation/invalidation behavior has regression coverage |
+| Done | Improve local verification feedback | The documented command reports ranked durations and uses a 180-second warm-cache Windows budget with a 25% regression trigger. Single-pass report views plus signature-invalidated isolated YAML, expanded-scenario, review-ledger, and suite caches reduce the measured complete run from 216 tests in 491.51 seconds to 223 tests in 100.31 seconds; cache mutation/invalidation behavior has regression coverage. Read-only API fixtures are shared safely and concurrency tests delay only the phase under test. |
 | Open | Remove local workspace archive debris safely | Workspace diagnostics identify `.DS_Store`, `__MACOSX`, caches, and stale generated bundles without deleting user evidence automatically |
 
 ### C2 — CI, security, and release hygiene
@@ -157,23 +157,25 @@ and selection remain separate products.
 
 ## 4. Current Verified Baseline
 
-Last verified on 2026-07-22:
+Last verified on 2026-07-23:
 
-- `pytest platform/tests -q --durations=15`: **219 passed in 155.38 seconds** on
-  the current Windows workstation (down from the preceding 216-test measurement
-  of 491.51 seconds and below the documented 180-second warm-cache budget).
-- `aies suites validate`: **484 scenarios, 12 areas, 0 warnings, 0 errors**.
+- `pytest platform/tests -q --durations=15`: **223 passed in 100.31 seconds** on
+  the current Windows workstation (down from the preceding 219-test measurement
+  of 155.38 seconds and below the documented 180-second warm-cache budget).
+- `aies suites validate`: **484 scenarios, 12 areas, 0 warnings, 0 errors**;
+  **268 effective hash-bound ledger acceptances, 0 stale, 0 unknown**.
 - Decision-engine conformance: **8/8 cases passed**, semantics 1.0.
 - Release hygiene: **PASS**.
 - Repository audit at RT2 — Moderate: **PASS**, with 18 verified controls and
   8 gaps; the prior order-dependent CI-test false negative is covered by a
   regression test.
-- Scenario review maturity: **216/484 human design-reviewed**, **0/484
-  empirically calibrated**. Deterministic preflight: **268/268 pending
-  instruments structurally ready**, with zero structural gaps; independent
-  human dispositions remain outstanding.
+- Scenario review maturity: **484/484 human design-reviewed**, **0/484
+  empirically calibrated**. The accepted 268-instrument tranche is one
+  transparent human-authorized AI-assisted decision bound to every scenario ID
+  and content hash; it claims no separate manual click-through reviews and no
+  external independent validation. Any content change reopens that instrument.
 - `python platform/scripts/demo_full.py`: the complete 16-stage offline demo
-  passed in **16.0 seconds** on the current Windows workstation.
+  passed in **11.8 seconds** on the current Windows workstation.
 
 ## Related Documents
 

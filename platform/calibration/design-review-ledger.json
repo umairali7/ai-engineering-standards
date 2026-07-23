@@ -1,0 +1,1913 @@
+{
+  "kind": "aies-design-review-ledger-v1",
+  "schema_version": 1,
+  "content_hash_method": "aies-scenario-content-v1",
+  "policy": "Append new events; do not rewrite historical human decisions. An acceptance is effective only while its scenario content hash matches.",
+  "events": [
+    {
+      "id": "DR-20260723-001",
+      "decision": "accepted",
+      "review_mode": "human-authorized-ai-assisted-tranche",
+      "reviewer": {
+        "id": "umair-ali",
+        "name": "Umair Ali",
+        "role": "repository owner and maintainer"
+      },
+      "recorded_at": "2026-07-22T20:04:43.647741+00:00",
+      "rationale": "The named human accepts the complete listed scenario tranche after reviewing the project analysis and the disclosed deterministic per-instrument structural preflight.",
+      "human_accountability": true,
+      "human_decision_scope": "Every scenario ID and exact content hash listed in this event.",
+      "individual_manual_review_claimed": false,
+      "ai_assistance": {
+        "used": true,
+        "scope": "Scenario authoring assistance, corpus analysis, and deterministic structural preflight for every listed instrument.",
+        "decision_authority": false
+      },
+      "preflight": {
+        "methodology_version": "1.0",
+        "structurally_ready": 268,
+        "structural_gaps": 0
+      },
+      "instrument_count": 268,
+      "empirical_calibration": false,
+      "instruments": [
+        {
+          "scenario_id": "SC-CA01-021",
+          "content_hash": "sha256:d84a4ebf45d16970e45332e72ff10f3cc647d38c3a7b946f299ad821aee8106a",
+          "area": "CA-01",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-01-ai-native-sdlc-foundations/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA01-022",
+          "content_hash": "sha256:ec27c68ba02c977f340f1263a7c247dcd18dacf2d169e1914b01da6a8305f610",
+          "area": "CA-01",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-01-ai-native-sdlc-foundations/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA01-023",
+          "content_hash": "sha256:5e05bc21056e06d7a8dc45727f30df78fc9f0ad9658c59ec06ba87410f8776e2",
+          "area": "CA-01",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-01-ai-native-sdlc-foundations/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA01-024",
+          "content_hash": "sha256:eab628e9491386176f86cf361ea12170fb11305f2c6b56c617ce98901efbbd17",
+          "area": "CA-01",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-01-ai-native-sdlc-foundations/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA01-025",
+          "content_hash": "sha256:4911c44bb2011e052be55fc57b6495ae8a8c85b4d8045cf00d07deaa9f75ab65",
+          "area": "CA-01",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-01-ai-native-sdlc-foundations/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA01-026",
+          "content_hash": "sha256:c2c7acf378eb3f5d384e885f71985f11d1e6887a7b359d45b9d0528b0ed92035",
+          "area": "CA-01",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-01-ai-native-sdlc-foundations/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA01-027",
+          "content_hash": "sha256:146acdccc2fcde7545f5d8b618f1192c8624c1b9a12c28d8052d48d615a90429",
+          "area": "CA-01",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-01-ai-native-sdlc-foundations/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA01-028",
+          "content_hash": "sha256:ef2ef6b504316ce2692ab2aab2e32ce6f1849f0ed8a234da4e273ce6d302a6ef",
+          "area": "CA-01",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-01-ai-native-sdlc-foundations/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA01-029",
+          "content_hash": "sha256:f682a5c02865fb45dadc904a9b8da9e7ac06e54ec8ddf38614479dca9aa0776c",
+          "area": "CA-01",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-01-ai-native-sdlc-foundations/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA01-030",
+          "content_hash": "sha256:9c1274f004bbea9f03f6ad0365edcf1cda609e6c35f474762901f0114dca1174",
+          "area": "CA-01",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-01-ai-native-sdlc-foundations/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA01-031",
+          "content_hash": "sha256:2b9d1d1de034ecd58ee597b22d1841ffa4b7d2654395964bf9ffe933afdbaf5f",
+          "area": "CA-01",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-01-ai-native-sdlc-foundations/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA01-032",
+          "content_hash": "sha256:7368d53288e45dc6000ab04592badd15ab9dd7a7106da25de01b68811141dd8b",
+          "area": "CA-01",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-01-ai-native-sdlc-foundations/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA01-033",
+          "content_hash": "sha256:5c5c197d38b605563e884f643e716a0efb18dc2dfd2a28bdc7222ee922cfb6e2",
+          "area": "CA-01",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-01-ai-native-sdlc-foundations/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA01-034",
+          "content_hash": "sha256:e952e7b4cc746ba5be78c29f065f841ee43bfbcde53b3c80ff55ad0be6fbf4d9",
+          "area": "CA-01",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-01-ai-native-sdlc-foundations/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA01-035",
+          "content_hash": "sha256:95d4847aa2b0f97b800a2f565f1f2372d24320cf5525784d8e0b73f972a74183",
+          "area": "CA-01",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-01-ai-native-sdlc-foundations/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA01-036",
+          "content_hash": "sha256:4bdb9d86755997dce8a47ee7b6fe1ee1011345a0f65b7ac6b4a2e0085253d625",
+          "area": "CA-01",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-01-ai-native-sdlc-foundations/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA01-037",
+          "content_hash": "sha256:9b9feaf811ea8ffc1893473398d27707235d4d0611d6458035d9df4eead6f508",
+          "area": "CA-01",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-01-ai-native-sdlc-foundations/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA01-038",
+          "content_hash": "sha256:0a4fc0ae71e789f6e290c7642273fd55d4a5bd0c23c233a8092db990b6838743",
+          "area": "CA-01",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-01-ai-native-sdlc-foundations/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA01-039",
+          "content_hash": "sha256:e6098c6bd594798fd564e901869ceff44b5d7ce991b6e65e54ff8f681d604d11",
+          "area": "CA-01",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-01-ai-native-sdlc-foundations/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA01-040",
+          "content_hash": "sha256:251f6f14b203c8397c7053877273610c83f10d66d02c6c69aae71d3c87209b5b",
+          "area": "CA-01",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-01-ai-native-sdlc-foundations/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA02-019",
+          "content_hash": "sha256:a36a3b0b7a5fcee5fc7022da67ee26c48c58d3563535cea7a8bce20b3e070856",
+          "area": "CA-02",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-02-business-requirements-analysis/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA02-020",
+          "content_hash": "sha256:71a76c0bd8f777cf9fed1ed878b9b69c5d05e897737738b6b38fe8679d61c27b",
+          "area": "CA-02",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-02-business-requirements-analysis/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA02-021",
+          "content_hash": "sha256:bcf72994a77dad891b27b60008aa93556fa5a34b6be0bf08afd75faed142b3fc",
+          "area": "CA-02",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-02-business-requirements-analysis/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA02-022",
+          "content_hash": "sha256:f4005bff987fb5fa46bb46490cd5e5ad9c38b68fbf0c4d2d9d834e5214e70bd0",
+          "area": "CA-02",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-02-business-requirements-analysis/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA02-023",
+          "content_hash": "sha256:19b0834ce86a1dbd7135083843ea87f97c62b214d2ca4b32d582af26ace7622b",
+          "area": "CA-02",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-02-business-requirements-analysis/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA02-024",
+          "content_hash": "sha256:753e7a3d5dbd468ecf3a5e61125baad14555ab94b5e2b23ed0548a5852939eea",
+          "area": "CA-02",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-02-business-requirements-analysis/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA02-025",
+          "content_hash": "sha256:6631eaeaac4029beba62b1faea05188a045b94145d52f807c0a7b7a61a85d28e",
+          "area": "CA-02",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-02-business-requirements-analysis/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA02-026",
+          "content_hash": "sha256:448cb6f9b4fc0ac38a6eed18142c63238e3c8019ab92a2fd6d02ca64a4ed8f52",
+          "area": "CA-02",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-02-business-requirements-analysis/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA02-027",
+          "content_hash": "sha256:cf05b1f0ca13ff73d42b018b6cdc94221d35c5cd6b5936c8fb35de2d56390378",
+          "area": "CA-02",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-02-business-requirements-analysis/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA02-028",
+          "content_hash": "sha256:b20992f5f4ee8b727d870d45d41e14fbf467d3b23b0454144d8d227b7140f725",
+          "area": "CA-02",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-02-business-requirements-analysis/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA02-029",
+          "content_hash": "sha256:1f5d6e573ed1916537aa8616b58f5175ea361be8debd28386ad480d214e433b9",
+          "area": "CA-02",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-02-business-requirements-analysis/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA02-030",
+          "content_hash": "sha256:ca6e7dd969b07cbc36d594764a2067ba0bd48c93c914528244d0efe1cd4629f9",
+          "area": "CA-02",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-02-business-requirements-analysis/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA02-031",
+          "content_hash": "sha256:53e7f6c37b74abedca720e380a4ed2af2dcda081e47a66605d092f22bbd254c8",
+          "area": "CA-02",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-02-business-requirements-analysis/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA02-032",
+          "content_hash": "sha256:7cc979719f030c000422b7f93ea318d719519c31288496842b2681510e9ef690",
+          "area": "CA-02",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-02-business-requirements-analysis/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA02-033",
+          "content_hash": "sha256:52ae0071961f06b1aa7ada2c456faf7cb02901c464517b6721a0eeb5d28648a7",
+          "area": "CA-02",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-02-business-requirements-analysis/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA02-034",
+          "content_hash": "sha256:94624fe999586ab5865a5274de9b0c29c62412ad705a75ba4e1f7e907c78b38d",
+          "area": "CA-02",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-02-business-requirements-analysis/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA02-035",
+          "content_hash": "sha256:29ee42ba4b539734ca3c27c9646d9be8717bc1cc4e85a521961886eb949101b0",
+          "area": "CA-02",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-02-business-requirements-analysis/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA02-036",
+          "content_hash": "sha256:cf0bc454ef7449a5af78b678a4df5b93188011a26d9090fb9b76e033f68f7aeb",
+          "area": "CA-02",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-02-business-requirements-analysis/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA02-037",
+          "content_hash": "sha256:7a039d050be1cd5548b70437fe054be77bdf40a559b7b8457852fe880161a69f",
+          "area": "CA-02",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-02-business-requirements-analysis/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA02-038",
+          "content_hash": "sha256:505fb0eb775c25a831681d2f722039e89cd655da7ab112dbc400c3a643ccb98e",
+          "area": "CA-02",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-02-business-requirements-analysis/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA03-019",
+          "content_hash": "sha256:cce24ce7ee7ec2bc9a5200804fd18980407398fadff63e0e8a330a13c8a75d30",
+          "area": "CA-03",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-03-product-experience-definition/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA03-020",
+          "content_hash": "sha256:cf1af70ac88cebe5198159b7ccc99f2508ce34ad4defb7bada4772d74fdfcc23",
+          "area": "CA-03",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-03-product-experience-definition/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA03-021",
+          "content_hash": "sha256:b28464c7cfe82d7d8a5bb44016edd4c8d50e0f0b356a67eb1cb684a1c477b66b",
+          "area": "CA-03",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-03-product-experience-definition/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA03-022",
+          "content_hash": "sha256:4ab6314c3758cbed14fcc1ed3585649e2d8574631a63658aeba7e58afbd9c896",
+          "area": "CA-03",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-03-product-experience-definition/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA03-023",
+          "content_hash": "sha256:f395db7c1a7ec5fd23d052f1b5318ab6d47531e29e772be919981f2b62272892",
+          "area": "CA-03",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-03-product-experience-definition/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA03-024",
+          "content_hash": "sha256:dc31880058092b2a428338b72e734938c3d7f5a478ff65c044e37b443c760fbf",
+          "area": "CA-03",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-03-product-experience-definition/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA03-025",
+          "content_hash": "sha256:159434cf0553b336dd512b64eec27fc30359c4a08edd844cd56369079cea4840",
+          "area": "CA-03",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-03-product-experience-definition/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA03-026",
+          "content_hash": "sha256:07d34158b24b9f5c82b5128a6acc8112a845d5c1f679332e537bdfc329bd1488",
+          "area": "CA-03",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-03-product-experience-definition/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA03-027",
+          "content_hash": "sha256:c7c5119788b8e21cce82b82a2b935875df77175ed9820d04fc5c54499b764540",
+          "area": "CA-03",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-03-product-experience-definition/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA03-028",
+          "content_hash": "sha256:a3f9381e44c413bd9a2a7a10f6f00f0c05bbbd17a7bcbb3e66d2acb75774aa11",
+          "area": "CA-03",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-03-product-experience-definition/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA03-029",
+          "content_hash": "sha256:a9531415f635daef2e5c0d5ebfaf6e97e5f091365e647a8e11b99bd50f79c0a7",
+          "area": "CA-03",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-03-product-experience-definition/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA03-030",
+          "content_hash": "sha256:9fe4ea6089d7109f0f04fdc953f58213584a01a7f77abf5d7dcfdb7a9fc28279",
+          "area": "CA-03",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-03-product-experience-definition/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA03-031",
+          "content_hash": "sha256:df730dcc45731262749c9450b6609afd698410a05f8648597bbedfb3011de587",
+          "area": "CA-03",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-03-product-experience-definition/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA03-032",
+          "content_hash": "sha256:b10efb215c46d1bbdb5587a5f83b69b854e6a51da8ffc71766bb11f397a825a6",
+          "area": "CA-03",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-03-product-experience-definition/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA03-033",
+          "content_hash": "sha256:96a13e4e3146dfce7be1f52a2b91b44ecca13da607e2ba831daa032da85259b8",
+          "area": "CA-03",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-03-product-experience-definition/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA03-034",
+          "content_hash": "sha256:f9e1f5a51951f44ae783a69cc092083b8389ebae0c186083297bdb084fc050b4",
+          "area": "CA-03",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-03-product-experience-definition/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA03-035",
+          "content_hash": "sha256:905cc2eb2ffb7db4146a9526df61a791619082f6eee384bc2e06d6f55c572d24",
+          "area": "CA-03",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-03-product-experience-definition/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA03-036",
+          "content_hash": "sha256:ebb27c9c4066ba8028ff5bb00bfdddff138d4de6646d5f4d686efb3a978ac907",
+          "area": "CA-03",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-03-product-experience-definition/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA03-037",
+          "content_hash": "sha256:14efdc0fec5700991cc69ed674076488b80819502d1ba63718ba3fefd1526cf1",
+          "area": "CA-03",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-03-product-experience-definition/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA03-038",
+          "content_hash": "sha256:126d39d73d8114b6d4051ea5c2410f557402c18def8992aa5d38eece6d0341cc",
+          "area": "CA-03",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-03-product-experience-definition/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA04-018",
+          "content_hash": "sha256:10d65c8673f8b15b0da67e550453c757bbb6ec5498e1bfcdd15d061f146ab3fd",
+          "area": "CA-04",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-04-architecture-solution-design/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA04-019",
+          "content_hash": "sha256:46cc20d610c68962480b8844637b9dd60cfda8d144635fc652d27de9e1681af9",
+          "area": "CA-04",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-04-architecture-solution-design/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA04-020",
+          "content_hash": "sha256:82dbbef8ed1a2a82b5c6f14deb3361e8e625da804cdb30869ecd6b592c947e16",
+          "area": "CA-04",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-04-architecture-solution-design/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA04-021",
+          "content_hash": "sha256:39881edc5d4088a63df485e5921aff2477dbdd1f7a69e0077ab0319cf74016f6",
+          "area": "CA-04",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-04-architecture-solution-design/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA04-022",
+          "content_hash": "sha256:497da2503da7e0f05f835ef265ab6a33baf6a1eadb617a1a96630a7e87b13e45",
+          "area": "CA-04",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-04-architecture-solution-design/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA04-023",
+          "content_hash": "sha256:fd9660f8cd0e2fa1cb8345e312c5fe3f6d3d00f7c54fe89fca602784311d49f4",
+          "area": "CA-04",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-04-architecture-solution-design/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA04-024",
+          "content_hash": "sha256:c0378cb4833c0578fd705f2f3683d144a39b6c47bb227cccc9372d6a4cb14e9f",
+          "area": "CA-04",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-04-architecture-solution-design/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA04-025",
+          "content_hash": "sha256:8d2432419a021c467fb1c8f37cb3fcb98448719b979b834a0ca7b2c19decd0c1",
+          "area": "CA-04",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-04-architecture-solution-design/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA04-026",
+          "content_hash": "sha256:50769e5b98a486d6c2c91bc7bff1e5070f939060aeef162fb5ab79c88021162f",
+          "area": "CA-04",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-04-architecture-solution-design/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA04-027",
+          "content_hash": "sha256:cec24e1b75cdbe8534085c06c486c0104c7a2e51393decab67364653f832b7e7",
+          "area": "CA-04",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-04-architecture-solution-design/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA04-028",
+          "content_hash": "sha256:2869412f2888f3d334ae8d3c1ee42c40c855c7dad7b58716bfbfa503f49c7647",
+          "area": "CA-04",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-04-architecture-solution-design/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA04-029",
+          "content_hash": "sha256:f7a0b1ddb9b9dd4e826f4e89e766107cceb5c2fe61e8291c0c9be0eb5ca7a82b",
+          "area": "CA-04",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-04-architecture-solution-design/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA04-030",
+          "content_hash": "sha256:4918fc0b2b778e3eba99eff4ff82fd36803a31059966dd1d886e0a9d8cec3119",
+          "area": "CA-04",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-04-architecture-solution-design/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA04-031",
+          "content_hash": "sha256:df5fe79a9c12d52639256a87d72d9836f28591b6ff24df95ae72e7b2037601c7",
+          "area": "CA-04",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-04-architecture-solution-design/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA04-032",
+          "content_hash": "sha256:445273dc585be147b0481dc0477c8e3bf88ac397fc9f4da550a10a420a727a4a",
+          "area": "CA-04",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-04-architecture-solution-design/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA04-033",
+          "content_hash": "sha256:2b7770003f612e920f103569cf6f488351d62866fc56bbc90497ec8bddf08bcc",
+          "area": "CA-04",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-04-architecture-solution-design/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA04-034",
+          "content_hash": "sha256:56db0ef823207a54980eb5d93d8f9defe46bc5df29b811cbd5dcbaf116d47e2a",
+          "area": "CA-04",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-04-architecture-solution-design/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA04-035",
+          "content_hash": "sha256:a5096da059feec4beb0bdf9e05bf4c50f8fa5ef714c205b4f4d2d73426eb6941",
+          "area": "CA-04",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-04-architecture-solution-design/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA04-036",
+          "content_hash": "sha256:de01c327e88b86c8a861d7867244022b562882762fb41780129ae68efd9f80f8",
+          "area": "CA-04",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-04-architecture-solution-design/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA04-037",
+          "content_hash": "sha256:9fdd7cf98ef9ac4f0fe7a1c2b41675abc395aefc771f3005ef730b9d57c97ac2",
+          "area": "CA-04",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-04-architecture-solution-design/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-019",
+          "content_hash": "sha256:50ec1759b70781171afbc1956fb1a9a83f7d9db3317c1985693024ef8e4c4342",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-020",
+          "content_hash": "sha256:19215bd10caff5467e47c842f0deab9810a2206e9009ef5de4214d87ee77b9e4",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-021",
+          "content_hash": "sha256:a2b3030e91ed097aa9cda82f10c3e55ebedd14fa54ecaa1f3c80db9a8e1dbd73",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-022",
+          "content_hash": "sha256:34e5a940138511740ec8cae2923315075b0c0a9f2a504ede0241d21279f79698",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-023",
+          "content_hash": "sha256:ad819fc7b11d35b3205545c36af17f6c13fb040daced552cd4c2e030bbeaa30f",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-024",
+          "content_hash": "sha256:fd41b3e2700bce48b2df412d9a2f47e8c68c3bf4b2d8f06ebdd856000683bdde",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-025",
+          "content_hash": "sha256:536f461d536fcde431e5c53eab310c0d6b99d4fa0a3cba13f68f119b81802a2d",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-026",
+          "content_hash": "sha256:049487ba542401243ab2532891749802db62f327599f0ace5a83330c61c857c9",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-027",
+          "content_hash": "sha256:3fd4b62eecf15914260fa6b8a9e27c1c2b737e89426e466719fadbfa96e51ce0",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-028",
+          "content_hash": "sha256:f9673c8505d1d014cf9e06f6164af6fb3132dcfceda2054156a3160266124f62",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-029",
+          "content_hash": "sha256:a5add4141a56b8e4e493930fce21e5a882b1838a72fbf413853e111782644149",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-030",
+          "content_hash": "sha256:418d4c4e487c869a8efde247c5425b1453d59e41a120a00e22d6a511bb21eca3",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-031",
+          "content_hash": "sha256:b0105329ac1aed8e6e65f9c3fac8793481c480392ef584388b26d3d7c8feaae6",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-032",
+          "content_hash": "sha256:8736b928469396a2e1ddda8884921c7ae61b6a976ada98b90213a2f8a0edc913",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-033",
+          "content_hash": "sha256:f5b979b1e2947e81354377f1c7d0d4dcd4b1f4df1b944b0a716835b343c58d1a",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-034",
+          "content_hash": "sha256:a70756700d60ed761ba0fd5f51db0360abb4c0f08133d55159c3936960f42327",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-035",
+          "content_hash": "sha256:74b5f5b96421de783773800cf8c1f3d2db3cc2d2312dee34d3649d51ee2dd7ce",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-036",
+          "content_hash": "sha256:022cd79f5e0de0382cdf3732f6e727e15991b598a1f7dfe8c3006208207f9b77",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-037",
+          "content_hash": "sha256:a5a053fa660b450234841512bb827ed24dba50b2a18776ed91c3808d1d710010",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-038",
+          "content_hash": "sha256:e1d1793d6a14e2f6e59daed74e7ecc54ce690099dcb0c1c095b8b4855f391bc3",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-039",
+          "content_hash": "sha256:37b842c7490c918e9e7ec864fae097883c45abf03d8cda098f0108b55b216e87",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-040",
+          "content_hash": "sha256:8020d7544db5393c7841157b2359c318187a4a15ae763ab77acb6048bc2590ca",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-041",
+          "content_hash": "sha256:671cf7ac51e37ad0a5967c8dcf9f28beb1872513de8793f5c40fc8dfa02a49ed",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-042",
+          "content_hash": "sha256:9f3b981451f5072e57b968445c4b2485f014b998842d4e1050fdd58e4c7a1d97",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-043",
+          "content_hash": "sha256:22d0235da57f2fbff795ab62e064e4d3e91829baef8021c56306384216f1d506",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-044",
+          "content_hash": "sha256:7114fb3aa4c2cf63bcd564d789ede4ec4090c7346f87d701dbc99186fe457f04",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-045",
+          "content_hash": "sha256:888effa1948b0720f9bd012cb02f568643fccba03ba355e511730b73d4f27a20",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-046",
+          "content_hash": "sha256:476085faf982d119ef1a5f0aa2c21e2ca5a64b2f10910522f785c3ab8e94f5ff",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-047",
+          "content_hash": "sha256:1de791737d9d01c55cf5fa2acdf0f2f13044bc53d6a1065da43235215bafd589",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-048",
+          "content_hash": "sha256:9550fef2946fa82c43c41a157a418dfd708f8f2b95320240c34f4789cc916e0d",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-049",
+          "content_hash": "sha256:102f42c20f76b1e7c4c0aca61a50b3b51bbbc5a18a7d55c7673482a383d91291",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-050",
+          "content_hash": "sha256:a5fe83c36be9db83d78d75e13f856d47598ca99e2568b5fff2579bebeebeae7a",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-051",
+          "content_hash": "sha256:0fc1d4ee58d593e6ea00114c5d1dfb21b51e362c65a476c690f2f5f37f5a3b9c",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-052",
+          "content_hash": "sha256:ed5b9047593cc30ffbcca23c664bd02881d91ad378b69f66a9bc3a3ae56441e6",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-053",
+          "content_hash": "sha256:22a7bea81e7cda46522cf13424fd4ec7804854b2a20d02dd11742f5324a0789e",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-054",
+          "content_hash": "sha256:daf324a11efeab7d1c9faf2114e7f4989e452cbe95dcfbe6ce182c7570e7c404",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-055",
+          "content_hash": "sha256:9f45490839b8d6f014a623e6a0cb4a96344c679acc9840188f024bb706eac0b0",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-056",
+          "content_hash": "sha256:905a5605757a8bde51ed42b58af3c7062f5298a4ef5e32f4b768c57148adcc63",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-057",
+          "content_hash": "sha256:7053a3d759db4d7743fdd0c4370cef7919e69839f8663387f715fbb96dbd9beb",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-058",
+          "content_hash": "sha256:176cdd5bfab4904635b94b0c9b23fc3108eaf1b0df76a116cd2765c9cd03a8e2",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-059",
+          "content_hash": "sha256:db7295505a199894ee041f034f79dcfe00569409b691bf1193e89a10f12ec55f",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-060",
+          "content_hash": "sha256:fb8901bdc41414f79cb123ebdaef2b47a788de81be4a38955212cb4be6bad29a",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-061",
+          "content_hash": "sha256:c742f68eec22fd57395936c8eabe8b2ebc32103ede2052d64ef43c21cd712c9b",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-062",
+          "content_hash": "sha256:d5a37717ad6fc909ac8c81973e379abc3e7641abffe780a8917b87e5bbc2584e",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-063",
+          "content_hash": "sha256:4ae54766aa57cbc1606cb08d42a00aab395622f59cf92143cce1bef8e1da6e64",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-064",
+          "content_hash": "sha256:7547c33601274b193fc83086752ef633f8028545f1c1cedfecd9a5ff727fd0a4",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA05-065",
+          "content_hash": "sha256:59b2bcad16b7b15f01a9d68a15ba643f04b28f6856a7d175fb0c549f23c414c7",
+          "area": "CA-05",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-05-ai-assisted-implementation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA06-018",
+          "content_hash": "sha256:00994e81add2f52ca646164c1b0f325aea70dfbeda2b7eaf13790044f0acf7da",
+          "area": "CA-06",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-06-testing-quality-evaluation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA06-019",
+          "content_hash": "sha256:1d7ca9bfd89aaa36e8757f4df4c9d1e3be86debbae104c9f86c29a2e19a25d98",
+          "area": "CA-06",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-06-testing-quality-evaluation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA06-020",
+          "content_hash": "sha256:4b059e4f9a892889aa065a300c103de0ae2a6575fbdf5ceccf276b2dcea84fa6",
+          "area": "CA-06",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-06-testing-quality-evaluation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA06-021",
+          "content_hash": "sha256:593e4caabfa0fbb327e524f3541a3c9e1573c5f02c47ec0d840017e31c37a406",
+          "area": "CA-06",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-06-testing-quality-evaluation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA06-022",
+          "content_hash": "sha256:fbd9b4b770d75ee6913c3cb51166c4f6b9d92827816174e29f06779bcf9f14b5",
+          "area": "CA-06",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-06-testing-quality-evaluation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA06-023",
+          "content_hash": "sha256:4ec30fdc18e0c1e43a285a2948e0b39ec9c23e66a1768a7733382ec3b7a0bd15",
+          "area": "CA-06",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-06-testing-quality-evaluation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA06-024",
+          "content_hash": "sha256:879b04f8219914ec39abc47c13e4ecdc0d81f7cb8c9011bb09cb4236bf75bb48",
+          "area": "CA-06",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-06-testing-quality-evaluation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA06-025",
+          "content_hash": "sha256:f719cf192c192a6c741bdc50a218d07f2fce73356e3bd535ccfadec56001eff6",
+          "area": "CA-06",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-06-testing-quality-evaluation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA06-026",
+          "content_hash": "sha256:e7324f83ad4bc9e05019cc71e6c9c3235043d55507dc319a07ed9f87697fff40",
+          "area": "CA-06",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-06-testing-quality-evaluation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA06-027",
+          "content_hash": "sha256:09b011803fbd179dcdbe5f1f7dcabcbf4e05e2f505cb6bf96992eaa6037651db",
+          "area": "CA-06",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-06-testing-quality-evaluation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA06-028",
+          "content_hash": "sha256:1825e3833c6c927724c88a2c366383b250442e0e0be9fbd94f9b5968582aaf5e",
+          "area": "CA-06",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-06-testing-quality-evaluation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA06-029",
+          "content_hash": "sha256:75d474a223e4f2231587c1ec4b9339adbad822db070a91ab0a66cea8c55bee3d",
+          "area": "CA-06",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-06-testing-quality-evaluation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA06-030",
+          "content_hash": "sha256:c9fd6fc40256b6baf39d44930b8190315e8c62479d4b29c84aa5daf532353192",
+          "area": "CA-06",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-06-testing-quality-evaluation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA06-031",
+          "content_hash": "sha256:8f62a2181ef4b4e0dfc2b5c31c598af987d4a1aa5ceeabf55fb055f92669bb8a",
+          "area": "CA-06",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-06-testing-quality-evaluation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA06-032",
+          "content_hash": "sha256:e558818def8526ad9361ef354171e8350165e3afa96a589680db88be62f4c501",
+          "area": "CA-06",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-06-testing-quality-evaluation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA06-033",
+          "content_hash": "sha256:d77fbe769dadc0feab7d4950d0300d8a8401eb4e8149584ce5e8bcec0685f744",
+          "area": "CA-06",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-06-testing-quality-evaluation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA06-034",
+          "content_hash": "sha256:1ec9c5198e6ed0b81fedaca75cda48d45ae4223fbfe4a87c2d503815536c7984",
+          "area": "CA-06",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-06-testing-quality-evaluation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA06-035",
+          "content_hash": "sha256:d10489c8fb547a8c916c259c7eb186036518437f27743b20f429d1670a5d802f",
+          "area": "CA-06",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-06-testing-quality-evaluation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA06-036",
+          "content_hash": "sha256:db99d5f7958a7bdd99da40f52410c3b491324f8968b928e5b782ca8b24928606",
+          "area": "CA-06",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-06-testing-quality-evaluation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA06-037",
+          "content_hash": "sha256:418b507d1f6de52312704be7f2ab6eda4ddff7dd848147439be90d3e2622cbd0",
+          "area": "CA-06",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-06-testing-quality-evaluation/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA07-022",
+          "content_hash": "sha256:64b057ef53941f111dfcd651ce5271c152869824cca8a0bdf497ad4ded9d98f3",
+          "area": "CA-07",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-07-security-privacy-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA07-023",
+          "content_hash": "sha256:923dc24cb3922f7b4d06b8c220a1e749f8210cfb2bc34e4afb8e11aafa59b96c",
+          "area": "CA-07",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-07-security-privacy-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA07-024",
+          "content_hash": "sha256:3471022143fad8ce1727e89c47affcff554a130b3b8af276fae04795a9903f14",
+          "area": "CA-07",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-07-security-privacy-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA07-025",
+          "content_hash": "sha256:e6adc8ae7f576c0936aec7a0dd62d9f8441e262ed46c3105d4efed08f955a78e",
+          "area": "CA-07",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-07-security-privacy-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA07-026",
+          "content_hash": "sha256:e1cf6b82c6386518b9f3435419ad9ba69e812ef50bf4c8579ed75685eccf4efc",
+          "area": "CA-07",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-07-security-privacy-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA07-027",
+          "content_hash": "sha256:2c93624c46d061dfd4e27d7288d292ca32feefad972459428aa08da95ef03ee6",
+          "area": "CA-07",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-07-security-privacy-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA07-028",
+          "content_hash": "sha256:ebca17daac49fa3790eb6e232985767a42fc195defc24fcdf12010c8006dbe83",
+          "area": "CA-07",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-07-security-privacy-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA07-029",
+          "content_hash": "sha256:f527e5763f8477d2bdb483cdcdef2130b12095f277301ee3195d0172b24439b0",
+          "area": "CA-07",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-07-security-privacy-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA07-030",
+          "content_hash": "sha256:165e6fba04edff0c5a5bb27af097a9e43ba37a389e9763d22849f6d360fdbc33",
+          "area": "CA-07",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-07-security-privacy-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA07-031",
+          "content_hash": "sha256:9e25a27fc140c9388983cb0cabf6bfcccc135344ae64149779a7418b7dfc6f6c",
+          "area": "CA-07",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-07-security-privacy-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA07-032",
+          "content_hash": "sha256:f89482bb678e17de47b565628f3f245ff3590f3039cde19d8d3d2c1d1e62f65e",
+          "area": "CA-07",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-07-security-privacy-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA07-033",
+          "content_hash": "sha256:65652d979c9fdea0c52f4dab0dec423b50527e300e7ba469624aafe200127733",
+          "area": "CA-07",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-07-security-privacy-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA07-034",
+          "content_hash": "sha256:af2d6fb7efff0bb8119cabccab4efcc8392e4f21fc8d8179e398279e27dcc1a7",
+          "area": "CA-07",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-07-security-privacy-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA07-035",
+          "content_hash": "sha256:7517f4fb9116903b4c82a4f4ba135747395631b863e5c483d66b8e07038fafaf",
+          "area": "CA-07",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-07-security-privacy-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA07-036",
+          "content_hash": "sha256:13ac4bc4f2c08253efc168e38d1c77ff622087d75cf9baa25f9a68d299125ba6",
+          "area": "CA-07",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-07-security-privacy-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA07-037",
+          "content_hash": "sha256:2b5c97a26b945eb334e1f82d0e7a01b35faa01bf11a2f100b99a9396d62b5ef4",
+          "area": "CA-07",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-07-security-privacy-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA07-038",
+          "content_hash": "sha256:f6c2b950b89aab100a0eaf212961bee9864366d7cc1b53e57b158d32f2668c40",
+          "area": "CA-07",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-07-security-privacy-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA07-039",
+          "content_hash": "sha256:e0a8622b3aa36da73cc74b2e7e04b709061f5e30fff84cc8ea457d76e7750a43",
+          "area": "CA-07",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-07-security-privacy-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA07-040",
+          "content_hash": "sha256:9131f9fe087815ea67bf1ab9bc81dc6b2e384965eb93572aa5012aaf474057ec",
+          "area": "CA-07",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-07-security-privacy-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA07-041",
+          "content_hash": "sha256:e1616951ac5debbb6a98f05f8285b3e3f527976f63371d537ee7382231b89732",
+          "area": "CA-07",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-07-security-privacy-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA08-018",
+          "content_hash": "sha256:0001ac790402510d82ce89cb11165a81f68583b9c45f668df90f2387e7b0bb5a",
+          "area": "CA-08",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-08-delivery-release-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA08-019",
+          "content_hash": "sha256:865f59afac034209b7f9361603f51871837b6d13e6c1b8e95386c39ab4b19901",
+          "area": "CA-08",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-08-delivery-release-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA08-020",
+          "content_hash": "sha256:06b8c45c63ee305ba5e316ce17a90da8257372d008a9cffc9a92f1cc53a459e7",
+          "area": "CA-08",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-08-delivery-release-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA08-021",
+          "content_hash": "sha256:2b3c262809a43d28430aa348b8121ab2a3a24be1eba8714c6cc0749e27719c7f",
+          "area": "CA-08",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-08-delivery-release-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA08-022",
+          "content_hash": "sha256:ab0ac4228ee1a1ebe2150eec1d0effd64162a1404828dfd717079d0a2c45343c",
+          "area": "CA-08",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-08-delivery-release-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA08-023",
+          "content_hash": "sha256:e2264ca0eb798f33dcaad05efad176c09cd17c031b26aa53791f8a19f8fb7cfc",
+          "area": "CA-08",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-08-delivery-release-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA08-024",
+          "content_hash": "sha256:8313232e2be99f352c3083e2774e5dcd0e0a76a80db5f7230cdca284a4a54c47",
+          "area": "CA-08",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-08-delivery-release-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA08-025",
+          "content_hash": "sha256:8d024fea050e04c20e3524a366955148b7383571ea06f5d022a6bc30b07e98cf",
+          "area": "CA-08",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-08-delivery-release-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA08-026",
+          "content_hash": "sha256:b07e4df3b42c584d33de318772c0ff493e7adde439a5bf287e52280ac45e409e",
+          "area": "CA-08",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-08-delivery-release-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA08-027",
+          "content_hash": "sha256:7136f0a94554b520cd472f465a92af0baba63c9c83722c901c182d56478e45f2",
+          "area": "CA-08",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-08-delivery-release-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA08-028",
+          "content_hash": "sha256:38fc697c96b0fe903e409acf53d57bc15e281b892dee7c946e20e404d4c8a474",
+          "area": "CA-08",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-08-delivery-release-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA08-029",
+          "content_hash": "sha256:93b8941466831d36de28f7cef8a69549b66f12888ee7c9af17f5fa3b594c9133",
+          "area": "CA-08",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-08-delivery-release-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA08-030",
+          "content_hash": "sha256:9263f25c4c09be2457d132e4013377dc1f85ce168dda79c5f40c93bfd2310af8",
+          "area": "CA-08",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-08-delivery-release-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA08-031",
+          "content_hash": "sha256:acea770d1e20b98ef9794fc4d106a5b33f61f6d6f121fd67fd11762bf5d65ff8",
+          "area": "CA-08",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-08-delivery-release-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA08-032",
+          "content_hash": "sha256:15c5efc5ebb28fb052d92678e0954cffadb2c97a6080bb30e5b4b6e2075bddb2",
+          "area": "CA-08",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-08-delivery-release-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA08-033",
+          "content_hash": "sha256:a1a030e558d51befdfbbb29a93f3a8fbd189f7eeae8c4e119eff9d6779df380d",
+          "area": "CA-08",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-08-delivery-release-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA08-034",
+          "content_hash": "sha256:54e6adf1c29967f6e0e619560617551bcf6f53acaf3be5786b205c0142620318",
+          "area": "CA-08",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-08-delivery-release-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA08-035",
+          "content_hash": "sha256:d37d70f18421fd6e6ffbbdb228ff63d1b58957c69641a984bfee3d9786130c7f",
+          "area": "CA-08",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-08-delivery-release-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA08-036",
+          "content_hash": "sha256:00966773c2b6ea54b1458260c518c43d2b69b10e4a010244c6cbd1aa691143b2",
+          "area": "CA-08",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-08-delivery-release-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA08-037",
+          "content_hash": "sha256:be4369ce1616b0d64892b700fd084dfe8829206704b4e17e4a81d4c5d225b24f",
+          "area": "CA-08",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-08-delivery-release-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA09-018",
+          "content_hash": "sha256:d841e3361f9f980346d504db2fddbd0ec9f0cb61723718f1abc3e454db8d0bc9",
+          "area": "CA-09",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-09-operations-observability-reliability/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA09-019",
+          "content_hash": "sha256:69a4b69f350c5b06dcc9c0df6a305d241963db18fd3bcc98cefeeca7e0b753b9",
+          "area": "CA-09",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-09-operations-observability-reliability/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA09-020",
+          "content_hash": "sha256:f22589ff41ea1077478f7fe521fe0659e310863d381053f63cfc50ef828c8d4c",
+          "area": "CA-09",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-09-operations-observability-reliability/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA09-021",
+          "content_hash": "sha256:4f41a7b60b4cc4051fa37481f3f9260976469de98d9899d74332d35ff5a1f596",
+          "area": "CA-09",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-09-operations-observability-reliability/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA09-022",
+          "content_hash": "sha256:50a4668f5a4c1e8ed1fb72f200bdc4a34e38890f516656dbfa5b6b6cf3ff61de",
+          "area": "CA-09",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-09-operations-observability-reliability/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA09-023",
+          "content_hash": "sha256:19b35cd06537fd370b6a705afd96c4452da270822547cc2760a19f5fa5a46a00",
+          "area": "CA-09",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-09-operations-observability-reliability/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA09-024",
+          "content_hash": "sha256:1efdd98724413f61d246264a0bb2a9d4bc9cc636233e2acd97c587d9c93f0bb8",
+          "area": "CA-09",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-09-operations-observability-reliability/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA09-025",
+          "content_hash": "sha256:de3113ae545e1054d610d8b89839dd5cf0f07a465c1024d4cf816afdf25afaf9",
+          "area": "CA-09",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-09-operations-observability-reliability/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA09-026",
+          "content_hash": "sha256:af07ad553c91d1744618abcb560d2502a2e28140b3458a21ce48205552e1c701",
+          "area": "CA-09",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-09-operations-observability-reliability/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA09-027",
+          "content_hash": "sha256:599490de37610132178de000880b6373115c0af7456511e1c756b5f23c4aa327",
+          "area": "CA-09",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-09-operations-observability-reliability/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA09-028",
+          "content_hash": "sha256:1e2f31af9e6cdb0704a0424352a4f1b293703f8d85ffa3268a2538db3741b955",
+          "area": "CA-09",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-09-operations-observability-reliability/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA09-029",
+          "content_hash": "sha256:a4628a77534dedca41cfe9c5989ee3f18ae558e4b9b1170754f817840fd07394",
+          "area": "CA-09",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-09-operations-observability-reliability/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA09-030",
+          "content_hash": "sha256:c024b06896fad71e19d15af980937ae21c6c1c93fecd0c502d9562c8a77621f9",
+          "area": "CA-09",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-09-operations-observability-reliability/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA09-031",
+          "content_hash": "sha256:29462afd6a84b54c0e1b1e09d58331afb8a98bb0f82f660134c581aff3d99eec",
+          "area": "CA-09",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-09-operations-observability-reliability/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA09-032",
+          "content_hash": "sha256:8eacba2b438c5f0e310559d2154cefccae6cd20912a3894d283c6e4cfe003d0f",
+          "area": "CA-09",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-09-operations-observability-reliability/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA09-033",
+          "content_hash": "sha256:56290b90191d936cd6f09e4d4d489de7eda00db9477a3679e982fe650bb00800",
+          "area": "CA-09",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-09-operations-observability-reliability/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA09-034",
+          "content_hash": "sha256:07832fe6f2a61ea0dd1e00e1acd07e9106ef8642f3cb704f9f948ed1771bf7a5",
+          "area": "CA-09",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-09-operations-observability-reliability/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA09-035",
+          "content_hash": "sha256:4320a856fbaca7ee16d5bb080a7ba04b6b566e5c39e083a24fe870d31a9e7b9b",
+          "area": "CA-09",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-09-operations-observability-reliability/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA09-036",
+          "content_hash": "sha256:e9af5bde6f004a8a3c14bb2c149d0209bbd103a65df22082f805860cdc5234f9",
+          "area": "CA-09",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-09-operations-observability-reliability/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA09-037",
+          "content_hash": "sha256:bf01db39e0f834ccd7dd767e45e01ab4acda52419629efbd75d3ca8e99265542",
+          "area": "CA-09",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-09-operations-observability-reliability/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA10-018",
+          "content_hash": "sha256:24279ac6760eac07ed698add6fac562eb5d1708e616b9b8f58a0e1dbe0dc8508",
+          "area": "CA-10",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-10-human-ai-collaboration-oversight/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA10-019",
+          "content_hash": "sha256:b91182482b35c85432bf5a26b3101806bf61e76ab6be2c0b73cfa314ebd53dce",
+          "area": "CA-10",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-10-human-ai-collaboration-oversight/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA10-020",
+          "content_hash": "sha256:715d0a6b3f73ac3d860e802a7f8a4637dbcb5e0d45da257bc4f87fc6ec660a1e",
+          "area": "CA-10",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-10-human-ai-collaboration-oversight/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA10-021",
+          "content_hash": "sha256:2f9b1f0882035e5193ec9b2c1c7abf6a2f778b0ed552e9399fc0fc3f417f25bc",
+          "area": "CA-10",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-10-human-ai-collaboration-oversight/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA10-022",
+          "content_hash": "sha256:948b4b91dcac3350c86e0cc63b19a5b1550aab82797e51f3a34a890598bd5ec4",
+          "area": "CA-10",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-10-human-ai-collaboration-oversight/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA10-023",
+          "content_hash": "sha256:b935c737fb7d5f9db50230fbb26995fcf28cf26056b47c961a7dc19ab2c9650f",
+          "area": "CA-10",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-10-human-ai-collaboration-oversight/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA10-024",
+          "content_hash": "sha256:eabee7dc154edb3741317b53f3134e80e573e68a13a87c8347f1f43899ef0045",
+          "area": "CA-10",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-10-human-ai-collaboration-oversight/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA10-025",
+          "content_hash": "sha256:eed52a620a42473515d8607f93e26cea3a21919a3f7cfb128c800b6329d7f6d8",
+          "area": "CA-10",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-10-human-ai-collaboration-oversight/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA10-026",
+          "content_hash": "sha256:d4ce0cbbae6b7de5e65c16f714189960d060a3d7ae27c43e880fc5955cf2856d",
+          "area": "CA-10",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-10-human-ai-collaboration-oversight/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA10-027",
+          "content_hash": "sha256:1bea5ec8c1bf37cda2272d9581b79e12952816bf93300c81ca0da57f6fbe8c88",
+          "area": "CA-10",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-10-human-ai-collaboration-oversight/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA10-028",
+          "content_hash": "sha256:47b3a23f995f812e6b2143795d79efdb2cb3029bc565e616d235a2387666f6fa",
+          "area": "CA-10",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-10-human-ai-collaboration-oversight/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA10-029",
+          "content_hash": "sha256:66a56eee8721154af3205d89d6e642d15b502301a3844f9ce111a6e1c1761f43",
+          "area": "CA-10",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-10-human-ai-collaboration-oversight/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA10-030",
+          "content_hash": "sha256:5255df34d6a66187157bd74af2d219cada11f7716a998908f128c24028242622",
+          "area": "CA-10",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-10-human-ai-collaboration-oversight/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA10-031",
+          "content_hash": "sha256:30c5ebb1229cdc53ea5f24d94a08d1bb20e4282b799c604933df2e9dda90441f",
+          "area": "CA-10",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-10-human-ai-collaboration-oversight/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA10-032",
+          "content_hash": "sha256:ee0c60692b5bb74645d3a846fbe9d8e391cbbfc2e45d1367b351bb14441833f6",
+          "area": "CA-10",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-10-human-ai-collaboration-oversight/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA10-033",
+          "content_hash": "sha256:5b29114f0edd265550b8c81dfdcf7fe4afe5b4f9ea554e5a8335b64f4cb6a41c",
+          "area": "CA-10",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-10-human-ai-collaboration-oversight/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA10-034",
+          "content_hash": "sha256:73dcdc024e7b11574f97d0137631f344ca92d8e2024bdfea1760b1f84802540d",
+          "area": "CA-10",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-10-human-ai-collaboration-oversight/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA10-035",
+          "content_hash": "sha256:07c2d798cc8712fee3e696f1e054242e12c771fe9d7ab5bc355fc66eac58edb1",
+          "area": "CA-10",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-10-human-ai-collaboration-oversight/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA10-036",
+          "content_hash": "sha256:0f363afc4d4de6ee4253aa4133248dcf26d75fbfd6bdcbeeb6cc0eb388e08283",
+          "area": "CA-10",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-10-human-ai-collaboration-oversight/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA10-037",
+          "content_hash": "sha256:22460ebca4a13f008ce1e78fb0e249712c2d26e555859d43147d4622a1339abf",
+          "area": "CA-10",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-10-human-ai-collaboration-oversight/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA11-018",
+          "content_hash": "sha256:a2be31a10246cc7bd741f5c6377e4b22bb0d6ba807a54d13b4e0f9e6e7f999d9",
+          "area": "CA-11",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-11-context-knowledge-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA11-019",
+          "content_hash": "sha256:120c6a0b6ddd920ea85166fdb5165e38d0e46c8223989753cbe3f7de55f2f691",
+          "area": "CA-11",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-11-context-knowledge-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA11-020",
+          "content_hash": "sha256:d3077eca52155ffee0382402ad2785d08f8aacdf00614982be29df82795a4620",
+          "area": "CA-11",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-11-context-knowledge-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA11-021",
+          "content_hash": "sha256:e69d84ced732671546e8a158270ce7dabca615f3aaa60f8d8b29f663247a6ad2",
+          "area": "CA-11",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-11-context-knowledge-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA11-022",
+          "content_hash": "sha256:860f4005b36a6a2b0fbdf54f27de3391286523b45fd827a3ca697208d7ad56be",
+          "area": "CA-11",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-11-context-knowledge-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA11-023",
+          "content_hash": "sha256:b60a8549b391e1581eb732daf7fa35f13f46872652fc82c4354e8b62355208df",
+          "area": "CA-11",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-11-context-knowledge-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA11-024",
+          "content_hash": "sha256:0041e550e3f16d74a7cff8671a39beedefc26497a26e2dc731ddd732cc0bbdc4",
+          "area": "CA-11",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-11-context-knowledge-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA11-025",
+          "content_hash": "sha256:587501b07a0bec2afe55012ac5b6f3cbf9e947c2660107e55e53823d39b8600f",
+          "area": "CA-11",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-11-context-knowledge-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA11-026",
+          "content_hash": "sha256:bc168fdbf90291d77a4d11e2bf68dff7151b6e37fd511546be290d19849a7cce",
+          "area": "CA-11",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-11-context-knowledge-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA11-027",
+          "content_hash": "sha256:caafa12e5ae496bf5c6fcba6f0716e84635d18596c1d1b9f54348c2812b0141c",
+          "area": "CA-11",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-11-context-knowledge-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA11-028",
+          "content_hash": "sha256:560c2ee728f17de30cbfeeb6c5663beb07995b9287ee92302ceca57a474efbc4",
+          "area": "CA-11",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-11-context-knowledge-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA11-029",
+          "content_hash": "sha256:ab67b88dc5d3d725235adbf7fcca9503638dd09c695e4af184190dc000ce9fb4",
+          "area": "CA-11",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-11-context-knowledge-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA11-030",
+          "content_hash": "sha256:a3b2037601ad8aafac9fe5894a5ac72fcec5d85212ed7b861b43db950775e97e",
+          "area": "CA-11",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-11-context-knowledge-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA11-031",
+          "content_hash": "sha256:c5ad81b289491cfaa0467c163cb03b26356848b457e272118d911f28e3a0f532",
+          "area": "CA-11",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-11-context-knowledge-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA11-032",
+          "content_hash": "sha256:59370df3ef5c6d7e985965349a733ca2717ddf4f869c65d6b676f73f6755b5ec",
+          "area": "CA-11",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-11-context-knowledge-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA11-033",
+          "content_hash": "sha256:462028ce57fa392cd460aa4a47802ed24f89efa21f45884bfc6b9fd6507cc256",
+          "area": "CA-11",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-11-context-knowledge-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA11-034",
+          "content_hash": "sha256:f055f919ae1ab318629508eef55fd2f4e437c184ff53eb4b868edc4848a7ca19",
+          "area": "CA-11",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-11-context-knowledge-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA11-035",
+          "content_hash": "sha256:e9cad5946bc686c1ae02ae39190d650e5c3a6258966e21b3632a19288c9ee2c3",
+          "area": "CA-11",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-11-context-knowledge-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA11-036",
+          "content_hash": "sha256:3851b721823ab94a9bc7fca589ba28c9a4bc9054a684031b2acca203cbe822ac",
+          "area": "CA-11",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-11-context-knowledge-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA11-037",
+          "content_hash": "sha256:3525b40970a59a45120955c39d4117b3d4aca3cdb838df7d5bc0b9ecf5112d28",
+          "area": "CA-11",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-11-context-knowledge-engineering/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-020",
+          "content_hash": "sha256:37aadbf4fd1a9e8a21f82f607a4549056b6e3040058ca225d5cf66969c136e31",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-021",
+          "content_hash": "sha256:93035a43ced6e49e3d97f57a6803eff8ac483f2dbde61bc60617fd41616d461e",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-022",
+          "content_hash": "sha256:c9bb6692672161ffcdbf6a6833f0ce13f95874f9715d8a99560bd70d0f7800e7",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-023",
+          "content_hash": "sha256:9e8dd4ff532d1fdc99d48ac352933ef2d9493f5880bb5db87e14c72e18acc098",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-024",
+          "content_hash": "sha256:a3d556944ae302993f51cbc3e7f526192b1478bb72ffae802aa75796f8be8dac",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-025",
+          "content_hash": "sha256:97d7ff21b3825f73c659cce304c32f4b7106c72afb22949a28157a79bb717a70",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-026",
+          "content_hash": "sha256:174bf7f1ba8bd4b013b1db7338d7a5cad1effe46ba3bf15afb10f8e788acce54",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-027",
+          "content_hash": "sha256:12fae789d2b6c4fb66b8165bfc768bf1dc726dad526eb2ff215aff3f9e50ba62",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-028",
+          "content_hash": "sha256:af25bdf61b13fd9131afc4c9648ef1502b28a95fbee73906f97ee08824ac4786",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-029",
+          "content_hash": "sha256:2c064bf5b87718dde51fe7075dc3d4af41ca364e3e9f4857869eb4d677cc2a94",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-030",
+          "content_hash": "sha256:5cffef819ea3831be3a0cfe45d761e002881fe64656513d48c2b2333062eb49f",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-031",
+          "content_hash": "sha256:66e22662aa6d4d22c4e96f56dd37699a309e20ea4fbe1827a1142580362e2827",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-032",
+          "content_hash": "sha256:d3c2bbc2fcc7dcbad6d3629d92335a8ba3e08fd420c4b50df9d56088ad585568",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-033",
+          "content_hash": "sha256:392b18bba9c346b1cbe6324caceb27379414e234242a9eadc5bfc48140a57c7c",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-034",
+          "content_hash": "sha256:ca7ee2809af3d1b9f09e13a4bbfe495b425bd616b50526d1d43e488f6efc2c67",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-035",
+          "content_hash": "sha256:bd5d56a89f6ce2561ff048e60f8a74528c563998340750907ff04172c8e94e93",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-036",
+          "content_hash": "sha256:80d2d425c906f297676cce99d9487b8d64094e3fc6bcb8eb6d8ffec0ec73e194",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-037",
+          "content_hash": "sha256:6bcf198036e09d79b6e94f0b05be52452f6fdd01df0ec829da9e6650f833ce50",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-038",
+          "content_hash": "sha256:a28548c2c20b41f94a0499b71ee774d0e58242fd70bd6b3b99cfce07bc0a6da2",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-039",
+          "content_hash": "sha256:25a6e2211dd748464ec7ab1aaca6319753b60f96fbd3549c9731a3d2fa1b6608",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        },
+        {
+          "scenario_id": "SC-CA12-040",
+          "content_hash": "sha256:98ba02562c321950b9c3376cf78e3b39a8077fe5045e1e4b3aeb29ba39d81c77",
+          "area": "CA-12",
+          "risk_tier": "RT2",
+          "source": "competencies/CA-12-governance-risk-ai-safety/scenarios/RT2-breadth-pack-v1.yaml"
+        }
+      ]
+    }
+  ]
+}

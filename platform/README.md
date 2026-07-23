@@ -228,10 +228,15 @@ combine multiple constraints, ambiguity, safety pressure, engineering
 trade-offs, and direct coverage of ET-01 through ET-15; RT3 — Significant and
 RT4 — Critical include refusal and escalation cases. RT2 now meets the
 distinct-scenario sample floor in AIES-AESQS-CS-01 §6 without repeat padding.
-The 268 new breadth instruments are structurally validated and calibrated in
-metadata but remain explicitly design-review pending, and no scenario is
-empirically calibrated until a real-model panel is completed. Exact repeats are
-available only as explicit stability studies and do not repair breadth gaps.
+The 268 new breadth instruments are structurally validated and covered by a
+named human tranche decision whose ledger enumerates every scenario ID and
+content hash. Together with the original 216 instruments, all 484 are now
+design-reviewed; any content edit invalidates the matching ledger decision and
+reopens that item automatically. This human-authorized AI-assisted tranche does
+not claim 268 separate manual click-through reviews or external independent
+validation. No scenario is empirically calibrated until a real-subject panel is
+completed. Exact repeats are available only as explicit stability studies and
+do not repair breadth gaps.
 
 ## Related Documents
 

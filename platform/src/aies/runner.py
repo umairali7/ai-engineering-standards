@@ -94,9 +94,19 @@ def _load_yaml(path: Path):
     return copy.deepcopy(_load_yaml_cached(*_signature(path)))
 
 
-def load_scenario_documents(path: Path) -> list[dict]:
-    """Load one scenario or expand a declarative scenario pack."""
-    data = _load_yaml(path)
+@lru_cache(maxsize=1024)
+def _load_scenario_documents_cached(
+    path_text: str,
+    mtime_ns: int,
+    size: int,
+    ledger_signature: tuple[str, int, int],
+) -> tuple[dict, ...]:
+    """Expand and review-bind a stable source/ledger pair exactly once."""
+    from . import design_reviews
+
+    del ledger_signature
+    path = Path(path_text)
+    data = copy.deepcopy(_load_yaml_cached(path_text, mtime_ns, size))
     if isinstance(data, dict) and data.get("kind") == "aies-scenario-pack-v1":
         defaults = data.get("defaults")
         entries = data.get("scenarios")
@@ -106,11 +116,33 @@ def load_scenario_documents(path: Path) -> list[dict]:
         for index, entry in enumerate(entries, start=1):
             if not isinstance(entry, dict):
                 raise SuiteError(f"{path.name}: scenario pack item {index} must be a mapping")
-            out.append(_deep_merge(defaults, entry))
-        return out
+            try:
+                out.append(design_reviews.apply_effective_review(
+                    _deep_merge(defaults, entry)))
+            except design_reviews.DesignReviewError as exc:
+                raise SuiteError(str(exc)) from exc
+        return tuple(out)
     if not isinstance(data, dict):
         raise SuiteError(f"{path.name}: scenario must be a mapping")
-    return [data]
+    try:
+        return (design_reviews.apply_effective_review(data),)
+    except design_reviews.DesignReviewError as exc:
+        raise SuiteError(str(exc)) from exc
+
+
+def load_scenario_documents(path: Path) -> list[dict]:
+    """Load one scenario or expand a pack, returning caller-isolated values.
+
+    Expansion, deep merging, canonical hashing, and review-ledger application
+    are cached by both source-file and ledger signatures. The final deep copy is
+    intentional: callers may safely mutate their result without poisoning later
+    loads.
+    """
+    from . import design_reviews
+
+    cached = _load_scenario_documents_cached(
+        *_signature(path), design_reviews.ledger_signature())
+    return copy.deepcopy(list(cached))
 
 
 def load_area(area: str) -> tuple[dict, list[dict], str]:

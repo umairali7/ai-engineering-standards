@@ -157,7 +157,7 @@ def health(root=None) -> dict:
         recs.append({
             "priority": 0,
             "dimension": "calibration",
-            "action": "complete independent human design review of pending instruments",
+            "action": "complete accountable human design review of pending instruments",
             "evidence": (f"{tot.get('design_reviewed', 0)}/{tot.get('scenarios', 0)} "
                          "human design-reviewed"),
         })
@@ -394,16 +394,18 @@ def review_scenario(id_or_path, reviewer: str | None = None,
 
 
 def pending_reviews(root=None) -> dict:
-    """Build a deterministic preflight index for independent human review.
+    """Build a deterministic preflight index for accountable human review.
 
     The package deliberately cannot approve instruments. It makes every
-    outstanding item and structural gap visible so a named human can review
-    scenarios individually rather than bulk-attesting an opaque count.
+    outstanding item and structural gap visible so a named human can make an
+    explicit per-item decision or a content-bound tranche decision. A tranche
+    must enumerate exact scenario IDs and hashes; an opaque count is not review.
     """
-    from . import runner, suites
+    from . import design_reviews, runner, suites
 
     base = root or runner.competencies_dir()
     items = []
+    all_scenarios = []
     for area_dir in sorted(p for p in base.iterdir()
                            if p.is_dir() and p.name.startswith("CA-")):
         area = suites._area_code(area_dir.name)
@@ -411,6 +413,7 @@ def pending_reviews(root=None) -> dict:
             continue
         for source in sorted((area_dir / "scenarios").glob("*.yaml")):
             for scenario in runner.load_scenario_documents(source):
+                all_scenarios.append(scenario)
                 status = ((scenario.get("calibration") or {})
                           .get("empirical_status") or {})
                 if status.get("design_reviewed"):
@@ -433,19 +436,23 @@ def pending_reviews(root=None) -> dict:
                         "rationale": None,
                     },
                 })
+    ledger = (design_reviews.ledger_status(all_scenarios)
+              if root is None else None)
     return {
         "kind": "calibration-design-review-preflight",
         "review_package_schema": 1,
         "methodology_version": METHODOLOGY_VERSION,
         "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "status": "pending-independent-human-review" if items else "complete",
+        "status": "pending-human-review" if items else "complete",
         "pending": len(items),
         "structurally_ready": sum(not item["structural_gaps"] for item in items),
         "with_structural_gaps": sum(bool(item["structural_gaps"]) for item in items),
         "items": items,
+        "review_ledger": ledger,
         "authority_boundary": (
-            "This preflight is advisory. Only a named independent human may "
-            "accept, revise, or reject each instrument and record design_reviewed=true."),
+            "This preflight is advisory and cannot approve anything. Only a named "
+            "accountable human may accept, revise, or reject instruments, either "
+            "individually or as an exact content-hash-bound tranche."),
     }
 
 
@@ -456,9 +463,14 @@ def render_pending_reviews(report: dict) -> str:
         f"  pending            : {report['pending']}",
         f"  structurally ready : {report['structurally_ready']}",
         f"  structural gaps    : {report['with_structural_gaps']}",
-        "  authority          : named independent human; no automated approval",
-        "",
+        "  authority          : named accountable human; no automated approval",
     ]
+    ledger = report.get("review_ledger")
+    if ledger:
+        lines.append(
+            f"  hash-bound ledger   : {ledger['accepted']} effective, "
+            f"{ledger['stale']} stale, {ledger['unknown']} unknown")
+    lines.append("")
     for item in report["items"]:
         gaps = ", ".join(gap["criterion"] for gap in item["structural_gaps"]) or "ready"
         lines.append(

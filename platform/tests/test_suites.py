@@ -11,6 +11,9 @@ def test_shipped_competency_suites_are_valid():
     assert report["summary"]["scenarios"] == 484
     assert report["summary"]["valid_scenarios"] == report["summary"]["scenarios"]
     assert report["warnings"] == []
+    assert report["design_review_ledger"]["accepted"] == 268
+    assert report["design_review_ledger"]["stale"] == 0
+    assert report["design_review_ledger"]["unknown"] == 0
 
 
 def test_validator_rejects_bad_scenario(tmp_path: Path):

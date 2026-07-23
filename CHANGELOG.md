@@ -8,13 +8,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Content-bound human design-review ledger**: recorded Umair Ali's explicit
+  acceptance of the 268-instrument RT2 — Moderate tranche as one disclosed
+  human-authorized, AI-assisted decision. The append-only event enumerates every
+  effective scenario ID and canonical content hash, the zero-gap structural
+  preflight, reviewer identity, rationale, timestamp, and AI provenance; it does
+  not fabricate 268 separate click-through reviews. Effective corpus maturity is
+  now 484/484 human design-reviewed and 0/484 empirically calibrated. Any
+  scenario-content change invalidates its binding and reopens that instrument.
+- **Faster verification without reduced coverage**: scenario-pack expansion,
+  deep merging, canonical review hashing, and ledger application are cached by
+  source and ledger signatures while callers still receive isolated deep
+  copies. Read-only API tests reuse one immutable module fixture, and the judge
+  concurrency test delays only the reviewer behavior it measures. The complete
+  suite retains all assertions while removing repeated setup and unrelated
+  sleeps: 223 tests complete in 100.31 seconds on the Windows verification host,
+  down from the preceding 219-test 155.38-second baseline.
 - **Review-ready RT2 instrument tranche and governed open-license proposal**:
   all 268 new RT2 — Moderate instruments now include competency-specific
   behavioral floor anchors and gaming-resistance rationales. `aies corpus
   review-pending` expands scenario packs and produces a deterministic
   per-instrument structural preflight with explicit pending human dispositions;
   `aies corpus review <scenario-id>` can now inspect packed scenarios directly.
-  Automation does not mark any instrument human-reviewed. Proposed ADR-0014
+  Automation alone cannot mark any instrument human-reviewed. Proposed ADR-0014
   guarantees an openly licensed outcome after governance: CC BY-SA 4.0 for
   standards and assessment content, Apache 2.0 for executable software, and an
   authoritative path boundary. The existing no-license grant remains in force
@@ -60,7 +76,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - **First ADR-0012 enforcement slice**: qualified or calibrated model reviewers may support corroborating peer review, but their observations no longer enter qualification statistics directly or become the sole qualification-score source. Markdown, HTML, ECM admitted-score views, the platform specification, and the operator guide state the same boundary. This slice preserved schema v4 pending the separately recorded v5 resolved-item migration above; historical packages are not reinterpreted.
 
-- **Vision execution backlog and first integrity fixes**: replaced the duplicated OSS maturity lists with one acceptance-signal-driven backlog covering qualification integrity, measurement validity, subject-neutral executors, ECM decision products, adoption, and a separate cleanup/debt lane. Corrected the duplicate document identifiers by assigning AIES-DOC-14 to the backlog and AIES-DOC-15 to the dated Project Evaluation. Grant Readiness now renders successful decisional evidence as `Overall: READY` in both Markdown and HTML, missing admitted evidence as `NOT EVALUATED` rather than a failed gate, and correctly states that exact repeats cannot repair distinct-scenario breadth. Corpus health now distinguishes calibration-metadata completeness (484/484), independent human design review (216/484), and empirical calibration (0/484). Repository-audit text detection is exhaustive, deterministic, and cached, eliminating the large-YAML-corpus false negative that hid the repository's real pytest CI gate.
+- **Vision execution backlog and first integrity fixes**: replaced the duplicated OSS maturity lists with one acceptance-signal-driven backlog covering qualification integrity, measurement validity, subject-neutral executors, ECM decision products, adoption, and a separate cleanup/debt lane. Corrected the duplicate document identifiers by assigning AIES-DOC-14 to the backlog and AIES-DOC-15 to the dated Project Evaluation. Grant Readiness now renders successful decisional evidence as `Overall: READY` in both Markdown and HTML, missing admitted evidence as `NOT EVALUATED` rather than a failed gate, and correctly states that exact repeats cannot repair distinct-scenario breadth. Corpus health distinguishes calibration-metadata completeness, human design review, and empirical calibration rather than blending them. Repository-audit text detection is exhaustive, deterministic, and cached, eliminating the large-YAML-corpus false negative that hid the repository's real pytest CI gate.
 
 - **Distinct RT2 breadth and efficient judging**: expanded every competency to at least 30 distinct RT2 — Moderate scenario instruments (484 scenarios total), with at least 30 direct mappings for every task in ET-01 through ET-15, including dedicated Refactoring coverage and the formerly absent API Design, Performance Optimization, Database Design, Migration, and Infrastructure tasks. Qualification now executes each scenario once by default and `--decisional` refuses to pad breadth with exact repeats; explicit `--repeats` remains a separate stability-study control under accepted ADR-0011. Evidence Package schema v4 records the sample-adequacy policy so legacy runs retain their original interpretation. Automated review batches up to eight response/task pairs per judge request, bounds batches by the declared context window, recursively splits malformed batches, preserves successful ratings across partial judge failures, and still validates and persists one rating per response.
 - **Legacy rubric-coverage migration completed** ([ADR-0007](adr/ADR-0007-Scenario-Rubric-Applicability-Metadata.md)): reviewed all 124 legacy scenario warnings and added competency- and task-family-specific anchors for every previously uncovered EV dimension. No warning was suppressed and no dimension was bulk-declared non-applicable. `aies suites validate` now reports zero warnings and zero errors; the per-scenario disposition is recorded in [RUBRIC_COVERAGE_MIGRATION.md](platform/RUBRIC_COVERAGE_MIGRATION.md).

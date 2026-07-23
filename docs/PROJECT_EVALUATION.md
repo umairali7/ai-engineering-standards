@@ -22,9 +22,11 @@ The qualification platform now has 12 competency areas and 484 distinct
 scenario instruments, including at least 30 RT2 — Moderate scenarios in every area. The
 suite validator now reports zero rubric-coverage warnings, while the
 8-case decision-engine conformance corpus remains the data-first arbiter. These
-are repository observations, not a claim of external validation; the 268 new
-RT2 instruments remain design-review pending and the corpus remains
-empirically uncalibrated until a real-model panel is completed.
+are repository observations, not a claim of external validation. The 268 new
+RT2 instruments have a named, content-hash-bound human tranche acceptance; the
+record transparently discloses AI assistance and does not claim 268 separate
+manual reviews. The corpus remains empirically uncalibrated until a
+real-subject panel is completed.
 
 ## Strengths
 
@@ -56,8 +58,8 @@ empirically uncalibrated until a real-model panel is completed.
 
 ### P1 — make the measurement system decision-ready
 
-4. Human-review and empirically calibrate the new RT2 breadth, then grow RT3 —
-   Significant and RT4 — Critical into versioned public and held-out sets.
+4. Independently challenge and empirically calibrate the new RT2 breadth, then
+   grow RT3 — Significant and RT4 — Critical into versioned public and held-out sets.
    Preserve the distinction between design-time coverage and validated
    measurement; do not treat raw scenario count as calibration.
 5. Run the existing empirical-calibration methodology on a pre-registered,

@@ -9,7 +9,8 @@ from typing import Any
 import yaml
 
 from .constants import DIMENSIONS, RISK_TIERS
-from .runner import SCENARIO_REQUIRED, SuiteError, competencies_dir, load_scenario_documents
+from .runner import (SCENARIO_REQUIRED, SuiteError, competencies_dir, load_area,
+                     load_scenario_documents)
 
 AREA_RE = re.compile(r"^CA-(\d{2})")
 SCENARIO_RE = re.compile(r"^SC-(CA\d{2})-(\d{3})$")
@@ -52,7 +53,31 @@ def validate(root: Path | None = None) -> dict[str, Any]:
     for problem in mapping_problems:
         errors.append(_issue(task_mappings.registry_path(), f"task mapping: {problem}"))
 
-    return _report(base, areas, errors, warnings, assessments, applicability)
+    review_status = None
+    if root is None:
+        from . import design_reviews
+
+        scenarios = []
+        for area in areas:
+            try:
+                scenarios.extend(load_area(area["area"])[1])
+            except SuiteError as exc:  # already represented by area validation
+                errors.append(_issue(base, f"could not verify design reviews: {exc}"))
+        review_status = design_reviews.ledger_status(scenarios)
+        if review_status["stale"]:
+            warnings.append(_issue(
+                design_reviews.default_ledger_path(),
+                f"{review_status['stale']} accepted design-review binding(s) are stale; "
+                "changed instruments have returned to pending review"))
+        if review_status["unknown"]:
+            warnings.append(_issue(
+                design_reviews.default_ledger_path(),
+                f"{review_status['unknown']} accepted design-review binding(s) reference "
+                "scenario IDs not present in the corpus"))
+
+    report = _report(base, areas, errors, warnings, assessments, applicability)
+    report["design_review_ledger"] = review_status
+    return report
 
 
 def _validate_assessments(errors: list[dict[str, str]]) -> list[dict[str, Any]]:
@@ -97,6 +122,11 @@ def render(report: dict[str, Any]) -> str:
         f"  declared : {len(report.get('declared_non_applicable', []))}",
         f"  errors   : {len(report['errors'])}",
     ]
+    review_status = report.get("design_review_ledger")
+    if review_status:
+        lines.append(
+            f"  reviews  : {review_status['accepted']} hash-bound accepted, "
+            f"{review_status['stale']} stale, {review_status['unknown']} unknown")
     for issue in report["errors"][:20]:
         lines.append(f"  error   : {issue['file']}: {issue['message']}")
     if len(report["errors"]) > 20:

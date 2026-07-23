@@ -327,13 +327,16 @@ def test_judge_scoring_runs_concurrently_and_preserves_order(ws, tmp_path, monke
         return GenerationResponse(
             text='{"EV1":3,"EV2":3,"EV3":3,"EV4":3,"EV5":3,"EV6":3,"findings":[]}',
             usage={}, raw={})
-    monkeypatch.setattr(mockmod.MockAdapter, "generate", slow_judge)
-
     run = engine.start_qualification("cand", "enterprise", "RT2", ["CA-05"],
-                                     repeats=3, workers=8)
+                                     repeats=1, workers=8)
     run_id = run["run_id"]
     n = sum(a["planned_items"] for a in run["areas"])
     assert n >= 4  # enough items that concurrency is observable
+
+    # Only the reviewer is deliberately slow. Collection speed is unrelated to
+    # this test and making both adapters sleep doubles wall time without adding
+    # concurrency coverage.
+    monkeypatch.setattr(mockmod.MockAdapter, "generate", slow_judge)
 
     t = time.monotonic()
     summary = model_review.run_model_review(run_id, "judge", workers=8)
