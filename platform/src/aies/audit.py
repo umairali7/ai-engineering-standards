@@ -113,11 +113,18 @@ class RepoContext:
     # -- git ------------------------------------------------------------------
     def _git_log(self, n: int = 50) -> tuple[str, bool]:
         try:
+            probe = subprocess.run(
+                ["git", "-C", str(self.root), "rev-parse",
+                 "--is-inside-work-tree"],
+                capture_output=True, text=True, timeout=20)
+            if (probe.returncode != 0
+                    or probe.stdout.strip().lower() != "true"):
+                return "", False
             out = subprocess.run(
                 ["git", "-C", str(self.root), "log", f"-{n}", "--format=%an%x1f%b%x1e"],
                 capture_output=True, text=True, timeout=20)
             if out.returncode != 0:
-                return "", False
+                return "", True
             return out.stdout, True
         except Exception:
             return "", False
@@ -270,11 +277,41 @@ def _gate(results: list[dict], rt: str) -> dict:
                           "state": f["state"]} for f in failures]}
 
 
+def _scope_notice(root: Path, is_git: bool) -> dict | None:
+    """Disclose when a command audits only a subdirectory of a Git repository."""
+    if not is_git:
+        return None
+    try:
+        completed = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, timeout=10, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if completed.returncode != 0 or not completed.stdout.strip():
+        return None
+    git_root = Path(completed.stdout.strip()).resolve()
+    selected = root.resolve()
+    if git_root == selected:
+        return None
+    return {
+        "kind": "git-subdirectory-scope",
+        "selected_root": str(selected),
+        "repository_root": str(git_root),
+        "complete_repository": False,
+        "message": (
+            "Only a subdirectory of the enclosing Git repository was audited. "
+            "Absence-based repository-practice gaps may be scope artifacts "
+            "when the evidence exists above the selected root."),
+        "suggested_command": f'aies audit "{git_root}"',
+    }
+
+
 def run_audit(repo: str | Path, attestations: dict | None = None,
               rt: str | None = None, record: bool = True,
               engineering_analysis: bool = False) -> dict:
     """Audit a repository; returns the structured result (and persists it)."""
     ctx = RepoContext(repo)
+    scope_notice = _scope_notice(ctx.root, ctx.is_git)
     results = evaluate(ctx, attestations)
 
     areas = {}
@@ -334,6 +371,7 @@ def run_audit(repo: str | Path, attestations: dict | None = None,
         "subject": subject,
         "repo": str(ctx.root),
         "is_git": ctx.is_git,
+        "scope_notice": scope_notice,
         "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "n_checks": len(results),
         "auto_checks": auto_checks,
@@ -453,6 +491,14 @@ def _render_html(result: dict) -> str:
             "<tr><td>" + html.escape(f"{area['area']} — {area['name']}")
             + f"</td><td>ML{area['maturity']}</td><td>{counts['verified']}"
             + f"</td><td>{counts['asserted']}</td><td>{counts['gap']}</td></tr>")
+    scope_notice = result.get("scope_notice") or {}
+    scope_html = (
+        "<p class=notice><strong>Partial repository scope.</strong> "
+        + html.escape(scope_notice["message"])
+        + "<br>Full-repository command: <code>"
+        + html.escape(scope_notice["suggested_command"])
+        + "</code></p>"
+        if scope_notice else "")
     return """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AIES Repository Assessment</title><style>
@@ -465,7 +511,7 @@ li{margin:.6rem 0}code{word-break:break-all}</style></head><body>""" + (
         "<h1>AIES Repository Assessment</h1><p class=notice>"
         "<strong>Informational evidence only.</strong> Practice maturity and "
         "engineering analysis do not prove correctness, security, fitness, "
-        "conformance, or authorization.</p><p>Subject: <code>"
+        "conformance, or authorization.</p>" + scope_html + "<p>Subject: <code>"
         + html.escape((result.get("subject") or {}).get("id", "unknown"))
         + "</code></p><h2>Practice maturity</h2><table class=sortable><thead><tr>"
         "<th>Competency area</th><th>Maturity</th><th>Verified</th>"
@@ -517,6 +563,16 @@ def render_markdown(result: dict) -> str:
                f"**asserted** (attested with evidence), or **gap**. Absence is a gap, "
                f"never a pass.")
     out.append("")
+    scope_notice = result.get("scope_notice")
+    if scope_notice:
+        out.extend([
+            "> **PARTIAL REPOSITORY SCOPE** — "
+            + scope_notice["message"],
+            ">",
+            f"> Full-repository command: "
+            f"`{scope_notice['suggested_command']}`",
+            "",
+        ])
     out.append(f"- Checks: **{result['n_checks']}** "
                f"({result['auto_checks']} auto-detected, "
                f"{result['attestation_checks']} attestation-only)")

@@ -5,6 +5,7 @@ from __future__ import annotations
 import datetime
 import math
 import os
+import re
 import shutil
 import sys
 import threading
@@ -156,6 +157,7 @@ class CliProgress:
         self._lock = threading.RLock()
         self._heartbeat: threading.Thread | None = None
         self._slow_judge_tip_shown = False
+        self._rendered_lines = 0
 
     def _is_tty(self) -> bool:
         return bool(getattr(self.stream, "isatty", lambda: False)())
@@ -207,11 +209,7 @@ class CliProgress:
             capacity = event.get("parallelism") or len(active_tasks)
             unit = event.get("active_unit") or "task"
             label = "batches" if unit == "batch" else "tasks"
-            # Rotate the visible task on every heartbeat. Parallel activity
-            # stays observable without creating an unbounded terminal line.
-            tick = int(float(event.get("total_elapsed_seconds") or 0.0)
-                       / self.refresh_interval)
-            selected = active_tasks[tick % len(active_tasks)]
+            selected = self._sorted_active_tasks(active_tasks)[0]
             more = f" (+{len(active_tasks) - 1} more)" if len(active_tasks) > 1 else ""
             return (
                 f" · Active {label} {len(active_tasks)}/{capacity}: "
@@ -225,6 +223,40 @@ class CliProgress:
         if event.get("message"):
             return f" · {event['message']}"
         return ""
+
+    @staticmethod
+    def _sorted_active_tasks(active_tasks: list[str]) -> list[str]:
+        """Keep concurrent work in deterministic task/batch order."""
+        def key(value: str):
+            match = re.search(r"\b(?:Task|Batch)\s+(\d+)", value)
+            return (int(match.group(1)) if match else math.inf, value)
+        return sorted(active_tasks, key=key)
+
+    def _format_lines(self, event: dict) -> list[str]:
+        """Render a stable dashboard: one summary plus one row per active unit."""
+        summary_event = dict(event)
+        if self._is_tty() and summary_event.get("active_tasks"):
+            summary_event["active_tasks"] = []
+            summary_event["current"] = ""
+            summary_event["message"] = ""
+        lines = [self._format(summary_event)]
+        active = self._sorted_active_tasks(event.get("active_tasks") or [])
+        if self._is_tty() and active:
+            capacity = event.get("parallelism") or len(active)
+            unit = event.get("active_unit") or "task"
+            plural = "batches" if unit == "batch" else "tasks"
+            state = "SCORING" if event.get("stage") == "judge-review" else "RUNNING"
+            lines.append(f"  Active {plural} {len(active)}/{capacity}")
+            for index, task in enumerate(active, start=1):
+                lines.append(f"    [{index}/{capacity}] {state} · {task}")
+        if not self._is_tty():
+            return lines
+        width = self._width() - 1
+        return [
+            line if len(line) <= width
+            else line[:max(1, width - 1)].rstrip() + "…"
+            for line in lines
+        ]
 
     def _format(self, event: dict) -> str:
         total = event["total"]
@@ -296,14 +328,26 @@ class CliProgress:
         return line
 
     def _render(self, event: dict, *, terminal: bool) -> None:
-        line = self._colorize(self._format(event), event)
+        lines = [
+            self._colorize(line, event)
+            for line in self._format_lines(event)
+        ]
         if self._is_tty():
-            # Clear before redrawing. The line is terminal-width bounded, so a
-            # carriage return cannot leave fragments on wrapped rows.
-            print("\r\033[2K" + line, end="\n" if terminal else "",
-                  file=self.stream, flush=True)
+            # Redraw a fixed block in place. Active units stay listed in
+            # deterministic order instead of rotating through one terminal row.
+            old_height = self._rendered_lines
+            if old_height:
+                print(f"\033[{old_height}F", end="", file=self.stream)
+            height = max(old_height, len(lines))
+            for row in range(height):
+                value = lines[row] if row < len(lines) else ""
+                print("\033[2K" + value, file=self.stream)
+            if not terminal and height > len(lines):
+                print(f"\033[{height - len(lines)}F", end="", file=self.stream)
+            self._rendered_lines = 0 if terminal else len(lines)
+            self.stream.flush()
         else:
-            print(line, file=self.stream, flush=True)
+            print(lines[0], file=self.stream, flush=True)
 
     def _show_slow_judge_tip(self, event: dict) -> None:
         """Emit one actionable, non-blocking warning for a long serial judge."""

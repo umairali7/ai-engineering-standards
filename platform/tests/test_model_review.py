@@ -93,6 +93,41 @@ def test_legacy_false_abstention_is_ambiguous_not_a_proven_issue():
     assert view["abstention"]["ambiguous_legacy"] == 1
 
 
+def test_grounding_reliability_is_withheld_on_internal_reviewer_conflict():
+    from aies.diagnostics import _source_view
+
+    view = _source_view([{
+        "rates_response": "SC-CA02-004-r1.json",
+        "scores": {
+            "EV1": 0, "EV2": 1, "EV3": 4,
+            "EV4": 3, "EV5": 3, "EV6": 1,
+        },
+        "findings": [{
+            "dimension": "EV1", "score": 0,
+            "finding": (
+                "The response invented a final specification without source "
+                "material or traceability."),
+        }],
+        "failure_conditions_observed": [],
+        "provenance": {"rater": "model:reviewer"},
+        "grounding_diagnostics": {
+            "grounding_assessed": True,
+            "unsupported_assertions": 0,
+            "fabricated_apis_or_entities": 0,
+            "invalid_citations_or_provenance": 0,
+            "false_success_or_test_claims": 0,
+            "abstention_applicable": False,
+            "appropriate_abstention": None,
+        },
+    }], 1)
+
+    assert view["diagnostic_consistency"] == "conflicted"
+    assert view["consistency_conflicts"] == 1
+    assert view["observed_grounding_reliability_percent"] is None
+    assert view["observations_with_issues"] == 0
+    assert view["conflicts"][0]["response"] == "SC-CA02-004-r1.json"
+
+
 def test_mock_reviewer_is_judge_aware_and_emits_parseable_scores(ws, tmp_path):
     """The mock adapter is judge-aware: when driven as a reviewer it emits a
     deterministic, parseable EV1-EV6 JSON object, so the WHOLE pipeline —

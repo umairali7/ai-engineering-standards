@@ -197,7 +197,11 @@ Useful operating habits:
   the originating long-running command already shows task, elapsed time,
   throughput, failures, and ETA.
 - Interactive progress heartbeats once per second while a model call is in
-  flight. ETA is labelled as calculating until the first completion, uses a
+  flight. A TTY shows a stable multiline dashboard with one summary row and
+  one deterministically ordered RUNNING/SCORING row per active task or judge
+  batch; the active set updates in place rather than rotating or shuffling.
+  Redirected logs stay compact and throttled. ETA is labelled as calculating
+  until the first completion, uses a
   declared deployment estimate when one exists, and then updates from observed
   throughput. `stage elapsed` is the current stage; `command elapsed` resets
   for a standalone resume/review/score invocation and never means the age of
@@ -625,6 +629,12 @@ cannot alter their scores, gates, competency level, or a human Qualification
 Record. Human scoresheets and external imports may include the same optional
 `grounding_diagnostics` object.
 
+The renderer cross-checks each reviewer's structured diagnostic against that
+same reviewer's severe findings and recorded failure conditions. A
+contradiction is disclosed with the affected response identity and causes the
+descriptive reliability percentage to be withheld; AIES does not invent a
+replacement hallucination category or silently preserve a false clean score.
+
 **Bring external eval results in as evidence.** If you already scored the
 responses with another tool (a custom Inspect/DeepEval task, a second judge, an
 offline pipeline) that emits EV1–EV6, import them as automated-kind ratings.
@@ -1044,6 +1054,14 @@ aies audit . --out aies-repository-report
 aies audit . --conformance-only   # faster practice-maturity layer only
 ```
 
+The repository argument is an exact scope. If `.` is a subdirectory inside a
+larger Git repository, the CLI and all bundle/remediation views display a
+prominent partial-scope warning and the exact full-root command. This matters
+because root-level ADRs, workflows, policies, lockfiles, and governance assets
+cannot satisfy absence-based checks when they were excluded from the scan.
+Run from the Git root—or pass its path—when the intended subject is the whole
+repository.
+
 The default report deliberately contains two separate layers.
 
 1. **Repository Practice Conformance** scores maturity from ML0 — Absent
@@ -1071,8 +1089,10 @@ The default report deliberately contains two separate layers.
      CycloneDX/SPDX JSON SBOM evidence, including source-preserved vulnerability
      counts where the artifact provides them;
    - evidence confidence and limitations per perspective; and
-   - a priority-sorted, evidence-linked remediation plan with acceptance
-     signals, owner boundary, reassessment trigger, and exact rerun command.
+   - a priority-sorted, evidence-linked remediation plan with a compact
+     thematic triage summary, full detailed action inventory, specific native
+     verification advice, acceptance signals, owner boundary, reassessment
+     trigger, and exact rerun command.
 
 The analyzer does not execute repository code, tests, scanners, linters, or
 dependency resolution. Test presence is not execution evidence, passing tests

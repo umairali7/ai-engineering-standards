@@ -54,6 +54,7 @@ def build(run_id: str, matrix: dict, decision_guidance: dict,
         "scope": {
             "risk_tier": matrix["risk_tier"],
             "profile": matrix["profile"],
+            "composition": matrix.get("evaluation_scope"),
         },
         "assessment": assessment,
         "engineering_evaluation": evaluation.summarize(run_id),
@@ -135,8 +136,11 @@ def render_markdown(summary: dict) -> str:
         "# AIES Executive Summary", "",
         "> **INFORMATIONAL — NOT A QUALIFICATION, GRANT, OR DEPLOYMENT AUTHORIZATION.**", "",
         f"**Subject:** `{summary['subject']}`  ",
-        f"**Scope:** {C.risk_tier_label(summary['scope']['risk_tier'])} · "
-        f"{summary['scope']['profile']} profile  ",
+        f"**Evaluation composition:** "
+        f"{(summary['scope'].get('composition') or {}).get('label', 'not disclosed')}  ",
+        f"**Weighting:** {summary['scope']['profile']} profile "
+        f"({(summary['scope'].get('composition') or {}).get('profile_role', 'role not disclosed')})  ",
+        f"**Risk scope:** {C.risk_tier_label(summary['scope']['risk_tier'])}  ",
         f"**Engineering evaluation:** {evaluation_status.upper()} · "
         f"Human evaluation: {_human_label(summary)}  ",
         f"**Automated grounding diagnostic:** "
@@ -241,7 +245,9 @@ def render_html(summary: dict) -> str:
 <style>body{{font:16px system-ui;max-width:960px;margin:40px auto;padding:0 24px;color:#18202a}}table{{border-collapse:collapse;margin:16px 0}}th,td{{border:1px solid #ccd4dd;padding:8px 12px;text-align:left}}.banner{{padding:12px;background:#e8f5e9;border-left:5px solid #1a7f37}}</style></head><body>
 <h1>AIES Executive Summary</h1><p class='banner'><strong>ENGINEERING EVALUATION {html.escape(evaluation_status.upper())}</strong></p>
 <p><strong>Subject:</strong> <code>{html.escape(summary['subject'])}</code><br>
-<strong>Scope:</strong> {html.escape(C.risk_tier_label(summary['scope']['risk_tier']))} · {html.escape(summary['scope']['profile'])} profile<br>
+<strong>Evaluation composition:</strong> {html.escape((summary['scope'].get('composition') or {}).get('label', 'not disclosed'))}<br>
+<strong>Weighting:</strong> {html.escape(summary['scope']['profile'])} profile ({html.escape((summary['scope'].get('composition') or {}).get('profile_role', 'role not disclosed'))})<br>
+<strong>Risk scope:</strong> {html.escape(C.risk_tier_label(summary['scope']['risk_tier']))}<br>
 <strong>Human evaluation:</strong> {html.escape(_human_label(summary))}<br>
 <strong>Automated grounding diagnostic:</strong> {html.escape(grounding)}<br>
 <strong>Automated judge assurance:</strong> {html.escape(automated_review.get('calibration_status', 'not disclosed'))}<br>

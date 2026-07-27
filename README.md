@@ -83,6 +83,13 @@ and optional human evaluation—as different facts.
 | Integrate static analysis | `aies bridge sarif-import …` | Preserved SARIF findings that remain distinct from correctness claims |
 | Apply formal governance | `--formal-qualification` | A separate human-governed qualification path |
 
+Repository paths are exact scopes. If `aies audit .` is run from a
+subdirectory of a Git repository, AIES identifies the enclosing Git root,
+warns that root-level evidence was excluded, and prints the exact whole-repo
+command. Evaluation reports likewise distinguish `--profile enterprise`
+(score weighting only) from `--assessment enterprise` (the governed
+assessment composition).
+
 Current implemented subjects are AI deployments and repositories. The
 subject-neutral contracts for agents, MCP servers, RAG systems, pipelines, and
 platforms are experimental until their dedicated executors and instruments are
@@ -500,6 +507,9 @@ alternatives, while every generated HTML report table can be re-sorted by
 selecting a column heading. Long judge runs distinguish concurrency
 (`--parallel`) from responses per judge call (`--judge-batch-size`), report
 stage versus command elapsed time, and checkpoint every completed batch.
+Interactive parallel execution uses a stable multiline dashboard: every active
+task or judge batch remains listed with its RUNNING/SCORING state instead of
+rotating or shuffling through one line.
 
 Use formal qualification only when the governed decision is actually required:
 

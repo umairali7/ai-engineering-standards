@@ -3,6 +3,7 @@ false-greens, maturity rolls up from evidence, --gate enforces RT-required
 evidence, and attestation covers only non-detectable practices."""
 
 import sys
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -64,6 +65,24 @@ def test_bare_repo_is_gaps_not_false_green(ws, tmp_path):
     # every area is ML0 (nothing evidenced, nothing asserted)
     assert all(a["maturity"] == 0 for a in res["areas"].values())
     assert res["gate"]["passed"] is False and res["gate"]["failures"]
+
+
+def test_subdirectory_audit_discloses_partial_git_repository_scope(ws, tmp_path):
+    from aies import audit
+
+    repo = _good_repo(tmp_path)
+    subprocess.run(["git", "init", str(repo)], check=True, capture_output=True)
+    nested = repo / "platform"
+    _write(nested, "pyproject.toml", "[project]\nname='nested'")
+    result = audit.run_audit(nested, record=False)
+
+    notice = result["scope_notice"]
+    assert notice["kind"] == "git-subdirectory-scope"
+    assert notice["complete_repository"] is False
+    assert Path(notice["repository_root"]) == repo.resolve()
+    rendered = audit.render_markdown(result)
+    assert "PARTIAL REPOSITORY SCOPE" in rendered
+    assert notice["suggested_command"] in rendered
 
 
 def test_attestation_covers_only_non_detectable(ws, tmp_path):

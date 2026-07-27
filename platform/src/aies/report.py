@@ -126,7 +126,9 @@ def render_markdown(
       f"({subject['kind']}; executor: {subject['executor_kind']})  ")
     a(f"**Deployment / model evidence:** "
       f"`{subject['deployment_evidence']}` ({subject['checksum']})  ")
-    a(f"**Profile:** {scope['profile']} | **Scoped risk tier:** "
+    a(f"**Evaluation composition:** {scope['composition']['label']}  ")
+    a(f"**Weighting:** {scope['profile']} profile "
+      f"({scope['profile_role']}) | **Scoped risk tier:** "
       f"{scope['risk_tier_label']} | **Assessment subject class:** "
       f"{scope['subject_kind_label']}")
     a("")

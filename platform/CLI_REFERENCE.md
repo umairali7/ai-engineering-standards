@@ -331,7 +331,7 @@ assess repository-practice maturity and read-only engineering evidence across ar
 |---|---|---|---|
 | `-h`, `--help` | optional | show this help message and exit | — |
 | `--json` | optional | machine-readable output | — |
-| `<REPO>` | required | path to the repository to audit | — |
+| `<REPO>` | required | exact directory scope to audit; a Git subdirectory is not silently expanded, and the report identifies the enclosing repository root | — |
 | `--rt` | optional | evaluate against this risk tier's required evidence | choices: `1`, `2`, `3`, `4` |
 | `--gate` | optional | CI mode: non-zero exit if RT-required evidence is missing (implies the given --rt, default RT2 — Moderate) | Implies RT2 — Moderate when `--rt` is omitted. |
 | `--attest` | optional | attestation JSON for non-detectable practices ({items:[{id, evidence}]}) | — |

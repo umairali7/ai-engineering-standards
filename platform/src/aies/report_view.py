@@ -296,6 +296,7 @@ def build_context(run_id: str, *, matrix: dict | None = None) -> ReportContext:
         for area in areas)
     subject = subjects.from_manifest(manifest)
     execution = subjects.execution_from_manifest(manifest)
+    evaluation_scope = run_mode.scope(manifest)
     model = package.get("model") or {}
     environment = package.get("environment_fingerprint") or {}
     view = {
@@ -323,6 +324,8 @@ def build_context(run_id: str, *, matrix: dict | None = None) -> ReportContext:
         "scope": {
             "profile": package.get("profile"),
             "profile_version": package.get("profile_version"),
+            "profile_role": evaluation_scope["profile_role"],
+            "composition": evaluation_scope,
             "risk_tier": package.get("risk_tier"),
             "risk_tier_label": C.risk_tier_label(package.get("risk_tier")),
             "subject_kind": package.get("subject_kind"),
@@ -380,6 +383,8 @@ def build_context(run_id: str, *, matrix: dict | None = None) -> ReportContext:
             "this view does not replace or rewrite it.",
             "Automated and human observations remain separate, and unavailable "
             "evidence never means a passing or zero-issue result.",
+            "A weighting profile does not imply that its same-named declarative "
+            "assessment composition was executed.",
         ],
     }
     return ReportContext(

@@ -695,6 +695,7 @@ def for_repository(result: dict) -> dict:
             "id": result.get("audit_id"),
             "risk_tier": (result.get("gate") or {}).get("risk_tier"),
             "read_only_derivation": True,
+            "scope_notice": result.get("scope_notice"),
         })
     events = result.get("events") or []
     direct_events = [

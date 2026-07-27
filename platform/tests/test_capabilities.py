@@ -89,3 +89,41 @@ def test_capability_profile_needs_an_aggregated_run(ws, tmp_path):
     # not aggregated yet -> clear error, not a crash
     with pytest.raises(compare.CompareError):
         capabilities.capability_profile(run["run_id"])
+
+
+def test_critical_individual_failure_prevents_strong_engineering_fit():
+    from aies import guidance
+
+    matrix = {
+        "run_id": "run-test",
+        "subject": "subject-test",
+        "risk_tier": "RT2",
+        "profile": "enterprise",
+        "evaluation_scope": {
+            "kind": "targeted-area-selection",
+            "label": "Targeted competency-area selection",
+            "profile_role": "score-weighting profile only",
+        },
+        "engineering_evaluation": {
+            "human_evaluation": {"status": "not-reviewed"},
+        },
+        "tasks": [{
+            "task_id": "ET-01",
+            "task": "Requirements Analysis",
+            "observed_performance": 3.8,
+            "distinct_scenarios": 30,
+            "minimum_observations": 30,
+            "rating_observations": 30,
+            "evidence_assurance": {"status": "provisional"},
+            "critical_failures": [{
+                "scenario_id": "SC-CA02-004",
+                "critical_dimensions": {"EV1": 0},
+            }],
+        }],
+    }
+
+    result = guidance.engineering_fit("run-test", matrix=matrix)
+    task = result["tasks"][0]
+    assert task["fit"] == "review-recommended"
+    assert task["critical_failure_count"] == 1
+    assert "prevent a strong-fit label" in task["explanation"]

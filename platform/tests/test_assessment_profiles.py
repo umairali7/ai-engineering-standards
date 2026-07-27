@@ -196,6 +196,9 @@ def test_blind_spots_generate_stable_unassigned_reassessment_actions():
     assert [item["id"] for item in first["actions"]] == [
         item["id"] for item in second["actions"]]
     assert first["summary"]["actions"] == len(matrix["blind_spots"])
+    assert first["summary"]["themes"] == len(first["clusters"])
+    assert sum(cluster["count"] for cluster in first["clusters"]) == (
+        first["summary"]["actions"])
     assert first["summary"]["unassigned"] == first["summary"]["actions"]
     assert all(
         item["workflow"]["status"] == "open"
@@ -229,6 +232,10 @@ def test_repository_findings_and_gaps_share_one_action_schema():
     assert finding["priority"] == "P0"
     assert finding["evidence_refs"] == ["scan.sarif"]
     assert finding["monitoring"]["evidence_level"] == "field-observation"
+    assert "SARIF" in finding["recommendation"]
+    assert any(
+        cluster["title"] == "Security controls and retained scanner evidence"
+        for cluster in plan["clusters"])
 
 
 def test_remediation_dispositions_are_append_only_and_evidence_bounded(

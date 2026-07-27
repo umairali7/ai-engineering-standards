@@ -52,6 +52,82 @@ def _finding_priority(finding: dict) -> tuple[int, str]:
     return rank, f"P{rank}"
 
 
+def _action_theme(action: dict) -> tuple[str, str]:
+    """Group detailed actions into a small, stable triage surface."""
+    source = action["source"]
+    source_id = source["id"].upper()
+    if source["kind"] == "coverage-gap":
+        category = source["id"].split("/", 1)[0].replace("_", " ").title()
+        return f"coverage-{category.lower().replace(' ', '-')}", (
+            f"Evidence coverage — {category}")
+    if source_id.startswith(("QUALITY-COMPLEX", "QUALITY-LARGE", "QUALITY-DUP")):
+        return "code-maintainability", "Code maintainability and decomposition"
+    if source_id.startswith("CORRECTNESS"):
+        return "correctness-evidence", "Correctness and retained test evidence"
+    if source_id.startswith("DEP-"):
+        return "dependency-supply-chain", "Dependency and supply-chain evidence"
+    if source_id.startswith(("SEC-", "SECURITY")) or "CA07" in source_id:
+        return "security-evidence", "Security controls and retained scanner evidence"
+    if source_id.startswith("PRACTICE-"):
+        return "repository-practices", "Repository governance and engineering practices"
+    return "other-engineering-findings", "Other engineering findings"
+
+
+def _clusters(actions: list[dict]) -> list[dict]:
+    grouped: dict[str, dict] = {}
+    for action in actions:
+        theme_id, title = _action_theme(action)
+        group = grouped.setdefault(theme_id, {
+            "id": theme_id,
+            "title": title,
+            "priority_rank": action["priority_rank"],
+            "priority": action["priority"],
+            "action_ids": [],
+        })
+        group["priority_rank"] = min(
+            group["priority_rank"], action["priority_rank"])
+        group["priority"] = f"P{min(group['priority_rank'], 3)}"
+        group["action_ids"].append(action["id"])
+    return sorted(
+        ({**group, "count": len(group["action_ids"])}
+         for group in grouped.values()),
+        key=lambda group: (
+            group["priority_rank"], -group["count"], group["title"]))
+
+
+def _default_finding_recommendation(finding: dict) -> str:
+    source_id = str(finding.get("id") or "").upper()
+    artifacts = ", ".join(finding.get("artifacts") or []) or "the cited evidence"
+    if source_id.startswith(("QUALITY-COMPLEX", "QUALITY-LARGE")):
+        return (
+            f"Review {artifacts} at the cited function/file boundary, extract "
+            "one coherent responsibility only where behavior-preserving tests "
+            "exist, then retain the native test and static-analysis results.")
+    if source_id.startswith("QUALITY-DUP"):
+        return (
+            f"Confirm that {artifacts} has identical semantics before "
+            "consolidating it; retain regression-test evidence for every caller.")
+    if source_id.startswith("CORRECTNESS"):
+        return (
+            "Run the repository-native test and coverage commands and retain "
+            "structured JUnit and supported coverage artifacts in the audited scope.")
+    if source_id.startswith("DEP-"):
+        return (
+            "Adopt the ecosystem-native lockfile or exact reproducible "
+            "resolution, then retain dependency/SBOM evidence from that resolution.")
+    if source_id.startswith(("SEC-", "SECURITY")) or "CA07" in source_id:
+        return (
+            "Run the repository-approved secret, static, and dependency "
+            "scanners and retain their native SARIF or structured result artifacts.")
+    if source_id.startswith("PRACTICE-"):
+        return (
+            "Verify that the repository root is in scope, add or retain the "
+            "named governance/practice artifact there, then rerun the audit.")
+    return (
+        "Triage the cited finding, preserve its disposition, and retain "
+        "evidence from the appropriate repository-native verification tool.")
+
+
 def _action(
     *,
     subject_id: str,
@@ -189,8 +265,7 @@ def build(
             condition_refs=[],
             recommendation=(
                 finding.get("recommendation")
-                or "Triage the source finding, preserve its disposition, and "
-                "retain evidence from the appropriate native verification tool."),
+                or _default_finding_recommendation(finding)),
             acceptance_signal=(
                 finding.get("acceptance_signal")
                 or "The finding has a retained disposition and the relevant "
@@ -212,6 +287,7 @@ def build(
             action["workflow"]["status"] == state for action in ordered)
         for state in WORKFLOW_STATES
     }
+    clusters = _clusters(ordered)
     plan = {
         "kind": "aies-evidence-linked-remediation-plan",
         "schema": SCHEMA,
@@ -223,6 +299,7 @@ def build(
         "source_scope": coverage["evidence_scope"],
         "summary": {
             "actions": len(ordered),
+            "themes": len(clusters),
             "unassigned": sum(
                 action["workflow"]["owner_status"] == "unassigned"
                 for action in ordered),
@@ -231,6 +308,8 @@ def build(
                 for action in ordered),
             "workflow_states": counts,
         },
+        "scope_notice": coverage.get("evidence_scope", {}).get("scope_notice"),
+        "clusters": clusters,
         "actions": ordered,
         "disposition_events": 0,
         "ignored_dispositions": [],
@@ -389,12 +468,38 @@ def render_markdown(plan: dict) -> str:
         f"**Profile:** `{plan['profile']['id']}` — "
         f"{plan['profile']['title']}  ",
         f"**Actions:** {plan['summary']['actions']} · "
+        f"**Themes:** {plan['summary'].get('themes', len(plan.get('clusters', [])))} · "
         f"**Unassigned:** {plan['summary']['unassigned']} · "
         f"**Monitoring linked:** {plan['summary']['monitoring_linked']}",
         "",
+    ]
+    if plan.get("scope_notice"):
+        lines.extend([
+            "> **PARTIAL REPOSITORY SCOPE** — "
+            + plan["scope_notice"]["message"],
+            f"> Full-repository command: "
+            f"`{plan['scope_notice']['suggested_command']}`",
+            "",
+        ])
+    lines.extend([
+        "## Prioritized remediation themes",
+        "",
+        "| Priority | Theme | Detailed actions |",
+        "|---|---|---:|",
+    ])
+    for cluster in plan.get("clusters", []):
+        lines.append(
+            f"| {cluster['priority']} | {cluster['title']} | "
+            f"{cluster['count']} |")
+    if not plan.get("clusters"):
+        lines.append("| — | No generated themes | 0 |")
+    lines.extend([
+        "",
+        "## Detailed action inventory",
+        "",
         "| Priority | Action | Source | Workflow | Monitoring |",
         "|---|---|---|---|---|",
-    ]
+    ])
     for action in plan["actions"]:
         source = action["source"]
         lines.append(
@@ -431,6 +536,11 @@ def render_json(plan: dict) -> str:
 
 
 def render_html(plan: dict) -> str:
+    clusters = "".join(
+        "<tr><td>" + html.escape(cluster["priority"])
+        + "</td><td>" + html.escape(cluster["title"])
+        + "</td><td>" + str(cluster["count"]) + "</td></tr>"
+        for cluster in plan.get("clusters", []))
     rows = "".join(
         "<tr><td>" + html.escape(action["priority"])
         + "</td><td><code>" + html.escape(action["id"])
@@ -455,7 +565,19 @@ def render_html(plan: dict) -> str:
         "unassigned until a named owner records a disposition.</p><p><code>"
         + html.escape(plan["subject"]["id"]) + "</code> — "
         + html.escape(plan["subject"]["display_name"])
-        + "</p><table><thead><tr><th>Priority</th><th>Action</th><th>Source</th>"
+        + "</p>"
+        + (
+            "<p class='notice'><strong>Partial repository scope.</strong> "
+            + html.escape(plan["scope_notice"]["message"])
+            + "<br><code>"
+            + html.escape(plan["scope_notice"]["suggested_command"])
+            + "</code></p>"
+            if plan.get("scope_notice") else "")
+        + "<h2>Prioritized remediation themes</h2><table><thead><tr>"
+        "<th>Priority</th><th>Theme</th><th>Detailed actions</th></tr></thead>"
+        "<tbody>" + (clusters or
+        "<tr><td colspan='3'>No generated themes</td></tr>") + "</tbody></table>"
+        "<h2>Detailed action inventory</h2><table><thead><tr><th>Priority</th><th>Action</th><th>Source</th>"
         "<th>Workflow</th><th>Monitoring</th></tr></thead><tbody>"
         + (rows or "<tr><td colspan='5'>No generated actions</td></tr>")
         + "</tbody></table><p>" + html.escape(plan["claim_boundary"])

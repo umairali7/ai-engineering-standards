@@ -3814,7 +3814,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="assess repository-practice maturity and read-only engineering "
              "evidence across architecture, quality, correctness, security, "
              "testing, dependencies, and remediation"))
-    au.add_argument("repo", help="path to the repository to audit")
+    au.add_argument(
+        "repo",
+        help="exact directory scope to audit; a Git subdirectory is not "
+             "silently expanded, and the report identifies the enclosing "
+             "repository root")
     au.add_argument("--rt", type=int, choices=(1, 2, 3, 4), default=None,
                     help="evaluate against this risk tier's required evidence")
     au.add_argument("--gate", action="store_true",

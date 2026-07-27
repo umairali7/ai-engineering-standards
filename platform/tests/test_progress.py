@@ -202,10 +202,44 @@ def test_cli_progress_bounds_tty_line_to_terminal_width():
             "failures": 0, "current": "", "current_index": None,
             "activity": "Executing task", "parallelism": 4,
             "active_tasks": ["Task 1/147 · " + "long task " * 30]})
-    visible = stream.getvalue().split("\033[2K", 1)[1]
-    visible = re.sub(r"\x1b\[[0-9;]*m", "", visible)
-    assert len(visible) <= 100
-    assert visible.endswith("…")
+    visible_lines = [
+        re.sub(r"\x1b\[[0-9;]*m", "", line)
+        for line in stream.getvalue().splitlines()
+        if line.replace("\033[2K", "").strip()
+    ]
+    assert visible_lines
+    assert all(len(line.replace("\033[2K", "")) <= 100
+               for line in visible_lines)
+    assert any(line.endswith("…") for line in visible_lines)
+
+
+def test_interactive_progress_lists_all_active_tasks_in_stable_order():
+    from aies.progress import CliProgress
+
+    class TtyStream(io.StringIO):
+        def isatty(self):
+            return True
+
+    stream = TtyStream()
+    render = CliProgress(stream, terminal_width=240)
+    render({
+        "stage": "response-collection", "status": "running",
+        "completed": 4, "total": 30, "percent": 13.3,
+        "elapsed_seconds": 60.0, "total_elapsed_seconds": 60.0,
+        "throughput_per_second": 0.067, "eta_seconds": 388.0,
+        "eta_basis": "observed-throughput", "failures": 0,
+        "current": "", "current_index": None, "parallelism": 4,
+        "active_tasks": [
+            "Task 8/30 · Documentation",
+            "Task 6/30 · API Design",
+            "Task 7/30 · Testing",
+        ],
+    })
+    output = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", stream.getvalue())
+    assert "Active tasks 3/4" in output
+    assert output.index("Task 6/30") < output.index("Task 7/30")
+    assert output.index("Task 7/30") < output.index("Task 8/30")
+    assert output.count("RUNNING · Task ") == 3
 
 
 def test_declared_eta_is_available_before_first_completion(tmp_path, monkeypatch):

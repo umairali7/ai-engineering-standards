@@ -28,6 +28,7 @@ def engineering_fit(ref: str, *, matrix: dict | None = None) -> dict:
         minimum = task.get("minimum_observations") or 0
         breadth = round(min(1.0, distinct / minimum) * 100, 1) if minimum else 0.0
         assurance = task.get("evidence_assurance") or {}
+        critical_failures = list(task.get("critical_failures") or [])
         if percent is None:
             fit = "not-assessed"
             explanation = "no directly mapped scored scenario evidence"
@@ -36,6 +37,11 @@ def engineering_fit(ref: str, *, matrix: dict | None = None) -> dict:
             explanation = (
                 "direct scenario breadth is too limited for a fit label; "
                 "treat the observed score as an early signal")
+        elif critical_failures:
+            fit = "review-recommended"
+            explanation = (
+                f"{len(critical_failures)} critical individual failure(s) "
+                "prevent a strong-fit label even though the aggregate is high")
         elif percent >= 75:
             fit = "strong-observed-fit"
             explanation = (
@@ -56,6 +62,8 @@ def engineering_fit(ref: str, *, matrix: dict | None = None) -> dict:
             # Compatibility alias for engineering-fit schema 1 readers.
             "evidence_confidence_percent": breadth,
             "evidence_assurance": assurance,
+            "critical_failure_count": len(critical_failures),
+            "critical_failures": critical_failures,
             "distinct_scenarios": distinct,
             "rating_observations": task.get("rating_observations", 0),
             "explanation": explanation,
@@ -68,6 +76,7 @@ def engineering_fit(ref: str, *, matrix: dict | None = None) -> dict:
         "subject": matrix["subject"],
         "risk_tier": matrix["risk_tier"],
         "profile": matrix["profile"],
+        "evaluation_scope": matrix.get("evaluation_scope"),
         "human_evaluation": (matrix.get("engineering_evaluation") or {}).get(
             "human_evaluation"),
         "tasks": rows,
@@ -95,8 +104,11 @@ def render_fit_markdown(result: dict) -> str:
         "RECOMMENDATION, OR AUTHORIZATION.**", "",
         f"Subject: `{result['subject']}`  ",
         f"Run: `{result['run_id']}`  ",
-        f"Scope: {C.risk_tier_label(result['risk_tier'])} · "
-        f"{result['profile']} profile  ",
+        f"Evaluation composition: "
+        f"{(result.get('evaluation_scope') or {}).get('label', 'not disclosed')}  ",
+        f"Weighting: {result['profile']} profile "
+        f"({(result.get('evaluation_scope') or {}).get('profile_role', 'role not disclosed')})  ",
+        f"Risk scope: {C.risk_tier_label(result['risk_tier'])}  ",
         f"Human evaluation: {human_label}", "",
     ]
     for title, code in sections:
@@ -160,7 +172,9 @@ def render_fit_html(result: dict) -> str:
 <style>body{{font:16px system-ui;max-width:960px;margin:40px auto;padding:0 24px;color:#18202a}}.banner{{padding:12px;background:#e8f5e9;border-left:5px solid #1a7f37}}</style></head><body>
 <h1>AIES Engineering Fit Guidance</h1><p class='banner'><strong>INFORMATIONAL — NOT A QUALIFICATION, GRANT, DEPLOYMENT RECOMMENDATION, OR AUTHORIZATION.</strong></p>
 <p><strong>Subject:</strong> <code>{html.escape(result['subject'])}</code><br>
-<strong>Scope:</strong> {html.escape(C.risk_tier_label(result['risk_tier']))} · {html.escape(result['profile'])} profile<br>
+<strong>Evaluation composition:</strong> {html.escape((result.get('evaluation_scope') or {}).get('label', 'not disclosed'))}<br>
+<strong>Weighting:</strong> {html.escape(result['profile'])} profile ({html.escape((result.get('evaluation_scope') or {}).get('profile_role', 'role not disclosed'))})<br>
+<strong>Risk scope:</strong> {html.escape(C.risk_tier_label(result['risk_tier']))}<br>
 <strong>Human evaluation:</strong> {html.escape(human_label)}</p>
 {''.join(sections)}
 <h2>Boundary</h2><p>Human evaluation is optional. Supply a Qualification Record to the CLI for separately governed Deployment Guidance.</p>

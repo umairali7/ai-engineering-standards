@@ -8,6 +8,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Truthful diagnostics, critical-fit floors, stable parallel progress, and
+  exact audit scope**: grounding reports now withhold their descriptive
+  reliability percentage and expose response-linked consistency conflicts when
+  a reviewer records zero structured issues while its own severe findings or
+  failure conditions describe fabrication, unsupported claims, or traceability
+  failure. ECM and Engineering Fit retain aggregate performance but downgrade
+  directly mapped tasks to engineering review when an individual observation
+  hits a critical EV1/EV3 floor, an explicit scenario failure condition, or
+  inappropriate abstention. Reports distinguish a score-weighting `--profile`
+  from a declarative `--assessment`. Interactive parallel work now renders a
+  stable multiline dashboard with every active task/batch and current state
+  instead of rotating or shuffling one line. Subdirectory repository audits
+  disclose the enclosing Git root and exact full-scope command, and remediation
+  output clusters detailed findings into prioritized themes with
+  finding-specific verification advice.
 - **Pre-scheduling GitHub Actions validation**: corrected the reusable advisory
   workflow's invalid use of the `runner` context in job-level environment
   values by initializing runner-local paths through `GITHUB_ENV`. The main CI

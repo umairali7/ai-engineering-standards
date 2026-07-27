@@ -261,7 +261,12 @@ execution reports the dynamic active set and effective capacity; neither value
 is hard-coded. Completed judge batches are saved immediately and reused by a
 later review.
 Interactive terminals receive a one-second heartbeat during long inference
-calls, with a terminal-width-bounded active-task line. ETA is labelled as
+calls. The display is a stable multiline dashboard: one summary row followed
+by one deterministically ordered row for every active task or judge batch,
+including its RUNNING/SCORING state and the effective `active/parallel`
+capacity. Rows update in place and never rotate or shuffle merely to fit one
+line. Redirected logs retain the compact throttled single-line representation.
+ETA is labelled as
 calculating until the first measured completion (or uses an explicitly
 declared deployment estimate), then updates from observed throughput.
 Standalone review/resume/score commands reset `command elapsed`; they do not
@@ -284,7 +289,16 @@ success/test claims, and appropriate abstention. The report keeps automated
 and optional human observations separate. Its observed grounding reliability
 is descriptive only: unavailable coverage is never shown as zero
 hallucinations, and the diagnostic cannot change EV scores or qualification
-gates.
+gates. If a reviewer reports a clean structured diagnostic while its own
+severe findings describe fabrication, unsupported claims, traceability
+failure, or an observed failure condition, AIES records a consistency conflict
+and withholds the reliability percentage instead of publishing a false 100%.
+
+`--profile enterprise` selects the enterprise **score-weighting profile**; it
+does not mean the declarative enterprise assessment was run. Use
+`--assessment enterprise` to select that assessment's governed competency
+composition. Reports label targeted area selections and declarative
+assessments separately.
 
 **Qualify deployments, not bare models** (PLATFORM.md D11). A deployment
 is the named tuple of model × runtime × config × endpoint; `aies discover`

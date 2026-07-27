@@ -20,3 +20,30 @@ def purpose(manifest: dict) -> str:
 
 def is_formal(manifest: dict) -> bool:
     return purpose(manifest) == FORMAL_QUALIFICATION
+
+
+def scope(manifest: dict) -> dict:
+    """Describe how the run was composed without conflating profile and scope."""
+    assessment = manifest.get("assessment")
+    areas = list(manifest.get("scoped_areas") or [
+        item.get("area") for item in manifest.get("areas", [])
+        if item.get("area")
+    ])
+    if assessment:
+        assessment_id = (
+            assessment.get("id") or assessment.get("name")
+            if isinstance(assessment, dict) else str(assessment))
+        return {
+            "kind": "declarative-assessment",
+            "assessment": assessment_id,
+            "areas": areas,
+            "label": f"Declarative assessment {assessment_id}",
+            "profile_role": "assessment-selected weighting profile",
+        }
+    return {
+        "kind": "targeted-area-selection",
+        "assessment": None,
+        "areas": areas,
+        "label": "Targeted competency-area selection (not a declarative assessment)",
+        "profile_role": "score-weighting profile only",
+    }
