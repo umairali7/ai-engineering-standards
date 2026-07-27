@@ -18,12 +18,13 @@ import platform
 import re
 import subprocess
 import sys
-import xml.etree.ElementTree as ET
 from collections import Counter, defaultdict
 from functools import lru_cache
 from pathlib import Path
 
 import yaml
+from defusedxml import ElementTree as SafeET
+from defusedxml.common import DefusedXmlException
 
 try:  # Python 3.11+ standard library; conditional dependency on 3.10.
     import tomllib
@@ -889,14 +890,14 @@ def _coverage_artifacts(ctx) -> tuple[list[dict], list[str]]:
                 failures.append(path)
         elif name in {"coverage.xml", "cobertura.xml"}:
             try:
-                root = ET.fromstring(ctx.read(path))
+                root = SafeET.fromstring(ctx.read(path))
                 rate = root.attrib.get("line-rate")
                 values.append({
                     "artifact": path,
                     "line_percent": round(float(rate) * 100, 2) if rate else None,
                     "format": "cobertura-xml",
                 })
-            except (ET.ParseError, ValueError):
+            except (SafeET.ParseError, DefusedXmlException, ValueError):
                 failures.append(path)
     return values, failures
 
@@ -910,7 +911,7 @@ def _test_results(ctx) -> tuple[list[dict], list[str]]:
                 and name.endswith(".xml")):
             continue
         try:
-            root = ET.fromstring(ctx.read(path))
+            root = SafeET.fromstring(ctx.read(path))
             suites = [root] if root.tag == "testsuite" else list(root.iter("testsuite"))
             results.append({
                 "artifact": path,
@@ -919,7 +920,7 @@ def _test_results(ctx) -> tuple[list[dict], list[str]]:
                 "errors": sum(int(s.attrib.get("errors", 0)) for s in suites),
                 "skipped": sum(int(s.attrib.get("skipped", 0)) for s in suites),
             })
-        except (ET.ParseError, ValueError):
+        except (SafeET.ParseError, DefusedXmlException, ValueError):
             failures.append(path)
     return results, failures
 

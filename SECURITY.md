@@ -60,6 +60,37 @@ If you are unsure whether a flaw in the standard is security-sensitive, report i
 - This policy covers this repository and its official tooling only. Vulnerabilities in third-party products that happen to implement AIES guidance belong with those products' vendors.
 - Reference implementations and the qualification platform (Roadmap [Phases 7–8](ROADMAP.md)) will carry their own security policies when they exist; until then, this document is authoritative for the whole project.
 
+## 6. Automated Security Evidence
+
+The repository retains machine-readable security evidence on every push and
+pull request and on a weekly schedule:
+
+- **Secret history:** checksum-pinned Gitleaks 8.30.1 scans every reachable
+  commit and branch with matched values fully redacted. The one current
+  exception is an exact finding fingerprint for a deliberately synthetic token
+  in a security assessment instrument; broad file, path, or rule exclusions are
+  not used. A match must be treated as potentially real until a human has
+  reviewed it, and an exposed credential is revoked before any history repair.
+- **Python static analysis:** Ruff 0.15.22 runs its security rules over the
+  platform source and scripts. Internal test assertions (`S101`), deliberately
+  non-fatal optional discovery (`S110`/`S112`), and fixed argument-vector
+  subprocess execution (`S603`/`S607`) remain human-review concerns but are
+  excluded from this high-signal automated gate. URL and XML parsing findings
+  are not excluded; untrusted endpoints are constrained to HTTP(S), and
+  retained XML evidence is parsed with entity-safe tooling.
+- **Dependency audit:** pip-audit 2.10.1 resolves the platform's current runtime
+  dependencies and records known-vulnerability results. This is a time-bound
+  observation of the resolved environment, not proof that future resolutions
+  are safe; reproducible lock and release provenance remain release work.
+
+The workflow uploads redacted Gitleaks JSON, SARIF static-analysis output,
+dependency-audit JSON, and tool/version/source metadata. Contributors can run
+the equivalent checks with `make security` after installing the pinned tools.
+GitHub CodeQL default setup and Private Vulnerability Reporting are repository
+settings: both remain external release-readiness controls until a repository
+administrator enables and tests them. Security automation finds evidence; it
+does not certify that the project is secure.
+
 ## Related Documents
 
 - [AIES-GOV-01 — Governance](GOVERNANCE.md)

@@ -55,3 +55,18 @@ def test_openai_compatible_adapter_classifies_local_and_remote_endpoints():
                 "runtime_config": {"base_url": "http://127.0.0.1:8000/v1",
                                    "model": "served"}})
     assert local.fingerprint()["execution_scope"] == "local"
+
+
+def test_openai_compatible_adapter_rejects_non_http_endpoint():
+    import pytest
+    from aies.adapters.openai_compat import OpenAICompatAdapter
+
+    adapter = OpenAICompatAdapter()
+    with pytest.raises(ValueError, match="absolute http"):
+        adapter.load({
+            "id": "unsafe",
+            "runtime_config": {
+                "base_url": "file:///tmp/not-an-endpoint",
+                "model": "served",
+            },
+        })

@@ -139,6 +139,33 @@ def test_retained_tool_results_do_not_become_correctness_or_security_pass(
     assert "does not execute code" in analysis["claim_boundary"]
 
 
+def test_repository_analysis_rejects_xml_entities(tmp_path, monkeypatch):
+    from aies import audit
+
+    monkeypatch.setenv("AIES_WORKSPACE", str(tmp_path / "workspace"))
+    repository = _repository(tmp_path)
+    _write(
+        repository,
+        "coverage.xml",
+        """<!DOCTYPE coverage [
+<!ENTITY injected "99">
+]>
+<coverage line-rate="&injected;" />""",
+    )
+
+    correctness = audit.run_audit(
+        repository,
+        record=False,
+        engineering_analysis=True,
+    )["engineering_analysis"]["perspectives"]["correctness_assurance"]
+
+    assert "coverage.xml" in correctness["evidence"]["parse_failures"]
+    assert all(
+        item["artifact"] != "coverage.xml"
+        for item in correctness["evidence"]["coverage"]
+    )
+
+
 def test_architecture_and_dependency_findings_are_traceable(
         tmp_path, monkeypatch):
     from aies import audit

@@ -1,7 +1,7 @@
 # AIES Engineering Assessment Platform — developer entry points.
 # The demo is executable documentation: `make demo` runs the entire workflow
 # offline; the same golden path is CI-gated as tests/test_demo.py.
-.PHONY: install test validate audit release-hygiene demo demo-full demo-empirical integration-demo all
+.PHONY: install test validate audit security release-hygiene release-readiness demo demo-full demo-empirical integration-demo all
 
 install:            ## editable install + test deps
 	pip install -e . && pip install pytest
@@ -17,8 +17,16 @@ validate:          ## suite catalog + shipped assessments (the CI gate)
 audit:             ## repository self-conformance (dogfood), gated at RT2
 	aies audit .. --gate --rt 2
 
+security:          ## requires gitleaks 8.30.1 and the [security] Python extra
+	gitleaks git --log-opts="--all" --redact=100 --no-banner --no-color --report-format json --report-path "$${TMPDIR:-/tmp}/aies-gitleaks.json" ..
+	ruff check src/aies scripts --select S --ignore S101,S110,S112,S603,S607
+	pip-audit . --progress-spinner=off
+
 release-hygiene:   ## reject local/generated artifacts from the tracked release tree
 	python scripts/check_release_artifacts.py ..
+
+release-readiness: ## show public-preview blockers; add --gate only at release time
+	python scripts/check_public_release.py ..
 
 demo:              ## core workflow, fully offline (mock runtime + mock judge)
 	bash scripts/demo.sh

@@ -17,12 +17,16 @@ dependencies = [
     # freshly-installed Python (notably python.org builds on macOS) cannot
     # verify certs and every HTTPS call fails with CERTIFICATE_VERIFY_FAILED.
     "certifi>=2023.7.22",
+    # Repository analysis consumes retained coverage/JUnit XML as untrusted
+    # evidence; defusedxml rejects entity expansion and external references.
+    "defusedxml>=0.7.1",
 ]
 
 [project.optional-dependencies]
-# Dev/test extras only — the platform itself needs nothing beyond PyYAML.
+# Development extras; runtime dependencies remain intentionally small.
 # Install with:  pip install -e ".[test]"
 test = ["pytest>=7"]
+security = ["ruff==0.15.22", "pip-audit==2.10.1"]
 # Detached-signature verification for `aies deployment verify-artifact`.
 # Optional: without it, checksum verification still works and signature
 # verification reports "unverifiable" rather than a false pass.

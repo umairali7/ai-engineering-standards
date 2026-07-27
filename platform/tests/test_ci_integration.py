@@ -8,6 +8,9 @@ from aies import ci_integration, cli
 
 
 ROOT = Path(__file__).resolve().parents[2]
+CHECKOUT_SHA = "11d5960a326750d5838078e36cf38b85af677262"
+SETUP_PYTHON_SHA = "a26af69be951a213d495a4c3e4e4022e16d87065"
+UPLOAD_ARTIFACT_SHA = "ea165f8d65b6e75b540449e92b4886f43607fa02"
 
 
 def _empty_repo(tmp_path: Path) -> Path:
@@ -85,7 +88,7 @@ def test_reusable_workflow_is_advisory_by_default_and_retains_artifacts():
     assert '>> "${GITHUB_ENV}"' in text
     assert "default: false" in text
     assert "required: true" in text
-    assert "actions/upload-artifact@v4" in text
+    assert f"actions/upload-artifact@{UPLOAD_ARTIFACT_SHA} # v4" in text
     assert "if: always()" in text
     assert "--enforce" in text
 
@@ -99,6 +102,28 @@ def test_main_ci_lints_every_workflow_on_workflow_changes():
     assert "ACTIONLINT_VERSION" in text
     assert "ACTIONLINT_SHA256" in text
     assert '"${RUNNER_TEMP}/actionlint" -color' in text
+
+
+def test_security_workflow_scans_history_and_retains_redacted_evidence():
+    text = (
+        ROOT / ".github" / "workflows" / "security.yml"
+    ).read_text(encoding="utf-8")
+    workflow = yaml.safe_load(text)
+    jobs = workflow["jobs"]
+
+    assert set(jobs) == {"secret-history", "python-security"}
+    assert "permissions:\n  contents: read" in text
+    assert f"actions/checkout@{CHECKOUT_SHA} # v4" in text
+    assert f"actions/setup-python@{SETUP_PYTHON_SHA} # v5" in text
+    assert f"actions/upload-artifact@{UPLOAD_ARTIFACT_SHA} # v4" in text
+    assert 'GITLEAKS_VERSION: "8.30.1"' in text
+    assert '--log-opts="--all"' in text
+    assert "--redact=100" in text
+    assert "ruff==0.15.22" in text
+    assert "pip-audit==2.10.1" in text
+    assert "ruff-security.sarif" in text
+    assert "pip-audit.json" in text
+    assert text.count("if: always()") == 2
 
 
 def test_container_is_non_root_and_excludes_secrets_and_runs():

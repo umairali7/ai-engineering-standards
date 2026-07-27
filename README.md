@@ -563,12 +563,25 @@ Individual documents carry a lifecycle status only (Draft → Review → Approve
   Blocked under
   [ADR-0009](adr/ADR-0009-Engineering-Assessment-Platform-Identity.md).
 - **Verified baseline:** 484 scenarios across 12 competency areas with zero
-  suite warnings/errors; 353 platform tests passing at the latest local
-  verification. Empirical panel calibration and an independent pilot remain
-  open.
+  suite warnings/errors; 366 platform tests passing and one skipped at the
+  latest local verification. Empirical panel calibration and an independent
+  pilot remain open.
 - **ECM standardization:** The ECM implementation and ET-01 through ET-15
   taxonomy are delivered; formal ratification of AIES-ECM-01 and integration
   into the five-module standards architecture remain open governance work.
+- **Public-release readiness:** The repository has a fail-closed preflight,
+  ownership routing, automated dependency-update discovery, checksum-pinned
+  full-history secret scanning, Python security analysis, dependency auditing,
+  and retained machine-readable security evidence. Run
+  `python platform/scripts/check_public_release.py .` from the repository root
+  to see the remaining local and externally verified gates. It currently
+  reports NOT READY while licensing, security, version/distribution, and
+  repository-setting work remains. At release time, a named and timestamped
+  external-evidence document is supplied with `--external-evidence`, followed
+  by `--gate`; the preflight never enables those settings or authorizes
+  publication itself. Start from
+  [`templates/public-release-external-evidence.json`](templates/public-release-external-evidence.json);
+  unconfirmed or incomplete entries continue to fail closed.
 - **Status:** Active Development.
 
 ## License

@@ -221,6 +221,65 @@ until their prerequisite evidence exists.
 | **Subject expansion (P2)** | Subject Descriptor → Subject Assessment Profile → executor/evidence adapters → direct instruments → coverage matrix → calibration → report limitations → discovery registry | Never route a new subject kind through deployment scoring by convenience |
 | **Selection and portfolio (P2)** | Validated ECM → workload schema → cost/latency/reliability evidence → compatibility filter → explained fit → sensitivity analysis → human decision record | AIES Select remains a scoped decision aid, never a universal leaderboard |
 
+### Public repository release program
+
+Public visibility, open-source permission, a public-comment release, and the
+stable v1.0 standard are separate milestones. The repository may enter public
+development before empirical validation and independent adoption are complete,
+but it MUST NOT be described as open source until effective licenses are
+granted, and it MUST NOT be described as an Approved standard or v1.0 before
+the governance gates below are complete.
+
+| Milestone | Meaning | Minimum entry gate |
+|---|---|---|
+| **Private development** | Maintainers and invited reviewers can inspect the evolving implementation | Current state; no public reuse claim |
+| **Public development preview** | Anyone can inspect, use, modify, and contribute under effective licenses; standards remain at Draft/Review and evidence limitations remain prominent | PR-01 through PR-05 below; release authority records the visibility decision |
+| **v0.5 public comment** | A frozen standards candidate is open for formal comment and disposition | Approval inventory, automated conformance, independent review progress, comment protocol, and content hash freeze |
+| **v1.0 stable** | Approved, citation-stable standard and supported reference platform | Public comment closed; findings resolved; modules and Shared foundations ratified; signed reproducible release published |
+
+The following chunks are the authoritative implementation order. A chunk is
+`Done` only when its evidence column exists; implementation progress cannot
+close a named-human or external-verification gate.
+
+| Chunk | Lane | Status | Scope | Required evidence / exit signal |
+|---|---|---|---|---|
+| **PR-01 — Release control plane** | Build now | Done | Consolidate this plan; add fail-closed public-release preflight, CODEOWNERS review routing, dependency-update automation, least-privilege CI permissions, and a retained non-blocking readiness artifact | `check_public_release.py` reports every local blocker and external confirmation without granting authority; tests cover pending and locally complete states |
+| **PR-02 — Security and history assurance** | Build now + external confirmation | In progress | Add CodeQL/SAST, dedicated full-history secret scanning, dependency/container scanning, explicit workflow permissions, retained machine-readable results, and a review procedure for historical Actions logs/artifacts | Local scanners pass across source, dependencies, and all reachable history without leaking matched values; CodeQL, historical Actions review, and Private Vulnerability Reporting remain external confirmations |
+| **PR-03 — License ratification and implementation** | Human governance, then build | Blocked | Record affiliation disclosures, announce ADR-0014, complete the seven-day Class 3 window, disposition objections, record named acceptance, install both official texts, publish the path scope table, and update SPDX/package/contribution/badge notices | Accepted ADR with dates/deciders/disclosures plus CI proving every distributed path resolves to exactly one applicable license |
+| **PR-04 — Version and distribution trust** | Build after PR-03 | Open | Explain standards, platform, schema, profile, and artifact version axes; choose the preview version; lock dependencies; build wheel/sdist and multi-arch image; generate hashes, SBOM/AI-BOM, SLSA provenance, and signatures/attestations | Clean-machine Windows/macOS/Linux verification, prior-version upgrade evidence, signed artifacts, independently verified provenance, and release notes |
+| **PR-05 — Repository protection and publication decision** | External repository settings + human release authority | Open | Protect `main`; require current CI and CODEOWNER/human review; restrict bypasses and workflow permissions; enable security features; review retained logs/artifacts; run the readiness gate; record the named-human visibility decision | GitHub settings evidence, zero unresolved release blockers, signed preview tag, immutable release bundle, and recorded publication decision |
+| **PR-06 — Public preview conversion loop** | Public adoption | Open | Publish the 60-second proof, ten-minute trial, persona paths, example bundles, Discussions categories, first issues, launch article/video/social assets, and a claim-reviewed announcement | Five unfamiliar users complete first use; failures and comprehension findings are published and fixed; first local and hosted reproducibility pilots are retained |
+| **PR-07 — Evidence credibility and v1.0 governance** | External evidence and governance | Blocked | Execute the preregistered representative panel, validate judges against independent human labels, publish comparative cases and null findings, complete two independent reviews per approval candidate, run v0.5 comment, and ratify v1.0 | Measurement-validity report, independent pilot evidence, disposition ledger, Approved documents, signed v1.0 release, and maintenance cadence |
+
+#### PR-01 implementation checklist
+
+| Status | Task | Owner type | Verification |
+|---|---|---|---|
+| Done | Add default and high-impact CODEOWNERS routes | Maintainer | `.github/CODEOWNERS` is detected by the repository audit; branch enforcement remains PR-05 |
+| Done | Add automated update discovery for Actions, Python, and the container | Maintainer | `.github/dependabot.yml` parses and covers all three ecosystems |
+| Done | Add a non-authorizing public-release readiness contract | Platform | Text and JSON enumerate local blockers, external confirmations, limitations, and exact next actions; `--gate` fails closed and accepts only schema-valid, named, timezone-stamped `--external-evidence` confirmations for controls not provable from the checkout; a safe all-false template is shipped |
+| Done | Retain readiness output in CI without blocking ordinary development | Platform | A dedicated CI job uploads `public-release-readiness.json`; publication still requires an explicit gated run |
+| Done | Reduce default workflow token authority | Maintainer | Platform CI declares `contents: read`; later jobs must request any additional permission explicitly |
+CODEOWNERS enforcement, protected-branch settings, and Private Vulnerability
+Reporting are deliberately not counted as PR-01 implementation. They are
+externally verified repository controls in PR-05; the readiness gate continues
+to report them until a repository administrator supplies that evidence.
+
+#### PR-02 implementation checklist
+
+| Status | Task | Owner type | Verification |
+|---|---|---|---|
+| Done | Scan complete Git history for secrets | Maintainer | Checksum-pinned Gitleaks 8.30.1 scanned 77 reachable commits with 100% redaction and zero undispositioned findings; one synthetic-token match is suppressed by exact commit/path/rule/line fingerprint |
+| Done | Add high-signal Python static analysis | Maintainer | Ruff 0.15.22 security rules pass; HTTP(S) endpoint validation and entity-safe XML evidence parsing close the actionable findings, while documented low-signal exclusions remain reviewable |
+| Done | Audit resolved runtime dependencies | Maintainer | pip-audit 2.10.1 resolved three direct/runtime dependencies and reported zero known vulnerabilities in the 2026-07-27 observation |
+| Done | Pin CI action identities and minimize authority | Maintainer | Checkout, Python setup, and artifact upload use immutable action commit SHAs; workflows default to read-only contents permission |
+| Done | Retain redacted, machine-readable evidence | Platform | CI uploads Gitleaks JSON, SARIF, dependency JSON, tool versions, distribution checksum, source revision, scope, and redaction metadata even when a scanner fails |
+| Done | Provide a repeatable local security command | Platform | `make security` runs full-history secret scanning, Python security rules, and dependency audit with pinned tool-version requirements |
+| Open | Publish a dedicated security contact | Named maintainer | Replace the placeholder fallback in `SECURITY.md` with the approved monitored address and optional public key |
+| Open | Enable and test Private Vulnerability Reporting | Repository administrator | A harmless test report verifies private intake, maintainer notification, acknowledgement, and closure without exposing sensitive content |
+| Open | Enable CodeQL default setup after eligibility | Repository administrator | After public visibility, Python CodeQL default setup completes and its first successful result is retained; local Ruff remains complementary rather than being relabelled CodeQL |
+| Open | Review historical Actions logs and artifacts | Named maintainer | Review retained workflow logs/artifacts for credentials or private data, revoke anything exposed, and record the named/time-stamped external confirmation used by the readiness gate |
+
 ### Next executable tranche
 
 This is the recommended sequence from the current verified baseline. Work in
@@ -239,11 +298,14 @@ license governance are waiting on other people.
 | 8 | Build now | Done | Implement Inspect log bridge | Evidence Adapter contract | Portable AIES Inspect JSON profile imports/exports preserve source hashes, explicit loss, immutable duplicate rejection, typed events, and no inferred score; independent pinned-native API validation remains under the external interoperability track |
 | 9 | Build now | Done | Implement SARIF repository bridge | Evidence Adapter contract and repository-analysis ADR | SARIF 2.1.0 findings import/export preserve provenance, tool/rule/location/severity/fingerprint/fix/suppression/baseline semantics, typed events, and repository-analysis consumption; independent official-schema validation remains under the external interoperability track |
 | 9A | Build now | Done | Build the adoption and promotion launch-kit foundation | Demo, packaging, `init`/`evaluate`/`open`, measurement claims | Conversion README/Quickstart, CLI calls to action, persona message matrix, research-backed channel/funnel plan, claim-review checklist, launch sequence, social-preview asset, and safe community forms are implemented; individual launch assets and studies remain explicit Open items |
-| 10 | External evidence | Blocked | Execute preregistered multi-subject validity panel | Representative subjects plus independent human labels and interpretation | Published analysis covers discrimination, agreement, uncertainty, robustness, null results, and limitations |
-| 11 | External governance | Blocked | Complete two independent reviews per approval candidate | Reviewer recruitment and review packets | Every candidate has two traceable non-author reviews and dispositioned findings |
-| 12 | External adoption | Open | Publish comparative ECM case study and reproducible local/hosted pilots | Validity panel, installation path, independent reviewers, publishable evidence | Independent users reproduce results and report decision usefulness and limitations |
-| 13 | Release governance | Blocked | Ratify license and secure the release supply chain | Named-human ADR-0014 ratification and release authority | Reusable licenses, SPDX metadata, dependency lock, SBOM/AI-BOM, SLSA provenance, signatures/attestations, and clean-machine verification are published |
-| 14 | Expansion | Open | Promote the first non-deployment Subject Assessment Profile | Subject/evidence contracts and support registry | Choose one narrow profile—recommended first candidate: MCP server or repository engineering analysis—and ship direct instruments, executor, limitations, and discovery before starting another |
+| 10 | Build now | Done | Execute PR-01 release control plane | Existing CI, audit, and governance boundaries | The retained readiness contract is implemented; external repository-setting confirmations remain explicit |
+| 11 | Build now | In progress | Execute PR-02 security and history assurance | PR-01 inventory and repository ownership | Local security workflows and full-history evidence pass; external CodeQL/PVR/history-log confirmations remain open |
+| 12 | Release governance | Blocked | Execute PR-03 license ratification and implementation | Named-human ADR-0014 Class 3 process | Reusable licenses and unambiguous path/package metadata are effective |
+| 13 | Build after license | Open | Execute PR-04 version and distribution trust | Effective license and selected preview version | Signed reproducible packages/container and upgrade evidence are published |
+| 14 | Release authority | Open | Execute PR-05 repository protection and publication decision | PR-01 through PR-04 | Readiness gate and external confirmations pass; named human records publication |
+| 15 | External adoption | Open | Execute PR-06 public preview conversion loop | Public preview and claim-reviewed assets | First-use study and reproducible local/hosted pilots publish their findings |
+| 16 | External evidence/governance | Blocked | Execute PR-07 evidence credibility and v1.0 governance | Representative subjects, independent reviewers, and public comment | Measurement validity and v1.0 approval evidence are published |
+| 17 | Expansion | Open | Promote the first non-deployment Subject Assessment Profile | Subject/evidence contracts and support registry | Choose one narrow profile—recommended first candidate: MCP server or repository engineering analysis—and ship direct instruments, executor, limitations, and discovery before starting another |
 
 Do not start AIES Select, organization portfolio dashboards, certification
 operations, or multiple subject executors ahead of this tranche. Those products
@@ -457,7 +519,7 @@ included before public release.
 | Done | Generate and test the perspective-coverage registry | `perspectives-v1.yaml` drives SAP applicability, runtime coverage, code-title labels, generated `ASSESSMENT_PROFILES.md`, validation, CLI/API discovery, and regression tests across every declared category |
 | Done | Clarify immutable artifacts and regenerable views | Storage policy classifies append-only records, derived canonical snapshots, mutable workflow state/configuration, and regenerable views; `workspace.write_json` rejects append-only replacement and `workspace.write_view` cannot target evidence paths |
 | Done | Make record identifiers concurrency-safe | Qualification Records atomically claim human-readable IDs through exclusive creation; a 12-decision concurrent regression proves unique issued records and lifecycle events |
-| Done | Improve local verification feedback | The documented command reports ranked durations and uses a 180-second warm-cache Windows budget with a 25% regression trigger. Single-pass report views plus signature-invalidated isolated YAML, expanded-scenario, review-ledger, and suite caches retain complete coverage; the expanded 306-test suite passes in 179.78 seconds on the current Windows verification host. Cache mutation/invalidation behavior has regression coverage, read-only API fixtures are shared safely, and concurrency tests delay only the phase under test. The previous 115.39-second host result was not reproduced in this batch, so further optimization remains tracked rather than presenting that historical timing as current. |
+| Done | Improve local verification feedback | The documented command reports ranked durations and uses a 180-second warm-cache Windows budget with a 25% regression trigger. Single-pass report views plus signature-invalidated isolated YAML, expanded-scenario, review-ledger, and suite caches retain complete coverage; cache mutation/invalidation behavior has regression coverage, read-only API fixtures are shared safely, and concurrency tests delay only the phase under test. The 2026-07-27 security-expanded 366-test run took 182.41 seconds, narrowly exceeding the budget, so performance recovery remains tracked rather than presenting an older host result as current. |
 | Open | Recover full-suite performance headroom | Profile collection, fixture setup, filesystem/antivirus sensitivity, and repeated corpus/report work on Windows; either restore a reproducible warm-cache result at least 25% below the 180-second ceiling or publish host-normalized budgets with CI trend evidence. Do not reduce scenario, schema, concurrency, or end-to-end coverage to make the number pass |
 | Done | Keep package-build artifacts out of review | Root ignore policy excludes `build/`, `dist/`, and demo workspaces; release-hygiene validation passes after local wheel/sdist builds |
 | Done | Generate exhaustive CLI guidance and shell completion | A parser-derived CLI reference covers every command, subcommand, positional parameter, option, default, choice, prerequisite, interaction, result/side effect, recommended next step, and workflow sequence; CI detects undocumented parser drift, and PowerShell/Bash/Zsh Tab completion is generated from the same live command surface |
@@ -473,19 +535,20 @@ included before public release.
 | Done | Test supported Python versions | CI runs the complete platform gate on Python 3.10, 3.11, 3.12, 3.13, and 3.14; installation docs identify that tested range |
 | Open | Add documentation governance checks | CI detects duplicate document/requirement IDs, missing meaningful titles, broken links, invalid metadata/status transitions, and stale references |
 | Open | Add code-quality checks | Formatting, linting, type checking, and coverage thresholds run in CI |
-| Open | Add supply-chain controls | Lock and review dependencies; run secret scanning/SAST; emit SPDX 3 Software/AI/Dataset/Build profiles where applicable; generate SLSA provenance for packages, containers, and conformance bundles; sign or attest release artifacts with Sigstore/Cosign or an equivalently verifiable mechanism; CI verifies identity, digest, source revision, builder, and provenance before publication and states that provenance does not prove safety or correctness |
+| In progress | Add supply-chain controls | Dependabot, immutable action pins, full-history Gitleaks, Ruff security analysis, pip-audit, retained scanner evidence, and the public-release readiness inventory are implemented. Remaining work locks dependencies; scans release containers; emits SPDX 3 Software/AI/Dataset/Build profiles where applicable; generates SLSA provenance for packages, containers, and conformance bundles; signs or attests release artifacts with Sigstore/Cosign or an equivalently verifiable mechanism; CI verifies identity, digest, source revision, builder, and provenance before publication and states that provenance does not prove safety or correctness |
 | Open | Publish a real security contact | Dedicated email and optional encryption key replace the placeholder fallback; private vulnerability reporting remains preferred |
-| Open | Add ownership and protected-branch evidence | CODEOWNERS and externally attested branch-protection/human-review gates satisfy the repository’s own audit |
+| In progress | Add ownership and protected-branch evidence | CODEOWNERS now routes default and high-impact paths to the Maintainer. GitHub-protected-branch settings, required CODEOWNER/human review, restricted bypasses, and retained external evidence still need repository-administrator completion |
 | Open | Align versions | Package version, standards milestone, artifact versions, changelog, tags, and release names answer different versioning questions explicitly and consistently |
+| Done | Establish the public-release readiness gate | The versioned text/JSON preflight, `--gate` failure behavior, Make target, tests, and retained CI artifact are implemented. It stays NOT READY until licensing, security scanning/contact, external settings, history/log review, and signed release evidence are complete |
 | Done | Correct current CI identity wording | Workflow and active docs say Engineering Assessment Platform rather than Qualification Platform |
 
 ## 5. Current Verified Baseline
 
-Last verified on 2026-07-23:
+Last verified on 2026-07-27:
 
-- `pytest platform/tests -q`: **306 passed in 179.78 seconds** on the current
-  Windows run, within the documented 180-second budget but without adequate
-  headroom; performance recovery remains open.
+- `pytest platform/tests -q`: **366 passed, 1 skipped in 182.41 seconds** on the
+  current Windows run, **2.41 seconds above** the documented 180-second budget
+  and without the target 25% headroom; performance recovery remains open.
 - `aies suites validate`: **484 scenarios, 12 areas, 0 warnings, 0 errors**;
   **268 effective hash-bound ledger acceptances, 0 stale, 0 unknown**.
 - Decision-engine conformance: **8/8 cases passed**, semantics 1.0.
@@ -494,9 +557,16 @@ Last verified on 2026-07-23:
   install runs suite validation and the offline demo; isolated sdist install,
   validation, and uninstall pass on Windows. Cross-platform package/demo CI is
   now defined and awaits hosted-run evidence.
-- Repository audit at RT2 — Moderate: **PASS**, with 18 verified controls and
-  8 gaps; the prior order-dependent CI-test false negative is covered by a
-  regression test.
+- Repository audit at RT2 — Moderate: **PASS**, with **21 verified controls and
+  5 gaps**. CODEOWNERS and dependency-update automation are now detected;
+  protected-branch enforcement remains correctly external.
+- Public-release readiness: **NOT READY**, with 5 tracked-tree blockers and 5
+  externally verified controls still open. Local security automation now
+  passes; CodeQL default setup, Private Vulnerability Reporting, protected-main
+  settings, historical Actions review, and signed-release evidence require
+  named external confirmation. Text/JSON rendering, schema-valid
+  named external confirmations, fail-closed gate behavior, Python 3.10
+  compatibility, workflow YAML, and actionlint validation pass.
 - Scenario review maturity: **484/484 human design-reviewed**, **0/484
   empirically calibrated**. The accepted 268-instrument tranche is one
   transparent human-authorized AI-assisted decision bound to every scenario ID

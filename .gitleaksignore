@@ -1,0 +1,5 @@
+# Exact historical false positive. The matched value is a synthetic Stripe-like
+# token in a security-training scenario, not a credential. Scope is intentionally
+# one commit, one file, one rule, and one line; do not replace with a path/rule
+# allowlist. Reviewed 2026-07-27 during PR-02 security-history assurance.
+4dba5dda394637821b75551555b32a106332949a:platform/competencies/CA-07-security-privacy-engineering/scenarios/SC-CA07-002.yaml:stripe-access-token:15

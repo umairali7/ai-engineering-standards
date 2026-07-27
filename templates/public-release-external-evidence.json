@@ -1,0 +1,36 @@
+{
+  "kind": "aies-public-release-external-evidence",
+  "schema_version": 1,
+  "confirmations": {
+    "branch-protection": {
+      "confirmed": false,
+      "verified_by": "",
+      "verified_at": "",
+      "evidence": ""
+    },
+    "private-vulnerability-reporting": {
+      "confirmed": false,
+      "verified_by": "",
+      "verified_at": "",
+      "evidence": ""
+    },
+    "github-code-scanning": {
+      "confirmed": false,
+      "verified_by": "",
+      "verified_at": "",
+      "evidence": ""
+    },
+    "history-and-actions-review": {
+      "confirmed": false,
+      "verified_by": "",
+      "verified_at": "",
+      "evidence": ""
+    },
+    "signed-preview-release": {
+      "confirmed": false,
+      "verified_by": "",
+      "verified_at": "",
+      "evidence": ""
+    }
+  }
+}

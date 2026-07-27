@@ -29,6 +29,17 @@ from .base import GenerationRequest, GenerationResponse, RuntimeAdapter
 _SSL_CONTEXT: ssl.SSLContext | None = None
 
 
+def _http_endpoint(value: str) -> str:
+    """Return a normalized HTTP(S) endpoint or reject an unsafe URL scheme."""
+    endpoint = value.rstrip("/")
+    parsed = urllib.parse.urlsplit(endpoint)
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname:
+        raise ValueError(
+            "OpenAI-compatible endpoint must be an absolute http:// or https:// URL"
+        )
+    return endpoint
+
+
 def _ssl_context() -> ssl.SSLContext:
     """A TLS context that verifies certs reliably across platforms.
 
@@ -72,11 +83,11 @@ class OpenAICompatAdapter(RuntimeAdapter):
         from .. import config
         cfg = registry_entry.get("runtime_config") or {}
         # Precedence: deployment manifest → env/.env → runtime conventional default.
-        self._base_url = str(
+        raw_base_url = str(
             cfg.get("base_url")
             or config.endpoint(self.RUNTIME_ENV, self.RUNTIME_DEFAULT)
             or ""
-        ).rstrip("/")
+        )
         self._model = str(cfg.get("model", registry_entry.get("id", "")))
         self._fingerprint_settings = {
             key: value for key, value in cfg.items()
@@ -87,12 +98,13 @@ class OpenAICompatAdapter(RuntimeAdapter):
             or registry_entry.get("deployment_revision") or "undeclared")
         self._served_checksum = ((registry_entry.get("provenance") or {}).get("checksum")
                                  or "undeclared")
-        if not self._base_url:
+        if not raw_base_url:
             raise ValueError(
                 f"no endpoint for the {self.adapter_id} adapter: set "
                 f"runtime_config.base_url in the deployment, or {self.RUNTIME_ENV} "
                 "in the environment / .env"
             )
+        self._base_url = _http_endpoint(raw_base_url)
         # A deployment MAY name its own key env var; otherwise use the default.
         key_env = cfg.get("api_key_env")
         self._api_key = os.environ.get(key_env) if key_env else config.openai_api_key()
@@ -107,7 +119,7 @@ class OpenAICompatAdapter(RuntimeAdapter):
             **{k: v for k, v in request.parameters.items()
                if k in ("temperature", "max_tokens", "seed", "top_p")},
         }
-        req = urllib.request.Request(
+        req = urllib.request.Request(  # noqa: S310 - base URL validated as HTTP(S)
             f"{self._base_url}/chat/completions",
             data=json.dumps(payload).encode(),
             headers={
@@ -121,8 +133,8 @@ class OpenAICompatAdapter(RuntimeAdapter):
         timeout = float(request.parameters.get("timeout_s", config.request_timeout_s()))
         started = time.monotonic()
         try:
-            with urllib.request.urlopen(req, timeout=timeout,
-                                        context=_ssl_context()) as resp:
+            with urllib.request.urlopen(  # noqa: S310 - URL validated as HTTP(S)
+                    req, timeout=timeout, context=_ssl_context()) as resp:
                 body = json.loads(resp.read().decode())
         except urllib.error.HTTPError as e:          # 4xx/5xx — server answered
             detail = ""
@@ -192,7 +204,8 @@ class OpenAICompatAdapter(RuntimeAdapter):
     def fingerprint(self) -> dict:
         parsed = urllib.parse.urlsplit(self._base_url)
         host = (parsed.hostname or "").lower()
-        local_hosts = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
+        # Classification only; this code never binds a listening socket.
+        local_hosts = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}  # noqa: S104
         endpoint_identity = urllib.parse.urlunsplit((
             parsed.scheme.lower(), parsed.netloc.split("@")[-1].lower(),
             parsed.path.rstrip("/"), "", ""))
@@ -215,7 +228,7 @@ class OpenAICompatAdapter(RuntimeAdapter):
     def _default_base_url(cls) -> str | None:
         from .. import config
         base = config.endpoint(cls.RUNTIME_ENV, cls.RUNTIME_DEFAULT)
-        return base.rstrip("/") if base else None
+        return _http_endpoint(base) if base else None
 
     @classmethod
     def probe_runtime(cls) -> dict:
@@ -225,8 +238,9 @@ class OpenAICompatAdapter(RuntimeAdapter):
             return {"available": False, "version": None,
                     "detail": f"{cls.RUNTIME_ENV} not set (env or .env)"}
         try:
-            with urllib.request.urlopen(f"{base}/models", timeout=config.probe_timeout_s(),
-                                        context=_ssl_context()) as resp:
+            with urllib.request.urlopen(  # noqa: S310 - base is validated HTTP(S)
+                    f"{base}/models", timeout=config.probe_timeout_s(),
+                    context=_ssl_context()) as resp:
                 ok = resp.status == 200
             return {"available": ok, "version": "openai-compatible",
                     "detail": f"endpoint reachable at {base}"}
@@ -241,8 +255,9 @@ class OpenAICompatAdapter(RuntimeAdapter):
         if not base:
             return []
         try:
-            with urllib.request.urlopen(f"{base}/models", timeout=config.probe_timeout_s(),
-                                        context=_ssl_context()) as resp:
+            with urllib.request.urlopen(  # noqa: S310 - base is validated HTTP(S)
+                    f"{base}/models", timeout=config.probe_timeout_s(),
+                    context=_ssl_context()) as resp:
                 body = json.loads(resp.read().decode())
         except Exception:
             return []

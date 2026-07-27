@@ -1,0 +1,13 @@
+# Default ownership. CODEOWNERS requests review; protected-branch settings must
+# separately require that review before a merge.
+* @umairali7
+
+# High-impact governance, release, security, and executable decision surfaces.
+/GOVERNANCE.md @umairali7
+/LICENSE.md @umairali7
+/SECURITY.md @umairali7
+/Shared/ @umairali7
+/adr/ @umairali7
+/.github/ @umairali7
+/platform/src/aies/ @umairali7
+/conformance/ @umairali7

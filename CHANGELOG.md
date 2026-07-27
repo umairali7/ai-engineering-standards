@@ -8,6 +8,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Security and history assurance foundation**: a dedicated least-privilege
+  workflow runs checksum-verified Gitleaks 8.30.1 against all reachable history
+  with fully redacted output, Ruff 0.15.22 high-signal Python security rules,
+  and pip-audit 2.10.1 dependency resolution. CI action dependencies are pinned
+  to immutable commits and retain JSON/SARIF plus tool, checksum, scope, source,
+  and redaction metadata. The only current secret-scan exception is bound to an
+  exact historical finding fingerprint for a synthetic security scenario.
+  HTTP-compatible adapters now reject non-HTTP(S) endpoints and repository
+  coverage/test XML uses entity-safe parsing. `make security` reproduces the
+  local checks; GitHub CodeQL default setup, Private Vulnerability Reporting,
+  historical Actions review, and a dedicated security contact remain explicit
+  public-release gates rather than being inferred from tracked files.
+- **Public-preview release control plane**: the canonical maturity backlog now
+  separates public visibility, effective open-source permission, the v0.5
+  public-comment release, and v1.0 approval into seven ordered release chunks
+  with explicit local, human-governance, repository-administrator, and external
+  evidence gates. A dependency-free, Python 3.10–3.14 compatible
+  `check_public_release.py` preflight emits versioned text/JSON readiness,
+  precise next actions, and a fail-closed `--gate` without accepting an ADR or
+  authorizing publication. Controls not provable from a checkout can be
+  satisfied only through schema-valid, named, timezone-stamped
+  `--external-evidence`; malformed or partial confirmations remain open. CI
+  retains the informational artifact while normal development remains
+  non-blocking. CODEOWNERS routes default and high-impact paths, Dependabot
+  covers Actions/Python/container inputs, and platform CI now defaults to
+  read-only repository permission.
 - **Truthful diagnostics, critical-fit floors, stable parallel progress, and
   exact audit scope**: grounding reports now withhold their descriptive
   reliability percentage and expose response-linked consistency conflicts when
