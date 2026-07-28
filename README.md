@@ -68,6 +68,7 @@ and optional human evaluation—as different facts.
 | See the idea without setup | `aies demo --open` | Executive Summary, ECM, fit guidance, diagnostics, and full report |
 | Understand one registered AI deployment | `aies evaluate DEPLOYMENT --plan-only` | Non-executing call plan, declared cost/ETA or exact unknowns, limitations, resumability, and execution path |
 | Evaluate it automatically | `aies evaluate DEPLOYMENT --judge JUDGE` | Completed non-blocking Engineering Evaluation and report bundle |
+| Apply AIES to one engineering task | `aies apply DEPLOYMENT --scenario SC-CA05-001 --compare-baseline --judge JUDGE` | Standards-assisted output plus an isolated baseline-versus-guided EV comparison; never qualification evidence |
 | See the decision snapshot in your terminal | `aies snapshot latest` | Task evidence, observed capability, scenario breadth, assurance gaps, and engineering interpretation |
 | Check what AIES truly supports | `aies support` | Implemented, experimental, and planned subject kinds with executable entry points and limitations |
 | See how each subject is assessed | `aies assessment-profile list` | Approved Subject Assessment Profiles, executors, evidence adapters, applicability, decision products, and limitations |
@@ -108,6 +109,31 @@ that is prohibited from silently inflating the parent subject. Each written
 coverage product also emits an **Evidence-Linked Remediation & Monitoring
 Plan**. Its actions start open and unassigned; a named owner must separately
 accept, defer, or close them.
+
+### How the standards are used
+
+AIES now keeps assessment and assistance as two explicit workflows:
+
+```text
+Unassisted assessment
+standard + scenario → frozen instrument
+                    → task-only candidate prompt
+                    → complete hidden reviewer rubric
+                    → digest-bound evidence and Standards Traceability
+
+Standards-assisted work
+standard + selected task → scoped guidance → engineering output
+                                      └───── excluded from qualification
+```
+
+`aies evaluate` and `aies qualify` measure unassisted behavior: the candidate
+does not receive expected answers, failure conditions, or scoring anchors.
+The reviewer receives the complete frozen instrument only after the response
+exists. `aies apply` is the separate assisted path; it can compare baseline and
+guided outputs against the same instrument, but never adds that guided result
+to qualification evidence. Repository audits use repository-specific
+deterministic controls and evidence profiles rather than pretending that a
+source tree answered a model prompt.
 
 ---
 
@@ -165,19 +191,40 @@ AIES addresses these gaps through an open, extensible, engineering-driven standa
 ## From Evidence to Engineering Decisions
 
 AIES separates evidence from the different decisions people need to make from
-it:
+it. The reusable source is
+[AIES Assessment and Assistance Flow](diagrams/aies-assessment-and-assistance-flow.mmd).
 
 ```text
-Assessment
-    ↓
-Canonical Evidence
-    ↓
-Competency Analysis
-    ↓
-Engineering Capability Matrix (ECM)
-    ↓
-Engineering Fit, Comparison, and Optional Formal Qualification
+AIES standards + assessment scope + subject descriptor
+                         │
+                         ▼
+              Frozen assessment instrument
+               ┌─────────┴─────────┐
+               ▼                   ▼
+ task-only candidate path   complete reviewer path
+               │            (after evidence exists)
+               └─────────┬─────────┘
+                         ▼
+       Canonical evidence + Standards Traceability
+                         │
+                         ▼
+     Competency analysis → Engineering Capability Matrix
+                         │
+          ┌──────────────┼──────────────┐
+          ▼              ▼              ▼
+ Engineering Fit   Compatible Compare   Optional Formal
+ (informational)    (informational)      Qualification
+
+Separate path: aies apply → standards-assisted output
+               (never qualification evidence)
 ```
+
+The baseline candidate never receives expected answers, scoring anchors,
+failure boundaries, or calibration material. Reviewers receive the complete
+frozen instrument only after evidence exists, and every response and rating is
+bound to its digest. The separate `aies apply` path uses task-scoped standards
+to assist engineering work and can measure a paired baseline delta without
+contaminating assessment evidence.
 
 The outputs serve different audiences and must not be collapsed into one
 opaque score:

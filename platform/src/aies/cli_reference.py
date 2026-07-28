@@ -45,6 +45,11 @@ GUIDANCE: dict[str, CommandGuidance] = {
         "Plans and runs a bounded, no-repeat, non-blocking Engineering Evaluation through the canonical qualify pipeline and creates the complete report bundle.",
         "Run `aies open <run-id>` to inspect the result; expand scope only when the decision requires more evidence.",
     ),
+    "apply": CommandGuidance(
+        "The subject deployment is registered and reachable, and the selected shipped scenario is appropriate for the intended engineering task. A paired score additionally requires a distinct reachable judge.",
+        "Runs an explicitly standards-assisted task outside qualification evidence, with live baseline, guided-generation, review, and artifact progress. Optional baseline comparison executes the task both without and with the task-scoped AIES context and blind-scores both against the same frozen instrument.",
+        "Inspect the immutable guided-execution JSON and its EV deltas; use `aies evaluate` separately for an unassisted capability baseline.",
+    ),
     "open": CommandGuidance(
         "The selected run has generated HTML reports; redacted export requires a destination that does not already exist.",
         "Opens or links the primary local result. Optional export includes only allowlisted derived views and a digest manifest, never raw evidence or credentials.",

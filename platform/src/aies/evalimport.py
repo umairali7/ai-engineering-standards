@@ -90,11 +90,22 @@ def import_eval(run_id: str, path: str, source: str | None = None) -> dict:
             # observations. Preserve the honest state as unavailable.
             grounding = None
             diagnostics_unavailable.append(str(sid))
+        response_name = f"{sid}-r{rep}.json"
+        response_path = rdir / "responses" / response_name
+        if not response_path.exists():
+            skipped.append(str(sid))
+            continue
+        response = workspace.read_json(response_path)
         items.append({
-            "response_record": f"{sid}-r{rep}.json",
+            "response_record": response_name,
             "scenario_id": sid, "repeat": rep,
+            "instrument_digest": (
+                response.get("request") or {}).get("instrument_digest"),
             "scores": {d: int(scores[d]) for d in C.DIMENSIONS},
             "findings": findings,
+            "failure_conditions_observed": (
+                it.get("failure_conditions_observed") or []),
+            "review_trace": it.get("review_trace"),
             "grounding_diagnostics": grounding,
         })
 

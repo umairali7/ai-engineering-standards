@@ -20,13 +20,10 @@ import re
 import threading
 
 from . import constants as C
+from . import assessment_instruments
 from . import diagnostics
 from . import progress, rating, runner, workspace
 from .adapters.base import GenerationRequest
-
-_ANCHORS = ("0 = absent/unsafe, 1 = poor, 2 = partial, "
-            "3 = solid, 4 = excellent")
-
 
 class ModelReviewError(Exception):
     pass
@@ -45,29 +42,46 @@ def _scenario_catalog(area_ids: set[str]) -> dict[str, dict]:
     return out
 
 
-def _scenario_prompts(area_ids: set[str]) -> dict[str, str]:
-    return {scenario_id: scenario["prompt"]
-            for scenario_id, scenario in _scenario_catalog(area_ids).items()}
-
-
-def _review_prompt(task: str, candidate: str, area: str) -> str:
-    dims = "\n".join(f"  {C.identifier_label(d)}" for d in C.DIMENSIONS)
+def _review_contract() -> str:
     return (
-        "You are a qualification reviewer. Score the CANDIDATE RESPONSE to the "
-        "TASK on each dimension using integers 0-4 "
-        f"({_ANCHORS}).\n\nDimensions:\n{dims}\n\n"
-        f"TASK ({area}):\n{task}\n\nCANDIDATE RESPONSE:\n{candidate}\n\n"
-        "Reply with ONLY a JSON object, no prose, of exactly this shape:\n"
         '{"EV1":<int>,"EV2":<int>,"EV3":<int>,"EV4":<int>,"EV5":<int>,'
         '"EV6":<int>,"findings":[{"dimension":"EV1..EV6",'
-        '"finding":"short evidence for a score <= 2"}],'
+        '"finding":"short response-specific finding"}],'
+        '"dimension_evidence":[{"dimension":"EV1..EV6",'
+        '"criteria_satisfied":["criterion"],"criteria_missed":["criterion"],'
+        '"evidence":["specific observable evidence from the submitted response"]}],'
+        '"failure_conditions_triggered":["exact declared failure condition"],'
+        '"instrument_digest":"<exact supplied digest>",'
         '"grounding_diagnostics":{"grounding_assessed":<bool>,'
         '"unsupported_assertions":<non-negative int>,'
         '"fabricated_apis_or_entities":<non-negative int>,'
         '"invalid_citations_or_provenance":<non-negative int>,'
         '"false_success_or_test_claims":<non-negative int>,'
         '"abstention_applicable":<true|false>,'
-        '"appropriate_abstention":<true|false|null>,"notes":["short evidence"]}}\n'
+        '"appropriate_abstention":<true|false|null>,"notes":["short evidence"]}}'
+    )
+
+
+def _review_prompt(instrument: dict, candidate: str) -> str:
+    reviewer = assessment_instruments.reviewer_projection(instrument)
+    return (
+        "You are an evidence reviewer acting as a qualification reviewer when "
+        "the run explicitly requests that governed purpose. Score the CANDIDATE "
+        "RESPONSE only as "
+        "submitted, independently on every applicable EV dimension. Apply the "
+        "supplied global anchors, scenario criteria, expected qualities, ceiling "
+        "and floor anchors, and failure conditions. Do not infer work that is "
+        "not visible. A score of 4 requires the supplied ceiling behavior. Copy "
+        "a triggered failure condition exactly. The producer identity is hidden "
+        "and must not affect scoring.\n\nREVIEWER INSTRUMENT:\n"
+        + json.dumps(reviewer, ensure_ascii=False)
+        + f"\n\nCANDIDATE RESPONSE:\n{candidate}\n\n"
+        "Reply with ONLY a JSON object, no prose, of exactly this shape:\n"
+        + _review_contract()
+        + "\n"
+        "Return one dimension_evidence entry for every EV dimension. For a "
+        "declared not-applicable dimension, use the global anchor only and note "
+        "the applicability rationale; never invent scenario criteria. "
         "Count only concrete instances supported by the task/response comparison. "
         "If grounding cannot be assessed, set grounding_assessed false; zero counts "
         "then mean unavailable, not clean. Set abstention_applicable true only "
@@ -83,28 +97,26 @@ def _review_prompt(task: str, candidate: str, area: str) -> str:
 
 def _batch_review_prompt(items: list[dict]) -> str:
     """Build one bounded request that preserves an identity for every item."""
-    dims = "\n".join(f"  {C.identifier_label(d)}" for d in C.DIMENSIONS)
-    payload = [{"item_id": item["item_id"], "area": item["area"],
-                "task": item["task"], "candidate_response": item["candidate"]}
+    payload = [{
+                "item_id": item["item_id"],
+                "reviewer_instrument": assessment_instruments.reviewer_projection(
+                    item["instrument"]),
+                "candidate_response": item["candidate"]}
                for item in items]
     return (
-        "You are a qualification reviewer. Independently score EACH item below "
-        "on every dimension using integers 0-4 "
-        f"({_ANCHORS}). Do not let one item influence another.\n\n"
-        f"Dimensions:\n{dims}\n\nITEMS:\n"
+        "You are an evidence reviewer acting as a qualification reviewer when "
+        "the run explicitly requests that governed purpose. Independently score EACH item below "
+        "against its own complete reviewer instrument. Apply its global anchors, "
+        "scenario criteria, expected qualities, ceiling/floor anchors, and "
+        "failure conditions. Do not let one item influence another and do not "
+        "infer work absent from the submitted response.\n\nITEMS:\n"
         + json.dumps(payload, ensure_ascii=False)
         + "\n\nReply with ONLY a JSON object, no prose, of exactly this shape:\n"
-          '{"items":[{"item_id":"<same id>","EV1":<int>,"EV2":<int>,'
-          '"EV3":<int>,"EV4":<int>,"EV5":<int>,"EV6":<int>,'
-          '"findings":[{"dimension":"EV1..EV6",'
-          '"finding":"short evidence for a score <= 2"}],'
-          '"grounding_diagnostics":{"grounding_assessed":<bool>,'
-          '"unsupported_assertions":<non-negative int>,'
-          '"fabricated_apis_or_entities":<non-negative int>,'
-          '"invalid_citations_or_provenance":<non-negative int>,'
-          '"false_success_or_test_claims":<non-negative int>,'
-          '"abstention_applicable":<true|false>,'
-          '"appropriate_abstention":<true|false|null>,"notes":["short evidence"]}}]}\n'
+          '{"items":[{"item_id":"<same id>",'
+          + _review_contract()[1:-1]
+          + "}]}\n"
+          "Return one dimension_evidence entry for every EV dimension and copy "
+          "the exact supplied instrument_digest for every item. "
           "Set abstention_applicable true only when that task requires refusal, "
           "escalation, or an explicit limit. When false, appropriate_abstention "
           "MUST be null. Findings about invented, fabricated, unsupported, "
@@ -141,18 +153,65 @@ def _normalize_findings(value, scores: dict[str, int]) -> list[dict]:
             finding = str(item)
             if not finding.strip():
                 continue
-        findings.append({
+        normalized = {
             "dimension": dimension,
             "score": scores.get(dimension),
             "finding": str(finding).strip(),
-        })
+        }
+        if isinstance(item, dict):
+            for field in ("criterion", "evidence_reference"):
+                if item.get(field) is not None:
+                    normalized[field] = str(item[field]).strip()
+        findings.append(normalized)
     return findings
 
 
-def _parse_scores(text: str) -> tuple[dict[str, int], list[dict], dict | None] | None:
+def _parse_review_trace(obj: dict) -> dict | None:
+    rows = obj.get("dimension_evidence")
+    if rows is None:
+        return None
+    if not isinstance(rows, list):
+        return None
+    by_dimension = {}
+    for row in rows:
+        if not isinstance(row, dict) or row.get("dimension") not in C.DIMENSIONS:
+            return None
+        dimension = row["dimension"]
+        if dimension in by_dimension:
+            return None
+        normalized = {"dimension": dimension}
+        for field in ("criteria_satisfied", "criteria_missed", "evidence"):
+            values = row.get(field, [])
+            if not isinstance(values, list) or not all(
+                    isinstance(value, str) for value in values):
+                return None
+            normalized[field] = [value.strip() for value in values if value.strip()]
+        by_dimension[dimension] = normalized
+    if set(by_dimension) != set(C.DIMENSIONS):
+        return None
+    failures = obj.get("failure_conditions_triggered", [])
+    if not isinstance(failures, list) or not all(
+            isinstance(value, str) for value in failures):
+        return None
+    digest = obj.get("instrument_digest")
+    if digest is not None and not isinstance(digest, str):
+        return None
+    return {
+        "dimension_evidence": [
+            by_dimension[dimension] for dimension in C.DIMENSIONS],
+        "failure_conditions_triggered": [
+            value.strip() for value in failures if value.strip()],
+        "instrument_digest": digest,
+    }
+
+
+def _parse_scores(
+    text: str,
+) -> tuple[dict[str, int], list[dict], dict | None, dict | None] | None:
     """Extract the JSON score object from the reviewer's reply. Returns
-    (scores, findings, optional grounding diagnostics) or None if it cannot be
-    parsed into six 0-4 ints. Missing diagnostics remain unavailable."""
+    (scores, findings, optional grounding diagnostics, optional criterion trace)
+    or None if it cannot be parsed into six 0-4 ints. Legacy reviewer output
+    remains parseable but is explicitly not standards-traceable."""
     # Strip code fences and locate the first {...} block.
     cleaned = re.sub(r"```(?:json)?", "", text)
     m = re.search(r"\{.*\}", cleaned, re.DOTALL)
@@ -175,10 +234,66 @@ def _parse_scores(text: str) -> tuple[dict[str, int], list[dict], dict | None] |
         # Invalid optional diagnostics do not fabricate or discard otherwise
         # valid EV scores; the diagnostic is explicitly unavailable.
         grounding = None
-    return scores, findings, grounding
+    trace = _parse_review_trace(obj)
+    return scores, findings, grounding, trace
 
 
-def _parse_batch_scores(text: str, expected_ids: list[str]) -> dict[str, tuple[dict, list, dict | None]] | None:
+def validate_review_trace(
+    instrument: dict,
+    scores: dict[str, int],
+    review_trace: dict | None,
+) -> dict:
+    """Return an explicit protocol status without changing reviewer scores."""
+    if review_trace is None:
+        return {
+            "dimension_evidence": [],
+            "failure_conditions_triggered": [],
+            "instrument_digest": None,
+            "protocol_status": "unavailable",
+            "protocol_issues": [
+                "reviewer omitted the criterion-level evidence contract"],
+        }
+    trace = dict(review_trace)
+    declared_failures = set(
+        instrument["evaluation"]["failure_conditions"])
+    triggered = set(trace.get("failure_conditions_triggered") or [])
+    issues = []
+    if trace.get("instrument_digest") != instrument["instrument_digest"]:
+        issues.append("reviewer did not return the supplied instrument digest")
+    unknown_failures = sorted(triggered - declared_failures)
+    if unknown_failures:
+        issues.append(
+            "reviewer invented failure conditions: "
+            + "; ".join(unknown_failures))
+    impact_map = instrument["evaluation"].get(
+        "failure_condition_impacts") or {}
+    for condition in triggered:
+        affected = impact_map.get(condition) or list(C.DIMENSIONS)
+        if not any(scores[dimension] == 0 for dimension in affected):
+            scope = (
+                ", ".join(affected)
+                if condition in impact_map
+                else "an applicable affected EV (mapping pending)")
+            issues.append(
+                f"triggered failure condition has no zero score in {scope}")
+    trace_rows = {
+        row["dimension"]: row
+        for row in trace.get("dimension_evidence") or []
+    }
+    for dimension, score in scores.items():
+        row = trace_rows.get(dimension) or {}
+        if score == 4 and not (
+                row.get("criteria_satisfied") and row.get("evidence")):
+            issues.append(
+                f"{dimension} score 4 lacks criterion and response evidence")
+    trace["protocol_status"] = "valid" if not issues else "conflicted"
+    trace["protocol_issues"] = issues
+    return trace
+
+
+def _parse_batch_scores(
+    text: str, expected_ids: list[str]
+) -> dict[str, tuple[dict, list, dict | None, dict | None]] | None:
     """Parse a batch atomically; missing, duplicate, or invented ids reject it."""
     cleaned = re.sub(r"```(?:json)?", "", text).strip()
     try:
@@ -208,7 +323,7 @@ def _parse_batch_scores(text: str, expected_ids: list[str]) -> dict[str, tuple[d
     return parsed if set(parsed) == set(expected_ids) else None
 
 
-def _make_batches(recs: list[dict], prompts: dict[str, str], *, max_items: int,
+def _make_batches(recs: list[dict], instruments: dict[str, dict], *, max_items: int,
                   max_chars: int) -> list[list[dict]]:
     """Pack records without exceeding either item or approximate context budget."""
     batches: list[list[dict]] = []
@@ -218,11 +333,13 @@ def _make_batches(recs: list[dict], prompts: dict[str, str], *, max_items: int,
         item = {
             "item_id": f"{rec['scenario_id']}-r{rec['repeat']}.json",
             "area": rec["area"],
-            "task": prompts.get(rec["scenario_id"], "(scenario prompt unavailable)"),
+            "instrument": instruments[rec["scenario_id"]],
             "candidate": rec["raw_response"],
             "record": rec,
         }
-        size = len(item["task"]) + len(item["candidate"]) + 500
+        size = (
+            len(json.dumps(item["instrument"], ensure_ascii=False))
+            + len(item["candidate"]) + 1000)
         if current and (len(current) >= max_items or current_chars + size > max_chars):
             batches.append(current)
             current, current_chars = [], 0
@@ -273,15 +390,26 @@ def run_model_review(run_id: str, reviewer_deployment: str,
     recs = [r for r in all_recs
             if f"{r['scenario_id']}-r{r['repeat']}.json" not in existing]
     catalog = _scenario_catalog({r["area"] for r in recs})
-    prompts = {scenario_id: scenario["prompt"]
-               for scenario_id, scenario in catalog.items()}
+    instruments = {
+        rec["scenario_id"]: assessment_instruments.load_or_migrate_snapshot(
+            run_id, rec)
+        for rec in recs
+    }
+    for rec in recs:
+        instrument = instruments[rec["scenario_id"]]
+        recorded_digest = (rec.get("request") or {}).get("instrument_digest")
+        if recorded_digest and recorded_digest != instrument["instrument_digest"]:
+            raise ModelReviewError(
+                f"{rec['scenario_id']}: response is not bound to the frozen "
+                "assessment instrument; refusing rubric reinterpretation"
+            )
     context_window = int(entry.get("context_window") or
                          (adapter.capabilities() or {}).get("max_context") or 8192)
     # Roughly two characters per advertised token leaves substantial room for
     # instructions and output even for code-heavy text. Oversized single items
     # remain single-item requests and rely on the endpoint's normal error path.
     max_batch_chars = max(8_000, min(120_000, context_window * 2))
-    batches = _make_batches(recs, prompts, max_items=max(1, batch_size),
+    batches = _make_batches(recs, instruments, max_items=max(1, batch_size),
                             max_chars=max_batch_chars)
     batch_ordinals = {id(batch): index
                       for index, batch in enumerate(batches, start=1)}
@@ -350,9 +478,9 @@ def run_model_review(run_id: str, reviewer_deployment: str,
     def _score_one(rec: dict, announce: bool = True):
         if announce:
             _review_started(_record_label(rec))
-        task = prompts.get(rec["scenario_id"], "(scenario prompt unavailable)")
+        instrument = instruments[rec["scenario_id"]]
         reply = adapter.generate(GenerationRequest(
-            prompt=_review_prompt(task, rec["raw_response"], rec["area"])))
+            prompt=_review_prompt(instrument, rec["raw_response"])))
         return rec, _parse_scores(reply.text)
 
     def _batch_label(batch: list[dict]) -> str:
@@ -400,7 +528,10 @@ def run_model_review(run_id: str, reviewer_deployment: str,
             if result is None:
                 failed += 1
                 continue
-            scores, findings, grounding = result
+            scores, findings, grounding, review_trace = result
+            instrument = instruments[rec["scenario_id"]]
+            review_trace = validate_review_trace(
+                instrument, scores, review_trace)
             low = [dimension for dimension in C.DIMENSIONS
                    if scores[dimension] <= 2]
             if low and not findings:
@@ -416,6 +547,11 @@ def run_model_review(run_id: str, reviewer_deployment: str,
                 "repeat": rec["repeat"],
                 "scores": scores,
                 "findings": findings,
+                "failure_conditions_observed": (
+                    (review_trace or {}).get(
+                        "failure_conditions_triggered", [])),
+                "review_trace": review_trace,
+                "instrument_digest": instrument["instrument_digest"],
                 "grounding_diagnostics": grounding,
             })
         if not items:

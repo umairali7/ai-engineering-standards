@@ -1,0 +1,41 @@
+flowchart TB
+    cli["CLI / API<br/>commands · progress · read-only views"]
+    orchestrator["Assessment Orchestrator<br/>plans · resumes · evidence lifecycle"]
+    profiles["Subject Assessment Profiles<br/>scope · applicability · evidence semantics"]
+    compiler["Instrument Compiler<br/>frozen candidate/reviewer projections · digest"]
+    descriptors["Subject Registry<br/>descriptors · fingerprints · provenance"]
+    runtime_executor["Runtime Generation Executor"]
+    repository_executor["Repository Audit Executor"]
+    future_executor["Dedicated subject executors<br/>agents · MCP · RAG · pipelines"]
+    runtime_adapter["Runtime Adapters<br/>local or remote inference"]
+    evidence_adapter["Evidence Adapters<br/>repository · protocol · telemetry · imports"]
+    store["Append-only Evidence Store<br/>instruments · observations · ratings · events"]
+    review["Review and Rating<br/>criterion evidence · optional human evaluation"]
+    analysis["Analysis and Scoring<br/>EV · maturity · breadth · assurance"]
+    reports["Decision-product Renderers<br/>report · traceability · ECM · fit · comparison"]
+    authority["Human Authority<br/>formal qualification · grant · release · deployment"]
+    assisted["Standards-Assisted Executor<br/>isolated guided work · paired comparison"]
+
+    cli --> orchestrator
+    cli --> assisted
+    profiles --> orchestrator
+    profiles --> compiler
+    descriptors --> orchestrator
+    descriptors --> assisted
+    orchestrator --> compiler
+    compiler --> runtime_executor
+    compiler --> repository_executor
+    compiler --> future_executor
+    runtime_executor --> runtime_adapter
+    repository_executor --> evidence_adapter
+    future_executor --> evidence_adapter
+    runtime_adapter --> store
+    evidence_adapter --> store
+    compiler --> store
+    store --> review
+    review --> analysis
+    analysis --> reports
+    reports --> authority
+    compiler --> assisted
+    assisted -. "excluded from qualification evidence" .-> reports
+

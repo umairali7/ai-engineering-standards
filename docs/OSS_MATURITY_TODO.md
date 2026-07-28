@@ -23,27 +23,33 @@ Status values are **Open**, **In progress**, **Blocked**, **Deferred**, and
 
 ## 1. Target Architecture
 
+Canonical reusable source:
+[AIES Assessment and Assistance Flow](../diagrams/aies-assessment-and-assistance-flow.mmd).
+
 ```text
 AEBOK / AESQS / AEOS / AEAR / AECT / ECM
                     │
                     ▼
-             Assessment Plan
+       Assessment Plan + Subject Descriptor
                     │
                     ▼
-        Assessment Coverage Matrix
+        Frozen Assessment Instrument
+                    │
+         ┌──────────┴──────────┐
+         ▼                     ▼
+ Candidate Projection   Reviewer Projection
+     (task only)        (complete, post-evidence)
+         │                     │
+         ▼                     │
+ Subject Executor / Evidence Adapter
                     │
                     ▼
-             Subject Descriptor
-                    │
-                    ▼
-       Subject Executor / Evidence Adapter
-                    │
-                    ▼
-             Canonical Evidence
+  Canonical Evidence + Standards Traceability
                     │
         ┌───────────┼───────────┐
         ▼           ▼           ▼
- Qualification    ECM      Conformance
+ Engineering      ECM      Conformance
+ Evaluation
         │           │           │
         └───────────┼───────────┘
                     ▼
@@ -54,6 +60,9 @@ AEBOK / AESQS / AEOS / AEAR / AECT / ECM
                     │
                     ▼
              Human authority
+
+Separate: standards + instrument → aies apply → guided output
+          (informational; excluded from qualification evidence)
 ```
 
 The platform is not a model leaderboard. It prepares trustworthy, scoped
@@ -327,9 +336,14 @@ successful external adoption loop.
 | Done | Enforce the two-human qualification process | Every grant, conditional grant, and denial records an assessor and independent peer reviewer with qualification and conflict declarations |
 | Done | Complete the qualification scope tuple | Records include subject, role, phases, maximum risk tier, competency × CL claims, framework version, applicable agent-definition version, sponsor, and validity window |
 | Done | Make qualification lifecycle events immutable | Accepted ADR-0012 governs implementation; grant, condition change, renewal, suspension, invalidation, revocation, and supersession append separate ART-15 — Audit Trail Record events and prior records are never overwritten |
-| Done | Show detailed live progress for every run | `qualify`, `benchmark`, resume, `review`, and `score` display progress implicitly with completed/total, percentage, current-stage elapsed time, total run elapsed time, throughput, ETA, the current human-readable scenario family/task objective and run-wide ordinal, failures, and resumability; parallel runs expose the dynamic active task set and effective worker capacity for any `--parallel N`; a one-second interactive heartbeat keeps long in-flight calls visibly alive, bounds output to terminal width, rotates active work, distinguishes declared/warming-up/observed ETA, and uses accessible semantic color with `NO_COLOR`/plain redirected-output support; the same event state persists in `progress.json`, while `aies runs progress <run-id>` is an optional second-terminal observer |
+| Done | Show detailed live progress for every run | `qualify`, `benchmark`, resume, `review`, `score`, and standards-assisted `apply` display progress implicitly with completed/total, percentage, current-stage elapsed time, total command elapsed time, throughput, ETA, and the current human-readable work item; run-producing commands additionally persist resumability and failure state in `progress.json`; parallel runs expose the dynamic active task set and effective worker capacity for any `--parallel N`; a one-second interactive heartbeat keeps long in-flight calls visibly alive, bounds output to terminal width, keeps active work deterministically ordered, distinguishes declared/warming-up/observed ETA, and uses accessible semantic color with `NO_COLOR`/plain redirected-output support; `aies runs progress <run-id>` remains an optional second-terminal observer for run-producing commands |
 | Done | Make automated Engineering Evaluation self-contained | `qualify --judge`, `benchmark --judge`, `review --model-reviewer`, `score`, and `import` complete or refresh engineering analysis and the report bundle without a human prerequisite; named assessments emit non-blocking Engineering Assessment Results; capabilities default to ECM; guidance defaults to evidence-derived engineering fit; reports and executive summaries say formal qualification `not requested` rather than `blocked`; ECM scenario breadth counts distinct scored task scenarios instead of human-admitted qualification items; human evaluation is an optional visible column; only explicit formal-qualification/grant paths apply ADR-0012 gates |
 | Done | Separate ECM breadth from evidence assurance | Reader-facing ECM, report, guidance, snapshot, and executive views no longer call distinct-scenario coverage “confidence.” The compatibility field remains explicitly documented as a breadth alias; structured assurance discloses mapping review, instrument maturity, rater basis, and optional human evaluation; low-breadth tasks cannot receive a strong-fit label |
+| Done | Freeze assessment instruments and separate audience projections | Proposed ADR-0019 and `aies-assessment-instrument/v1` freeze task, expected qualities, EV anchors, applicability, failure conditions, calibration, task mappings, standards references, and digest before execution; candidates receive task-only projections; reviewers receive the complete post-response instrument; responses and ratings are digest-bound; exact-suite legacy migration is explicit and incompatible historical evidence is never silently reinterpreted |
+| Done | Make automated review criterion-grounded and provenance-blind | Single and batched judges receive the same frozen reviewer projection without subject identity, return response-specific evidence for every EV dimension, copy the instrument digest, identify exact failure conditions, and expose missing/conflicted/unavailable trace protocols without fabricating or silently modifying scores |
+| Done | Publish end-to-end standards traceability | Every report bundle emits JSON/Markdown/HTML lineage from AIES-AESQS-ER-01 through competency, frozen scenario, response, rater observation, EV result, and Engineering Task; the artifact is linked by the report, executive summary, run view, and API and remains informational |
+| Done | Add isolated standards-assisted execution | `aies apply SUBJECT --scenario ID` compiles a task-scoped AIES context pack; `--compare-baseline --judge REVIEWER` runs unassisted and guided variants and blind-scores both against one frozen instrument; immutable records declare that assisted output and deltas are excluded from qualification, grants, and deployment authority |
+| Blocked | Ratify ADR-0019 instrument and assisted-execution governance | Implementation and conformance tests are complete; a named maintainer and applicable Module Editor must review and accept or supersede the Class 3 decision before its Proposed status changes |
 | Open | Build the local Human EV Review Workspace | `aies score RUN --interactive` opens a token-protected localhost review workspace that shows each scenario, prompt, complete response, EV1 — Correctness through EV6 — Traceability anchors, failure conditions, and optional grounding fields; supports autosaved drafts, keyboard navigation, filtering, progress, required low-score findings, named rater/conflict metadata, and JSON export/import fallback; submission passes through the existing score validator, appends immutable rating/evidence records, aggregates, and refreshes reports in one action. It never binds publicly, silently admits an unqualified rater, makes human review mandatory for Engineering Evaluation, or changes Formal Qualification rules |
 | Done | Make automated-review diagnostics internally auditable | Future reviewer findings use structured EV attribution with scores derived from the canonical score table; legacy free-text findings remain general rather than fabricated as EV1/0; reports warn on stored finding/score inconsistencies; abstention applicability is explicit and ambiguous legacy false values are disclosed without being counted as proven grounding failures |
 | Done | Enforce expiry and requalification | Expired or materially changed qualifications are treated as absent; renewal and targeted re-evaluation are supported |
@@ -345,6 +359,7 @@ successful external adoption loop.
 | Done | Define the measurement claim and estimand for every decision product | `aies-measurement-claims/v1` and fixtures state subject, target population, sampling frame, unit, outcome, aggregation, uncertainty, exclusions, intended decision, and prohibited interpretation for Engineering Evaluation, ECM, Fit, comparison, and Formal Qualification; ECM/report bundles cite the contract |
 | Open | Separate benchmark, system, and field evidence | Reports identify controlled scenario results, integrated-system behavior, and field/operational observations as different evidence modalities; evidence transfer across levels requires an explicit rationale and never silently raises confidence |
 | Open | Validate automated judges against independent human labels | A frozen, stratified anchor set estimates agreement, systematic bias, severity-specific errors, drift, and uncertainty for every judge/protocol version; failed calibration makes scores advisory but does not discard collected responses |
+| Blocked | Populate structured failure-condition scoring impacts | The instrument, automated-review, and human-score contracts already accept and enforce explicit affected-EV mappings. Migrating textual corpus conditions to stable condition IDs and populated mappings is blocked on human content review; unmapped legacy conditions retain the disclosed conservative rule that at least one applicable affected EV is zero |
 | Open | Test predictive and decision validity | Preregister whether task scores should predict held-out engineering outcomes, expert preference, defect/security findings, or workload success; report effect sizes, intervals, null results, and decision errors rather than only rank correlation |
 | Open | Add sensitivity and robustness analysis | ECM and comparison show whether conclusions change under plausible rater resolution, weighting, missingness, scenario-family balance, outliers, and minimum-evidence choices; fragile conclusions are labelled |
 | Open | Govern contamination and evaluation awareness | Public, practice, held-out, and protected instruments have separate identities and rotation rules; similarity, leakage, prompt memorization, benchmark-aware behavior, and evaluator gaming are tested and disclosed |
@@ -364,6 +379,7 @@ successful external adoption loop.
 | Done | Separate Subject Executor from Runtime Adapter | `RuntimeGenerationExecutor` explicitly wraps generation adapters while `RepositoryAuditExecutor` provides the first non-runtime path; manifests and Evidence Packages record the executor contract and imported evidence remains generation-independent |
 | Done | Define typed canonical evidence events | Observation, rating, reviewer, environment, lifecycle, and attestation families share source-bound identity, modality, classification, correlation, append-only storage, deterministic replay, collision rejection, and an idempotent legacy-run projection exposed by `aies runs events` |
 | Done | Define a versioned Evidence Adapter contract | Machine-readable declarations include source/profile versions, modalities, completeness, decision use, scoring semantics, privacy, loss requirements, decision products, and limitations; Inspect and SARIF emit typed events and explicit correlation/loss disclosures with compatibility fixtures. Official upstream API/schema validation remains tracked by their adapter-specific rows, not by this foundation contract |
+| Done | Define non-generative instrument projections | `aies-assessment-instrument/v1` supports evidence-adapter observation instruments with immutable identity, reviewer criteria, standard lineage, explicit claim boundaries, no candidate prompt, and compatibility fixtures for repositories, MCP servers, RAG systems, and pipelines; dedicated subject profiles and executors remain tracked in their subject-expansion rows |
 | Done | Define the Subject Assessment Profile contract | Accepted ADR-0018, the machine-readable contract, SAP-01, and SAP-02 declare descriptor schema, fingerprint/change triggers, executor and evidence adapters, instruments, score semantics, minimums, gates, limitations, decision products, human-review requirements, and complete applicability rationale |
 | Open | Model composite subjects and dependencies | Typed component references already bind subject kind, role, version/fingerprint, and explicit no-transfer/reference-only/mapping-required semantics; coverage inventories component events and prohibits implicit inheritance. A future supported composite requires its own approved profile, governed mappings, executor, interface instruments, and decision products |
 | Done | Add subject capability discovery | The versioned `subject-support-v1.yaml` registry drives `aies support`, `/support`, the generated Subject Support Matrix, package data, CI drift checking, and validation tests. It names implemented profiles/executors/entry points/limitations and keeps agents, swarms, MCP, coding assistants, prompts, RAG, pipelines, platforms, people/teams, and composites explicitly planned rather than silently routing them through deployment scoring |

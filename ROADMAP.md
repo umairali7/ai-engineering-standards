@@ -185,6 +185,7 @@ and one hosted pilot remain outstanding**.
 |---|---|---|
 | Runtime, canonical artifacts, progress/resume, and contract governance | **Done** | One-second long-call heartbeat, honest declared/observed ETA, and shared versioned workspace/run/report consumer contracts are implemented; continue compatibility maintenance |
 | Automated Engineering Evaluation and linked report bundle | **Done** | Markdown, HTML, API, safe export, and future frontend use one per-run factual report contract while legacy artifacts remain compatible; continue usability and performance hardening |
+| Frozen instruments, grounded review, and standards-assisted execution | **Implemented** | Audience-specific instruments, criterion evidence, standards traceability, isolated baseline-versus-guided execution, and conformance tests are complete; ADR-0019 remains Proposed pending named-human governance ratification |
 | ECM, grounding diagnostics, fit guidance, and compatible comparison | **Implemented** | Ratify AIES-ECM-01 and validate task mappings empirically |
 | RT2 — Moderate distinct-instrument breadth and human design review | **Done** | Empirical panel calibration, protected hold-outs, and RT1/RT3/RT4 growth remain |
 | Repository conformance/practice audit | **Implemented** | Deeper architecture, code-quality, correctness, and controlled task evidence remain |

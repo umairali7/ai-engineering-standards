@@ -240,7 +240,8 @@ def render_markdown(
           "(engineering-fit-guidance.md) · [Executive Summary]"
           "(executive-summary.md) · [Assessment Coverage & Blind Spots]"
           "(assessment-coverage.md) · [Evidence-Linked Remediation Plan]"
-          "(evidence-remediation-plan.md).")
+          "(evidence-remediation-plan.md) · [Standards Traceability]"
+          "(standards-traceability.md).")
         a("")
         a("---")
         provenance = view["provenance"]
@@ -404,7 +405,8 @@ def render_markdown(
     a("Related decision products: [Executive Summary](executive-summary.md) · "
       "[Deployment Guidance](deployment-guidance.md) · "
       "[Assessment Coverage & Blind Spots](assessment-coverage.md) · "
-      "[Evidence-Linked Remediation Plan](evidence-remediation-plan.md).")
+      "[Evidence-Linked Remediation Plan](evidence-remediation-plan.md) · "
+      "[Standards Traceability](standards-traceability.md).")
     a("")
 
     a("---")
@@ -426,7 +428,7 @@ def write_reports(run_id: str) -> dict[str, str]:
     """
     from . import (assessment_coverage, decision, diagnostics, ecm,
                    engineering_assessment, executive_summary, guidance,
-                   report_html, report_view, run_mode)
+                   report_html, report_view, run_mode, standards_traceability)
 
     rdir = workspace.run_dir(run_id)
     matrix = ecm.engineering_capability_matrix(run_id)
@@ -523,6 +525,7 @@ def write_reports(run_id: str) -> dict[str, str]:
         run_id, capability_matrix=matrix)
     coverage_paths = assessment_coverage.write_run_artifacts(
         run_id, coverage_matrix)
+    traceability_paths = standards_traceability.write_artifacts(run_id)
 
     paths = {
         "markdown": str(rdir / "report.md"), "json": str(rdir / "report.json"),
@@ -534,6 +537,7 @@ def write_reports(run_id: str) -> dict[str, str]:
         **{key: str(path) for key, path in executive_paths.items()},
         **{key: str(path) for key, path in diagnostic_paths.items()},
         **coverage_paths,
+        **traceability_paths,
     }
     bundle = {
         "kind": "aies-report-bundle", "report_bundle_schema": 1,
@@ -559,6 +563,9 @@ def write_reports(run_id: str) -> dict[str, str]:
             "assessment_coverage": (
                 "evidence availability, applicability, reuse, and blind spots; "
                 "not subject quality"),
+            "standards_traceability": (
+                "standard → competency → instrument → response → rating → "
+                "EV → Engineering Task lineage; informational only"),
             "evidence_remediation_plan": (
                 "unassigned evidence-linked actions, monitoring links, and "
                 "reassessment triggers; not risk acceptance or authorization"),

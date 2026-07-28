@@ -6,14 +6,16 @@
 | **Status** | Draft |
 | **Audience** | Engineers · Platform teams · Contributors & maintainers |
 
-A **runtime adapter** is the only component that talks to a model. Everything
-else in the platform — the engine, scoring, review, reporting — is
-runtime-agnostic. This is the abstraction that lets `aies` qualify a model on
-MLX today and the same model on a hosted API tomorrow without changing one line
-of the engine (PLATFORM.md §8, design decision D9).
+A **runtime adapter** is the only component that talks to a generative runtime.
+It sits behind the Runtime Generation Subject Executor; repositories and other
+non-generative subjects use their own executors and Evidence Adapters.
+Everything else in the platform — orchestration, scoring, review, and reporting
+— is runtime-agnostic. This is the abstraction that lets `aies` assess a model
+on MLX today and the same model on a hosted API tomorrow without changing the
+assessment core (PLATFORM.md §8, design decision D9).
 
 ```
-   Qualification Engine
+   Runtime Generation Subject Executor
           │
           ▼
    Runtime Interface        ← the four-operation contract below (frozen v1.0)
@@ -32,7 +34,7 @@ required operations plus two optional discovery hooks:
 | Operation | Required | Contract |
 |-----------|----------|----------|
 | `load(registry_entry)` | yes | attach the model named by the deployment; verify its checksum; fail loudly on mismatch |
-| `generate(request) → response` | yes | run exactly one inference call; return raw text + usage; no retries the Test Runner did not order |
+| `generate(request) → response` | yes | run exactly one inference call; return raw text + usage; no retries the Subject Executor did not order |
 | `capabilities() → dict` | yes | declare modalities, tool/function calling, structured output, streaming, max context |
 | `fingerprint() → dict` | yes | the runtime component of the environment fingerprint: id, version, device, settings |
 | `probe_runtime() → dict` | optional | class method; is this runtime present? `{available, version, detail}` — best-effort, never raises. Powers `aies doctor` / `aies runtime list` |

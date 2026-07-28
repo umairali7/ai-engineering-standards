@@ -1917,6 +1917,43 @@ def cmd_guidance(args) -> int:
     return 0
 
 
+def cmd_apply(args) -> int:
+    """Run explicitly standards-assisted work outside qualification evidence."""
+    from . import standards_guided
+
+    try:
+        result = standards_guided.execute(
+            args.subject,
+            args.scenario,
+            runtime=args.runtime,
+            compare_baseline=args.compare_baseline,
+            judge=args.judge,
+            reviewer_runtime=args.reviewer_runtime,
+            progress_callback=_live_progress(args),
+        )
+        _out(result, args.json, standards_guided.render_markdown(result))
+        return 0
+    except Exception as error:
+        _emit_failure(
+            error,
+            operation="standards-assisted-execution",
+            args=args,
+            phase="execution",
+            preserved_work_status="no-assessment-evidence-changed",
+            preserved_work_detail=(
+                "Standards-assisted execution is isolated from qualification "
+                "runs and cannot alter existing evidence."),
+            recovery_command=(
+                f"aies apply {args.subject} --scenario {args.scenario}"
+                + (f" --judge {args.judge}" if args.judge else "")),
+            duplicate_cost_risk="possible",
+            duplicate_cost_detail=(
+                "Retrying can repeat candidate and optional judge calls; inspect "
+                "guided-executions before retrying."),
+        )
+        return 2
+
+
 def cmd_transcript(args) -> int:
     from . import transcript
     try:
@@ -3825,6 +3862,29 @@ def build_parser() -> argparse.ArgumentParser:
                     help="requested autonomy level number (for example 2 for AL2 — Collaborative)")
     gd.add_argument("--write", action="store_true", help="write Deployment Guidance Markdown, JSON, and HTML beside the run")
     gd.set_defaults(func=cmd_guidance)
+
+    apply_cmd = common(sub.add_parser(
+        "apply",
+        help="run standards-assisted engineering work, isolated from qualification"))
+    apply_cmd.add_argument(
+        "subject", help="registered AI deployment that will perform the task")
+    apply_cmd.add_argument(
+        "--scenario", required=True, metavar="SC-CA##-###",
+        help="shipped scenario used to compile a task-scoped standards context")
+    apply_cmd.add_argument(
+        "--runtime", default=None,
+        help="disambiguate the subject deployment runtime")
+    apply_cmd.add_argument(
+        "--compare-baseline", action="store_true",
+        help="also run the task without standards guidance for a paired comparison")
+    apply_cmd.add_argument(
+        "--judge", default=None, metavar="DEPLOYMENT",
+        help="blind-score guided and optional baseline outputs against the same "
+             "frozen instrument")
+    apply_cmd.add_argument(
+        "--reviewer-runtime", default=None,
+        help="disambiguate the judge deployment runtime")
+    apply_cmd.set_defaults(func=cmd_apply)
 
     au = common(sub.add_parser(
         "audit",

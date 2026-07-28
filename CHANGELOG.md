@@ -8,6 +8,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Frozen assessment instruments and standards-assisted execution**:
+  `aies-assessment-instrument/v1` now freezes the complete scenario scoring
+  contract before response collection and exposes separate task-only candidate
+  and full hidden reviewer projections. Responses and ratings are digest-bound;
+  exact-suite legacy runs can be migrated without rubric reinterpretation.
+  Automated judges receive global and scenario-specific EV anchors, expected
+  qualities, applicability, failure conditions, calibration anchors, and
+  standards/task mappings while remaining blind to producer identity. Reviews
+  may retain per-dimension criterion evidence and explicit trace conflicts.
+  Optional human-reviewed failure-condition-to-EV mappings are validated and
+  enforced exactly; unmapped legacy conditions use a disclosed conservative
+  affected-dimension rule.
+  Report bundles add JSON/Markdown/HTML Standards Traceability. The new
+  `aies apply` workflow performs explicitly standards-assisted work and can
+  compare an unassisted baseline with a guided output using one blind judge;
+  these records are isolated from qualification evidence and authority.
+  The command shows live baseline, guided-generation, reviewer, and artifact
+  stages with elapsed time and ETA behavior consistent with other long-running
+  CLI operations. Reusable Mermaid sources now document both the complete
+  assessment-versus-assistance flow and the subject-neutral platform component
+  architecture; the README, platform specification, guide, and maturity plan
+  link to the same canonical views.
 - **Security and history assurance foundation**: a dedicated least-privilege
   workflow runs checksum-verified Gitleaks 8.30.1 against all reachable history
   with fully redacted output, Ruff 0.15.22 high-signal Python security rules,

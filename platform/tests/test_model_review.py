@@ -33,11 +33,12 @@ def test_parse_scores_robust():
     ok = _parse_scores('noise ```json\n{"EV1":3,"EV2":2,"EV3":3,"EV4":3,"EV5":2,'
                        '"EV6":4,"findings":["ev2 thin"]}\n``` trailing')
     assert ok is not None
-    scores, findings, grounding = ok
+    scores, findings, grounding, trace = ok
     assert scores["EV1"] == 3 and scores["EV6"] == 4 and findings
     assert findings == [{
         "dimension": "general", "score": None, "finding": "ev2 thin"}]
     assert grounding is None
+    assert trace is None
     structured = _parse_scores(
         '{"EV1":3,"EV2":2,"EV3":3,"EV4":3,"EV5":2,"EV6":4,'
         '"findings":[{"dimension":"EV2","score":0,"finding":"missing edge case"},'

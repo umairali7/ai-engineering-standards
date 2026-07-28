@@ -38,6 +38,9 @@ def test_validator_rejects_bad_scenario(tmp_path: Path):
         "expected_qualities: []\n"
         "rubric:\n"
         "  EV7: [not a real dimension]\n"
+        "failure_conditions: [declared failure]\n"
+        "failure_condition_impacts:\n"
+        "  invented failure: [EV9]\n"
         "weight: 0\n"
         "repeats_min: 0\n",
         encoding="utf-8",
@@ -50,6 +53,8 @@ def test_validator_rejects_bad_scenario(tmp_path: Path):
     assert "risk_tier must be one of" in messages
     assert "prompt must be a non-empty string" in messages
     assert "rubric has unknown dimensions" in messages
+    assert "keys must exactly match a declared failure condition" in messages
+    assert "must be a non-empty list of EV1 through EV6" in messages
 
 
 def test_validator_distinguishes_reviewed_non_applicability_from_a_gap(tmp_path: Path):

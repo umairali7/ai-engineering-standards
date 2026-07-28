@@ -197,6 +197,13 @@ def start_qualification(
         "repeats": repeats,          # override used, if any (for resume-collection)
         "sample_plan": plan,
         "sample_adequacy_policy": "distinct-scenarios-v1",
+        "assessment_instrument_contract": {
+            "kind": "aies-assessment-instrument",
+            "schema_version": 1,
+            "candidate_projection": "task-only",
+            "reviewer_projection": "full-hidden-instrument",
+            "snapshot_policy": "append-only-before-response-collection",
+        },
         "decisional_target": decisional,
         "run_purpose": run_purpose,
         "scoped_areas": list(areas),  # the CA codes as requested (for resume-collection)
@@ -422,6 +429,13 @@ def start_journey(
         "schema": subjects.RUN_MANIFEST_SCHEMA,
         "run_id": run_id,
         "kind": "journey",
+        "assessment_instrument_contract": {
+            "kind": "aies-assessment-instrument",
+            "schema_version": 1,
+            "candidate_projection": "task-only",
+            "reviewer_projection": "full-hidden-instrument",
+            "snapshot_policy": "append-only-before-step-execution",
+        },
         "run_purpose": run_purpose,
         "journey": {"id": journey["id"], "title": journey.get("title", ""),
                     "version": jversion,

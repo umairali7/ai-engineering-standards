@@ -17,6 +17,7 @@ from . import config
 APPEND_ONLY_DIRECTORIES = frozenset({
     "responses", "ratings", "resolutions", "events", "raters", "audits",
     "comparisons", "run-imports", "import-sources", "remediation",
+    "instruments", "guided-executions",
 })
 MUTABLE_WORKING_FILES = frozenset({
     "manifest.json", "scoresheet.json", "progress.json", "latest.json",
@@ -41,6 +42,8 @@ REGENERABLE_VIEW_FILES = frozenset({
     "assessment-coverage.md", "assessment-coverage.json",
     "assessment-coverage.html", "evidence-remediation-plan.md",
     "evidence-remediation-plan.json", "evidence-remediation-plan.html",
+    "standards-traceability.md", "standards-traceability.json",
+    "standards-traceability.html",
     "dashboard.html",
 })
 ARCHIVE_DEBRIS_NAMES = frozenset({".DS_Store", "Thumbs.db", "desktop.ini"})
@@ -54,7 +57,9 @@ def root() -> Path:
 
 def ensure() -> Path:
     ws = root()
-    for sub in ("registry", "fingerprints", "runs", "comparisons"):
+    for sub in (
+        "registry", "fingerprints", "runs", "comparisons", "guided-executions"
+    ):
         (ws / sub).mkdir(parents=True, exist_ok=True)
     return ws
 

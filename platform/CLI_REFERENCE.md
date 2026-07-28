@@ -118,6 +118,31 @@ aies report run-123 --format <Tab>    # html, json, markdown
 | `-h`, `--help` | show this help message and exit |
 | `--version` | show program's version number and exit |
 
+## `aies apply`
+
+run standards-assisted engineering work, isolated from qualification
+
+**Usage:** `aies apply [-h] [--json] --scenario SC-CA##-### [--runtime RUNTIME] [--compare-baseline] [--judge DEPLOYMENT] [--reviewer-runtime REVIEWER_RUNTIME] subject`
+
+**Prerequisites:** The subject deployment is registered and reachable, and the selected shipped scenario is appropriate for the intended engineering task. A paired score additionally requires a distinct reachable judge.
+
+**Result and side effects:** Runs an explicitly standards-assisted task outside qualification evidence, with live baseline, guided-generation, review, and artifact progress. Optional baseline comparison executes the task both without and with the task-scoped AIES context and blind-scores both against the same frozen instrument.
+
+**Recommended next step:** Inspect the immutable guided-execution JSON and its EV deltas; use `aies evaluate` separately for an unassisted capability baseline.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |
+| `<SUBJECT>` | required | registered AI deployment that will perform the task | — |
+| `--scenario` | required | shipped scenario used to compile a task-scoped standards context | — |
+| `--runtime` | optional | disambiguate the subject deployment runtime | — |
+| `--compare-baseline` | optional | also run the task without standards guidance for a paired comparison | — |
+| `--judge` | optional | blind-score guided and optional baseline outputs against the same frozen instrument | — |
+| `--reviewer-runtime` | optional | disambiguate the judge deployment runtime | — |
+
 ## `aies assessment`
 
 declarative assessments (ADR-0005): list/show/validate and render engineering or formal results

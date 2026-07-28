@@ -36,8 +36,11 @@ class MockAdapter(RuntimeAdapter):
         # obviously synthetic and the adapter self-declares in provenance, so
         # mock evidence can never masquerade as a real model's qualification.
         if self._is_review_prompt(request.prompt):
-            scored = (self._mock_batch_scores(request.prompt)
-                      if "\n\nITEMS:\n" in request.prompt else self._mock_scores(digest))
+            scored = (
+                self._mock_batch_scores(request.prompt)
+                if "\n\nITEMS:\n" in request.prompt
+                else self._mock_scores(digest, prompt=request.prompt)
+            )
             return GenerationResponse(
                 text=scored,
                 usage={"prompt_chars": len(request.prompt), "latency_ms": 0},
@@ -78,15 +81,38 @@ class MockAdapter(RuntimeAdapter):
                 and "JSON array of short concern strings" in prompt)
 
     @staticmethod
-    def _mock_scores(digest: str) -> str:
+    def _mock_scores(
+        digest: str, *, prompt: str | None = None,
+        instrument_digest: str | None = None,
+    ) -> str:
         # Deterministic per-response scores in {3,4} — high enough to pass gates
         # so the offline demo yields a decisional result, but seeded from the
         # digest so different responses differ (exercises aggregation/CI bounds).
         dims = ("EV1", "EV2", "EV3", "EV4", "EV5", "EV6")
         scores = {d: 3 + (int(digest[i], 16) % 2) for i, d in enumerate(dims)}
+        if instrument_digest is None and prompt:
+            marker = '"instrument_digest": "'
+            if marker in prompt:
+                instrument_digest = prompt.split(marker, 1)[1].split('"', 1)[0]
+        trace = {}
+        if instrument_digest:
+            trace = {
+                "dimension_evidence": [
+                    {
+                        "dimension": dimension,
+                        "criteria_satisfied": ["synthetic offline criterion"],
+                        "criteria_missed": [],
+                        "evidence": ["mock deterministic response"],
+                    }
+                    for dimension in dims
+                ],
+                "failure_conditions_triggered": [],
+                "instrument_digest": instrument_digest,
+            }
         return json.dumps({
             **scores,
             "findings": [],
+            **trace,
             "grounding_diagnostics": {
                 "grounding_assessed": True,
                 "unsupported_assertions": 0,
@@ -107,7 +133,12 @@ class MockAdapter(RuntimeAdapter):
         rows = []
         for item in items:
             digest = hashlib.sha256(json.dumps(item, sort_keys=True).encode()).hexdigest()
-            scores = json.loads(cls._mock_scores(digest))
+            scores = json.loads(cls._mock_scores(
+                digest,
+                instrument_digest=(
+                    item.get("reviewer_instrument") or {}).get(
+                        "instrument_digest"),
+            ))
             rows.append({"item_id": item["item_id"], **scores})
         return json.dumps({"items": rows})
 

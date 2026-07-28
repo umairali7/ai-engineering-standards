@@ -41,7 +41,8 @@ where `<module>` is one of `shared`, `aebok`, `aesqs`, `aeos`, `aear`, `aect`, o
 
 | File | Description | Used By |
 |------|-------------|---------|
-| — | *No diagram sources yet.* | |
+| [`aies-assessment-and-assistance-flow.mmd`](aies-assessment-and-assistance-flow.mmd) | Separates unassisted assessment, frozen audience-specific instrument projections, canonical evidence, ECM decision products, optional formal qualification, and isolated standards-assisted work. | [README](../README.md), [Platform Specification](../docs/PLATFORM.md), [Project Evaluation](../docs/PROJECT_EVALUATION.md), [Platform Guide](../platform/GUIDE.md), [Vision Execution Backlog](../docs/OSS_MATURITY_TODO.md) |
+| [`aies-platform-components.mmd`](aies-platform-components.mmd) | Subject-neutral executable architecture: profiles, instrument compiler, executors/adapters, evidence store, review, analysis, reporting, human authority, and the isolated assisted executor. | [Platform Specification](../docs/PLATFORM.md), [Repository Architecture](../docs/ARCHITECTURE.md), [Platform Guide](../platform/GUIDE.md) |
 
 ## Related Documents
 

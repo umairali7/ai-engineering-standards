@@ -210,7 +210,6 @@ def calibrate(root: Path | None = None) -> dict[str, Any]:
 
 def render_calibration(report: dict[str, Any]) -> str:
     t = report["totals"]
-    n = t.get("scenarios", 0) or 1
     lines = [
         "calibration coverage (design-time; empirical requires a model panel)",
         f"  scenarios          : {t.get('scenarios', 0)}",
@@ -363,6 +362,27 @@ def _validate_scenario(
         errors.append(_issue(path, "repeats_min must be a positive integer"))
     if "failure_conditions" in scenario and not isinstance(scenario["failure_conditions"], list):
         errors.append(_issue(path, "failure_conditions must be a list when present"))
+    failure_impacts = scenario.get("failure_condition_impacts")
+    if failure_impacts is not None:
+        conditions = scenario.get("failure_conditions") or []
+        if not isinstance(failure_impacts, dict) or not failure_impacts:
+            errors.append(_issue(
+                path,
+                "failure_condition_impacts must be a non-empty mapping when present"))
+        else:
+            for condition, dimensions in failure_impacts.items():
+                if condition not in conditions:
+                    errors.append(_issue(
+                        path,
+                        "failure_condition_impacts keys must exactly match a "
+                        f"declared failure condition: {condition!r}"))
+                if (not isinstance(dimensions, list) or not dimensions
+                        or any(dimension not in DIMENSIONS
+                               for dimension in dimensions)):
+                    errors.append(_issue(
+                        path,
+                        f"failure_condition_impacts[{condition!r}] must be a "
+                        "non-empty list of EV1 through EV6"))
 
     if "calibration" in scenario:
         _validate_calibration(path, scenario, area_code, errors, warnings)

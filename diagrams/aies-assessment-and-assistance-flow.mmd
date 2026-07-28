@@ -1,0 +1,42 @@
+flowchart TB
+    standards["AIES standards<br/>requirements · EV anchors · task taxonomy"]
+    plan["Assessment plan<br/>scope · profile · risk tier"]
+    subject["Subject descriptor<br/>identity · version · environment"]
+    instrument["Frozen assessment instrument<br/>task · criteria · failure boundaries · digest"]
+    executor["Subject Executor / Evidence Adapter"]
+    evidence["Canonical evidence<br/>response or direct observation · provenance"]
+    reviewer["Engineering review<br/>complete hidden instrument · automated review · optional human evaluation"]
+    analysis["Competency analysis<br/>EV results · breadth · assurance · limitations"]
+    trace["Standards Traceability<br/>requirement → instrument → evidence → score → task"]
+    ecm["Engineering Capability Matrix<br/>observed task capability · unknowns"]
+    fit["Engineering Fit<br/>informational"]
+    compare["Compatible comparison<br/>informational"]
+    formal["Optional Formal Qualification<br/>human-governed"]
+
+    standards --> instrument
+    plan --> instrument
+    plan --> subject
+    instrument -- "task-only candidate projection" --> executor
+    subject --> executor
+    executor --> evidence
+    instrument -- "complete reviewer projection<br/>after evidence exists" --> reviewer
+    evidence --> reviewer
+    reviewer --> analysis
+    analysis --> trace
+    analysis --> ecm
+    trace --> ecm
+    ecm --> fit
+    ecm --> compare
+    analysis --> formal
+
+    guided["Standards-assisted execution<br/>aies apply · task-scoped guidance"]
+    guided_output["Guided engineering output<br/>qualification_eligible: false"]
+    paired["Optional blind baseline comparison<br/>engineering diagnostic only"]
+
+    standards --> guided
+    instrument --> guided
+    subject --> guided
+    guided --> guided_output
+    guided_output --> paired
+    evidence -. "optional unassisted baseline" .-> paired
+

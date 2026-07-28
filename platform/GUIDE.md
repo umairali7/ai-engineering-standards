@@ -44,6 +44,40 @@ calls, and generates the complete non-blocking Engineering Evaluation bundle.
 Advanced qualification, benchmark, journey, and governance commands remain
 available without being prerequisites for first value.
 
+### Where the standards enter execution
+
+See the reusable
+[AIES Assessment and Assistance Flow](../diagrams/aies-assessment-and-assistance-flow.mmd)
+for the complete assessment and assisted-execution boundary.
+
+Each controlled scenario is frozen as an
+`aies-assessment-instrument/v1` before collection. The instrument contains the
+task, expected qualities, EV1 — Correctness through EV6 — Traceability anchors,
+applicability, failure conditions, calibration anchors, competency and
+Engineering Task mappings, standards references, and a content digest.
+
+Baseline assessment deliberately gives the candidate only the task projection.
+After the response is captured, automated and human reviewers receive the
+complete reviewer projection. Responses and ratings retain the same instrument
+digest, and every report bundle includes `standards-traceability.*` showing the
+standard → competency → instrument → response → rating → EV → Engineering Task
+chain. This prevents the candidate from seeing the scoring key while ensuring
+that the reviewer applies it.
+
+Standards-assisted engineering work is a separate workflow:
+
+```text
+aies apply SUBJECT --scenario SC-CA05-001
+aies apply SUBJECT --scenario SC-CA05-001 \
+  --compare-baseline --judge REVIEWER
+```
+
+The first command compiles only the selected task's AIES criteria into a guided
+context. The second also executes the unassisted task and blind-scores both
+outputs against the same frozen instrument. Guided records are stored under
+`guided-executions/`, declare `qualification_eligible: false`, and never enter
+assessment breadth, qualification, grants, or deployment authority.
+
 `aies init --guided` offers three first-use paths: configure an
 OpenAI-compatible deployment, run the offline demo, or audit a repository. The
 deployment path previews its id, served model, endpoint, subject/judge role,
@@ -235,84 +269,66 @@ separate workflows.
 
 ## 1. The whole system, in one picture
 
-The **standard** defines what to measure and how; the **platform** executes
-it; a **runtime adapter** is the only thing that talks to an actual model.
+The **standards** define what to measure and how. The **platform** freezes those
+requirements into an assessment instrument, collects subject-appropriate
+evidence, reviews it against the hidden instrument, and derives audience-
+specific decision products. Runtime adapters talk only to generative runtimes;
+other subject kinds use dedicated Subject Executors and Evidence Adapters.
 
+```text
+Standards + assessment plan + subject descriptor
+                         |
+                         v
+              Frozen assessment instrument
+               /                         \
+      task-only candidate          non-generative evidence
+          projection               collection contract
+               \                         /
+                Canonical evidence store
+                         |
+              complete reviewer projection
+                         |
+       review + scoring + standards traceability
+                         |
+              Engineering Capability Matrix
+                         |
+       engineering fit / compare / reports
+                         |
+              optional formal qualification
+
+Separate: standards + instrument -> aies apply -> guided output
+          (diagnostic only; never qualification evidence)
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│ THE STANDARD  (Markdown — the "what" and "how much")                        │
-│                                                                             │
-│   Shared/  Glossary + Taxonomy  ── canonical scales: EV1–EV6, CL1–CL4,      │
-│      │                  AL0 — Manual through AL4 — Autonomous; RT1 — Minimal through RT4 — Critical; ROLE-01..14            │
-│      ▼                                                                      │
-│   AEBOK ──► AESQS ──► AEOS ──► AEAR ──► AECT      docs/standards/ govern    │
-│  (know)   (qualify)  (operate)(architect)(certify)  every document          │
-│              │                                                              │
-│              │  capability-scoring.md, evaluation-rubrics.md,               │
-│              │  qualification-process.md  (weights, gates, minimums)        │
-└──────────────┼──────────────────────────────────────────────────────────────┘
-               │  transcribed verbatim (with requirement-ID citations)
-               ▼
-┌──────────────────────────────────────────────────────────────────────────┐
-│ THE PLATFORM  platform/  (Python package `aies` — the execution engine)     │
-│                                                                             │
-│                         ┌───────────────┐                                   │
-│   you type ───────────► │      CLI      │  (§4 verbs)                        │
-│                         └───────┬───────┘                                   │
-│                                 ▼                                           │
-│   deployment registry ►  ┌───────────────┐  ◄─ profiles/ (weights only;     │
-│   (what × where)         │ Qualification │     gates NOT expressible)        │
-│                          │    Engine     │                                   │
-│                          └───────┬───────┘                                   │
-│           ┌─────────────────────┼───────────────────────┐                   │
-│           ▼                     ▼                        ▼                   │
-│   ┌──────────────┐     ┌────────────────┐      ┌──────────────────┐         │
-│   │ Test Runner  │     │  Evaluation    │      │  Scoring Engine  │         │
-│   │ (competencies│     │  (human +      │      │ constants.py  ◄──┼─ AESQS  │
-│   │  /CA-NN + │──┐  │  model raters) │      │ gates·weights·CI │  tables │
-│   │  --parallel) │  │  └────────────────┘      └────────┬─────────┘         │
-│   └──────┬───────┘  │           ▲                       ▼                   │
-│          ▼          │           │              ┌──────────────────┐         │
-│   ┌──────────────┐  │   review.py (calib.     │ Report / Dashboard│         │
-│   │Runtime Adapter│ │   gate, divergences)    │ md · json · html  │         │
-│   │  (§8 plugin) │  │           ▲              └────────┬─────────┘         │
-│   └──────┬───────┘  └───────────┘                       ▼                   │
-│          │  ONLY component that speaks to a model    ┌──────────────────┐   │
-└──────────┼──────────────────────────────────────────│ Qualification    │───┘
-           │                                           │ Record (human    │
-           ▼                                           │ grant, §7)       │
-┌──────────────────────────┐                           └──────────────────┘
-│ RUNTIMES (outside aies)  │        artifacts on disk (append-only, plain files):
-│  mock  · openai-compat   │          registry/*.yaml  runs/<id>/responses/*.json
-│  + any out-of-tree plugin│          runs/<id>/{scoresheet,evidence-package}.json
-│      │                   │          qualifications/QR-*.json   index.sqlite
-│      ▼                   │
-│  a real model:           │        Everything the platform emits is evidence with
-│  local server or hosted  │        full provenance; a human records every grant.
-│  OpenAI-compatible API   │
-└──────────────────────────┘
-```
+
+Use the canonical diagrams when reviewing or extending this architecture:
+
+- [Assessment and Assistance Flow](../diagrams/aies-assessment-and-assistance-flow.mmd)
+- [Subject-Neutral Platform Components](../diagrams/aies-platform-components.mmd)
 
 ## 2. How the pieces wire — component responsibilities
 
 | Component | File | Responsibility | Standard tie |
 |-----------|------|----------------|--------------|
 | CLI | `cli.py` | verb dispatch, human/JSON output; no qualification logic | PLATFORM.md §3 |
-| Qualification Engine | `engine.py` | sequences the pipeline; assembles evidence package | §2, §4 |
-| Deployment registry | `registry.py` | what is qualified and where (model × runtime × config × endpoint) | §5.1, D11 |
+| Assessment Orchestrator | `engine.py` | freezes instruments, sequences evidence collection and analysis, and assembles evidence packages | §2, §4 |
+| Subject registry | `registry.py` | subject descriptor, executor, runtime/config where applicable, and deployment identity | §5.1, D11 |
 | Profile Loader | `profiles.py` | weighting presets; **cannot** weaken gates or minimums | §5.2, D3 |
-| Test Runner | `runner.py` | executes distinct suites; explicit stability repeats; `--parallel` | §4, D6 |
-| Runtime Adapter | `adapters/` | the **only** code that speaks to a model runtime | §8, D9 |
+| Instrument Compiler | `assessment_instruments.py` | freezes the scoring contract and produces audience-separated projections | §5.4.1 |
+| Subject Executor | `runner.py`, subject integrations | collects evidence according to subject kind; supports bounded concurrency | §4, §8 |
+| Runtime Adapter | `adapters/` | the only code that speaks to a generative runtime | §8, D9 |
+| Evidence Adapter | subject integrations | normalizes non-generative observations into typed canonical evidence | §4, §8 |
 | Runtime probing | `runtimes.py` | `doctor`/`discover` over installed runtimes | D11 |
-| Evaluation | `rating.py` | human (and model) rater ingestion, append-only | ER-01 |
-| Peer review | `review.py` | calibration gate; divergence surfacing | §7 |
+| Engineering review | `model_review.py`, `rating.py` | criterion-grounded automated and optional human observations, append-only | ER-01 |
+| Peer review | `review.py` | qualification-only admission, calibration gate, and divergence surfacing | §7 |
 | Scoring Engine | `scoring.py` + `constants.py` | EV1–EV6, gates, CI lower bounds, CL, RT×AL | CS-01, §6 |
-| Reports / Dashboard | `report*.py`, `dashboard.py` | md/json/html; overview | §9 |
+| Decision products | `report*.py`, `executive_summary.py`, `standards_traceability.py` | evidence, traceability, ECM, engineering fit, comparison, and audience views | §9 |
+| Standards-assisted executor | `standards_guided.py` | isolated guided work and paired baseline diagnostics; excluded from qualification evidence | ADR-0019 |
 | Qualification Record | `qualification.py` | human grant, status, D7 verify | §7, RR-01 |
 
-**The one rule that ties it together:** the platform *prepares evidence*; a
-named human authority *records every grant*. Nothing in the pipeline can
-issue a qualification on its own (D8).
+**The one rule that ties it together:** automated engineering evaluation may
+complete without human scoring, while a named human authority records every
+formal grant. Nothing in the pipeline can issue qualification or deployment
+authority on its own (D8).
 
 ## 3. The pipeline, stage by stage → the command that runs it
 

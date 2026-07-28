@@ -172,6 +172,7 @@ ADRs follow their own lifecycle (Proposed → Accepted → Superseded) described
 | Write a new AIES document | [templates/STANDARD_TEMPLATE.md](../templates/STANDARD_TEMPLATE.md) and the [Documentation Standards (AIES-STD-00 — Documentation Standards)](standards/README.md) |
 | Propose or understand a structural decision | [adr/](../adr/README.md) |
 | See the standards applied concretely | [examples/](../examples/README.md) |
+| Understand the executable assessment and assisted-execution architecture | [AIES Assessment and Assistance Flow](../diagrams/aies-assessment-and-assistance-flow.mmd) and [AIES Platform Components](../diagrams/aies-platform-components.mmd) |
 | Contribute | [CONTRIBUTING.md](../CONTRIBUTING.md) and [GOVERNANCE.md](../GOVERNANCE.md) |
 | Check what changed and what is coming | [CHANGELOG.md](../CHANGELOG.md) and [ROADMAP.md](../ROADMAP.md) |
 | Get quick answers to common questions | [FAQ.md](FAQ.md) |

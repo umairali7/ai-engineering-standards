@@ -34,6 +34,8 @@ _RUN_GUIDANCE = re.compile(r"^/runs/([^/]+)/guidance$")
 _RUN_EXECUTIVE = re.compile(r"^/runs/([^/]+)/executive-summary$")
 _RUN_DIAGNOSTICS = re.compile(r"^/runs/([^/]+)/diagnostics$")
 _RUN_COVERAGE = re.compile(r"^/runs/([^/]+)/coverage$")
+_RUN_STANDARDS_TRACEABILITY = re.compile(
+    r"^/runs/([^/]+)/standards-traceability$")
 _RUN_REMEDIATION = re.compile(r"^/runs/([^/]+)/remediation$")
 _RUN_DETAIL = re.compile(r"^/runs/([^/]+)$")
 _AUDIT_DETAIL = re.compile(r"^/audits/([^/]+)$")
@@ -197,6 +199,9 @@ def route(path: str) -> tuple[int, dict]:
     m = _RUN_COVERAGE.match(path)
     if m:
         return _run_artifact(m.group(1), "assessment-coverage.json")
+    m = _RUN_STANDARDS_TRACEABILITY.match(path)
+    if m:
+        return _run_artifact(m.group(1), "standards-traceability.json")
     m = _RUN_REMEDIATION.match(path)
     if m:
         return _run_artifact(

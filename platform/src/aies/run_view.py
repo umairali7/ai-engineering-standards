@@ -38,6 +38,8 @@ _ARTIFACTS = {
         "grounding-diagnostics.json", "diagnostics"),
     "assessment_coverage": (
         "assessment-coverage.json", "coverage"),
+    "standards_traceability": (
+        "standards-traceability.json", "standards-traceability"),
     "evidence_remediation_plan": (
         "evidence-remediation-plan.json", "remediation"),
 }

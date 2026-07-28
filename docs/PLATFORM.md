@@ -30,18 +30,37 @@ The platform prepares evidence; it does not grant qualifications. A human qualif
 
 ## 2. Engineering Assessment and Optional Qualification
 
+Canonical reusable source:
+[AIES Assessment and Assistance Flow](../diagrams/aies-assessment-and-assistance-flow.mmd).
+
 ```
- ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
- │ 1. Subject       │   │ 2. Capability    │   │ 3. Context /     │   │ 4. Evidence      │
- │    Registration  ├──►│    Discovery     ├──►│    Environment   ├──►│    Collection     │
- │ (typed identity) │   │ (scope adapters) │   │  (fingerprint)   │   │ (scenario/probes)│
- └─────────────────┘   └─────────────────┘   └─────────────────┘   └────────┬────────┘
-                                                                            │
- ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐   ┌────────▼────────┐
- │ Decision         │   │ Optional Formal  │   │ Engineering      │   │ 5. Competency    │
- │ Products: ECM +  │◄──┤ Qualification   │◄──┤ Review / Human  │◄──┤    Analysis      │
- │ Fit Guidance     │   │ (human-governed)│   │ Eval (optional) │   │ (EVs + statistics)│
- └─────────────────┘   └─────────────────┘   └─────────────────┘   └─────────────────┘
+ Subject + scope + environment + applicable AIES standards
+                           │
+                           ▼
+                Frozen Assessment Instrument
+                 ┌─────────┴─────────┐
+                 ▼                   ▼
+       task-only candidate     complete reviewer
+           projection          projection (later)
+                 │                   │
+                 ▼                   │
+       Subject Executor / Evidence Adapter
+                 │                   │
+                 ▼                   ▼
+             Canonical Evidence → Engineering Review
+                           │
+                           ▼
+          Competency Analysis + Standards Traceability
+                           │
+                           ▼
+             ECM + Engineering Fit + Comparison
+                           │
+                           └──► Optional Formal Qualification
+                                (human-governed)
+
+ Separate boundary:
+ AIES standards + instrument → aies apply → guided output / paired diagnostic
+                                             (never qualification evidence)
 ```
 
 | # | Stage | What it does | AESQS / Taxonomy clauses implemented |
@@ -49,11 +68,12 @@ The platform prepares evidence; it does not grant qualifications. A human qualif
 | 1 | **Subject Registration** | Records a typed subject identity and versioned configuration. The current deployment adapter records family, parameters, quantization, runtime, license, context window, modalities, and capability flags; future adapters use the same subject envelope for repositories, agents, MCP servers, RAG systems, pipelines, platforms, and composites. | [AIES-AESQS-QP-01-R02 — Qualification Process, requirement 02](../AESQS/qualification-process.md) (subject identity), AIES-AESQS-QP-01 §7 (configuration-bound validity) |
 | 2 | **Capability Discovery** | Runs automated probes (coding, reasoning, structured-output/schema adherence, function calling, long context, retrieval-grounded answering, query languages, planning, vision where claimed) to establish which competency areas are even in scope. Discovery narrows scope; it never awards scores. | AIES-AESQS-QP-01 §2 (scoping); [AIES-AESQS-QP-01-R05 — Qualification Process, requirement 05](../AESQS/qualification-process.md) (no vendor claims — capabilities are probed, not read from marketing) |
 | 3 | **Environment Validation** | Fingerprints the execution environment (§5.5): machine, CPU/GPU, memory, runtime and version, OS, power/thermal state. Model behavior is a property of model × environment; the fingerprint is provenance and its change is a re-qualification trigger. | [AIES-AESQS-QP-01-R10 — Qualification Process, requirement 10](../AESQS/qualification-process.md) (full provenance), [AIES-AESQS-RR-01 — Revision and Revocation §2](../AESQS/revision-and-revocation.md) (model/context change triggers — see §11 D7) |
-| 4 | **Benchmark Execution** | Executes versioned, held-out scenario suites grouped by competency area (484 distinct scenarios), including at least 30 distinct RT2 — Moderate instruments per area and refuse/escalate scenarios at RT3 — Significant through RT4 — Critical scope. Exact reruns are explicit stability studies, not sample padding. Every executed run is recorded; none may be discarded. | [AIES-AESQS-QP-01-R08 — Qualification Process, requirement 08](../AESQS/qualification-process.md) (golden-task suites), [AIES-AESQS-CS-01-R10 — Distinct minimum samples and separate stability evidence are required](../AESQS/capability-scoring.md), [ADR-0011](../adr/ADR-0011-Distinct-Scenario-Breadth-and-Separate-Stability-Studies.md) |
-| 5 | **Scoring** | Scores each evidence item on the EV1–EV6 rubrics with 0–4 anchors; aggregates with risk-tier weights and profile weights; enforces minimum gates and statistical minimums; computes confidence intervals whose lower bounds are the decision values. | [AIES-AESQS-ER-01 — Evaluation Rubrics §1–§2](../AESQS/evaluation-rubrics.md), [AIES-AESQS-CS-01 — Capability Scoring §1–§6](../AESQS/capability-scoring.md) |
-| 6 | **Engineering Review** | Records automated reviewer observations as usable Engineering Evaluation evidence and keeps optional human evaluation separate. When formal qualification is explicitly requested, the stricter reviewer-admission and human-decision protocol applies (§7). | [AIES-AESQS-PR-01-R09 — Peer Review, requirement 09](../AESQS/peer-review.md), [AIES-AESQS-ER-01-R10 — Evaluation Rubrics, requirement 10](../AESQS/evaluation-rubrics.md) |
-| 7 | **Qualification Decision** | Presents the assembled evidence, scores, gates, and review package to the human qualification authority, who records Grant / Grant-with-conditions / Deny. The platform writes the resulting Qualification Record and audit events. | [AIES-AESQS-QP-01-R12 — Qualification Process, requirement 12](../AESQS/qualification-process.md), [AIES-AESQS-00-R04 — Qualification Standard, requirement 04](../AESQS/README.md) (audit trail) |
-| 8 | **Decision Products** | Produces the subject-neutral Engineering Capability Matrix and Engineering Fit Guidance from observed evidence. An awarded formal qualification may additionally support deployment-role recommendations ([ROLE-01 — Planner through ROLE-14 — Governance Officer](../Shared/Taxonomy/README.md#5-ai-engineering-roles)) and an RT×AL envelope. Never a global pass/fail. | [AIES-AESQS-CS-01 — Capability Scoring §4–§5](../AESQS/capability-scoring.md), [Taxonomy §3–§4](../Shared/Taxonomy/README.md) |
+| 4 | **Instrument Compilation** | Freezes the complete versioned assessment contract before collection: legitimate task or evidence criteria, EV anchors, applicability, expected qualities, failure boundaries and optional affected-EV mappings, calibration, competency/task mappings, standards references, and digest. A candidate projection contains only legitimate task material; the complete reviewer projection is exposed only after evidence exists. | [AIES-AESQS-ER-01 — Evaluation Rubrics](../AESQS/evaluation-rubrics.md), [AIES-AESQS-QP-01-R08 — Qualification Process, requirement 08](../AESQS/qualification-process.md), proposed [ADR-0019](../adr/ADR-0019-Frozen-Assessment-Instruments-and-Standards-Assisted-Execution.md) |
+| 5 | **Evidence Collection** | Executes each selected held-out scenario once by default, or invokes a profile-specific Evidence Adapter for a non-generative subject. Exact reruns are explicit stability studies, not sample padding. Every observation is bound to its instrument, subject, environment, and provenance; none may be discarded. | [AIES-AESQS-QP-01-R08 — Qualification Process, requirement 08](../AESQS/qualification-process.md), [AIES-AESQS-CS-01-R10 — Distinct minimum samples and separate stability evidence are required](../AESQS/capability-scoring.md), [ADR-0011](../adr/ADR-0011-Distinct-Scenario-Breadth-and-Separate-Stability-Studies.md) |
+| 6 | **Engineering Review** | Applies the complete frozen reviewer instrument to the evidence, retaining per-EV criterion evidence, exact failure conditions, trace validity, reviewer identity, automated observations, and optional human evaluation. Producer identity is hidden where feasible. Formal qualification invokes stricter rater admission and human-decision rules (§7). | [AIES-AESQS-ER-01-R01 — Evaluation Rubrics, requirement 01](../AESQS/evaluation-rubrics.md), [AIES-AESQS-ER-01-R03 — Evaluation Rubrics, requirement 03](../AESQS/evaluation-rubrics.md), [AIES-AESQS-ER-01-R10 — Evaluation Rubrics, requirement 10](../AESQS/evaluation-rubrics.md) |
+| 7 | **Analysis and Scoring** | Resolves evidence-item observations, computes EV1–EV6 results, statistics, breadth and assurance, and preserves maturity or subject-specific score semantics where EV scoring is not applicable. Standards Traceability links requirement → competency → instrument → evidence → rating → EV → Engineering Task → decision product. | [AIES-AESQS-CS-01 — Capability Scoring §1–§6](../AESQS/capability-scoring.md), [AIES-ECM-01 — Engineering Capability Matrix](../ECM/README.md) |
+| 8 | **Decision Products** | Produces Engineering Evaluation, ECM, Engineering Fit, compatible comparison, coverage, remediation, diagnostics, and audience-specific reports. These remain informational unless a separately governed authority acts. | [AIES-AESQS-CS-01 — Capability Scoring §4–§5](../AESQS/capability-scoring.md), [Taxonomy §3–§4](../Shared/Taxonomy/README.md) |
+| 9 | **Optional Formal Qualification** | Presents admitted evidence, resolved scores, gates, and review records to the named human qualification authority. Only that authority records Grant / Grant-with-conditions / Deny and creates the immutable Qualification Record and lifecycle events. | [AIES-AESQS-QP-01-R12 — Qualification Process, requirement 12](../AESQS/qualification-process.md), [AIES-AESQS-00-R04 — Qualification Standard, requirement 04](../AESQS/README.md) |
 
 ## 3. CLI Surface
 
@@ -69,6 +89,7 @@ The `aies` command exposes the pipeline as composable verbs:
 | `qualify` | Run the full engineering-evaluation pipeline for one **deployment**. With `--judge`, collection, scoring, analysis, Engineering Assessment Result, ECM, diagnostics, Engineering Fit Guidance, and reports complete without human review. `--formal-qualification` explicitly selects the separate human-gated qualification protocol. | `aies qualify local-qwen --profile enterprise --rt 2 --judge gpt-oss` |
 | `benchmark` | Run a non-blocking Engineering Evaluation. Without `--judge` it collects scenario responses and a scoresheet; with `--judge` it also scores, analyzes, and writes the complete report bundle. | `aies benchmark acme-7b-q4 --area CA-05 --judge gpt-oss --parallel 4` |
 | `review` | Record model-review scores and refresh engineering analysis/reporting; optional human evaluation remains separate. Formal reviewer admission applies only to qualification. | `aies review run-2031 --model-reviewer rev-model` |
+| `apply` | Perform explicitly standards-assisted engineering work outside qualification evidence. It can run a task-only baseline, a guided variant, and one blind paired review against the same frozen instrument while showing live stage progress. | `aies apply local-qwen --scenario SC-CA05-001 --compare-baseline --judge gpt-oss` |
 | `compare` | Compare compatible observed ECM task scores by default without human review. It may identify the higher observed score but never a formal winner; `--formal-qualification` requires demonstrated status and the human-rater protocol before a winner claim. `--area-summary` retains the legacy competency aggregate. | `aies compare run-a run-b` |
 | `runs` | List runs, inspect the versioned informational `aies-run-view` for one run, or observe its durable progress. Run inspection inventories stored state/products and computes no outcome. | `aies runs show run-2031 --json` |
 | `report` | Render a run or Qualification Record as Markdown, JSON, or self-contained HTML. Evaluation runs produce an Engineering Evaluation Report, ECM, Grounding Diagnostics, Engineering Fit Guidance, Engineering Assessment Result when named, and Executive Summary; formal runs retain qualification products. | `aies report run-2031 --format html --write` |
@@ -99,39 +120,54 @@ or a decision. The canonical Evidence Package and the historical
 
 ## 4. Package Architecture
 
+Canonical reusable source:
+[AIES Platform Components](../diagrams/aies-platform-components.mmd).
+
 ```
-                       ┌───────────────┐
-                       │      CLI      │  argument parsing, output rendering
-                       └───────┬───────┘
-                               ▼
-                       ┌───────────────┐        ┌────────────────┐
-                       │ Qualification │◄───────┤ Profile Loader │  profiles + immutable gates
-                       │    Engine     │        └────────────────┘
-                       └───────┬───────┘
-                    ┌──────────┼─────────────────────┐
-                    ▼          ▼                     ▼
-            ┌────────────┐ ┌────────────┐    ┌──────────────┐
-            │ Test Runner│ │ Evaluation │    │   Scoring    │
-            │            │ │   Engine   │    │   Engine     │
-            └─────┬──────┘ └────────────┘    └──────┬───────┘
-                  ▼                                 ▼
-            ┌────────────┐                   ┌──────────────┐    ┌────────────────┐
-            │  Runtime   │                   │    Report    ├───►│ Qualification  │
-            │  Plugin    │                   │  Generator   │    │    Record      │
-            └────────────┘                   └──────────────┘    └────────────────┘
+ CLI / API
+    │
+    ▼
+ Assessment Orchestrator ◄── Subject Profiles + Registry
+    │
+    ├──► Instrument Compiler ──► append-only instrument snapshots
+    │              │
+    │       ┌──────┴────────┐
+    │       ▼               ▼
+    │ Runtime Executor   Evidence-producing Executor
+    │       │               │
+    │ Runtime Adapter    Evidence Adapter
+    │       └──────┬────────┘
+    │              ▼
+    └──────► Canonical Evidence Store
+                   │
+                   ▼
+          Review → Analysis / Scoring
+                   │
+                   ▼
+       Report + Traceability + ECM + Guidance
+                   │
+                   ▼
+         Optional Human Authority
+
+ CLI ──► Standards-Assisted Executor ──► isolated guided record
+          (never written into qualification evidence)
 ```
 
 | Component | Responsibility |
 |-----------|----------------|
 | **CLI** | Verb dispatch, argument validation, human/JSON output. No qualification logic. |
-| **Qualification Engine** | Orchestrates the pipeline: sequences stages, enforces preconditions (registered model, valid fingerprint, suite versions), assembles the evidence package and decision workflow. |
-| **Profile Loader** | Loads and validates weighting profiles; guarantees gates and statistical minimums cannot be weakened by any profile (§5.2, §6). |
-| **Test Runner** | Executes scenario suites against the candidate via a runtime plugin: prompt assembly, repeats, timeouts, parallel execution (M3), full raw capture. |
-| **Runtime Plugin** | The only component that talks to a model runtime or provider (§8). Vendor- and runtime-specific code lives here and nowhere else. |
-| **Evaluation Engine** | Applies test-case rubrics to raw responses, producing per-item EV sub-criterion scores with written findings; hosts automated raters and, in M4, reviewer-model scoring under the calibration rules of §7. |
-| **Scoring Engine** | Implements [AIES-AESQS-CS-01 — Capability Scoring](../AESQS/capability-scoring.md): dimension scores, confidence intervals, weighted aggregation, minimum gates, CL derivation, RT×AL envelopes. |
-| **Report Generator** | Renders evidence packages, comparisons, and Qualification Records to the output formats of §9. |
-| **Qualification Record** | The persistent output artifact: scoped grants, evidence references, provenance, status — schema in §5.5/§9. |
+| **Assessment Orchestrator** | Sequences subject/profile validation, instrument compilation, collection, review, analysis, reporting, resume, and optional formal qualification without making a grant itself. |
+| **Subject Assessment Profile Loader** | Declares applicable subject kinds, executors, Evidence Adapters, instruments, score semantics, decision products, limitations, and human-review requirements. |
+| **Instrument Compiler** | Freezes `aies-assessment-instrument/v1`, its task-only candidate projection, complete reviewer projection, mappings, standards lineage, and digest before collection. |
+| **Subject Executors** | Execute the collection interaction appropriate to the subject. `RuntimeGenerationExecutor` handles deployment requests; `RepositoryAuditExecutor` handles read-only repository observation; future subject kinds require dedicated executors. |
+| **Runtime Adapters** | Connect generation executors to local or remote inference endpoints. Provider-specific behavior remains behind this boundary (§8). |
+| **Evidence Adapters** | Convert direct observations, repository analysis, protocol traces, telemetry, Inspect logs, SARIF, and other declared sources into typed canonical evidence without inventing generation scores. |
+| **Canonical Evidence Store** | Retains append-only instruments, observations, ratings, events, resolutions, provenance, and immutable authority records separately from regenerable views. |
+| **Review and Rating** | Applies the frozen reviewer instrument, retains criterion evidence and conflicts, and keeps automated review distinct from optional human evaluation and formal rater admission. |
+| **Analysis and Scoring** | Computes subject-appropriate results: EV vectors and statistics where applicable, repository maturity and perspective evidence where applicable, breadth, assurance, limitations, and ECM mappings. |
+| **Decision-Product Renderers** | Render reports, Standards Traceability, ECM, fit/guidance, compatible comparison, coverage, remediation, diagnostics, executive views, and safe exports. |
+| **Standards-Assisted Executor** | Runs task-scoped guided work and optional paired baseline review in `guided-executions/`; its records are informational and excluded from qualification evidence. |
+| **Human Authority** | Records formal qualification, grant, release, deployment, or other consequential decisions through separately governed immutable records. |
 
 ## 5. Data Model
 
@@ -241,6 +277,30 @@ failure_conditions:               # any one observed → dimension score 0 for t
 repeats_min: 3
 ```
 
+#### 5.4.1 Frozen Assessment Instrument (JSON)
+
+Before evidence collection, the platform compiles each selected scenario into
+an immutable `aies-assessment-instrument/v1` snapshot. The snapshot binds the
+task, expected qualities, global and scenario-specific EV1–EV6 anchors,
+applicability, failure conditions, optional reviewed failure-condition-to-EV
+mappings, calibration anchors, competency and Engineering Task (ET) mappings,
+standards references, and an instrument digest.
+
+The platform derives two audience projections from that one snapshot:
+
+- the **candidate projection** contains only the legitimate task context and
+  instrument digest; it never exposes hidden expected qualities, anchors,
+  failure conditions, or calibration material;
+- the **reviewer projection** contains the complete frozen evaluation contract
+  and is released only after the response exists.
+
+Every response and rating retains the instrument digest. Non-generative
+subjects declare Evidence Adapter collection semantics and therefore have no
+candidate prompt. Legacy evidence may be migrated only by an explicit
+scoring/review operation when its exact prompt and suite snapshot can be
+reconstructed; report rendering never silently reinterprets historical
+evidence.
+
 ### 5.5 Result Record (JSON)
 
 Every executed scenario run produces an immutable JSON evidence record:
@@ -300,14 +360,21 @@ Rules:
 
 ## 8. Plugin Contract
 
-Runtime plugins are the sole boundary between the engine and any model runtime or hosted provider. The core engine contains no vendor- or runtime-specific code.
+Subject Executors are the boundary between orchestration and subject
+interaction. A generative deployment uses a Runtime Generation Executor backed
+by a runtime adapter; repositories and other non-generative subjects use
+dedicated executors and Evidence Adapters. The core orchestration, analysis,
+and reporting layers contain no vendor- or subject-specific interaction code.
+
+Runtime adapters are the sole boundary between a Runtime Generation Executor
+and any model runtime or hosted provider.
 
 A runtime adapter implements four operations:
 
 | Operation | Contract |
 |-----------|----------|
 | `load(registry_entry)` | Acquire/attach the model identified by the registry entry; verify the checksum; fail loudly on mismatch. |
-| `generate(request) → response` | Execute one inference request; return the raw response plus runtime-reported usage (tokens, latency). No retries that the Test Runner did not order. |
+| `generate(request) → response` | Execute one inference request; return the raw response plus runtime-reported usage (tokens, latency). No retries that the Subject Executor did not order. |
 | `capabilities() → declaration` | Declare what the adapter supports: modalities, tool/function calling, structured output, streaming, maximum context. |
 | `fingerprint() → environment` | Report the behaviorally relevant deployment fingerprint (§5.5): runtime id/version, endpoint identity, served model/revision/checksum, device placement, and relevant settings. Hosted deployments exclude irrelevant calling-client CPU/RAM/host identity from the binding hash; local deployments remain host-bound. Secrets and endpoint query/user information are never fingerprinted. |
 | `probe_runtime() → status` *(optional)* | Class-level. Detect whether the runtime is present on the host: `{available, version, detail}`. Best-effort and non-fatal — an absent runtime reports `available: false`, never raises. Powers `aies doctor`. |
@@ -370,6 +437,9 @@ These ten decisions bind the implementation to the standard. Deviating from any 
 ## Related Documents
 
 - [ADR-0009 — Engineering Assessment Platform Identity](../adr/ADR-0009-Engineering-Assessment-Platform-Identity.md)
+- [ADR-0019 — Frozen Assessment Instruments and Standards-Assisted Execution](../adr/ADR-0019-Frozen-Assessment-Instruments-and-Standards-Assisted-Execution.md)
+- [Assessment and Assistance Flow](../diagrams/aies-assessment-and-assistance-flow.mmd)
+- [Subject-Neutral Platform Components](../diagrams/aies-platform-components.mmd)
 - [AIES-AESQS-00 — AESQS — AI Engineering SDLC Qualification Standard](../AESQS/README.md)
 - [AIES-AESQS-QP-01 — Qualification Process](../AESQS/qualification-process.md)
 - [AIES-AESQS-ER-01 — Evaluation Rubrics](../AESQS/evaluation-rubrics.md)

@@ -176,7 +176,12 @@ def _now() -> str:
 
 
 def _build_record(run_id, model_entry, adapter, sc, r, suite_version,
-                  environment_fp, response, parameters) -> dict:
+                  environment_fp, response, parameters,
+                  instrument: dict | None = None) -> dict:
+    if instrument is None:
+        from . import assessment_instruments
+        instrument = assessment_instruments.build(
+            sc, suite_version=suite_version)
     return {
         "run_id": f"{run_id}-{sc['id']}-r{r}",
         "suite_version": suite_version,
@@ -197,6 +202,8 @@ def _build_record(run_id, model_entry, adapter, sc, r, suite_version,
         "request": {
             "prompt": sc["prompt"],
             "prompt_hash": "sha256:" + hashlib.sha256(sc["prompt"].encode()).hexdigest(),
+            "projection": "candidate",
+            "instrument_digest": instrument["instrument_digest"],
             "parameters": parameters or {},
         },
         "raw_response": response.text,
@@ -227,6 +234,8 @@ def _record_observation_event(run_id: str, path: Path, record: dict) -> None:
             "risk_tier": record.get("risk_tier"),
             "repeat": record.get("repeat"),
             "prompt_hash": (record.get("request") or {}).get("prompt_hash"),
+            "instrument_digest": (
+                record.get("request") or {}).get("instrument_digest"),
             "response_record": path.name,
         },
     )
@@ -255,6 +264,7 @@ def execute_journey(
     from .journeys import render_step_prompt
 
     rdir = workspace.run_dir(run_id) / "responses"
+    from . import assessment_instruments
     risk_tier = journey["risk_tier"]
     n_repeats = repeats or 1
     written: list[Path] = []
@@ -266,7 +276,27 @@ def execute_journey(
             pseudo = {"id": step["id"], "area": step["area"],
                       "risk_tier": risk_tier, "prompt": prompt,
                       "family": step.get("phase") or "journey step",
-                      "calibration": {"objective": step.get("title") or step["id"]}}
+                      "expected_qualities": list(
+                          step.get("expected_qualities") or [
+                              str(value)
+                              for values in (step.get("rubric") or {}).values()
+                              for value in values
+                          ]),
+                      "rubric": step.get("rubric") or {},
+                      "rubric_applicability": step.get("rubric_applicability") or {},
+                      "failure_conditions": step.get("failure_conditions") or [],
+                      "calibration": {
+                          "objective": step.get("title") or step["id"],
+                          "ceiling_anchor": step.get(
+                              "ceiling_anchor",
+                              "Exemplary performance satisfies every declared "
+                              "step criterion with inspectable evidence."),
+                          "floor_anchor": step.get(
+                              "floor_anchor",
+                              "The response misses the step's primary objective."),
+                      }}
+            instrument = assessment_instruments.write_snapshots(
+                run_id, [pseudo], suite_version=journey_version)[step["id"]]
             label = (f"Task {len(written) + 1}/{total} · "
                      f"{scenario_progress_label(pseudo, r)}")
             if progress_callback:
@@ -274,7 +304,8 @@ def execute_journey(
             response = adapter.generate(GenerationRequest(
                 prompt=prompt, parameters=parameters or {}))
             record = _build_record(run_id, model_entry, adapter, pseudo, r,
-                                   journey_version, environment_fp, response, parameters)
+                                   journey_version, environment_fp, response,
+                                   parameters, instrument)
             record["journey"] = {"id": journey["id"], "step": step["id"],
                                  "phase": step.get("phase", ""),
                                  "step_risk_tier": step.get("risk_tier", risk_tier)}
@@ -327,6 +358,9 @@ def execute_suite(
     import threading
 
     rdir = workspace.run_dir(run_id) / "responses"
+    from . import assessment_instruments
+    instruments = assessment_instruments.write_snapshots(
+        run_id, scenarios, suite_version=suite_version)
     tasks = []  # (scenario, repeat)
     for sc in scenarios:
         n_repeats = repeats or 1
@@ -365,7 +399,8 @@ def execute_suite(
             request = GenerationRequest(prompt=sc["prompt"], parameters=parameters or {})
             response = adapter.generate(request)
             record = _build_record(run_id, model_entry, adapter, sc, r, suite_version,
-                                   environment_fp, response, parameters)
+                                   environment_fp, response, parameters,
+                                   instruments[sc["id"]])
             path = rdir / f"{sc['id']}-r{r}.json"
             workspace.write_json(path, record)
             _record_observation_event(run_id, path, record)

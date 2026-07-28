@@ -106,12 +106,22 @@ Matrix is a finer-grained, evidence-derived extension, not a replacement.
 The intended data path is:
 
 ```text
-Assessment -> Canonical Evidence -> Competency Analysis
--> Engineering-task mapping -> Engineering Capability Matrix -> audience views
+Standards + plan + subject descriptor
+-> Frozen assessment instrument
+-> Candidate or non-generative evidence projection
+-> Canonical evidence bound to the instrument digest
+-> Reviewer projection and engineering review
+-> Competency and standards-traceability analysis
+-> Engineering Capability Matrix
+-> engineering fit, comparison, and optional formal qualification views
 ```
 
 The matrix must be subject-neutral. It should describe a deployment, agent,
 repository, AI system, or another assessable subject—not only a bare model.
+The separate standards-assisted `aies apply` path may compare an unassisted
+baseline with a guided output, but neither output enters qualification
+evidence. See the canonical
+[Assessment and Assistance Flow](../diagrams/aies-assessment-and-assistance-flow.mmd).
 
 ## Engineering Capability Matrix Design Principles
 

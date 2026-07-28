@@ -31,6 +31,23 @@ def build_scoresheet(run_id: str) -> dict:
     items = []
     for p in responses:
         rec = workspace.read_json(p)
+        reviewer_instrument = None
+        frozen_instrument_digest = (
+            rec.get("request") or {}).get("instrument_digest")
+        try:
+            from . import assessment_instruments
+            instrument = assessment_instruments.load_or_migrate_snapshot(
+                run_id, rec)
+            reviewer_instrument = assessment_instruments.reviewer_projection(
+                instrument)
+            frozen_instrument_digest = instrument["instrument_digest"]
+        except Exception:
+            # Legacy runs remain readable, but the missing frozen rubric is
+            # explicit and cannot be mistaken for standards-grounded review.
+            reviewer_instrument = {
+                "status": "unavailable",
+                "reason": "run predates immutable assessment-instrument snapshots",
+            }
         items.append({
             "response_record": p.name,
             "scenario_id": rec["scenario_id"],
@@ -38,21 +55,26 @@ def build_scoresheet(run_id: str) -> dict:
             "task_label": ((rec.get("scenario") or {}).get("progress_label")
                            or f"Scenario {rec['scenario_id']}-r{rec['repeat']}"),
             "raw_response_preview": rec["raw_response"][:400],
+            "instrument_digest": frozen_instrument_digest,
+            "reviewer_instrument": reviewer_instrument,
             "scores": {dim: None for dim in C.DIMENSIONS},
             "findings": [],
             "failure_conditions_observed": [],
             # Optional and informational. A human may record structured
             # grounding observations without creating a seventh EV dimension.
             "grounding_diagnostics": None,
+            "review_trace": None,
         })
     sheet = {
         "run_id": run_id,
         "instructions": (
             "Score each response on every dimension with an integer 0-4 "
-            "against the rubric anchors (AIES-AESQS-ER-01; no half points). "
+            "against the embedded frozen reviewer_instrument rubric anchors "
+            "(AIES-AESQS-ER-01; no half points). "
             "Record a finding for every score <= 2. If a scenario "
-            "failure_condition is observed, list it and score the mapped "
-            "dimension 0. Rater identity is required. The optional "
+            "failure_condition is observed, list it, identify the directly "
+            "affected dimension in a finding, and score at least one applicable "
+            "affected dimension 0. Rater identity is required. The optional "
             "grounding_diagnostics object records source-separated hallucination "
             "and fabrication observations; it never changes EV scores or gates."
         ),
@@ -126,7 +148,20 @@ def ingest_scores(run_id: str, sheet: dict, progress_callback=None, *,
                                 current=task_label, current_index=index,
                                 activity="Recording EV1–EV6 scores",
                                 active_tasks=[task_label], parallelism=1,
-                                callback=progress_callback)
+                                 callback=progress_callback)
+            response_path = rdir / "responses" / str(
+                item.get("response_record") or "")
+            if not response_path.exists():
+                raise RatingError(
+                    f"{item.get('response_record')}: response record does not exist")
+            response_record = workspace.read_json(response_path)
+            expected_instrument = (
+                response_record.get("request") or {}).get("instrument_digest")
+            supplied_instrument = item.get("instrument_digest")
+            if expected_instrument and supplied_instrument != expected_instrument:
+                raise RatingError(
+                    f"{item.get('response_record')}: rating is not bound to the "
+                    "response's frozen assessment instrument")
             scores = item.get("scores") or {}
             missing = [d for d in C.DIMENSIONS if scores.get(d) is None]
             if missing:
@@ -140,6 +175,43 @@ def ingest_scores(run_id: str, sheet: dict, progress_callback=None, *,
                         f"{item.get('response_record')}: {d}={scores[d]!r} is not an "
                         "integer 0-4 (AIES-AESQS-ER-01-R04)"
                     )
+            observed_failures = item.get("failure_conditions_observed") or []
+            if observed_failures:
+                from . import assessment_instruments
+                instrument = assessment_instruments.load_or_migrate_snapshot(
+                    run_id, response_record)
+                declared_failures = set(
+                    instrument["evaluation"]["failure_conditions"])
+                impact_map = instrument["evaluation"].get(
+                    "failure_condition_impacts") or {}
+                unknown_failures = sorted(
+                    set(observed_failures) - declared_failures)
+                if unknown_failures:
+                    raise RatingError(
+                        f"{item.get('response_record')}: rating cites undeclared "
+                        "failure conditions: " + "; ".join(unknown_failures))
+                if kind == "human":
+                    zero_dimensions = {
+                        dimension for dimension, score in scores.items()
+                        if score == 0}
+                    finding_dimensions = {
+                        finding.get("dimension")
+                        for finding in item.get("findings") or []
+                        if isinstance(finding, dict)}
+                    required_dimensions = {
+                        dimension
+                        for condition in observed_failures
+                        for dimension in impact_map.get(condition, C.DIMENSIONS)
+                    }
+                    attributed_zeroes = (
+                        zero_dimensions
+                        & finding_dimensions
+                        & required_dimensions)
+                    if not attributed_zeroes:
+                        raise RatingError(
+                            f"{item.get('response_record')}: an observed scenario "
+                            "failure condition requires at least one affected EV "
+                            "score of 0 and a finding attributed to that dimension")
             low = [d for d in C.DIMENSIONS if scores[d] <= 2]
             findings = item.get("findings") or []
             if low and not findings:
@@ -154,6 +226,8 @@ def ingest_scores(run_id: str, sheet: dict, progress_callback=None, *,
                 "scores": {d: int(scores[d]) for d in C.DIMENSIONS},
                 "findings": findings,
                 "failure_conditions_observed": item.get("failure_conditions_observed", []),
+                "review_trace": item.get("review_trace"),
+                "instrument_digest": item.get("instrument_digest"),
                 "grounding_diagnostics": diagnostics.normalize(
                     item.get("grounding_diagnostics")),
                 "provenance": {
