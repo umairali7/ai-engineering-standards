@@ -2666,6 +2666,29 @@ ingest a filled scoresheet (human or model rater)
 | `<RUN>` | required | run id whose completed scoresheet will be ingested | — |
 | `--file` | optional | scoresheet path (default: the run's scoresheet.json) | — |
 
+## `aies security`
+
+run cross-platform secret-history, Python SAST, and dependency checks
+
+**Usage:** `aies security [-h] [--evidence-dir DIRECTORY] [--tool-cache DIRECTORY] [--history-only | --python-only] [repo]`
+
+**Prerequisites:** Run inside a Git checkout. Install the `security` Python extra once so pinned Ruff and pip-audit are available; Gitleaks is bootstrapped automatically.
+
+**Result and side effects:** Runs the same checksum-verified, cross-platform full-history secret scan, Python security rules, and dependency audit used by CI. It writes redacted machine-readable evidence and never invokes Homebrew, Make, or a system package manager.
+
+**Recommended next step:** Retain the evidence in CI or release records; investigate failures before retrying or publishing.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `<REPO>` | optional | repository root or a path inside it (default: current directory) | default: `.` |
+| `--evidence-dir` | optional | machine-readable evidence directory (default: OS temporary directory) | — |
+| `--tool-cache` | optional | override the checksum-verified user-local tool cache | — |
+| `--history-only` | optional | run only the full-history secret scan | — |
+| `--python-only` | optional | run only Python security rules and dependency auditing | — |
+
 ## `aies serve`
 
 thin read-only REST API over versioned views and stored canonical artifacts (JSON; computes no outcomes)

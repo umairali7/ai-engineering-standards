@@ -115,6 +115,11 @@ GUIDANCE: dict[str, CommandGuidance] = {
         "Writes repository-assessment JSON, Markdown, and annotation artifacts; emits GitHub annotations when requested. It exits non-zero for policy gaps only with `--enforce`.",
         "Upload the artifact directory on every run. Enable enforcement only after repository owners approve the selected risk-tier policy.",
     ),
+    "security": CommandGuidance(
+        "Run inside a Git checkout. Install the `security` Python extra once so pinned Ruff and pip-audit are available; Gitleaks is bootstrapped automatically.",
+        "Runs the same checksum-verified, cross-platform full-history secret scan, Python security rules, and dependency audit used by CI. It writes redacted machine-readable evidence and never invokes Homebrew, Make, or a system package manager.",
+        "Retain the evidence in CI or release records; investigate failures before retrying or publishing.",
+    ),
     "bridge": CommandGuidance(
         "A version-supported external evidence file is available; Inspect rating import also requires an existing matching AIES run.",
         "Converts supported external evidence with a source digest, converter identity, explicit loss accounting, and no inferred scores or claim inflation.",

@@ -158,24 +158,30 @@ aies open latest
 ```
 
 The warm-cache full-suite performance budget on the recorded Windows reference
-workstation is **180 seconds**. The current security-expanded baseline is **366
-passed, one skipped in 182.41 seconds**, narrowly above that budget; performance
-recovery remains open. A run above budget or a greater-than-25% regression
+workstation is **180 seconds**. The latest security-expanded baseline is **373
+passed, one skipped in 143.09 seconds**, 20.5% below that budget; the preceding
+372-test run took 126.28 seconds. A run above budget or a greater-than-25%
+regression
 should be profiled before merge; use the ranked durations rather than guessing.
 Scenario YAML and suite digests are cached by path, modification time, and size,
 return isolated values, and invalidate automatically when an instrument changes.
 
-For the contributor security gate, install the security extra plus
-checksum-verified Gitleaks 8.30.1, then run:
+For the contributor security gate, install the Python security extra and run:
 
 ```sh
 python -m pip install -e ".[security]"
-make security
+aies security
 ```
 
 This scans all reachable Git history with fully redacted findings, runs the
 documented high-signal Python security rules, and audits the currently resolved
-runtime dependencies. CI retains the corresponding JSON/SARIF evidence.
+runtime dependencies. A repository-owned cross-platform bootstrap downloads
+Gitleaks 8.30.1 into a user-local tool cache and verifies the upstream SHA-256;
+no Homebrew or system-wide installation is required. CI retains the
+corresponding JSON/SARIF evidence.
+
+`make security` remains a contributor convenience alias only; `aies security`
+is the canonical command on macOS, Linux, and Windows.
 
 Artifacts are written to `./aies-workspace` (override with the
 `AIES_WORKSPACE` environment variable). Everything persisted is plain

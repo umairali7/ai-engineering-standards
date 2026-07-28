@@ -18,6 +18,8 @@ from __future__ import annotations
 import datetime
 import copy
 import json
+import threading
+import time
 import uuid
 
 from . import constants as C, workspace
@@ -34,6 +36,8 @@ STATUSES = ("active", "conditional", "denied", "suspended", "expired",
             "invalidated", "revoked", "superseded")
 LIFECYCLE_EVENTS = ("issued", "condition-changed", "renewed", "suspended",
                     "expired", "invalidated", "revoked", "superseded")
+_EVENT_ORDER_LOCK = threading.Lock()
+_LAST_EVENT_ORDER_NS = 0
 
 
 class QualificationError(Exception):
@@ -48,6 +52,15 @@ def _records_dir():
     d = workspace.ensure() / "qualifications"
     d.mkdir(parents=True, exist_ok=True)
     return d
+
+
+def _next_event_order_ns() -> int:
+    """Return a strictly increasing in-process lifecycle append order."""
+    global _LAST_EVENT_ORDER_NS
+    with _EVENT_ORDER_LOCK:
+        observed = time.time_ns()
+        _LAST_EVENT_ORDER_NS = max(observed, _LAST_EVENT_ORDER_NS + 1)
+        return _LAST_EVENT_ORDER_NS
 
 
 def _events_dir(record_id: str):
@@ -79,6 +92,10 @@ def _append_event(record_id: str, event_type: str, status: str, authority: str,
         "kind": "qualification-lifecycle-event",
         "event_schema": 1,
         "event_id": f"QEV-{uuid.uuid4().hex}",
+        # Some operating-system clocks return the same datetime value for
+        # consecutive calls. Preserve append order independently so a later
+        # terminal event can never be projected before the issued event.
+        "recorded_at_ns": _next_event_order_ns(),
         "record_id": record_id,
         "event_type": event_type,
         "status": status,
@@ -98,8 +115,17 @@ def _project(base: dict) -> dict:
     # Legacy records stored mutable history inline. Preserve it verbatim, then
     # append v2 immutable events; never reinterpret or discard old provenance.
     history = copy.deepcopy(base.get("history") or [])
-    for path in sorted(_events_dir(base["record_id"]).glob("*.json")):
+    retained_events = []
+    for path in _events_dir(base["record_id"]).glob("*.json"):
         event = workspace.read_json(path)
+        retained_events.append((path, event))
+    retained_events.sort(key=lambda item: (
+        item[1].get("at", ""),
+        item[1].get("recorded_at_ns", item[0].stat().st_mtime_ns),
+        0 if item[1].get("event_type") == "issued" else 1,
+        item[1].get("event_id", ""),
+    ))
+    for _path, event in retained_events:
         record["status"] = event["status"]
         changes = event.get("changes") or {}
         if "conditions" in changes:

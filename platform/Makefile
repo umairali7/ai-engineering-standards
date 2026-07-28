@@ -17,10 +17,8 @@ validate:          ## suite catalog + shipped assessments (the CI gate)
 audit:             ## repository self-conformance (dogfood), gated at RT2
 	aies audit .. --gate --rt 2
 
-security:          ## requires gitleaks 8.30.1 and the [security] Python extra
-	gitleaks git --log-opts="--all" --redact=100 --no-banner --no-color --report-format json --report-path "$${TMPDIR:-/tmp}/aies-gitleaks.json" ..
-	ruff check src/aies scripts --select S --ignore S101,S110,S112,S603,S607
-	pip-audit . --progress-spinner=off
+security:          ## auto-bootstrap pinned Gitleaks; requires the [security] Python extra
+	aies security ..
 
 release-hygiene:   ## reject local/generated artifacts from the tracked release tree
 	python scripts/check_release_artifacts.py ..

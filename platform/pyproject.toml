@@ -26,7 +26,11 @@ dependencies = [
 # Development extras; runtime dependencies remain intentionally small.
 # Install with:  pip install -e ".[test]"
 test = ["pytest>=7"]
-security = ["ruff==0.15.22", "pip-audit==2.10.1"]
+security = [
+    "ruff==0.15.22",
+    "pip-audit==2.10.1",
+    "truststore==0.10.4",
+]
 # Detached-signature verification for `aies deployment verify-artifact`.
 # Optional: without it, checksum verification still works and signature
 # verification reports "unverifiable" rather than a false pass.

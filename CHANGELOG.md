@@ -17,8 +17,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   exact historical finding fingerprint for a synthetic security scenario.
   HTTP-compatible adapters now reject non-HTTP(S) endpoints and repository
   coverage/test XML uses entity-safe parsing. `make security` reproduces the
-  local checks; GitHub CodeQL default setup, Private Vulnerability Reporting,
-  historical Actions review, and a dedicated security contact remain explicit
+  local checks through a repository-owned macOS/Linux/Windows bootstrap that
+  downloads the exact Gitleaks release, verifies its published SHA-256, and
+  reuses a tamper-checked user cache without modifying Homebrew or `PATH`.
+  Evidence-report Markdown now applies the same default performance sort as the
+  standalone ECM and labels that order explicitly. Report-only resume starts a
+  fresh command clock, so regenerating an older run no longer displays the
+  run's historical age as current command elapsed time. Qualification
+  lifecycle projection preserves append order even when the operating-system
+  clock gives consecutive events the same timestamp, so a later revocation or
+  other terminal event cannot be projected before issuance. Generated
+  remediation plans now emit the executable `aies qualify --resume RUN_ID`
+  reassessment command instead of the nonexistent `aies resume` spelling.
+  ECM task rows now expose their titled CA competency evidence source and
+  render breadth as distinct evidence against a minimum target (for example,
+  `57 distinct; target ≥30`) instead of a misleading fraction. The canonical
+  cross-platform security entry point is now `aies security`; Make remains an
+  optional alias and Homebrew is never required.
+  GitHub CodeQL default setup, Private Vulnerability Reporting, historical
+  Actions review, and a dedicated security contact remain explicit
   public-release gates rather than being inferred from tracked files.
 - **Public-preview release control plane**: the canonical maturity backlog now
   separates public visibility, effective open-source permission, the v0.5

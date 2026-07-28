@@ -116,9 +116,9 @@ def test_security_workflow_scans_history_and_retains_redacted_evidence():
     assert f"actions/checkout@{CHECKOUT_SHA} # v4" in text
     assert f"actions/setup-python@{SETUP_PYTHON_SHA} # v5" in text
     assert f"actions/upload-artifact@{UPLOAD_ARTIFACT_SHA} # v4" in text
-    assert 'GITLEAKS_VERSION: "8.30.1"' in text
-    assert '--log-opts="--all"' in text
-    assert "--redact=100" in text
+    assert text.count("scripts/run_security_checks.py") == 2
+    assert "--history-only" in text
+    assert "--python-only" in text
     assert "ruff==0.15.22" in text
     assert "pip-audit==2.10.1" in text
     assert "ruff-security.sarif" in text

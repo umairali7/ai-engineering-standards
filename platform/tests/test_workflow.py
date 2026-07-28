@@ -235,8 +235,11 @@ def test_full_cycle_to_grant_and_env_invalidation(ws, tmp_path):
     assert qualification.get_record(record["record_id"])["status"] == "invalidated"
 
 
-def test_deny_and_revoke(ws, tmp_path):
+def test_deny_and_revoke(ws, tmp_path, monkeypatch):
     from aies import engine, qualification
+    monkeypatch.setattr(
+        qualification, "_now", lambda: "2026-07-27T10:36:03.511125+00:00")
+    monkeypatch.setattr(qualification.time, "time_ns", lambda: 1)
     _register(tmp_path)
     run = engine.start_qualification("demo", "research", "RT2", ["CA-05"], repeats=1)
     _score(run["run_id"], "Human", "human", 3)

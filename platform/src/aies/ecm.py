@@ -364,6 +364,7 @@ def engineering_capability_matrix(ref: str) -> dict:
     task_grouped: dict[str, dict] = defaultdict(lambda: {
         "scenario_ids": set(), "response_records": set(), "scores": [],
         "admitted_scores": [], "raters": set(), "rater_kinds": set(), "areas": set(),
+        "scenarios_by_area": defaultdict(set),
         "mapping_rules": {}, "instrument_maturity": {},
         "all_items": {}, "decision_items": {}, "critical_observations": {},
     })
@@ -407,6 +408,7 @@ def engineering_capability_matrix(ref: str) -> dict:
                 task["scenario_ids"].add(scenario_id)
                 task["response_records"].add(response_name)
                 task["areas"].add(area)
+                task["scenarios_by_area"][area].add(scenario_id)
                 rule_key = f"{rule['area']}:{rule.get('family', '*')}:{task_id}"
                 task["mapping_rules"][rule_key] = {
                     "area": rule["area"], "family": rule.get("family"),
@@ -493,6 +495,7 @@ def engineering_capability_matrix(ref: str) -> dict:
             }
             tasks.append({"task_id": task_id, "task": task_name, "scenario_ids": [],
                           "areas": [], "distinct_scenarios": 0, "distinct_responses": 0,
+                          "source_competencies": [],
                           "rating_observations": 0, "minimum_observations": None,
                           "admitted_rating_observations": 0, "observed_performance": None,
                           "coverage_percent": None,
@@ -554,6 +557,12 @@ def engineering_capability_matrix(ref: str) -> dict:
             scenario_breadth)
         tasks.append({"task_id": task_id, "task": task_name,
                       "scenario_ids": sorted(data["scenario_ids"]), "areas": sorted(data["areas"]),
+                      "source_competencies": [{
+                          "area": area,
+                          "label": C.competency_label(area),
+                          "distinct_scenarios": len(
+                              data["scenarios_by_area"][area]),
+                      } for area in sorted(data["areas"])],
                       "distinct_scenarios": len(data["scenario_ids"]),
                       "distinct_responses": len(data["response_records"]),
                       "rating_observations": n, "minimum_observations": minimum,
@@ -646,25 +655,28 @@ def render_markdown(matrix: dict, *, sort_by: str = "performance",
         "",
         "## Task Capability Profile",
         "",
-        "| Task | Observed performance | Scenario breadth | Evidence assurance | Evidence | Engineering status | Human eval |",
-        "|---|---|---|---|---|---|---|",
+        "| Task | Competency evidence source | Observed performance | Scenario breadth | Evidence assurance | Evidence | Engineering status | Human eval |",
+        "|---|---|---|---|---|---|---|---|",
     ]
     for task in sorted_tasks(matrix, sort_by, descending):
         performance = ("not assessed" if task["observed_performance"] is None
                        else _bar(task["observed_performance"] / 4 * 100)
                             + f" {task['observed_performance'] / 4 * 100:.0f}%")
         lines.append(
-            f"| {task['task_id']} {task['task']} | {performance} | "
+            f"| {task['task_id']} {task['task']} | "
+            f"{_task_source_competencies(task)} | {performance} | "
             f"{_scenario_breadth(task)} | {_assurance_label(task)} | "
             f"{_task_sample(task)} | "
             f"{task.get('engineering_status', 'not assessed')} | "
             f"{_human_evaluation_label(matrix)} |")
     lines.extend([
         "",
-        "Observed performance is the unweighted EV mean. Scenario breadth is "
-        "the share of the task's distinct-scenario target directly exercised by "
-        "scored evidence; exact repeats and additional raters do not increase it. "
-        "Breadth is not reviewer, mapping, calibration, or human assurance.",
+        "Competency evidence source shows the CA area(s) whose scenarios fed "
+        "each ET task row. Observed performance is the unweighted EV mean. "
+        "Scenario breadth compares distinct directly mapped scored scenarios "
+        "with a minimum target; the target is not a maximum, and exact repeats "
+        "or additional raters do not increase breadth. Breadth is not reviewer, "
+        "mapping, calibration, or human assurance.",
         "",
     ])
     if matrix.get("run_purpose") == run_mode.FORMAL_QUALIFICATION:
@@ -768,8 +780,22 @@ def _scenario_breadth(task: dict) -> str:
     if task.get("observed_performance") is None or percent is None:
         return "not assessed"
     minimum = task.get("minimum_observations") or 0
+    observed = task["distinct_scenarios"]
+    shortfall = (
+        f"; {minimum - observed} short"
+        if minimum and observed < minimum else "")
     return (f"{_bar(percent)} {percent:.0f}% "
-            f"({task['distinct_scenarios']}/{minimum} distinct scenarios)")
+            f"({observed} distinct; target ≥{minimum}{shortfall})")
+
+
+def _task_source_competencies(task: dict) -> str:
+    """Show exactly which competency evidence fed one task row."""
+    sources = task.get("source_competencies") or []
+    if not sources:
+        return "none in this run"
+    return "; ".join(
+        f"{source['label']} ({source['distinct_scenarios']} scenarios)"
+        for source in sources)
 
 
 def _task_breadth_percent(task: dict) -> float | None:
@@ -826,6 +852,8 @@ def render_html(matrix: dict, *, sort_by: str = "performance",
     limits = "".join(f"<li>{html.escape(x)}</li>" for x in matrix["limitations"])
     task_rows = "".join(
         "<tr><td>" + html.escape(f"{task['task_id']} {task['task']}") + "</td><td>" +
+        html.escape(_task_source_competencies(task)) +
+        "</td><td>" +
         html.escape("not assessed" if task["observed_performance"] is None else
                     f"{_bar(task['observed_performance'] / 4 * 100)} {task['observed_performance'] / 4 * 100:.0f}%") +
         "</td><td>" + html.escape(_scenario_breadth(task)) +
@@ -876,8 +904,8 @@ def render_html(matrix: dict, *, sort_by: str = "performance",
 <h1>Engineering Capability Matrix (ECM)</h1><p class='notice'>INFORMATIONAL — NOT A QUALIFICATION, GRANT, OR DEPLOYMENT AUTHORIZATION.</p>
 <p><b>Subject:</b> {html.escape(matrix['subject'])}<br><b>Run:</b> {html.escape(matrix['run_id'])}<br><b>Evaluation composition:</b> {html.escape(matrix['evaluation_scope']['label'])}<br><b>Weighting:</b> {html.escape(matrix['profile'])} profile ({html.escape(matrix['evaluation_scope']['profile_role'])})<br><b>Risk scope:</b> {html.escape(C.risk_tier_label(matrix['risk_tier']))}<br><b>Human evaluation:</b> {html.escape(human_label)}</p>
 <p class='summary'><strong>At a glance:</strong> {len(summary['engineering_assessed_tasks'])} assessed and {len(summary['task_not_assessed'])} not assessed task(s). {automated} automated rating observation(s) are usable engineering evidence. Human evaluation is optional.</p>
-<h2>Task Capability Profile</h2><p>Sorted by {html.escape(sort_by)} {"descending" if descending else "ascending"}. Select any column heading to re-sort.</p><table class='sortable'><thead><tr><th>Task</th><th>Observed performance</th><th>Scenario breadth</th><th>Evidence assurance</th><th>Evidence</th><th>Engineering status</th><th>Human eval</th></tr></thead><tbody>{task_rows}</tbody></table>
-<p>Observed performance is an unweighted EV mean. Scenario breadth measures distinct directly mapped scored scenarios against the task target; repeats do not increase it. Breadth is not reviewer, mapping, calibration, or human assurance.</p>
+<h2>Task Capability Profile</h2><p>Sorted by {html.escape(sort_by)} {"descending" if descending else "ascending"}. Select any column heading to re-sort.</p><table class='sortable'><thead><tr><th>Task</th><th>Competency evidence source</th><th>Observed performance</th><th>Scenario breadth</th><th>Evidence assurance</th><th>Evidence</th><th>Engineering status</th><th>Human eval</th></tr></thead><tbody>{task_rows}</tbody></table>
+<p>Competency evidence source shows the CA area(s) whose scenarios fed each ET task row. Observed performance is an unweighted EV mean. Scenario breadth measures distinct directly mapped scored scenarios against a minimum target, not a fraction with a maximum; repeats do not increase it. Breadth is not reviewer, mapping, calibration, or human assurance.</p>
 {"<h2>Formal Qualification Task Decision Detail</h2>" + task_details if task_details else "<h2>Formal Qualification Boundary</h2><p>Formal qualification was <strong>not requested</strong>; human-rater admission and grant readiness are not statuses in this engineering matrix.</p>"}
 <h2>Evidence Summary</h2><ul><li><strong>Automated evaluation observations:</strong> {html.escape(observed)}.</li><li><strong>Direct evidence still needed:</strong> {html.escape(unassessed)}.</li><li><strong>Human evaluation:</strong> {html.escape(human_label)}.</li></ul>
 <h2>Observed improvement signals</h2><p>Lowest observed evidence slices in this run; not failure verdicts.</p><ul>{signal_items}</ul>
@@ -968,7 +996,12 @@ def _improvement_signals(matrix: dict, limit: int = 6) -> dict:
     }
 
 
-def render_capability_summary_markdown(matrix: dict) -> str:
+def render_capability_summary_markdown(
+    matrix: dict,
+    *,
+    sort_by: str = "performance",
+    descending: bool = True,
+) -> str:
     """Render the full engineer-facing section embedded in an evidence report."""
     summary = capability_summary(matrix)
     lines = [
@@ -981,25 +1014,30 @@ def render_capability_summary_markdown(matrix: dict) -> str:
         "",
         "### Task Capability Profile",
         "",
-        "| Task | Observed performance | Scenario breadth | Evidence assurance | Evidence | Engineering status | Human eval |",
-        "|---|---|---|---|---|---|---|",
+        f"Sorted by {sort_by} {'descending' if descending else 'ascending'}.",
+        "",
+        "| Task | Competency evidence source | Observed performance | Scenario breadth | Evidence assurance | Evidence | Engineering status | Human eval |",
+        "|---|---|---|---|---|---|---|---|",
     ]
-    for task in matrix["tasks"]:
+    for task in sorted_tasks(matrix, sort_by, descending):
         performance = ("not assessed" if task["observed_performance"] is None
                        else _bar(task["observed_performance"] / 4 * 100)
                             + f" {task['observed_performance'] / 4 * 100:.0f}%")
         lines.append(
-            f"| {task['task_id']} {task['task']} | {performance} | "
+            f"| {task['task_id']} {task['task']} | "
+            f"{_task_source_competencies(task)} | {performance} | "
             f"{_scenario_breadth(task)} | {_assurance_label(task)} | "
             f"{_task_sample(task)} | "
             f"{task.get('engineering_status', 'not assessed')} | "
             f"{_human_evaluation_label(matrix)} |")
     lines.extend([
         "",
-        "Observed performance is an unweighted EV mean. Scenario breadth "
-        "measures distinct directly mapped scored scenarios against the task "
-        "target; exact repeats do not increase it. Automated scores are usable "
-        "Engineering Evaluation evidence.",
+        "Competency evidence source shows the CA area(s) whose scenarios fed "
+        "each ET task row. Observed performance is an unweighted EV mean. "
+        "Scenario breadth compares distinct directly mapped scored scenarios "
+        "with a minimum target; the target is not a maximum, and exact repeats "
+        "do not increase breadth. Automated scores are usable Engineering "
+        "Evaluation evidence.",
         "",
         "### Evidence by scenario family",
         "",
@@ -1170,6 +1208,8 @@ def render_capability_summary_html(matrix: dict, *, sort_by: str = "performance"
     summary = capability_summary(matrix)
     task_rows = "".join(
         "<tr><td>" + html.escape(f"{task['task_id']} {task['task']}") + "</td><td>" +
+        html.escape(_task_source_competencies(task)) +
+        "</td><td>" +
         html.escape("not assessed" if task["observed_performance"] is None else
                     f"{_bar(task['observed_performance'] / 4 * 100)} {task['observed_performance'] / 4 * 100:.0f}%") +
         "</td><td>" + html.escape(_scenario_breadth(task)) +
@@ -1227,8 +1267,8 @@ def render_capability_summary_html(matrix: dict, *, sort_by: str = "performance"
 <p>Derived solely from the scored scenario evidence in this run. It does not infer capability for tasks that were not assessed.</p>
 <h3>Task Capability Profile</h3>
 <p>Sorted by {html.escape(sort_by)} {"descending" if descending else "ascending"}. Select any column heading to re-sort.</p>
-<table class='sortable'><thead><tr><th>Task</th><th>Observed performance</th><th>Scenario breadth</th><th>Evidence assurance</th><th>Evidence</th><th>Engineering status</th><th>Human eval</th></tr></thead><tbody>{task_rows}</tbody></table>
-<p>Observed performance is an unweighted EV mean. Scenario breadth measures distinct directly mapped scored scenarios against the task target; repeats do not increase it. Breadth is not reviewer, mapping, calibration, or human assurance. Automated scores are usable Engineering Evaluation evidence.</p>
+<table class='sortable'><thead><tr><th>Task</th><th>Competency evidence source</th><th>Observed performance</th><th>Scenario breadth</th><th>Evidence assurance</th><th>Evidence</th><th>Engineering status</th><th>Human eval</th></tr></thead><tbody>{task_rows}</tbody></table>
+<p>Competency evidence source shows the CA area(s) whose scenarios fed each ET task row. Observed performance is an unweighted EV mean. Scenario breadth measures distinct directly mapped scored scenarios against a minimum target, not a fraction with a maximum; repeats do not increase it. Breadth is not reviewer, mapping, calibration, or human assurance. Automated scores are usable Engineering Evaluation evidence.</p>
 <details><summary>Scenario-family evidence and traceability ({len(summary['observed'])} rows)</summary>
 <table class='sortable'><thead><tr><th>Scenario family</th><th>Evidence mean (0–4)</th><th>Distinct scenarios</th><th>Ratings</th><th>Adequacy</th></tr></thead><tbody>{rows}</tbody></table>
 </details>

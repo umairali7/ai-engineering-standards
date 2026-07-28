@@ -770,6 +770,14 @@ aies rater register --id alice --name "Alice Example" \
 aies score <run-id>              # ingest + aggregate + complete report bundle
 ```
 
+This is the current machine-readable workflow. The planned Human EV Review
+Workspace will put the same fields and validation into a token-protected local
+browser page and submit them through the same append-only ingestion path; it
+will improve entry ergonomics without inventing a second scoring protocol.
+Until that interface ships, a browser checkbox or edited report HTML is not
+evidence: only a validated scoresheet ingested by `aies score` creates a human
+rating observation.
+
 An unregistered human may still contribute optional engineering feedback, but
 that observation is explicitly **not admitted** to formal qualification. For
 RT1 — Minimal and RT2 — Moderate, independently double-rate at least 20% of

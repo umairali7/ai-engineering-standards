@@ -95,6 +95,38 @@ def test_full_pipeline_offline(ws, tmp_path):
     assert "fingerprint" in md.lower()
 
 
+def test_report_only_resume_starts_a_fresh_command_clock(
+        ws, tmp_path, monkeypatch):
+    from aies import cli, engine, rating, workspace
+
+    _register(tmp_path)
+    manifest = engine.start_qualification(
+        "demo-model-q4", "coder", "RT1", ["CA-05"], repeats=1)
+    run_id = manifest["run_id"]
+    run_dir = workspace.run_dir(run_id)
+    sheet = json.loads(
+        (run_dir / "scoresheet.json").read_text(encoding="utf-8"))
+    sheet["rater"] = {"name": "Test Rater", "kind": "human"}
+    for item in sheet["items"]:
+        item["scores"] = {
+            f"EV{index}": 3 for index in range(1, 7)}
+    rating.ingest_scores(run_id, sheet)
+    engine.aggregate(run_id)
+    stale = json.loads(
+        (run_dir / "progress.json").read_text(encoding="utf-8"))
+    stale["started_epoch"] = 1.0
+    workspace.write_json(
+        run_dir / "progress.json", stale, overwrite=True)
+    monkeypatch.setenv("AIES_JUDGE", "")
+
+    assert cli.main(["qualify", "--resume", run_id, "--json"]) == 0
+
+    refreshed = json.loads(
+        (run_dir / "progress.json").read_text(encoding="utf-8"))
+    assert refreshed["stage"] == "report-generation"
+    assert refreshed["total_elapsed_seconds"] < 60
+
+
 def test_unscored_sheet_rejected(ws, tmp_path):
     from aies import engine, rating, workspace
     _register(tmp_path)

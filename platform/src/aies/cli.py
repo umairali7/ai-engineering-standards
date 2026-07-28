@@ -990,6 +990,7 @@ def cmd_qualify(args) -> int:
                 _write_review_package(args.resume, review_pkg)
             from . import progress
             progress.update(args.resume, "aggregation", 0, 1,
+                            reset_operation=scoring is None,
                             callback=live_progress)
             package = engine.aggregate(args.resume)
             progress.update(args.resume, "aggregation", 1, 1, status="completed",
@@ -1694,6 +1695,22 @@ def cmd_audit(args) -> int:
         g = result.get("gate") or {}
         return 0 if g.get("passed") else 1
     return 0
+
+
+def cmd_security(args) -> int:
+    """Run the canonical cross-platform repository security checks."""
+    from . import security_checks
+
+    argv = ["--repo", str(args.repo)]
+    if args.evidence_dir:
+        argv.extend(["--evidence-dir", str(args.evidence_dir)])
+    if args.tool_cache:
+        argv.extend(["--tool-cache", str(args.tool_cache)])
+    if args.history_only:
+        argv.append("--history-only")
+    if args.python_only:
+        argv.append("--python-only")
+    return security_checks.main(argv)
 
 
 def cmd_ci(args) -> int:
@@ -3838,6 +3855,27 @@ def build_parser() -> argparse.ArgumentParser:
         help="write an immutable Markdown, JSON, HTML, and bundle-index report")
     au.set_defaults(func=lambda a: (setattr(a, "rt", a.rt or (2 if a.gate else None)),
                                     cmd_audit(a))[1])
+
+    sec = sub.add_parser(
+        "security",
+        help="run cross-platform secret-history, Python SAST, and dependency checks")
+    sec.add_argument(
+        "repo", nargs="?", default=".",
+        help="repository root or a path inside it (default: current directory)")
+    sec.add_argument(
+        "--evidence-dir", default=None, metavar="DIRECTORY",
+        help="machine-readable evidence directory (default: OS temporary directory)")
+    sec.add_argument(
+        "--tool-cache", default=None, metavar="DIRECTORY",
+        help="override the checksum-verified user-local tool cache")
+    sec_mode = sec.add_mutually_exclusive_group()
+    sec_mode.add_argument(
+        "--history-only", action="store_true",
+        help="run only the full-history secret scan")
+    sec_mode.add_argument(
+        "--python-only", action="store_true",
+        help="run only Python security rules and dependency auditing")
+    sec.set_defaults(func=cmd_security)
 
     ci = common(sub.add_parser(
         "ci", help="CI evidence integrations; advisory unless enforcement is explicit"))

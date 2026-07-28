@@ -190,9 +190,9 @@ def test_blind_spots_generate_stable_unassigned_reassessment_actions():
             assessment_profiles.get_profile("SAP-01"), subject,
             {"kind": "fixture", "id": "actions"}))
     first = remediation.build(
-        matrix, reassessment_command="aies resume run-fixture")
+        matrix, reassessment_command="aies qualify --resume run-fixture")
     second = remediation.build(
-        matrix, reassessment_command="aies resume run-fixture")
+        matrix, reassessment_command="aies qualify --resume run-fixture")
     assert [item["id"] for item in first["actions"]] == [
         item["id"] for item in second["actions"]]
     assert first["summary"]["actions"] == len(matrix["blind_spots"])
@@ -203,7 +203,8 @@ def test_blind_spots_generate_stable_unassigned_reassessment_actions():
     assert all(
         item["workflow"]["status"] == "open"
         and item["closure"]["status"] == "not-evaluated"
-        and item["reassessment"]["command"] == "aies resume run-fixture"
+        and item["reassessment"]["command"]
+        == "aies qualify --resume run-fixture"
         for item in first["actions"])
     assert "does not assign an owner" in first["claim_boundary"]
 
@@ -253,7 +254,7 @@ def test_remediation_dispositions_are_append_only_and_evidence_bounded(
             assessment_profiles.get_profile("SAP-01"), subject,
             {"kind": "run", "id": "run-fixture"}))
     plan = remediation.build(
-        matrix, reassessment_command="aies resume run-fixture")
+        matrix, reassessment_command="aies qualify --resume run-fixture")
     action_id = plan["actions"][0]["id"]
     with pytest.raises(remediation.RemediationError):
         remediation.record_disposition(
@@ -265,7 +266,7 @@ def test_remediation_dispositions_are_append_only_and_evidence_bounded(
     assert event["schema"] == "aies-remediation-disposition/v1"
     assert len(remediation.history("run-fixture")) == 1
     merged = remediation.build(
-        matrix, reassessment_command="aies resume run-fixture")
+        matrix, reassessment_command="aies qualify --resume run-fixture")
     action = next(
         item for item in merged["actions"] if item["id"] == action_id)
     assert action["workflow"]["status"] == "in-progress"
@@ -290,7 +291,7 @@ def test_stale_disposition_never_fills_or_creates_a_current_action(
             assessment_profiles.get_profile("SAP-01"), subject,
             {"kind": "run", "id": "run-fixture"}))
     plan = remediation.build(
-        matrix, reassessment_command="aies resume run-fixture")
+        matrix, reassessment_command="aies qualify --resume run-fixture")
     assert not any(
         action["id"] == "ACT-000000000000" for action in plan["actions"])
     assert plan["ignored_dispositions"][0]["reason"].startswith(

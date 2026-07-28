@@ -46,6 +46,11 @@ def test_ecm_groups_existing_families_and_labels_small_samples(tmp_path, monkeyp
     assert code_generation["evidence_assurance"]["status"] == "provisional"
     assert code_generation["engineering_status"].startswith("observed")
     assert code_generation["qualification_status"] == "observed"
+    assert code_generation["source_competencies"] == [{
+        "area": "CA-05",
+        "label": "CA-05 — AI-Assisted Implementation",
+        "distinct_scenarios": code_generation["distinct_scenarios"],
+    }]
     assert code_generation["task_decision"]["mapping_review_satisfied"] is False
     assert any(task["status"] == "not assessed" for task in matrix["tasks"])
     assert matrix["rows"]
@@ -54,6 +59,9 @@ def test_ecm_groups_existing_families_and_labels_small_samples(tmp_path, monkeyp
     assert all(row["scenario_ids"] for row in matrix["rows"])
     assert "NOT A QUALIFICATION" in ecm.render_markdown(matrix)
     assert "ET-04 Code Generation" in ecm.render_markdown(matrix)
+    assert "Competency evidence source" in ecm.render_markdown(matrix)
+    assert "CA-05 — AI-Assisted Implementation" in ecm.render_markdown(matrix)
+    assert "distinct; target ≥" in ecm.render_markdown(matrix)
 
 
 def test_ecm_writer_emits_json_markdown_and_html(tmp_path, monkeypatch):
@@ -77,11 +85,25 @@ def test_ecm_writer_emits_json_markdown_and_html(tmp_path, monkeypatch):
         assert marker in path.read_text(encoding="utf-8")
     html = ecm.render_html(matrix)
     assert "Scenario breadth" in html
+    assert "Competency evidence source" in html
     assert "Evidence assurance" in html
     assert "Observed improvement signals" in html
     assert "Engineering status" in html
     assert "Scenario-family evidence and traceability" in html
     assert "Task Capability Profile" in ecm.render_capability_summary_html(matrix)
+    summary_markdown = ecm.render_capability_summary_markdown(matrix)
+    assert "Sorted by performance descending." in summary_markdown
+    task_rows = [
+        line for line in summary_markdown.splitlines()
+        if line.startswith("| ET-")
+    ]
+    assert task_rows
+    observed_ids = [
+        task["task_id"] for task in ecm.sorted_tasks(
+            matrix, "performance", descending=True)
+        if task["observed_performance"] is not None
+    ]
+    assert task_rows[0].startswith(f"| {observed_ids[0]} ")
     assert "table class='sortable'" in html
     assert "Sort by this column" in html
 

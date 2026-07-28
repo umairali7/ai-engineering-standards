@@ -337,7 +337,7 @@ def for_reference(reference: str) -> dict:
             reassessment_command=f'aies audit "{repository_argument}"')
     matrix = assessment_coverage.for_run(reference)
     return build(
-        matrix, reassessment_command=f"aies resume {reference}")
+        matrix, reassessment_command=f"aies qualify --resume {reference}")
 
 
 def _events_dir(reference: str):

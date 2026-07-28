@@ -84,12 +84,20 @@ pull request and on a weekly schedule:
   are safe; reproducible lock and release provenance remain release work.
 
 The workflow uploads redacted Gitleaks JSON, SARIF static-analysis output,
-dependency-audit JSON, and tool/version/source metadata. Contributors can run
-the equivalent checks with `make security` after installing the pinned tools.
-GitHub CodeQL default setup and Private Vulnerability Reporting are repository
-settings: both remain external release-readiness controls until a repository
-administrator enables and tests them. Security automation finds evidence; it
-does not certify that the project is secure.
+dependency-audit JSON, and tool/version/source metadata. Contributors run the
+equivalent checks with `aies security`; the repository-owned runner downloads
+the exact Gitleaks archive for macOS, Linux, or Windows, verifies the published
+SHA-256, and reuses a tamper-checked user-local cache. It does not install or
+modify Homebrew, system packages, or `PATH`. The Python security extra supplies
+the pinned Ruff and pip-audit commands plus native operating-system certificate
+store support for the verified download. GitHub CodeQL default setup and
+Private Vulnerability Reporting are repository settings: both remain external
+release-readiness controls until a repository administrator enables and tests
+them. Security automation finds evidence; it does not certify that the project
+is secure.
+
+`make security` is only a compatibility alias for contributors who already use
+Make. It is not required on any supported operating system.
 
 ## Related Documents
 

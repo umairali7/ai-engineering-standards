@@ -961,7 +961,7 @@ def write_run_artifacts(run_id: str, matrix: dict | None = None) -> dict[str, st
     matrix = matrix or for_run(run_id)
     rdir = workspace.run_dir(run_id)
     plan = remediation.build(
-        matrix, reassessment_command=f"aies resume {run_id}")
+        matrix, reassessment_command=f"aies qualify --resume {run_id}")
     paths = {
         "coverage_markdown": rdir / "assessment-coverage.md",
         "coverage_json": rdir / "assessment-coverage.json",
