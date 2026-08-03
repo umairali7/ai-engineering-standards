@@ -21,6 +21,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   authoritative roadmap now distinguish delivered reference/platform cores,
   the public development preview, remaining empirical and independent-pilot
   validation, and the separate v0.5 approval plus signed v1.0 release gates.
+  Ecosystem positioning now treats established evaluation frameworks,
+  benchmarks, scanners, and human review as specialized evidence producers;
+  AIES owns the versioned evidence-to-engineering-decision layer without
+  overstating its current experimental bridge coverage.
 
 - **Evidence-backed README walkthrough**: a compact animated proof now follows
   deployment discovery, built-in workflow help, the actual CLI evaluation,
