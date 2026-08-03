@@ -24,7 +24,7 @@ Ordinary content defects (wrong facts, unclear requirements, broken links) are *
 ## 2. How to Report
 
 - **Preferred:** GitHub **Private Vulnerability Reporting** on this repository ("Report a vulnerability" under the Security tab).
-- **Fallback:** email the security contact listed in the repository description. *(Placeholder — a dedicated security contact address will be published before the v0.4 review cycle.)*
+- **Fallback:** email `umair.013@gmail.com`.
 
 Do not disclose the issue publicly, and do not open a public issue or PR that reveals it, until the maintainers confirm remediation or the coordinated disclosure window (§4) elapses.
 
