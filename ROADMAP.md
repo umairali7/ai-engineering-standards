@@ -27,9 +27,14 @@ foundations before implementation and public release.
 | 4 | AEOS — Operating System | 🔍 Content complete; independent approval reviews pending |
 | 5 | AEAR — Architecture Reference | 🔍 Content complete; independent approval reviews pending |
 | 6 | AECT — Certification & Training | 🔍 Content complete; independent approval reviews pending |
-| 7 | Reference Implementations | 🚧 Started — platform/conformance references landed; reproducible public pilots outstanding |
-| 8 | Engineering Assessment Platform | ✅ M1–M4 delivered; 🚧 hardening and subject expansion |
-| 9 | v1.0 Public Release | ⏳ Planned |
+| 7 | Reference Implementations | 🟡 Core platform, conformance, and demo references delivered; independently reproducible public pilot artifacts pending |
+| 8 | Engineering Assessment Platform | 🟡 Public development preview — M1–M4 delivered; empirical validation, independent pilots, hardening, and additional subject executors pending |
+| 9 | v1.0 Standards Release | 🚧 Release preparation active — public source preview and open licensing delivered; v0.5 comment/approval cycle and signed v1.0 release pending |
+
+The repository is already public as a development preview for testing,
+contribution, and external review. Phase 9 tracks the separate, versioned v1.0
+standards release, which still requires the independent-review, public-comment,
+ratification, reproducibility, and immutable-release evidence defined below.
 
 ---
 
@@ -119,9 +124,10 @@ Entry criteria: AEBOK and AESQS content-complete (curriculum derives from both).
 
 ## Phase 7 — Reference Implementations
 
-**Status: 🚧 Started — reframed to consume the Engineering Assessment Platform
-(Phase 8); platform/conformance references are delivered and reproducible
-public pilot artifacts remain outstanding**
+**Status: 🟡 Core reference paths delivered — the Engineering Assessment
+Platform, conformance engine, offline demonstrations, and example contracts are
+available; independently reproduced public pilot artifacts and surrounding
+operating-model implementations remain outstanding**
 
 Phase 7 no longer builds evaluation tooling of its own: it produces reference *artifacts* by running the Phase 8 platform, plus reference implementations of the surrounding operating model.
 
@@ -135,8 +141,9 @@ Entry criteria: platform milestone M1 shipped ([PLATFORM.md §10](docs/PLATFORM.
 
 ## Phase 8 — Engineering Assessment Platform
 
-**Status: ✅ Core M1–M4 delivered; 🚧 hardening, independent pilots, and
-subject-adapter expansion remain (per
+**Status: 🟡 Public development preview — core M1–M4 delivered; empirical
+validation, independent pilots, performance/release hardening, and additional
+subject executors remain (per
 [ADR-0009](adr/ADR-0009-Engineering-Assessment-Platform-Identity.md))**
 
 The `aies` command-line platform is the executable reference implementation of
@@ -202,17 +209,28 @@ The single authoritative implementation and cleanup backlog is
 Detailed work-item status is maintained there rather than duplicated in this
 milestone roadmap.
 
-## Phase 9 — v1.0 Public Release
+## Phase 9 — v1.0 Standards Release
 
-**Status: ⏳ Planned**
+**Status: 🚧 Release preparation active — the source repository is public for
+development and review, and path-based open licensing is complete; the v0.5
+public-comment/approval cycle and signed v1.0 release remain open**
 
 Deliverables:
 
-- All five modules and Shared Standards at Approved status
-- Public comment period completed and dispositions published for every comment
-- License finalized (see [README — License](README.md#license)); stable citation scheme; versioned publication of the standard
+- ✅ Public development repository, contribution path, security-reporting
+  policy, and path-based CC BY-SA 4.0 / Apache 2.0 licensing
+- 🚧 All five modules, Shared Standards, and release-governance foundations at
+  Approved status after independent non-author review and finding disposition
+- ⏳ v0.5 public comment completed with a published disposition for every
+  substantiated comment
+- ⏳ Citation-stable, signed, immutable v1.0 tag and release artifacts with
+  hashes, provenance, errata process, and announced maintenance cadence
 
-Entry criteria: Phases 2–6 exited; public comment (v0.5) closed with all substantiated objections resolved per [GOVERNANCE §4](GOVERNANCE.md#4-consensus-process). Exit criteria: v1.0 tagged; errata process live; maintenance cadence announced.
+Formal release entry criteria: Phases 2–6 exited; public comment (v0.5) closed
+with all substantiated objections resolved per
+[GOVERNANCE §4](GOVERNANCE.md#4-consensus-process). Exit criteria: independently
+verifiable v1.0 artifacts published and tagged; errata process live;
+maintenance cadence announced.
 
 ---
 
