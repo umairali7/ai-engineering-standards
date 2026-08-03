@@ -48,9 +48,9 @@ third is a shared, reproducible case study or contribution.
 
 Each asset must show real generated output and pass claim review:
 
-- GitHub social preview: `docs/assets/aies-social-preview.png` now visualizes
-  evidence → ECM → assurance → decision; repository settings still need to
-  select it as the social image.
+- GitHub social preview: `docs/assets/aies-social-preview.png` visualizes
+  evidence → ECM → assurance → decision; the optimized 1280×640 derivative is
+  active in repository settings.
 - Root README: problem, 60-second command, expected output, honest maturity,
   supported scope, primary CTA, persona paths, help/contribution links.
 - A 31-second README GIF at `docs/assets/aies-workflow-demo.gif` now shows the

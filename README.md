@@ -1,69 +1,78 @@
 # AI Engineering Standards (AIES)
 
-> **Evidence-Backed Engineering Evaluation as Code — turn AI engineering behavior into proof you can inspect, compare, and act on.**
+> **Evidence-backed Engineering Evaluation as Code. See what an AI engineering
+> system can actually do, how much evidence supports it, and where the unknowns
+> remain.**
 
-![Status](https://img.shields.io/badge/Status-Active%20Development-blue)
+[![Platform CI](https://github.com/umairali7/ai-engineering-standards/actions/workflows/platform-ci.yml/badge.svg)](https://github.com/umairali7/ai-engineering-standards/actions/workflows/platform-ci.yml)
+[![Security evidence](https://github.com/umairali7/ai-engineering-standards/actions/workflows/security.yml/badge.svg)](https://github.com/umairali7/ai-engineering-standards/actions/workflows/security.yml)
+![Status](https://img.shields.io/badge/Status-Public%20Development%20Preview-0969da)
 ![License](https://img.shields.io/badge/License-CC%20BY--SA%204.0%20%7C%20Apache%202.0-2ea44f)
+![Python](https://img.shields.io/badge/Python-3.10--3.14-3776ab)
 ![Contributions](https://img.shields.io/badge/Contributions-Welcome-brightgreen)
 
 ![AIES — Evidence to capability to engineering decisions](docs/assets/aies-social-preview.png)
 
-AIES defines **Engineering Evaluation as Code**: versioned assessment scope,
-subject descriptors, frozen instruments, evidence, scoring semantics,
-traceability, and decision products that can be reviewed and executed through
-the CLI, CI, or API. The result is reproducible engineering evidence rather
-than an opaque benchmark score. The term does not mean every judgment is
-automated: human evaluation is optional for engineering analysis, while formal
-qualification and consequential grants remain explicitly human-governed.
+**A leaderboard can tell you who won its benchmark. It cannot tell you whether
+a model should design your API, refactor a payment path, review a security
+boundary, or operate inside your repository.**
 
-Models, coding assistants, agents, and engineering platforms are often chosen
-from anecdotes or one opaque benchmark number. AIES produces a traceable
-Engineering Capability Matrix (ECM): what the assessed subject did well, where
-the evidence is thin, what was not assessed, and where engineering review is
-appropriate.
+AIES turns versioned engineering scenarios and repository evidence into a
+traceable **Engineering Capability Matrix (ECM)**: demonstrated strengths,
+weaker areas, evidence breadth, assurance gaps, and tasks that were not
+assessed. No mystery aggregate. No invented confidence. No universal “best
+model” claim.
 
-### One repository. Two reinforcing layers.
+**[Try it offline](#try-the-complete-product-offline)** ·
+**[Choose a workflow](#choose-your-first-workflow)** ·
+**[See the difference](#why-this-is-different)** ·
+**[Read the standards](GETTING_STARTED.md)** ·
+**[Help build it](CONTRIBUTING.md)**
 
-| Open standard | Open-source platform |
+## What you get
+
+| Evidence product | The decision it helps you make |
 |---|---|
-| Defines the vocabulary, engineering practices, evidence requirements, evaluation dimensions, task taxonomy, governance, and operating boundaries | Compiles those definitions into frozen assessment instruments, collects evidence, scores it, traces it, and produces decision-ready reports |
-| **CC BY-SA 4.0** — adaptations stay attributable and open | **Apache 2.0** — conventional enterprise-friendly software terms with an explicit patent grant |
+| **Engineering Capability Matrix** | What did this subject demonstrate across architecture, APIs, code, testing, security, performance, operations, and other engineering tasks? |
+| **Engineering Fit Guidance** | Where is the subject a reasonable fit, where should review be used, and where is the evidence insufficient? |
+| **Compatible comparison** | Which differences between 2–5 runs are supported by equivalent evidence—and which comparisons would be misleading? |
+| **Repository assessment** | What does the repository demonstrate about architecture, correctness assurance, quality, testing, security, dependencies, operations, governance, and improvement? |
+| **Coverage and remediation** | Which evidence is missing, conflicted, stale, or shallow, and what verifiable action would close the gap? |
+| **Optional formal qualification** | Does a separately invoked, human-governed process satisfy a defined risk-scoped protocol? |
 
-The standard says what trustworthy AI engineering should look like. The
-platform makes those expectations executable. Real assessment findings then
-expose weak instruments, missing evidence, and standards gaps—so the written
-standard and its implementation improve together instead of drifting apart.
+## Try the complete product offline
 
-### See it work in 60 seconds — entirely offline
+No model server. No API key. No Make. No Bash. The demo executes the real
+collection, scoring, analysis, ECM, Engineering Fit, and linked HTML-report
+pipeline with deterministic local fixtures.
 
-![AIES deployment discovery, built-in help, CLI evaluation, Engineering Capability Matrix, repository audit, comparison, and linked report walkthrough](docs/assets/aies-workflow-demo.gif)
-
-The walkthrough starts with deployment discovery and the built-in `aies help`
-workflow guide, then uses a retained 147-scenario Qwen3-Coder-Next assessment
-and a fresh AIES repository self-audit. The model scores are informational
-because the automated reviewer was advisory; human evaluation was optional and
-not completed, and no formal qualification is claimed. The animation embeds no
-raw prompts, responses, endpoints, machine identifiers, or environment
-fingerprints.
+**Windows PowerShell**
 
 ```powershell
-cd platform
+git clone https://github.com/umairali7/ai-engineering-standards.git
+cd ai-engineering-standards\platform
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -e .
 aies demo --open
 ```
 
-On macOS or Linux, use `python3 -m venv .venv`, then
-`source .venv/bin/activate` before the same install and demo commands. AIES
-never requires `--break-system-packages`. Existing isolated-tool users may
-instead run `pipx install ./platform` or `uv tool install ./platform` from the
-repository root.
+**macOS or Linux**
 
-No model server. No API key. No Make or Bash. No mandatory human-review loop.
-The command executes the real collection, batched scoring, analysis, ECM,
-Engineering Fit, and linked HTML report pipeline using deterministic mock
-deployments.
+```bash
+git clone https://github.com/umairali7/ai-engineering-standards.git
+cd ai-engineering-standards/platform
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e .
+aies demo --open
+```
+
+Prefer an isolated tool install? From the repository root, use
+`pipx install ./platform` or `uv tool install ./platform`, then run
+`aies demo --open`.
+
+Expected terminal snapshot:
 
 ```text
 AIES  EVIDENCE → CAPABILITY → ASSURANCE → ENGINEERING DECISIONS
@@ -76,10 +85,75 @@ ET-07 — Testing              2/20      █████████░ 90%     
 Coverage: assessed tasks are observed; unassessed tasks remain unknown, not zero.
 ```
 
-That separation matters: AIES does not relabel scenario count as confidence.
-It reports observed performance, direct scenario breadth, and evidence
-assurance—including reviewer calibration, mapping review, instrument maturity,
-and optional human evaluation—as different facts.
+The demo takes the shortest path through the product. It does not claim that
+eight fixtures qualify a model. It shows exactly how AIES preserves the
+difference between observed performance, direct scenario breadth, reviewer
+assurance, and optional human evaluation.
+
+## Choose your first workflow
+
+| I want to… | Start here | What I receive |
+|---|---|---|
+| **See the idea** | `aies demo --open` | A complete local report bundle and interactive HTML summary |
+| **Evaluate an AI deployment** | `aies evaluate DEPLOYMENT --judge REVIEWER` | Evidence, ECM, fit guidance, diagnostics, coverage, and reports |
+| **Audit a repository** | `aies audit . --out aies-repository-report` | Architecture, quality, correctness-assurance, testing, security, dependency, governance, and remediation views |
+| **Continuously assess a repository in CI** | `aies ci audit . --rt 2 --out aies-ci` | Retained JSON/Markdown evidence and annotations, advisory by default |
+| **Compare runs** | `aies compare RUN_A RUN_B --sort spread --out comparison` | Compatibility-gated Markdown, JSON, and sortable HTML comparison |
+| **Inspect before spending time** | `aies evaluate DEPLOYMENT --plan-only` | Exact scope, candidate/judge call plan, limitations, and execution path |
+| **Contribute** | Read [CONTRIBUTING.md](CONTRIBUTING.md) | Bounded work on an instrument, adapter, standard, report, test, or explanation |
+
+## Why this is different
+
+| Common evaluation shortcut | AIES behavior |
+|---|---|
+| One aggregate score | Task-level capability, breadth, assurance, and limitations remain separate |
+| Repeating one prompt to inflate sample size | Distinct scenarios measure breadth; repeats are identified as stability evidence |
+| Candidate sees the answer rubric | Candidate receives only the task; reviewers receive the frozen instrument after evidence exists |
+| Undocumented model-as-judge | Reviewer identity, protocol, evidence, rubric, and calibration status remain visible |
+| Unassessed becomes zero | Unassessed remains **unknown** |
+| Compare everything and name a winner | Compare only evidence-compatible runs; expose incompatibility instead of inventing a winner |
+| Generated code is the whole story | Assess the subject **and** audit the engineering repository that accepts its work |
+| Automated score silently becomes authority | Engineering evaluation is informational; formal qualification and consequential decisions are explicit and human-governed |
+
+### Put engineering evidence in the pipeline
+
+The same repository assessment can run in GitHub Actions, GitLab CI, Azure
+Pipelines, Jenkins, or another runner that can invoke the CLI:
+
+```bash
+aies ci audit . --rt 2 --out aies-ci
+```
+
+It writes machine-readable JSON, a human-readable report, and portable
+annotations without making missing evidence an implicit merge blocker. Start
+advisory, review results from representative changes, then enable enforcement
+only through an approved policy. GitHub users can call the pinned reusable
+[`aies-advisory.yml`](.github/workflows/aies-advisory.yml); the complete,
+reproducible setup and opt-in `enforce: true` example are in the
+[CI integration guide](platform/CI_INTEGRATION.md).
+
+## One repository, two reinforcing layers
+
+| Open standard | Open-source platform |
+|---|---|
+| Defines the vocabulary, practices, evidence requirements, evaluation dimensions, task taxonomy, governance, and operating boundaries | Compiles those definitions into frozen instruments, collects and scores evidence, traces every result, and renders decision products |
+| **CC BY-SA 4.0** — adaptations remain attributable and open | **Apache 2.0** — conventional software terms with an explicit patent grant |
+
+The standard says what trustworthy AI engineering should look like. The
+platform makes those expectations executable. Real assessments then reveal
+weak instruments, missing evidence, and standards gaps, creating a feedback
+loop between the written standard and the software that exercises it.
+
+## See it work in 60 seconds
+
+![AIES deployment discovery, built-in help, CLI evaluation, Engineering Capability Matrix, repository audit, comparison, and linked report walkthrough](docs/assets/aies-workflow-demo.gif)
+
+The walkthrough uses a retained 147-scenario Qwen3-Coder-Next assessment and a
+fresh AIES repository self-audit. The scores are informational because the
+automated reviewer was advisory; human evaluation was optional and not
+completed, and no formal qualification is claimed. The animation contains no
+raw prompts, responses, endpoints, machine identifiers, or environment
+fingerprints.
 
 ## Why AIES Had to Exist
 
@@ -150,7 +224,11 @@ AIES exists to make that trust testable.
 [help build it](CONTRIBUTING.md) ·
 [share first-run or report feedback](https://github.com/umairali7/ai-engineering-standards/issues/new/choose)
 
-### What can you use today?
+<details>
+<summary><strong>Explore the complete command and artifact map</strong></summary>
+
+The first-workflow table above is enough to begin. This reference expands the
+rest of the implemented CLI surface and the artifact produced by each path.
 
 | You want to… | Start with | You receive |
 |---|---|---|
@@ -174,6 +252,8 @@ AIES exists to make that trust testable.
 | Integrate an evaluation tool | `aies bridge inspect-import …` | Source-bound imported ratings and an explicit loss report |
 | Integrate static analysis | `aies bridge sarif-import …` | Preserved SARIF findings that remain distinct from correctness claims |
 | Apply formal governance | `--formal-qualification` | A separate human-governed qualification path |
+
+</details>
 
 Repository paths are exact scopes. If `aies audit .` is run from a
 subdirectory of a Git repository, AIES identifies the enclosing Git root,
@@ -228,54 +308,30 @@ source tree answered a model prompt.
 
 ---
 
-## Vision
+## The ambition
 
-Artificial Intelligence is fundamentally changing software engineering.
+AI is changing every phase of software engineering, but teams still lack a
+shared, vendor-neutral way to describe trustworthy AI participation, evaluate
+engineering behavior, and connect evidence to operating decisions.
 
-Organizations are rapidly adopting AI assistants, coding agents, autonomous workflows, and AI-native engineering platforms. Despite this transformation, there is no comprehensive, vendor-neutral engineering standard defining how AI should participate across the complete Software Development Life Cycle (SDLC).
+AIES is building that common engineering layer across the SDLC:
 
-The **AI Engineering Standards (AIES)** project exists to establish that
-standard: a practical, engineering-first framework that enables organizations
-to build, evaluate, compare, govern, certify, and operate trustworthy
-AI-native software engineering systems at enterprise scale.
+- a shared vocabulary and task taxonomy;
+- versioned assessment instruments and evidence contracts;
+- engineering capability, fit, comparison, and remediation products;
+- repository practices for architecture, quality, security, operations, and
+  governance;
+- explicit boundaries between assistance, evaluation, formal qualification,
+  and organizational authority.
 
-AIES is not confined to evaluating models. Its canonical evidence architecture
-is subject-neutral. The current reference implementation assesses **AI
-deployments** and **software repositories**. The same contracts are intended to
-support dedicated assessment adapters for AI agents, agent swarms, MCP servers,
-AI coding assistants, prompt libraries, RAG systems, AI pipelines, AI
-platforms, and composite systems as those adapters are implemented and
-validated.
+The implemented platform currently evaluates **AI deployments** and assesses
+**software repositories**. Subject-neutral contracts exist for future agents,
+MCP servers, RAG systems, pipelines, coding assistants, platforms, services,
+and composite systems, but those subjects are not advertised as supported
+until dedicated executors and instruments are implemented and validated.
 
-See the full [Vision](docs/VISION.md) and [Project Charter](docs/PROJECT_CHARTER.md).
-
-## Mission
-
-Build the world's most comprehensive **vendor-neutral engineering standard for AI Engineering** — the equivalent for this discipline of what these standards are for theirs:
-
-| Discipline | Industry Standard |
-|------------|-------------------|
-| Project Management | PMBOK |
-| Business Analysis | BABOK |
-| Enterprise Architecture | TOGAF |
-| Application Security | OWASP ASVS |
-| Software Testing | ISTQB |
-| **AI Engineering** | **AIES** |
-
-## Why This Project Exists
-
-Current AI engineering practice suffers from recurring gaps:
-
-- No common engineering vocabulary
-- No standard AI-native SDLC methodology
-- No objective capability evaluation framework
-- No engineering competency model
-- No standard AI operating model
-- Heavy dependence on specific vendors or models
-- Limited governance and auditability
-- Inconsistent quality across AI systems
-
-AIES addresses these gaps through an open, extensible, engineering-driven standard.
+Read the full [Vision](docs/VISION.md), [Project Charter](docs/PROJECT_CHARTER.md),
+and [current support matrix](platform/SUBJECT_SUPPORT.md).
 
 ---
 
@@ -674,6 +730,21 @@ zero structural warnings or errors. Empirical calibration against a
 representative multi-model panel remains outstanding; design quality and
 scenario count must not be presented as empirical discrimination.
 
+## Try it, challenge it, improve it
+
+The most valuable next signal is not a star. It is an engineer reaching the
+first ECM, understanding what the evidence does and does not support, and
+telling us where the workflow or report failed them.
+
+1. Run `aies demo --open`.
+2. Plan one real deployment with `aies evaluate DEPLOYMENT --plan-only` or
+   assess one repository with `aies audit . --out aies-repository-report`.
+3. [Report first-run friction, confusing output, or a reproducibility gap](https://github.com/umairali7/ai-engineering-standards/issues/new/choose).
+
+If the idea is useful, help review one instrument, reproduce one result, add
+one evidence adapter, or improve one explanation. Bounded contributions are
+described in [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Contributing
 
 Contributions are welcome. Every proposal should include an engineering rationale, problem statement, alternatives considered, trade-offs, references, and impact analysis. See [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -709,11 +780,15 @@ Individual documents carry a lifecycle status only (Draft → Review → Approve
 - **Public-release readiness:** The repository has a fail-closed preflight,
   ownership routing, automated dependency-update discovery, checksum-pinned
   full-history secret scanning, Python security analysis, dependency auditing,
-  and retained machine-readable security evidence. Run
+  GitHub CodeQL, private vulnerability reporting, an active `main` ruleset, and
+  retained machine-readable security evidence. The source repository is public
+  for development and review; a signed, immutable preview distribution is not
+  yet being claimed. Run
   `python platform/scripts/check_public_release.py .` from the repository root
-  to see the remaining local and externally verified gates. It currently
-  reports NOT READY while security-contact, version/distribution, and external
-  repository-setting work remains. Path-based open licensing is complete. At
+  to see the remaining local and externally verified gates. Path-based open
+  licensing and the dedicated security contact are complete. Independent
+  review enforcement, historical Actions/artifact review, final distribution
+  trust, and signed immutable release evidence remain explicit gates. At
   release time, a named and timestamped
   external-evidence document is supplied with `--external-evidence`, followed
   by `--gate`; the preflight never enables those settings or authorizes
