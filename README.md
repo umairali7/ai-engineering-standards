@@ -587,9 +587,16 @@ underlying AI technology.
 | 4 | AEOS — Operating System | 🔍 Content complete; independent approval reviews pending |
 | 5 | AEAR — Architecture Reference | 🔍 Content complete; independent approval reviews pending |
 | 6 | AECT — Certification & Training | 🔍 Content complete; independent approval reviews pending |
-| 7 | Reference Implementations | 🚧 Started — platform/conformance references delivered; public pilots outstanding |
-| 8 | Engineering Assessment Platform (`aies` CLI) | ✅ M1–M4 delivered; 🚧 hardening and subject expansion |
-| 9 | Public Release (v1.0) | ⏳ Planned |
+| 7 | Reference Implementations | 🟡 Core platform, conformance, and demo references delivered; independently reproducible public pilot artifacts pending |
+| 8 | Engineering Assessment Platform (`aies` CLI) | 🟡 Public development preview — M1–M4 delivered; empirical validation, independent pilots, hardening, and additional subject executors pending |
+| 9 | v1.0 Standards Release | 🚧 Release preparation active — public source preview and open licensing delivered; v0.5 comment/approval cycle and signed v1.0 release pending |
+
+The repository is already public as a development preview. The separately
+governed, versioned v1.0 standards release remains pending until independent
+review, public-comment disposition, ratification, and immutable release
+evidence are complete. See the
+[authoritative roadmap](ROADMAP.md) and
+[implementation backlog](docs/OSS_MATURITY_TODO.md).
 
 Public milestones are maintained in [ROADMAP.md](ROADMAP.md). Detailed
 vision-delivery and cleanup item statuses are maintained in the

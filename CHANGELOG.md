@@ -17,7 +17,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   call to action asks for reproducibility and comprehension evidence rather
   than generic attention. The first-workflow path also makes repository evidence operational in
   vendor-neutral CI through `aies ci audit`, with a pinned reusable GitHub
-  workflow and explicit advisory-to-enforcement boundary.
+  workflow and explicit advisory-to-enforcement boundary. README and the
+  authoritative roadmap now distinguish delivered reference/platform cores,
+  the public development preview, remaining empirical and independent-pilot
+  validation, and the separate v0.5 approval plus signed v1.0 release gates.
 
 - **Evidence-backed README walkthrough**: a compact animated proof now follows
   deployment discovery, built-in workflow help, the actual CLI evaluation,
