@@ -10,7 +10,8 @@ from aies import ci_integration, cli
 ROOT = Path(__file__).resolve().parents[2]
 CHECKOUT_SHA = "11d5960a326750d5838078e36cf38b85af677262"
 SETUP_PYTHON_SHA = "a26af69be951a213d495a4c3e4e4022e16d87065"
-UPLOAD_ARTIFACT_SHA = "ea165f8d65b6e75b540449e92b4886f43607fa02"
+UPLOAD_ARTIFACT_SHA = "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
+UPLOAD_ARTIFACT_VERSION = "v7.0.1"
 
 
 def _empty_repo(tmp_path: Path) -> Path:
@@ -88,7 +89,10 @@ def test_reusable_workflow_is_advisory_by_default_and_retains_artifacts():
     assert '>> "${GITHUB_ENV}"' in text
     assert "default: false" in text
     assert "required: true" in text
-    assert f"actions/upload-artifact@{UPLOAD_ARTIFACT_SHA} # v4" in text
+    assert (
+        f"actions/upload-artifact@{UPLOAD_ARTIFACT_SHA} "
+        f"# {UPLOAD_ARTIFACT_VERSION}"
+    ) in text
     assert "if: always()" in text
     assert "--enforce" in text
 
@@ -115,7 +119,10 @@ def test_security_workflow_scans_history_and_retains_redacted_evidence():
     assert "permissions:\n  contents: read" in text
     assert f"actions/checkout@{CHECKOUT_SHA} # v4" in text
     assert f"actions/setup-python@{SETUP_PYTHON_SHA} # v5" in text
-    assert f"actions/upload-artifact@{UPLOAD_ARTIFACT_SHA} # v4" in text
+    assert (
+        f"actions/upload-artifact@{UPLOAD_ARTIFACT_SHA} "
+        f"# {UPLOAD_ARTIFACT_VERSION}"
+    ) in text
     assert text.count("scripts/run_security_checks.py") == 2
     assert "--history-only" in text
     assert "--python-only" in text

@@ -1,8 +1,10 @@
 import hashlib
 import importlib
+import io
 import json
 from pathlib import Path
 import tarfile
+import urllib.error
 import zipfile
 
 import pytest
@@ -82,6 +84,95 @@ def test_cached_gitleaks_requires_matching_binary_digest(tmp_path):
     executable.write_bytes(b"tampered")
     assert not security._cache_is_valid(
         executable, metadata, asset, asset_sha)
+
+
+def test_download_retries_transient_github_failures(monkeypatch, tmp_path):
+    security = _module()
+    calls = []
+    sleeps = []
+
+    class Response(io.BytesIO):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            self.close()
+
+    def fake_urlopen(*_args, **_kwargs):
+        calls.append(1)
+        if len(calls) < 3:
+            raise urllib.error.HTTPError(
+                "https://example.invalid/tool", 500, "temporary", {}, None)
+        return Response(b"verified-archive")
+
+    monkeypatch.setattr(security.urllib.request, "urlopen", fake_urlopen)
+    destination = tmp_path / "archive"
+    security._download(
+        "https://example.invalid/tool",
+        destination,
+        sleep=sleeps.append,
+    )
+
+    assert destination.read_bytes() == b"verified-archive"
+    assert len(calls) == 3
+    assert sleeps == [1, 2]
+
+
+def test_security_startup_failure_retains_uploadable_diagnostics(
+    monkeypatch, tmp_path,
+):
+    security = _module()
+    repo = tmp_path / "repo"
+    platform_root = repo / "platform"
+    platform_root.mkdir(parents=True)
+    evidence = tmp_path / "evidence"
+    monkeypatch.setattr(security, "_git_root", lambda _path: repo)
+    monkeypatch.setattr(security, "_platform_root", lambda _path: platform_root)
+    monkeypatch.setattr(
+        security,
+        "run_history_scan",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            RuntimeError("HTTP Error 500: Internal Server Error")
+        ),
+    )
+
+    assert security.main([
+        "--repo", str(repo),
+        "--history-only",
+        "--evidence-dir", str(evidence),
+    ]) == 2
+    assert json.loads((evidence / "gitleaks.json").read_text()) == []
+    metadata = json.loads(
+        (evidence / "gitleaks-metadata.json").read_text(encoding="utf-8")
+    )
+    assert metadata["status"] == "not-run"
+    assert metadata["reason"] == "scanner-bootstrap-failed"
+
+
+def test_clean_history_scan_retains_empty_report_and_final_status(
+    monkeypatch, tmp_path,
+):
+    security = _module()
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    executable = tmp_path / "gitleaks"
+    executable.write_bytes(b"scanner")
+    install = {
+        "tool": "gitleaks",
+        "tool_version": security.GITLEAKS_VERSION,
+    }
+    monkeypatch.setattr(
+        security, "ensure_gitleaks", lambda _cache=None: (executable, install))
+    monkeypatch.setattr(security, "_run", lambda *_args, **_kwargs: 0)
+    monkeypatch.setattr(security, "_source_revision", lambda _repo: "abc123")
+
+    assert security.run_history_scan(repo, tmp_path) == 0
+    assert json.loads((tmp_path / "gitleaks.json").read_text()) == []
+    metadata = json.loads(
+        (tmp_path / "gitleaks-metadata.json").read_text(encoding="utf-8")
+    )
+    assert metadata["status"] == "pass"
+    assert metadata["exit_code"] == 0
 
 
 def test_make_security_is_only_an_alias_for_canonical_cli():

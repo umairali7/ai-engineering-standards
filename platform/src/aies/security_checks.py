@@ -14,8 +14,11 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import time
+import urllib.error
 import urllib.request
 import zipfile
+from collections.abc import Callable
 from pathlib import Path
 
 
@@ -155,17 +158,45 @@ def _source_revision(repo: Path) -> str:
     return completed.stdout.strip() or "unknown"
 
 
-def _download(url: str, destination: Path) -> None:
-    request = urllib.request.Request(  # noqa: S310 - constant HTTPS origin
-        url,
-        headers={"User-Agent": f"aies-security-bootstrap/{GITLEAKS_VERSION}"},
-    )
-    with urllib.request.urlopen(  # noqa: S310 - constant HTTPS origin
-        request,
-        timeout=120,
-        context=_ssl_context(),
-    ) as response, destination.open("wb") as output:
-        shutil.copyfileobj(response, output)
+def _download(
+    url: str,
+    destination: Path,
+    *,
+    attempts: int = 4,
+    sleep: Callable[[float], object] = time.sleep,
+) -> None:
+    """Download a pinned asset, retrying only transient transport failures."""
+    transient_statuses = {429, 500, 502, 503, 504}
+    for attempt in range(1, attempts + 1):
+        request = urllib.request.Request(  # noqa: S310 - constant HTTPS origin
+            url,
+            headers={"User-Agent": f"aies-security-bootstrap/{GITLEAKS_VERSION}"},
+        )
+        try:
+            with urllib.request.urlopen(  # noqa: S310 - constant HTTPS origin
+                request,
+                timeout=120,
+                context=_ssl_context(),
+            ) as response, destination.open("wb") as output:
+                shutil.copyfileobj(response, output)
+            return
+        except urllib.error.HTTPError as exc:
+            retryable = exc.code in transient_statuses
+            failure: OSError = exc
+        except (TimeoutError, urllib.error.URLError) as exc:
+            retryable = True
+            failure = exc
+        if not retryable or attempt == attempts:
+            raise failure
+        delay = 2 ** (attempt - 1)
+        print(
+            "[security-bootstrap] transient download failure "
+            f"({type(failure).__name__}); retry {attempt + 1}/{attempts} "
+            f"in {delay}s",
+            file=sys.stderr,
+            flush=True,
+        )
+        sleep(delay)
 
 
 def _extract_binary(archive: Path, destination: Path) -> None:
@@ -298,10 +329,15 @@ def run_history_scan(
 ) -> int:
     executable, install_metadata = ensure_gitleaks(cache_root)
     report_path = evidence_dir / "gitleaks.json"
+    # Gitleaks may omit the report file when a scan is clean. Seed a valid,
+    # empty redacted result so CI always has an artifact to retain; Gitleaks
+    # replaces it when findings exist.
+    report_path.write_text("[]\n", encoding="utf-8")
     metadata = {
         **install_metadata,
         "kind": "aies-security-tool-evidence",
         "schema_version": 1,
+        "status": "in-progress",
         "scope": "all reachable commits and branches",
         "redaction_percent": 100,
         "repository": str(repo),
@@ -315,7 +351,7 @@ def run_history_scan(
         "[secret-history] scanning all reachable commits (matched values redacted)",
         flush=True,
     )
-    return _run(
+    result = _run(
         [
             str(executable),
             "git",
@@ -329,6 +365,13 @@ def run_history_scan(
         ],
         cwd=repo,
     )
+    metadata["status"] = "pass" if result == 0 else "fail"
+    metadata["exit_code"] = result
+    (evidence_dir / "gitleaks-metadata.json").write_text(
+        json.dumps(metadata, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return result
 
 
 def run_python_security(
@@ -413,6 +456,31 @@ def run_python_security(
     return max(sarif_code, concise_code, audit_code)
 
 
+def _write_history_startup_failure(
+    evidence_dir: Path,
+    failure: BaseException,
+) -> None:
+    """Retain machine-readable evidence when the scanner could not start."""
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    report = evidence_dir / "gitleaks.json"
+    if not report.exists():
+        report.write_text("[]\n", encoding="utf-8")
+    metadata = {
+        "kind": "aies-security-tool-evidence",
+        "schema_version": 1,
+        "tool": "gitleaks",
+        "tool_version": GITLEAKS_VERSION,
+        "status": "not-run",
+        "reason": "scanner-bootstrap-failed",
+        "failure_type": type(failure).__name__,
+        "redaction_percent": 100,
+    }
+    (evidence_dir / "gitleaks-metadata.json").write_text(
+        json.dumps(metadata, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
@@ -452,16 +520,18 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     codes = []
+    evidence_dir = args.evidence_dir.expanduser().resolve()
     try:
         repo = _git_root(args.repo)
         platform_root = _platform_root(repo)
-        evidence_dir = args.evidence_dir.expanduser().resolve()
         evidence_dir.mkdir(parents=True, exist_ok=True)
         if not args.python_only:
             codes.append(run_history_scan(repo, evidence_dir, args.tool_cache))
         if not args.history_only:
             codes.append(run_python_security(repo, platform_root, evidence_dir))
     except (OSError, RuntimeError, subprocess.SubprocessError) as exc:
+        if not args.python_only:
+            _write_history_startup_failure(evidence_dir, exc)
         print(f"security checks could not start: {exc}", file=sys.stderr)
         return 2
 

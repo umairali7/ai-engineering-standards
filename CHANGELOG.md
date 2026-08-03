@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Evidence-backed README walkthrough**: a compact animated proof now follows
+  deployment discovery, built-in workflow help, the actual CLI evaluation,
+  canonical evidence chain, a retained
+  147-scenario Qwen3-Coder-Next Engineering Capability Matrix, a fresh AIES
+  repository self-audit, and the linked decision products. Its accompanying
+  disclosure distinguishes observed capability from breadth and assurance,
+  identifies the automated reviewer as advisory, keeps human evaluation
+  optional, makes no formal qualification claim, and embeds no raw prompts,
+  responses, endpoints, machine identifiers, or fingerprints.
+
 - **Optional Human EV Review Workspace**: `aies score RUN --interactive`
   opens a dependency-free, token-protected loopback interface that joins each
   scenario prompt, complete response, frozen EV1–EV6 anchors, failure
@@ -87,7 +97,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   render breadth as distinct evidence against a minimum target (for example,
   `57 distinct; target ≥30`) instead of a misleading fraction. The canonical
   cross-platform security entry point is now `aies security`; Make remains an
-  optional alias and Homebrew is never required.
+  optional alias and Homebrew is never required. Pinned scanner downloads now
+  retry transient GitHub transport failures with bounded backoff. If bootstrap
+  still cannot start, the check remains failed but emits uploadable redacted
+  `not-run` diagnostics instead of causing a second missing-artifact failure.
+  All workflow artifact uploads now use checksum-pinned
+  `actions/upload-artifact` v7.0.1 on Node.js 24, removing the Node.js 20 and
+  transitive `punycode` deprecation warnings from the retained-evidence steps.
   GitHub CodeQL default setup, Private Vulnerability Reporting, historical
   Actions review, and a dedicated security contact remain explicit
   public-release gates rather than being inferred from tracked files.

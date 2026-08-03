@@ -36,6 +36,16 @@ standard and its implementation improve together instead of drifting apart.
 
 ### See it work in 60 seconds — entirely offline
 
+![AIES deployment discovery, built-in help, CLI evaluation, Engineering Capability Matrix, repository audit, comparison, and linked report walkthrough](docs/assets/aies-workflow-demo.gif)
+
+The walkthrough starts with deployment discovery and the built-in `aies help`
+workflow guide, then uses a retained 147-scenario Qwen3-Coder-Next assessment
+and a fresh AIES repository self-audit. The model scores are informational
+because the automated reviewer was advisory; human evaluation was optional and
+not completed, and no formal qualification is claimed. The animation embeds no
+raw prompts, responses, endpoints, machine identifiers, or environment
+fingerprints.
+
 ```powershell
 cd platform
 py -m venv .venv

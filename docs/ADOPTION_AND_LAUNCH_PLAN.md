@@ -53,10 +53,19 @@ Each asset must show real generated output and pass claim review:
   select it as the social image.
 - Root README: problem, 60-second command, expected output, honest maturity,
   supported scope, primary CTA, persona paths, help/contribution links.
-- A 30–60 second terminal recording: install → `aies demo --open` →
-  Evidence → Capability → Confidence → Engineering Decisions snapshot → ECM.
+- A 31-second README GIF at `docs/assets/aies-workflow-demo.gif` now shows the
+  important CLI paths, deployment discovery with candidate/judge roles,
+  built-in `aies help` workflow guidance, live evaluation, evidence chain, an
+  actual retained Qwen ECM, explicit repository self-audit, compatible
+  comparison, optional human EV, safe sharing, and linked report products. Its source HTML is
+  retained beside it, and its caption discloses advisory review, optional
+  human evaluation, and the absence of formal qualification. A longer narrated
+  recording remains open.
 - A 5–10 minute narrated trial: plan → evaluate → progress/ETA → report → share.
-- Three report screenshots: Executive Summary, ECM, and evidence traceability.
+- Eight reusable 960×540 launch stills under `docs/assets/aies-workflow/`
+  cover commands, deployment discovery and help, live evaluation, evidence
+  flow, ECM, repository audit, comparison, and report highlights with a
+  retained claim-boundary note.
 - A technical launch article: why benchmarks are insufficient, how AIES
   separates decisions, reproducible commands, limitations, and roadmap.
 - A downloadable redacted example bundle with hashes and reproduction notes.
