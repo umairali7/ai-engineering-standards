@@ -115,6 +115,33 @@ assurance, and optional human evaluation.
 | Generated code is the whole story | Assess the subject **and** audit the engineering repository that accepts its work |
 | Automated score silently becomes authority | Engineering evaluation is informational; formal qualification and consequential decisions are explicit and human-governed |
 
+### Where AIES fits in the evaluation ecosystem
+
+Strong evaluation tools already exist. [Inspect AI](https://inspect.aisi.org.uk/)
+provides composable tasks, solvers, scorers, sandboxes, and agent evaluation;
+[SWE-bench](https://www.swebench.com/SWE-bench/) tests systems against
+real-world repository issues; static-analysis and security tools emit findings
+through formats such as SARIF. AIES does not need to replace those systems to
+be useful.
+
+Its core responsibility is the layer between **evidence production** and an
+**engineering decision**:
+
+| Layer | Responsibility |
+|---|---|
+| **Evidence producers** | AIES frozen instruments, external evaluation frameworks and benchmarks, repository analyzers, structured tool findings, and attributed human review observe behavior or repository state |
+| **AIES evidence-to-decision layer** | Preserve subject and source identity, admit evidence through versioned contracts, disclose conversion loss, check comparison compatibility, map evidence to engineering tasks, and produce ECM, assurance, fit, coverage, and remediation views |
+| **Human and organizational authority** | Decide deployment policy, risk acceptance, qualification, and operating permissions using the evidence and the organization’s own accountability process |
+
+This turns ecosystem breadth into a strength: teams can keep specialized tools
+that already work while using AIES to make their compatible evidence
+traceable, comparable, and actionable. The current boundary remains explicit:
+AIES ships executable assessment paths for AI deployments and repositories.
+Its AIES-profiled Inspect JSON and SARIF bridges are experimental, and it does
+not yet claim a native adapter for every framework or benchmark. Imported
+findings retain their original meaning and are never silently promoted into
+correctness, maturity, or qualification claims.
+
 ### Put engineering evidence in the pipeline
 
 The same repository assessment can run in GitHub Actions, GitLab CI, Azure
