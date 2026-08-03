@@ -101,11 +101,11 @@ The project is governed by the model defined in [GOVERNANCE.md](../GOVERNANCE.md
 - **C-1 Vendor neutrality is absolute.** No AIES document may name, endorse, or depend on a specific AI vendor, model, or commercial product.
 - **C-2 Text-first artifacts.** All standards, diagrams, and templates are maintained as diffable text (Markdown, Mermaid, ASCII) under version control.
 - **C-3 English is the normative language** for v0.x and v1.0; translations are informative until formally ratified.
-- **C-4 Open license pending ratification.** Proposed
-  [ADR-0014](../adr/ADR-0014-Dual-License-Standards-and-Software.md) guarantees
-  an openly licensed repository using CC BY-SA 4.0 for standards/content and
-  Apache 2.0 for executable software. Until the Class 3 decision is ratified,
-  redistribution terms are not final; see the [FAQ](FAQ.md).
+- **C-4 Path-based open licensing.** Accepted
+  [ADR-0014](../adr/ADR-0014-Dual-License-Standards-and-Software.md) applies CC
+  BY-SA 4.0 to standards and reusable assessment content and Apache 2.0 to
+  executable software. [LICENSE.md](../LICENSE.md) defines the authoritative
+  path boundary; CI rejects missing, ambiguous, or altered license artifacts.
 - **C-5 Volunteer capacity.** The project runs on contributor time; scope and schedule must fit sustainable contribution levels.
 
 ### 6.2 Assumptions

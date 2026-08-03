@@ -78,7 +78,7 @@ Accepted ADRs are never edited to change the decision. If circumstances change, 
 | [ADR-0011](ADR-0011-Distinct-Scenario-Breadth-and-Separate-Stability-Studies.md) | Count distinct scenario breadth and separate stability studies | Accepted |
 | [ADR-0012](ADR-0012-Qualification-Evidence-Rater-Protocol-and-Immutable-Lifecycle.md) | Separate evaluation observations from qualification evidence and use immutable lifecycle events | Accepted |
 | [ADR-0013](ADR-0013-ECM-Task-Decision-Semantics-and-Deployment-Guidance.md) | Govern ECM task decisions and deployment guidance | Accepted |
-| [ADR-0014](ADR-0014-Dual-License-Standards-and-Software.md) | Dual-license open standards and executable software | Proposed |
+| [ADR-0014](ADR-0014-Dual-License-Standards-and-Software.md) | Path-based open licensing for standards and software | Accepted |
 | [ADR-0015](ADR-0015-Subject-and-Evidence-Adapter-Contracts.md) | Subject Descriptor, typed evidence events, and Evidence Adapter contracts | Accepted |
 | [ADR-0016](ADR-0016-Repository-Engineering-Analysis-Layers.md) | Repository engineering analysis layers | Accepted |
 | [ADR-0017](ADR-0017-Verified-Run-Portability-and-Comparison-Cohorts.md) | Verified run portability and comparison cohorts | Accepted |

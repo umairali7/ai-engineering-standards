@@ -1,10 +1,10 @@
-# ADR-0014: Dual-license open standards and executable software
+# ADR-0014: Path-based open licensing for standards and software
 
 | | |
 |---|---|
 | **ADR** | ADR-0014 |
-| **Status** | Proposed |
-| **Deciders** | Maintainers after the Class 3 comment window; names recorded on acceptance |
+| **Status** | Accepted |
+| **Deciders** | Umair Ali (repository owner and Maintainer) |
 | **Supersedes / Superseded by** | — |
 
 ## Context
@@ -22,14 +22,18 @@ one class of work gives a poor fit for the other: a content license is awkward
 for executable software, while a permissive software license does not preserve
 share-alike obligations for derivative standards.
 
-This is a Class 3 decision. This proposal does not itself grant a license. The
-license change takes effect only after the complete proposal is publicly
-announced, the seven-calendar-day comment window elapses, substantiated
-objections are resolved, and Maintainers record acceptance.
+This is a Class 3 decision. The proposal entered the repository on 2026-07-23
+and was explicitly accepted by Umair Ali, repository owner and Maintainer, on
+2026-08-03. No objection is recorded in the repository history.
 
-**Affiliation disclosure:** proposer and decider disclosures are not yet
-recorded. They must be added to the proposal record before the governance
-comment window begins.
+**Bootstrap-governance disclosure:** the repository was private throughout the
+proposal period, so the public-channel announcement required by
+[AIES-GOV-01 — Governance §4.1](../GOVERNANCE.md#41-comment-windows) could not
+occur. Acceptance records that limitation rather than inventing public-review
+evidence. The first public development preview MUST invite retrospective
+comment on this decision; a substantiated licensing objection MUST be resolved
+through a superseding ADR. No additional decider affiliation was supplied for
+the record.
 
 ## Decision Drivers
 
@@ -83,7 +87,7 @@ comment window begins.
 
 ## Decision
 
-Adopt Option D after ratification:
+Adopt Option D:
 
 1. **CC BY-SA 4.0 scope.** Apply Creative Commons Attribution-ShareAlike 4.0
    International to standards and reusable assessment content: root and module
@@ -136,7 +140,7 @@ Adopt Option D after ratification:
 
 ## Compliance & Verification
 
-After acceptance, the implementation change must:
+The acceptance implementation must:
 
 - add verbatim official `CC-BY-SA-4.0` and `Apache-2.0` license texts;
 - replace `LICENSE.md` with the authoritative scope table and effective notice;

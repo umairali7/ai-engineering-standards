@@ -134,7 +134,10 @@ def _license_decision_checks(repo: Path) -> list[ReleaseCheck]:
         "no license has been granted" not in license_lower
         and "all rights are reserved" not in license_lower
         and "cc by-sa 4.0" in license_lower
-        and "apache 2.0" in license_lower
+        and (
+            "apache 2.0" in license_lower
+            or "apache license 2.0" in license_lower
+        )
     )
     adr_accepted = bool(
         re.search(
@@ -146,7 +149,7 @@ def _license_decision_checks(repo: Path) -> list[ReleaseCheck]:
     return [
         _check(
             "license-decision",
-            "ADR-0014 - Dual-license decision accepted",
+            "ADR-0014 - Path-based license decision accepted",
             adr_accepted,
             "ADR status is Accepted" if adr_accepted else "ADR status is not Accepted",
             "Complete the Class 3 comment window, dispositions, named decider "

@@ -194,7 +194,7 @@ and one hosted pilot remain outstanding**.
 | Advisory CI integration | **Implemented** | Pinned reusable workflow verifies evaluator semantics, retains evidence and annotations, and requires explicit enforcement; external repository pilots remain |
 | Containerized reproducibility | **Implemented; release hardening open** | Non-root demo/audit/conformance image and CI gate exist; digest pinning, multi-architecture publication, SBOM/provenance, signing, and hosted results remain |
 | Adoption and promotion launch kit | **In progress** | Conversion README/Quickstart, persona/message/channel plan, CLI calls to action, claim-review gate, visual proof assets, and user studies remain before broad launch |
-| Open repository licensing | **In progress** | Complete ADR-0014 governance and install final license artifacts |
+| Path-based open repository licensing | **Done** | ADR-0014 accepted; official CC BY-SA 4.0 and Apache 2.0 texts, authoritative path scope, package metadata, and CI boundary check installed |
 | Independent local/hosted pilots and public adoption | **Open** | Publish reproducible evidence and independent findings |
 
 The single authoritative implementation and cleanup backlog is

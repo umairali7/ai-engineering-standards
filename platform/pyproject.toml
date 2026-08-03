@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "AIES Engineering Assessment Platform - executable reference implementation of AESQS (see docs/PLATFORM.md, AIES-DOC-06)"
 readme = "README.md"
 requires-python = ">=3.10"
-license = "LicenseRef-AIES-Pending"
+license = "Apache-2.0"
 dependencies = [
     "PyYAML>=6.0",
     # tomllib entered the standard library in Python 3.11.

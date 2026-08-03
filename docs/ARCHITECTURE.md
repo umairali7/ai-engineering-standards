@@ -16,7 +16,8 @@ How the AIES repository is organized: the directory layout, how the five modules
 .
 ├── README.md                    ← project front door: vision, modules, principles
 ├── GETTING_STARTED.md           ← guided reading paths into the standard, by reader role
-├── LICENSE.md                   ← open dual-license proposal; no grant until ratified
+├── LICENSE.md                   ← authoritative path-based open-license scope
+├── LICENSES/                    ← official CC BY-SA 4.0 and Apache 2.0 texts
 ├── CHANGELOG.md                 ← versioned change history for the standard as a whole
 ├── ROADMAP.md                   ← phased delivery plan (module sequencing)
 ├── GOVERNANCE.md                ← decision-making model, review and ratification process

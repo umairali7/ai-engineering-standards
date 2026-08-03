@@ -128,7 +128,7 @@ Architecturally or normatively significant decisions — anything Class 3, plus 
 
 ## 7. Developer Certificate of Origin
 
-Contributions are accepted under the [Developer Certificate of Origin v1.1](https://developercertificate.org/). By signing off (`Signed-off-by: Your Name <email>`, added automatically by `git commit -s`), you certify that you have the right to submit the work under the project's license (see [README — License](README.md#license)). PRs with unsigned commits will be asked to rebase with sign-offs.
+Contributions are accepted under the [Developer Certificate of Origin v1.1](https://developercertificate.org/). By signing off (`Signed-off-by: Your Name <email>`, added automatically by `git commit -s`), you certify that you have the right to submit the work under the license applicable to its destination path (see [LICENSE.md](LICENSE.md)). Standards and reusable assessment content default to CC BY-SA 4.0; executable software defaults to Apache 2.0. Mixed-purpose files must be split or carry an explicit SPDX notice. Run `python platform/scripts/check_license_boundaries.py .` from the repository root before submitting. PRs with unsigned commits will be asked to rebase with sign-offs.
 
 ## 8. Conduct and Conflicts
 

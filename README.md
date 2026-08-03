@@ -1,12 +1,20 @@
 # AI Engineering Standards (AIES)
 
-> **Turn AI engineering behavior into evidence you can inspect, compare, and act on.**
+> **Engineering Evaluation as Code — turn AI engineering behavior into evidence you can inspect, compare, and act on.**
 
 ![Status](https://img.shields.io/badge/Status-Active%20Development-blue)
-![License](https://img.shields.io/badge/License-Open%20dual--license%20(proposed)-lightgrey)
+![License](https://img.shields.io/badge/License-CC%20BY--SA%204.0%20%7C%20Apache%202.0-2ea44f)
 ![Contributions](https://img.shields.io/badge/Contributions-Welcome-brightgreen)
 
 ![AIES — Evidence to capability to engineering decisions](docs/assets/aies-social-preview.png)
+
+AIES defines **Engineering Evaluation as Code**: versioned assessment scope,
+subject descriptors, frozen instruments, evidence, scoring semantics,
+traceability, and decision products that can be reviewed and executed through
+the CLI, CI, or API. The result is reproducible engineering evidence rather
+than an opaque benchmark score. The term does not mean every judgment is
+automated: human evaluation is optional for engineering analysis, while formal
+qualification and consequential grants remain explicitly human-governed.
 
 Models, coding assistants, agents, and engineering platforms are often chosen
 from anecdotes or one opaque benchmark number. AIES produces a traceable
@@ -14,7 +22,19 @@ Engineering Capability Matrix (ECM): what the assessed subject did well, where
 the evidence is thin, what was not assessed, and where engineering review is
 appropriate.
 
-### Try the complete product offline
+### One repository. Two reinforcing layers.
+
+| Open standard | Open-source platform |
+|---|---|
+| Defines the vocabulary, engineering practices, evidence requirements, evaluation dimensions, task taxonomy, governance, and operating boundaries | Compiles those definitions into frozen assessment instruments, collects evidence, scores it, traces it, and produces decision-ready reports |
+| **CC BY-SA 4.0** — adaptations stay attributable and open | **Apache 2.0** — conventional enterprise-friendly software terms with an explicit patent grant |
+
+The standard says what trustworthy AI engineering should look like. The
+platform makes those expectations executable. Real assessment findings then
+expose weak instruments, missing evidence, and standards gaps—so the written
+standard and its implementation improve together instead of drifting apart.
+
+### See it work in 60 seconds — entirely offline
 
 ```powershell
 cd platform
@@ -316,7 +336,7 @@ Enterprise engineering organizations, CTOs, engineering directors and managers, 
 .
 ├── README.md                 ← you are here
 ├── GETTING_STARTED.md        ← entry point: reading paths & adoption guide
-├── LICENSE.md                ← open dual-license proposal and current legal status
+├── LICENSE.md                ← authoritative standards/software license boundary
 ├── CHANGELOG.md              ← versioned change history
 ├── ROADMAP.md                ← phased delivery plan
 ├── GOVERNANCE.md             ← decision-making model
@@ -610,9 +630,8 @@ Individual documents carry a lifecycle status only (Draft → Review → Approve
   Blocked under
   [ADR-0009](adr/ADR-0009-Engineering-Assessment-Platform-Identity.md).
 - **Verified baseline:** 484 scenarios across 12 competency areas with zero
-  suite warnings/errors; 366 platform tests passing and one skipped at the
-  latest local verification. Empirical panel calibration and an independent
-  pilot remain open.
+  suite warnings/errors. The exact current test count is reported by CI;
+  empirical panel calibration and an independent pilot remain open.
 - **ECM standardization:** The ECM implementation and ET-01 through ET-15
   taxonomy are delivered; formal ratification of AIES-ECM-01 and integration
   into the five-module standards architecture remain open governance work.
@@ -622,8 +641,9 @@ Individual documents carry a lifecycle status only (Draft → Review → Approve
   and retained machine-readable security evidence. Run
   `python platform/scripts/check_public_release.py .` from the repository root
   to see the remaining local and externally verified gates. It currently
-  reports NOT READY while licensing, security, version/distribution, and
-  repository-setting work remains. At release time, a named and timestamped
+  reports NOT READY while security-contact, version/distribution, and external
+  repository-setting work remains. Path-based open licensing is complete. At
+  release time, a named and timestamped
   external-evidence document is supplied with `--external-evidence`, followed
   by `--gate`; the preflight never enables those settings or authorizes
   publication itself. Start from
@@ -633,12 +653,12 @@ Individual documents carry a lifecycle status only (Draft → Review → Approve
 
 ## License
 
-AIES is committed to an open-source release. The exact terms will be finalized
-before v1.0. Proposed
-[ADR-0014](adr/ADR-0014-Dual-License-Standards-and-Software.md) recommends
-**CC BY-SA 4.0** for standards and reusable assessment content and **Apache
-2.0** for executable software. Until that Class 3 decision is ratified, no
-license is granted; see [LICENSE.md](LICENSE.md) and [docs/FAQ.md](docs/FAQ.md).
+AIES is a path-based mixed-license repository under accepted
+[ADR-0014](adr/ADR-0014-Dual-License-Standards-and-Software.md): standards and
+reusable assessment content use **CC BY-SA 4.0**, while executable software
+uses the **Apache License 2.0**. The authoritative path table and complete
+official texts are in [LICENSE.md](LICENSE.md). CI verifies that every
+distributed path resolves to one applicable license.
 
 ---
 

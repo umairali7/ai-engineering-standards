@@ -1,7 +1,7 @@
 # AIES Engineering Assessment Platform — developer entry points.
 # The demo is executable documentation: `make demo` runs the entire workflow
 # offline; the same golden path is CI-gated as tests/test_demo.py.
-.PHONY: install test validate audit security release-hygiene release-readiness demo demo-full demo-empirical integration-demo all
+.PHONY: install test validate audit security license-check release-hygiene release-readiness demo demo-full demo-empirical integration-demo all
 
 install:            ## editable install + test deps
 	pip install -e . && pip install pytest
@@ -19,6 +19,9 @@ audit:             ## repository self-conformance (dogfood), gated at RT2
 
 security:          ## auto-bootstrap pinned Gitleaks; requires the [security] Python extra
 	aies security ..
+
+license-check:     ## verify path licenses and exact official license texts
+	python scripts/check_license_boundaries.py ..
 
 release-hygiene:   ## reject local/generated artifacts from the tracked release tree
 	python scripts/check_release_artifacts.py ..
@@ -40,4 +43,4 @@ integration-demo:  ## full workflow against a REAL deployment (opt-in)
 	@#   make integration-demo DEPLOYMENT=local-qwen JUDGE=gpt-oss
 	bash scripts/integration-demo.sh
 
-all: validate test audit release-hygiene
+all: validate test audit license-check release-hygiene

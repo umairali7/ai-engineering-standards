@@ -62,23 +62,19 @@ Through [AECT](../AECT/README.md), the Certification & Training module, which de
 
 The standard as a whole follows Semantic Versioning ([GOVERNANCE.md §6.1](../GOVERNANCE.md#6-releases)). The **0.x** major version means the standard is in its research-and-draft phase: content is substantive but not yet ratified, and minor versions may still contain breaking changes (each still requiring the full Class 3 process). v0.3.1 specifically is the **Repository Foundation** release — the phase that establishes the structure, shared vocabulary, conventions, governance, and templates on which the five modules are being drafted. Individual documents additionally carry their own status (Draft → Review → Approved → Deprecated) per the [Review Standard (AIES-STD-06 — Review Standard)](standards/review-standard.md).
 
-## 11. Why isn't a license chosen yet, and what is proposed?
+## 11. How is the mixed standards-and-software repository licensed?
 
-Choosing licenses for a standard and its executable reference platform is a
-governance decision with long consequences. Proposed
-[ADR-0014](../adr/ADR-0014-Dual-License-Standards-and-Software.md) guarantees an
-open result while matching license to work type: **CC BY-SA 4.0** keeps adapted
-standards and reusable assessment content attributable and open, while the
-OSI-approved **Apache 2.0** license gives executable software conventional
-open-source terms including an explicit patent grant. The proposal defines a
-path-level boundary for scenarios, rubrics, code, tests, and mixed files.
-
-The ADR remains Proposed. Under the Class 3 process it requires a complete
-affiliation disclosure, an announced seven-calendar-day public comment window,
-resolved objections, and Maintainer lazy consensus. Until ratification, no
-license is granted and redistribution terms are not final (constraint C-4 in
-the [Charter](PROJECT_CHARTER.md)); contributions remain under the DCO
-understanding ([CONTRIBUTING.md §7](../CONTRIBUTING.md#7-developer-certificate-of-origin)).
+Accepted
+[ADR-0014](../adr/ADR-0014-Dual-License-Standards-and-Software.md) matches the
+license to the work type: **CC BY-SA 4.0** keeps adapted standards and reusable
+assessment content attributable and open, while the OSI-approved **Apache
+License 2.0** gives executable software conventional open-source terms with an
+explicit patent grant. [LICENSE.md](../LICENSE.md) is the authoritative
+path-level boundary for scenarios, rubrics, documentation, code, tests,
+automation, and mixed files. CI checks that every distributed path resolves to
+one applicable license. Contributions remain subject to the DCO and the
+license applicable to their destination path
+([CONTRIBUTING.md §7](../CONTRIBUTING.md#7-developer-certificate-of-origin)).
 
 ## 12. How are breaking changes handled?
 

@@ -8,6 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Path-based open licensing**: accepted ADR-0014 now applies CC BY-SA 4.0 to
+  standards and reusable assessment content and Apache 2.0 to executable
+  software. The repository includes both official license texts, an
+  authoritative precedence/path table, Apache package metadata, and a CI-gated
+  classifier that verifies every distributed path and detects altered license
+  text. The acceptance record discloses that the repository was private during
+  the proposal period and requires retrospective public comment rather than
+  fabricating public-review evidence.
+- **Engineering Evaluation as Code positioning**: the README now names the
+  project category directly and defines it as versioned, executable,
+  reviewable assessment scope, instruments, evidence, scoring, traceability,
+  and decision products. It also preserves the boundary between optional
+  human evaluation for engineering analysis and mandatory human authority for
+  formal qualification or consequential grants.
 - **Frozen assessment instruments and standards-assisted execution**:
   `aies-assessment-instrument/v1` now freezes the complete scenario scoring
   contract before response collection and exposes separate task-only candidate
@@ -460,18 +474,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   archive metadata, Python/pytest caches, and regenerable report views misplaced
   at the runs root. Findings are advisory, fully exposed in JSON, do not affect
   runtime readiness, and never delete either debris or evidence.
-- **Review-ready RT2 instrument tranche and governed open-license proposal**:
+- **Review-ready RT2 instrument tranche and governed open-license decision**:
   all 268 new RT2 — Moderate instruments now include competency-specific
   behavioral floor anchors and gaming-resistance rationales. `aies corpus
   review-pending` expands scenario packs and produces a deterministic
   per-instrument structural preflight with explicit pending human dispositions;
   `aies corpus review <scenario-id>` can now inspect packed scenarios directly.
-  Automation alone cannot mark any instrument human-reviewed. Proposed ADR-0014
-  guarantees an openly licensed outcome after governance: CC BY-SA 4.0 for
-  standards and assessment content, Apache 2.0 for executable software, and an
-  authoritative path boundary. The existing no-license grant remains in force
-  until affiliation disclosure, the announced seven-day Class 3 comment
-  window, objection disposition, and Maintainer acceptance are recorded.
+  Automation alone cannot mark any instrument human-reviewed. Accepted
+  ADR-0014 establishes CC BY-SA 4.0 for standards and assessment content,
+  Apache 2.0 for executable software, and an authoritative path boundary.
 - **Fast no-repeat assessment demo**: removed stale `repeats: 3` defaults from
   all shipped assessments to conform to ADR-0011. General assessments now run
   each distinct instrument once; exact repeats require an explicit stability
