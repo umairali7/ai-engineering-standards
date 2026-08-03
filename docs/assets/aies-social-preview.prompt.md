@@ -37,3 +37,11 @@ unreadable labels, fake dashboards, decorative code snippets.
 
 The asset illustrates product architecture only. It is not assessment evidence
 and its bars are not subject scores.
+
+## GitHub upload derivative
+
+`aies-social-preview-github.png` is the deterministic 1280×640 social-preview
+derivative of the retained source image. It preserves the source composition
+and solid background while remaining below GitHub's 1 MB upload guidance. Use
+this derivative in **Repository Settings → General → Social preview**; retain
+`aies-social-preview.png` as the higher-resolution README source.
