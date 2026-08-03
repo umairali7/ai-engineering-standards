@@ -1,6 +1,6 @@
 # AI Engineering Standards (AIES)
 
-> **Engineering Evaluation as Code — turn AI engineering behavior into evidence you can inspect, compare, and act on.**
+> **Evidence-Backed Engineering Evaluation as Code — turn AI engineering behavior into proof you can inspect, compare, and act on.**
 
 ![Status](https://img.shields.io/badge/Status-Active%20Development-blue)
 ![License](https://img.shields.io/badge/License-CC%20BY--SA%204.0%20%7C%20Apache%202.0-2ea44f)
@@ -71,10 +71,69 @@ It reports observed performance, direct scenario breadth, and evidence
 assurance—including reviewer calibration, mapping review, instrument maturity,
 and optional human evaluation—as different facts.
 
+## Why AIES Had to Exist
+
+Every few days, another open-weight model arrives with a new chart, a new
+aggregate, and a new claim of state-of-the-art performance. But the moment an
+engineer has to choose one for real work, the leaderboard stops being enough.
+
+Which model is actually better at architecture? Which one can refactor without
+quietly changing behavior? Which one catches security boundaries, designs a
+sound API, writes meaningful tests, handles migrations, or recognizes when it
+should stop and ask for help? A single coding score cannot answer those
+questions. Neither can a handful of impressive prompts.
+
+The honest answer was uncomfortable: **we were selecting engineering systems
+without enough evidence to explain the selection.**
+
+AIES began as an attempt to make that decision defensible. Instead of asking
+whether a model is “good,” it asks what the subject demonstrably did, on which
+engineering tasks, under which conditions, with how much evidence, and with
+which limitations. That required more than another benchmark:
+
+1. **The work had to represent the SDLC.** Assessment expanded across twelve
+   engineering competency areas and fifteen stable Engineering Tasks—not only
+   code generation.
+2. **Breadth had to be real.** Repeating one prompt measures stability, not
+   capability breadth. The corpus grew to 484 distinct instruments. Every
+   competency area now has at least 30 distinct RT2 — Moderate instruments;
+   CA-05 — AI-Assisted Implementation has 57. They model constrained,
+   real-world engineering decisions with explicit failure modes and observable
+   anchors.
+3. **Every score needed a reviewer and a reason.** Human review is valuable but
+   difficult to scale. Independent evaluator models can provide practical
+   criterion-grounded review, but they must not become invisible authorities.
+   AIES freezes the rubric before execution, withholds it from the candidate,
+   records judge identity and protocol, requires evidence for each EV score,
+   and keeps optional human evaluation visible. Formal qualification remains a
+   separate human-governed decision.
+4. **Generated code was only half the problem.** A strong answer does not prove
+   that the repository accepting it is engineered responsibly. `aies audit`
+   examines architecture evidence, code quality, correctness assurance, tests
+   and coverage, security and privacy controls, dependencies and SBOMs,
+   AI-change provenance, risk classification, human gates, versioned context,
+   observability, release controls, and remediation evidence. Missing evidence
+   remains a gap; it is never converted into a pass.
+5. **The method had to outlive model churn.** The same evidence architecture can
+   support repositories today and dedicated assessment profiles for agents,
+   MCP servers, RAG systems, AI pipelines, coding assistants, platforms,
+   services, and composite systems tomorrow—without pretending they all answer
+   the same prompts or share the same scoring semantics.
+
+That is why AIES is **Evidence-Backed Engineering Evaluation as Code**. It is
+not a universal leaderboard and it does not ask anyone to trust an unexplained
+number. It turns engineering expectations into versioned instruments, observed
+behavior into durable evidence, and evidence into capability, fit, comparison,
+and improvement decisions whose reasoning can be inspected.
+
+AI capability is moving too quickly for engineering trust to remain anecdotal.
+AIES exists to make that trust testable.
+
 **Start here:** [60-second offline trial](QUICKSTART.md) ·
 [choose a path by role](GETTING_STARTED.md) ·
 [see every CLI command](platform/CLI_REFERENCE.md) ·
 [review the public roadmap](ROADMAP.md) ·
+[understand versions and releases](docs/VERSIONING_AND_RELEASES.md) ·
 [see the adoption and launch plan](docs/ADOPTION_AND_LAUNCH_PLAN.md) ·
 [adopt it in CI](platform/CI_INTEGRATION.md) ·
 [run it in a container](platform/CONTAINER.md) ·
@@ -88,9 +147,11 @@ and optional human evaluation—as different facts.
 | See the idea without setup | `aies demo --open` | Executive Summary, ECM, fit guidance, diagnostics, and full report |
 | Understand one registered AI deployment | `aies evaluate DEPLOYMENT --plan-only` | Non-executing call plan, declared cost/ETA or exact unknowns, limitations, resumability, and execution path |
 | Evaluate it automatically | `aies evaluate DEPLOYMENT --judge JUDGE` | Completed non-blocking Engineering Evaluation and report bundle |
+| Add optional human evidence without editing JSON | `aies score RUN --interactive` | Token-protected local EV workspace, autosaved draft, immutable rating records, and refreshed reports; no grant authority |
 | Apply AIES to one engineering task | `aies apply DEPLOYMENT --scenario SC-CA05-001 --compare-baseline --judge JUDGE` | Standards-assisted output plus an isolated baseline-versus-guided EV comparison; never qualification evidence |
 | See the decision snapshot in your terminal | `aies snapshot latest` | Task evidence, observed capability, scenario breadth, assurance gaps, and engineering interpretation |
 | Check what AIES truly supports | `aies support` | Implemented, experimental, and planned subject kinds with executable entry points and limitations |
+| Identify exactly what is installed | `aies version` | Separate standards, platform, and artifact-contract versions without implying approval or compatibility |
 | See how each subject is assessed | `aies assessment-profile list` | Approved Subject Assessment Profiles, executors, evidence adapters, applicability, decision products, and limitations |
 | See what evidence is missing and what to do next | `aies coverage RUN --write` | Coverage, evidence integrity, prioritized blind spots, and an unassigned evidence-linked remediation/monitoring plan with acceptance signals and reassessment commands; audits additionally use `--out NEW_DIR` |
 | Track an evidence-gap action | `aies remediation show RUN_OR_AUDIT` | Stable ACT identifiers, owner/workflow state, closure evidence requirements, monitoring links, and append-only human dispositions |

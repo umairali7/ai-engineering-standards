@@ -54,6 +54,14 @@ def _live_progress(args):
     return CliProgress()
 
 
+def cmd_version(args) -> int:
+    from . import versioning
+
+    value = versioning.inventory()
+    _out(value, args.json, versioning.render_text(value))
+    return 0
+
+
 def _emit_failure(error, *, operation: str, recovery_command: str,
                   args=None, **context) -> None:
     """Emit the shared actionable-failure contract without leaking secrets."""
@@ -1352,6 +1360,16 @@ def cmd_assessment(args) -> int:
 def cmd_score(args) -> int:
     from . import engine, evaluation, rating, report, workspace
     try:
+        if getattr(args, "interactive", False):
+            if args.file:
+                raise rating.RatingError(
+                    "--interactive uses the run scoresheet and cannot be combined "
+                    "with --file; import JSON with a non-interactive score command")
+            from . import human_review
+            human_review.serve(
+                args.run, port=args.port, launch=not args.no_open,
+                progress_callback=_live_progress(args))
+            return 0
         source = Path(args.file) if args.file else workspace.run_dir(args.run) / "scoresheet.json"
         sheet = json.loads(source.read_text(encoding="utf-8"))
         written = rating.ingest_scores(args.run, sheet,
@@ -3311,6 +3329,10 @@ def build_parser() -> argparse.ArgumentParser:
         sp.add_argument("--json", action="store_true", help="machine-readable output")
         return sp
 
+    version = common(sub.add_parser(
+        "version", help="show standard, platform, and artifact-contract versions"))
+    version.set_defaults(func=cmd_version)
+
     def qualification_event_args(sp):
         sp.add_argument("record", help="qualification record id")
         sp.add_argument(
@@ -3732,6 +3754,12 @@ def build_parser() -> argparse.ArgumentParser:
     s = common(sub.add_parser("score", help="ingest a filled scoresheet (human or model rater)"))
     s.add_argument("run", help="run id whose completed scoresheet will be ingested")
     s.add_argument("--file", help="scoresheet path (default: the run's scoresheet.json)")
+    s.add_argument("--interactive", action="store_true",
+                   help="open the optional token-protected local Human EV Review Workspace")
+    s.add_argument("--port", type=int, default=0, metavar="PORT",
+                   help="interactive workspace port (default: an available local port)")
+    s.add_argument("--no-open", action="store_true",
+                   help="print the interactive workspace URL without opening a browser")
     s.set_defaults(func=cmd_score)
 
     rr = common(sub.add_parser(

@@ -232,6 +232,7 @@ aies guidance <run-id>           # Engineering Fit Guidance
 aies report <run-id> --format html --write
 
 # Optional manual/imported rating paths also finish their own bundle:
+aies score <run-id> --interactive  # optional local Human EV Review Workspace
 aies score <run-id>                # ingest + aggregate + report
 aies import <run-id> external.json # import + aggregate + report
 

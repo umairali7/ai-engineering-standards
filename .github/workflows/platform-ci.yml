@@ -102,6 +102,18 @@ jobs:
           python -m pip install --upgrade pip build
           python -m build
           python -c "import glob; assert len(glob.glob('dist/*.whl')) == 1; assert len(glob.glob('dist/*.tar.gz')) == 1"
+      - name: Validate and hash release distributions
+        run: python scripts/build_release_bundle.py --dist dist
+      - name: Retain install-tested distributions and hashes
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: install-tested-distribution-${{ matrix.os }}
+          path: |
+            platform/dist/*.whl
+            platform/dist/*.tar.gz
+            platform/dist/SHA256SUMS
+            platform/dist/release-manifest.json
+          if-no-files-found: error
       - name: Install the built wheel, not the checkout
         run: python -c "import glob,subprocess,sys; subprocess.check_call([sys.executable,'-m','pip','install','--force-reinstall',glob.glob('dist/*.whl')[0]])"
       - name: Validate shipped data from the installed package

@@ -2674,13 +2674,13 @@ list installed runtime adapters
 
 ingest a filled scoresheet (human or model rater)
 
-**Usage:** `aies score [-h] [--json] [--file FILE] run`
+**Usage:** `aies score [-h] [--json] [--file FILE] [--interactive] [--port PORT] [--no-open] run`
 
-**Prerequisites:** A collected run and completed scoresheet exist; human qualification ratings require registered, in-scope, currently calibrated rater metadata.
+**Prerequisites:** A collected run and scoresheet exist. Use `--interactive` for the local review workspace or complete JSON for direct ingestion; formal admission additionally requires registered, in-scope, currently calibrated rater metadata.
 
-**Result and side effects:** Ingests rating observations, aggregates the engineering evaluation, and refreshes the complete report bundle in one command.
+**Result and side effects:** Opens an optional token-protected localhost reviewer workspace, or directly ingests rating observations; submission aggregates the engineering evaluation and refreshes the complete report bundle.
 
-**Recommended next step:** Inspect the generated report; human evaluation is optional unless formal qualification was explicitly requested.
+**Recommended next step:** Inspect the generated report. Human evaluation remains optional for Engineering Evaluation and the workspace cannot grant qualification or deployment authority.
 
 ### Parameters and options
 
@@ -2690,6 +2690,9 @@ ingest a filled scoresheet (human or model rater)
 | `--json` | optional | machine-readable output | — |
 | `<RUN>` | required | run id whose completed scoresheet will be ingested | — |
 | `--file` | optional | scoresheet path (default: the run's scoresheet.json) | — |
+| `--interactive` | optional | open the optional token-protected local Human EV Review Workspace | — |
+| `--port` | optional | interactive workspace port (default: an available local port) | — |
+| `--no-open` | optional | print the interactive workspace URL without opening a browser | — |
 
 ## `aies security`
 
@@ -2989,3 +2992,22 @@ verify a grant against the current environment (D7); invalidates on fingerprint 
 | `-h`, `--help` | optional | show this help message and exit | — |
 | `--json` | optional | machine-readable output | — |
 | `<RECORD>` | required | qualification record id to verify | — |
+
+## `aies version`
+
+show standard, platform, and artifact-contract versions
+
+**Usage:** `aies version [-h] [--json]`
+
+**Prerequisites:** AIES is installed.
+
+**Result and side effects:** Shows the independently versioned standards corpus, platform distribution, and public artifact contracts.
+
+**Recommended next step:** Use the exact axes in release notes, bug reports, compatibility checks, and retained assessment evidence.
+
+### Parameters and options
+
+| Parameter | Requirement | Details | Constraints and interactions |
+|---|---|---|---|
+| `-h`, `--help` | optional | show this help message and exit | — |
+| `--json` | optional | machine-readable output | — |

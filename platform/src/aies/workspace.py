@@ -20,7 +20,8 @@ APPEND_ONLY_DIRECTORIES = frozenset({
     "instruments", "guided-executions",
 })
 MUTABLE_WORKING_FILES = frozenset({
-    "manifest.json", "scoresheet.json", "progress.json", "latest.json",
+    "manifest.json", "scoresheet.json", "human-review-draft.json",
+    "progress.json", "latest.json",
 })
 DERIVED_SNAPSHOT_FILES = frozenset({
     "evidence-package.json", "assessment-result.json", "review-package.json",

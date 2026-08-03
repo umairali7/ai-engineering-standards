@@ -770,11 +770,27 @@ answers* when deciding whether the scores look right.
 
 ### 5.3 Manual scoring (omit `--judge`)
 
-Without `--judge`, `qualify` writes a `scoresheet.json` and stops. Open it and,
-for each response, set an integer **0–4** on each EV1–EV6 dimension against the
-rubric anchors, add the human's durable rater `id` and matching `name`, declare
-the run subject conflict-free, and write a finding for any score ≤ 2. Register
-each human once with their current competency/risk scope and calibration:
+Without `--judge`, `qualify` writes a `scoresheet.json` and stops. The easiest
+optional human-review path is a local browser workspace:
+
+```
+aies score <run-id> --interactive
+# Use --no-open to print the URL, or --port 8765 to select a local port.
+```
+
+The workspace binds only to `127.0.0.1` with a random session token. It shows
+the scenario prompt, complete response, frozen EV1–EV6 anchors, failure
+conditions, and optional grounding diagnostics together; supports filtering,
+keyboard navigation, progress, autosaved drafts, and JSON export; and submits
+through the same append-only validator used by the CLI. Submission records the
+ratings, aggregates the evaluation, and refreshes every report in one action.
+It cannot grant qualification or deployment authority.
+
+For each response, set an integer **0–4** on every EV dimension, identify the
+evidence behind the rating, and write a dimension-specific finding for every
+score ≤ 2. A human seeking formal admission must also provide a durable rater
+`id` and matching `name`, declare the run subject conflict-free, and be
+registered with current competency/risk scope and calibration:
 
 ```
 aies rater register --id alice --name "Alice Example" \
@@ -786,13 +802,10 @@ aies rater register --id alice --name "Alice Example" \
 aies score <run-id>              # ingest + aggregate + complete report bundle
 ```
 
-This is the current machine-readable workflow. The planned Human EV Review
-Workspace will put the same fields and validation into a token-protected local
-browser page and submit them through the same append-only ingestion path; it
-will improve entry ergonomics without inventing a second scoring protocol.
-Until that interface ships, a browser checkbox or edited report HTML is not
-evidence: only a validated scoresheet ingested by `aies score` creates a human
-rating observation.
+JSON remains the portable fallback: edit `scoresheet.json`, or pass an exported
+copy with `aies score <run-id> --file PATH`. The HTML reports themselves remain
+read-only views; only a validated workspace submission or scoresheet ingestion
+creates a human rating observation.
 
 An unregistered human may still contribute optional engineering feedback, but
 that observation is explicitly **not admitted** to formal qualification. For

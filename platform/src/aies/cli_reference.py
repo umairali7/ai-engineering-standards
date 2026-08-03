@@ -160,6 +160,11 @@ GUIDANCE: dict[str, CommandGuidance] = {
         "Lists or inspects runtime adapters without changing assessment evidence.",
         "Use `aies discover` to register deployments served by available runtimes.",
     ),
+    "version": CommandGuidance(
+        "AIES is installed.",
+        "Shows the independently versioned standards corpus, platform distribution, and public artifact contracts.",
+        "Use the exact axes in release notes, bug reports, compatibility checks, and retained assessment evidence.",
+    ),
     "plugins": CommandGuidance(
         "AIES and any out-of-tree adapter packages are installed.",
         "Lists discovered runtime-adapter plugins and their versions; it changes no state.",
@@ -201,9 +206,9 @@ GUIDANCE: dict[str, CommandGuidance] = {
         "Inspect `report.html`, run `aies capabilities <run> --ecm`, or begin the separate human qualification workflow.",
     ),
     "score": CommandGuidance(
-        "A collected run and completed scoresheet exist; human qualification ratings require registered, in-scope, currently calibrated rater metadata.",
-        "Ingests rating observations, aggregates the engineering evaluation, and refreshes the complete report bundle in one command.",
-        "Inspect the generated report; human evaluation is optional unless formal qualification was explicitly requested.",
+        "A collected run and scoresheet exist. Use `--interactive` for the local review workspace or complete JSON for direct ingestion; formal admission additionally requires registered, in-scope, currently calibrated rater metadata.",
+        "Opens an optional token-protected localhost reviewer workspace, or directly ingests rating observations; submission aggregates the engineering evaluation and refreshes the complete report bundle.",
+        "Inspect the generated report. Human evaluation remains optional for Engineering Evaluation and the workspace cannot grant qualification or deployment authority.",
     ),
     "rater": CommandGuidance(
         "AIES has a writable workspace. Registration requires evidence-backed human qualification, scope, calibration, expiry, and a named registry authority.",

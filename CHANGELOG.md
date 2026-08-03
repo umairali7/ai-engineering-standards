@@ -8,6 +8,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Optional Human EV Review Workspace**: `aies score RUN --interactive`
+  opens a dependency-free, token-protected loopback interface that joins each
+  scenario prompt, complete response, frozen EV1–EV6 anchors, failure
+  conditions, findings, and structured grounding diagnostics. It autosaves a
+  mutable draft, supports filtering, keyboard navigation, progress and JSON
+  export, then submits through the existing append-only score validator and
+  refreshes the full report bundle. Human evidence remains optional for
+  Engineering Evaluation, unqualified raters are never silently admitted to
+  Formal Qualification, and the workspace has no grant authority.
+- **Version and distribution identity foundation**: `aies version` separates
+  the governed standards version, executable platform version, and public
+  artifact-contract versions. The release-bundle builder validates wheel and
+  source-distribution identity, version and Apache license metadata, emits
+  SHA-256 sums plus a machine-readable manifest, and explicitly distinguishes
+  local hashes from signatures and provenance attestations. CI retains the
+  install-tested distributions and manifests from Windows, macOS, and Linux;
+  signed releases, SBOM/provenance, a selected preview version, and independent
+  clean-machine/upgrade evidence remain release gates.
 - **Path-based open licensing**: accepted ADR-0014 now applies CC BY-SA 4.0 to
   standards and reusable assessment content and Apache 2.0 to executable
   software. The repository includes both official license texts, an
