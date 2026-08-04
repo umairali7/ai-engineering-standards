@@ -52,6 +52,28 @@ def test_version_inventory_separates_standard_platform_and_schemas(capsys):
     assert json.loads(capsys.readouterr().out)["kind"] == "aies-version-inventory"
 
 
+def test_public_version_guidance_matches_runtime_contracts():
+    from aies import versioning
+
+    root = PLATFORM.parent
+    inventory = versioning.inventory()
+    standard = inventory["standard"]["version"]
+    distribution = (
+        f"aies-platform {inventory['platform']['version']}"
+    )
+    for relative in (
+        "README.md", "docs/FAQ.md", "docs/VERSIONING_AND_RELEASES.md"
+    ):
+        content = (root / relative).read_text(encoding="utf-8")
+        assert standard in content, relative
+        assert distribution in content, relative
+
+    stability = (root / "STABILITY.md").read_text(encoding="utf-8")
+    assert "| **Evidence Package schema** | Platform | `6` |" in stability
+    assert "| **Run Detail consumer view** (read-only) | Platform | `2` |" in stability
+    assert "not the current AIES standards-corpus version" in stability
+
+
 def test_release_bundle_validates_and_hashes_built_artifacts(tmp_path, monkeypatch):
     module = _release_module()
     wheel, sdist = _distributions(tmp_path)

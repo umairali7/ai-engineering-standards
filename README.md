@@ -24,6 +24,7 @@ assessed. No mystery aggregate. No invented confidence. No universal “best
 model” claim.
 
 **[Try it offline](#try-the-complete-product-offline)** ·
+**[Connect a deployment](#connect-a-real-deployment)** ·
 **[Choose a workflow](#choose-your-first-workflow)** ·
 **[See the difference](#why-this-is-different)** ·
 **[Read the standards](GETTING_STARTED.md)** ·
@@ -89,6 +90,65 @@ The demo takes the shortest path through the product. It does not claim that
 eight fixtures qualify a model. It shows exactly how AIES preserves the
 difference between observed performance, direct scenario breadth, reviewer
 assurance, and optional human evaluation.
+
+## Connect a real deployment
+
+AIES evaluates a **deployment**, not a model name: the model, runtime,
+configuration, quantization, endpoint, and observed environment together define
+the subject. Register the candidate and, preferably, a different reviewer
+before running an evaluation.
+
+First ask AIES to discover reachable supported local runtimes:
+
+```bash
+aies doctor
+aies discover
+aies deployment list
+aies deployment inspect DEPLOYMENT_ID
+```
+
+If discovery does not find your OpenAI-compatible endpoint, generate a valid
+manifest without placing a credential in it:
+
+```bash
+aies init aies-workspace --starter deployment --deployment-id local-coder --model served-model-id --endpoint http://127.0.0.1:1234/v1 --api-key-env AIES_OPENAI_API_KEY --role subject
+```
+
+The command writes `aies-workspace/deployment.example.yaml` and prints the
+exact workspace and `aies deployment add` commands for PowerShell or your POSIX
+shell. It records only the environment-variable name, never the key. Use
+`aies init --guided` for an interactive setup.
+
+Alternatively, adapt one of the checked
+[local and hosted examples](platform/examples/deployments/README.md), verify
+its model ID, endpoint, context window, role, and provenance, then register and
+plan it:
+
+```bash
+aies deployment add examples/deployments/local-qwen3-coder-next-8b.yaml
+aies deployment inspect local-qwen3-coder-next-8bit
+aies evaluate local-qwen3-coder-next-8bit --judge REVIEWER_ID --plan-only --parallel 4
+```
+
+Once the subject and reviewer are reachable, the short real run is:
+
+```bash
+aies evaluate SUBJECT_ID --judge REVIEWER_ID --parallel 4 --open
+```
+
+That intentionally defaults to the bounded `coder` assessment at RT1 —
+Minimal, with no repeated scenarios. Inspect the plan first, then expand scope
+only when the engineering decision needs it. The equally short repository path
+is:
+
+```bash
+aies audit . --out aies-repository-report
+```
+
+Run these example paths from `platform/`. A role tag is advisory: it organizes
+subjects and reviewers, but it does not prove that a reviewer is calibrated or
+trustworthy. The complete manifest reference and lifecycle commands are in
+[AIES-PLAT-03 — Deployments](platform/DEPLOYMENTS.md).
 
 ## Choose your first workflow
 
@@ -251,6 +311,8 @@ AIES exists to make that trust testable.
 [help build it](CONTRIBUTING.md) ·
 [share first-run or report feedback](https://github.com/umairali7/ai-engineering-standards/issues/new/choose)
 
+### Command and artifact map
+
 <details>
 <summary><strong>Explore the complete command and artifact map</strong></summary>
 
@@ -308,64 +370,18 @@ coverage product also emits an **Evidence-Linked Remediation & Monitoring
 Plan**. Its actions start open and unassigned; a named owner must separately
 accept, defer, or close them.
 
-### How the standards are used
-
-AIES now keeps assessment and assistance as two explicit workflows:
-
-```text
-Unassisted assessment
-standard + scenario → frozen instrument
-                    → task-only candidate prompt
-                    → complete hidden reviewer rubric
-                    → digest-bound evidence and Standards Traceability
-
-Standards-assisted work
-standard + selected task → scoped guidance → engineering output
-                                      └───── excluded from qualification
-```
-
-`aies evaluate` and `aies qualify` measure unassisted behavior: the candidate
-does not receive expected answers, failure conditions, or scoring anchors.
-The reviewer receives the complete frozen instrument only after the response
-exists. `aies apply` is the separate assisted path; it can compare baseline and
-guided outputs against the same instrument, but never adds that guided result
-to qualification evidence. Repository audits use repository-specific
-deterministic controls and evidence profiles rather than pretending that a
-source tree answered a model prompt.
-
----
-
-## The ambition
-
-AI is changing every phase of software engineering, but teams still lack a
-shared, vendor-neutral way to describe trustworthy AI participation, evaluate
-engineering behavior, and connect evidence to operating decisions.
-
-AIES is building that common engineering layer across the SDLC:
-
-- a shared vocabulary and task taxonomy;
-- versioned assessment instruments and evidence contracts;
-- engineering capability, fit, comparison, and remediation products;
-- repository practices for architecture, quality, security, operations, and
-  governance;
-- explicit boundaries between assistance, evaluation, formal qualification,
-  and organizational authority.
-
-The implemented platform currently evaluates **AI deployments** and assesses
-**software repositories**. Subject-neutral contracts exist for future agents,
-MCP servers, RAG systems, pipelines, coding assistants, platforms, services,
-and composite systems, but those subjects are not advertised as supported
-until dedicated executors and instruments are implemented and validated.
-
-Read the full [Vision](docs/VISION.md), [Project Charter](docs/PROJECT_CHARTER.md),
-and [current support matrix](platform/SUBJECT_SUPPORT.md).
-
----
-
 ## From Evidence to Engineering Decisions
 
-AIES separates evidence from the different decisions people need to make from
-it. The reusable source is
+AIES turns its standards into two deliberately separate workflows. Unassisted
+assessment freezes a versioned instrument, sends only the task to the subject,
+and exposes the complete rubric to the reviewer only after evidence exists.
+`aies apply` instead provides task-scoped standards assistance; its guided
+output can be analyzed but never enters qualification evidence. Repository
+audits use deterministic repository controls and evidence profiles rather than
+pretending that source code answered a model prompt.
+
+From there, AIES separates evidence from the different decisions people need
+to make from it. The reusable source is
 [AIES Assessment and Assistance Flow](diagrams/aies-assessment-and-assistance-flow.mmd).
 
 ```text
@@ -484,65 +500,42 @@ Enterprise engineering organizations, CTOs, engineering directors and managers, 
 
 ---
 
-## Repository Structure
+## Navigate the project
 
-```
+Start with [GETTING_STARTED.md](GETTING_STARTED.md) for a role-based reading
+path, [QUICKSTART.md](QUICKSTART.md) for the first run, or the
+[platform guide](platform/GUIDE.md) for an end-to-end real evaluation. The
+documentation becomes progressively more specific: README → charter →
+standards → specifications → reference implementations and examples →
+certification material.
+
+<details>
+<summary><strong>Repository map</strong></summary>
+
+```text
 .
-├── README.md                 ← you are here
-├── GETTING_STARTED.md        ← entry point: reading paths & adoption guide
-├── LICENSE.md                ← authoritative standards/software license boundary
-├── CHANGELOG.md              ← versioned change history
-├── ROADMAP.md                ← phased delivery plan
-├── GOVERNANCE.md             ← decision-making model
-├── CONTRIBUTING.md           ← how to contribute
-├── SECURITY.md               ← vulnerability reporting
-├── CODE_OF_CONDUCT.md
-│
-├── docs/                     ← charter, vision, architecture, SDLC, FAQ
-│   └── standards/            ← document standards governing every file here
-├── Shared/                   ← canonical glossary & taxonomy (normative)
-├── AEBOK/                    ← Body of Knowledge
-├── AESQS/                    ← Qualification Standard
-├── AEOS/                     ← Operating System
-├── AEAR/                     ← Architecture Reference
-├── AECT/                     ← Certification & Training
-│
-├── platform/                 ← executable Engineering Assessment Platform
-├── conformance/              ← golden evidence packages & conformance runner
-├── adr/                      ← Architecture Decision Records
-├── templates/                ← document templates
-├── examples/                 ← worked examples
-├── diagrams/                 ← source diagrams
-└── research/                 ← supporting research notes
+├── Shared/                 canonical glossary and taxonomy (normative)
+├── AEBOK/                  Body of Knowledge
+├── AESQS/                  Qualification Standard
+├── AEOS/                   Operating System
+├── AEAR/                   Architecture Reference
+├── AECT/                   Certification & Training
+├── platform/               executable Engineering Assessment Platform
+├── conformance/            golden evidence packages and conformance runner
+├── docs/                   vision, charter, architecture, SDLC, FAQ, standards
+├── adr/                    Architecture Decision Records
+├── templates/              governed document and evidence templates
+├── examples/               worked examples
+├── diagrams/               reusable diagram sources
+└── research/               supporting research and calibration plans
 ```
 
-## Documentation Hierarchy
+Project controls are at the root:
+[ROADMAP.md](ROADMAP.md), [GOVERNANCE.md](GOVERNANCE.md),
+[CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md),
+[CHANGELOG.md](CHANGELOG.md), and [LICENSE.md](LICENSE.md).
 
-```
-README → Project Charter → Standards → Specifications
-       → Reference Architectures → Examples → Certification Material
-```
-
-Each level becomes more specific: the README orients, the charter scopes, standards define requirements, specifications detail them, reference architectures and examples apply them, and certification material teaches them.
-
-## Engineering Philosophy
-
-Knowledge defines what good engineering looks like. Evidence establishes what
-was observed. Capability analysis makes that evidence useful. Qualification is
-a separate governed decision, not a prerequisite for engineering insight.
-
-```
-Knowledge → Assessment → Evidence → Competency Analysis → ECM
-                                                     ├→ Engineering Fit
-                                                     ├→ Comparison
-                                                     └→ Optional Formal Qualification
-                                                            ↓
-                                          Operations → Continuous Improvement
-```
-
-Certification and training remain connected to this lifecycle through AECT.
-The modules and implementation milestones are described in the
-[Roadmap](ROADMAP.md).
+</details>
 
 ## Governance
 
@@ -555,16 +548,21 @@ The project follows an engineering governance model described in [GOVERNANCE.md]
 
 No individual contributor owns the standards. Engineering consensus drives evolution.
 
-**Contract stability (v1.0 freeze).** The architecture has reached a stable
-equilibrium; the contracts others build against are frozen and versioned:
+**Artifact-contract stability (independent of the project release).** The
+interfaces listed in [STABILITY.md](STABILITY.md) are frozen at their own
+contract versions so integrators have a dependable boundary:
 
-- [STABILITY.md](STABILITY.md) — the **v1.0 Architecture Freeze**: frozen
-  contracts with versions, the **normative vs reference** distinction, and
+- [STABILITY.md](STABILITY.md) — the historical **v1.0 Architecture Freeze**:
+  contract-specific versions, the **normative vs reference** distinction, and
   **reference implementation vs conformance suite**.
 - [COMPATIBILITY.md](COMPATIBILITY.md) — how contracts evolve (additive-only,
   ADR-for-breaking, deprecation window) — **enforced by CI**, not just prose.
 - [CONFORMANCE-POLICY.md](CONFORMANCE-POLICY.md) — what "AIES Conformant" means,
   verified by a data-first conformance suite over a golden Evidence Package corpus.
+
+Here, `v1.0`, `v1`, or schema `1` identifies a particular interface contract.
+It does **not** mean the AIES standards corpus has reached its pending v1.0
+release, nor that the `aies-platform` package is version 1.0.
 
 ## Non-Goals
 
@@ -643,111 +641,27 @@ the executable reference implementation of the AIES evidence architecture. It
 collects canonical evidence once and renders audience-specific decision
 products without changing the underlying observations.
 
-### Current capabilities
+### Implemented now
 
-- Assess AI deployments across CA-01 — AI-Native SDLC Foundations through
-  CA-12 — Governance, Risk & AI Safety.
-- Audit repositories across architecture, correctness, code quality, testing,
-  security, operations, governance, documentation, and improvement
-  opportunities. Repository analysis content-binds the assessed scope, ingests
-  retained JUnit/coverage/SARIF and dependency evidence, emits typed
-  observations, and keeps every heuristic or tool limitation explicit; it does
-  not execute unfamiliar code or claim that correctness/security is proven.
-- Generate Engineering Assessment Results, evidence packages, ECM artifacts,
-  Engineering Fit Guidance, Assessment Coverage, Evidence-Linked Remediation
-  and Monitoring Plans, reports, and compatible run comparisons.
-- Consume the versioned, read-only `report-view.json` contract shared by
-  Markdown, HTML, safe exports, and `GET /runs/{id}/report-view`; canonical
-  evidence and legacy report contracts remain intact.
-- Use automated judges for complete non-blocking evaluation; preserve optional
-  human evaluation as a separately attributed column and evidence source.
-- Reserve formal qualification for explicit `--formal-qualification` runs and
-  named human qualification authorities.
-- Show live stage, current work, completed/total items, active worker count,
-  elapsed time, rate, and ETA for long-running CLI operations, including a
-  one-second heartbeat during long model calls and honest
-  calculating/declared/observed ETA states.
-- Evaluate the platform's own scenario corpus for coverage, calibration
-  metadata, behavioral diversity, duplication, and empirical maturity through
-  `aies corpus`.
-- Verify decision-engine compatibility against immutable golden Evidence
-  Packages through the conformance runner.
-- Discover the exact implemented, experimental, and planned subject boundary
-  through `aies support` or the read-only `/support` API endpoint.
-- Consume one versioned workspace summary through `aies overview`,
-  `GET /overview`, or the HTML dashboard. All three are read-only
-  presentations over the same facts and compute no assessment outcome.
-- Inspect one run through `aies runs show <run-id>` or `GET /runs/{id}`.
-  Both expose the same versioned, read-only subject, scope, progress,
-  decision-product, and artifact index without requiring knowledge of the
-  workspace file layout.
+| Assessment path | What the public preview does |
+|---|---|
+| **AI deployments** | Runs versioned scenarios across CA-01 — AI-Native SDLC Foundations through CA-12 — Governance, Risk & AI Safety; records candidate and reviewer identity; produces evidence, ECM, fit, coverage, diagnostics, remediation, and compatible comparisons |
+| **Repositories** | Content-binds the requested scope and analyzes architecture, code quality, correctness assurance, testing, security, dependencies, operations, governance, documentation, and improvement evidence without executing unfamiliar code or pretending heuristics prove correctness |
+| **Assessment system itself** | Validates suites, examines corpus coverage/calibration/diversity/duplicates, and checks decision-engine compatibility against immutable golden Evidence Packages |
+| **Integrations** | Exposes versioned read-only workspace, run, report, support, and comparison contracts through CLI, JSON, HTML, safe exports, and an HTTP consumer API |
 
-### Typical workflow
+Automated reviewers can complete the informational Engineering Evaluation;
+optional human ratings remain separately attributed. Formal qualification is
+invoked only with `--formal-qualification` and still requires the governed
+human protocol. Long operations show stable per-worker current tasks, stage and
+command elapsed time, completed/total work, rate, ETA, and durable checkpoints.
 
-Adoption is progressive; users do not need to begin with formal qualification:
-
-| Stage | Goal | Current entry point |
-|---|---|---|
-| **Try** | See the complete product without credentials or model cost | `aies demo --open` |
-| **Evaluate** | Collect and automatically score engineering evidence | `aies qualify … --judge …` or `aies benchmark … --judge …` |
-| **Understand** | Read task strengths, scenario breadth, assurance gaps, and fit | `aies snapshot`, `aies capabilities`, `aies guidance`, `aies transcript` |
-| **Compare** | Compare compatible observed ECM evidence | `aies compare` |
-| **Integrate** | Audit repositories, export evidence, or consume shared read-only workspace and run contracts | `aies audit`, `aies export`, `aies overview`, `aies runs show`, `aies serve` |
-| **Govern** | Explicitly invoke formal qualification and human authority | `--formal-qualification`, followed by the governed rater and decision workflow |
-
-From `platform/`, create an isolated Python environment and install the CLI:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -e .
-aies doctor
-aies discover
-```
-
-Run an end-to-end engineering evaluation with a separately registered judge:
-
-```powershell
-aies qualify <deployment> --all-areas --rt 2 --judge <judge-deployment> --parallel 4
-
-# Equivalent benchmark-oriented command
-aies benchmark <deployment> --all-areas --rt 2 --judge <judge-deployment> --parallel 4
-```
-
-Both commands collect responses, score them, aggregate canonical evidence, and
-generate the complete report bundle. Human review is optional. Inspect or
-compare the decision products with:
-
-```powershell
-aies support
-aies starter show understand-deployment
-aies snapshot <run-id>
-aies capabilities <run-id>
-aies guidance <run-id>
-aies compare <run-a> <run-b>
-aies transcript <run-id>
-```
-
-Task views default to observed performance from strongest to weakest:
-`aies snapshot <run-id> --sort breadth` and
-`aies capabilities <run-id> --sort task --ascending` provide deterministic
-alternatives, while every generated HTML report table can be re-sorted by
-selecting a column heading. Long judge runs distinguish concurrency
-(`--parallel`) from responses per judge call (`--judge-batch-size`), report
-stage versus command elapsed time, and checkpoint every completed batch.
-Interactive parallel execution uses a stable multiline dashboard: every active
-task or judge batch remains listed with its RUNNING/SCORING state instead of
-rotating or shuffling through one line.
-
-Use formal qualification only when the governed decision is actually required:
-
-```powershell
-aies qualify <deployment> --assessment enterprise --judge <judge-deployment> --formal-qualification
-```
-
-See the [platform guide](platform/GUIDE.md) for the complete workflow and the
-[CLI reference](platform/CLI_REFERENCE.md) for every command, parameter,
-prerequisite, sequence, progress behavior, and recovery path.
+The exact implemented, experimental, and planned subject boundary is generated
+in the [Subject Support Matrix](platform/SUBJECT_SUPPORT.md) and exposed by
+`aies support`. The complete command sequence is documented once in the
+[command and artifact map](#command-and-artifact-map), the
+[platform guide](platform/GUIDE.md), and the generated
+[CLI reference](platform/CLI_REFERENCE.md).
 
 ### Evidence scope and honest claims
 
@@ -771,7 +685,7 @@ first ECM, understanding what the evidence does and does not support, and
 telling us where the workflow or report failed them.
 
 1. Run `aies demo --open`.
-2. Plan one real deployment with `aies evaluate DEPLOYMENT --plan-only` or
+2. [Connect and plan one real deployment](#connect-a-real-deployment), or
    assess one repository with `aies audit . --out aies-repository-report`.
 3. [Report first-run friction, confusing output, or a reproducibility gap](https://github.com/umairali7/ai-engineering-standards/issues/new/choose).
 
@@ -783,53 +697,62 @@ described in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Contributions are welcome. Every proposal should include an engineering rationale, problem statement, alternatives considered, trade-offs, references, and impact analysis. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Versioning
+## Release identities and current status
 
-The standard versions as a whole — Semantic Versioning via git tags and the [CHANGELOG](CHANGELOG.md), per the [Versioning Standard (AIES-STD-05 — Versioning Standard)](docs/standards/versioning-standard.md):
+This repository has three independent version axes. They must not be shortened
+to one ambiguous “AIES version.”
 
-| Version | Status |
-|---------|--------|
-| v0.x | Research & Draft |
-| v1.x | Stable Standards |
-| v2.x | Major Evolution |
+| Axis | Current identity | Maturity and meaning |
+|---|---|---|
+| **Standards corpus** | `v0.4.0` | Governed research release; all five modules are content-complete at **Review**, not yet ratified as Approved |
+| **Executable platform** | `aies-platform 0.1.0` | Functional public development preview with M1–M4 delivered; not a stable 1.0 software distribution |
+| **Artifact and interface contracts** | Independently versioned | Each schema or contract carries its own version; a `v1`, `v1.0`, or schema `1` label is not the AIES v1.0 standards release |
 
-Individual documents carry a lifecycle status only (Draft → Review → Approved → Deprecated) per the [Review Standard (AIES-STD-06 — Review Standard)](docs/standards/review-standard.md) — no per-document versions or dates; git history is the system of record.
+Run `aies version` for the key installed identity inventory and
+`aies --version` for only the Python package. The authoritative model is documented in
+[Versioning and Release Identity](docs/VERSIONING_AND_RELEASES.md); changes are
+recorded in [CHANGELOG.md](CHANGELOG.md). Individual standards documents carry
+a lifecycle status—Draft → Review → Approved → Deprecated—under
+[AIES-STD-06 — Review Standard](docs/standards/review-standard.md).
 
-## Current Status
+Current evidence and remaining boundaries:
 
-- **Standards:** Internal review cycle complete for all module documents; AEBOK,
-  AESQS, AEOS, AEAR, and AECT are in Review for v0.4.0.
-- **Platform:** Functional reference implementation with engineering
-  evaluation, repository audit, ECM, fit guidance, comparison, reporting,
-  conformance, and optional formal qualification; remaining hardening,
-  validation, and subject-adapter expansion are explicitly tracked as Open or
-  Blocked under
-  [ADR-0009](adr/ADR-0009-Engineering-Assessment-Platform-Identity.md).
-- **Verified baseline:** 484 scenarios across 12 competency areas with zero
-  suite warnings/errors. The exact current test count is reported by CI;
-  empirical panel calibration and an independent pilot remain open.
-- **ECM standardization:** The ECM implementation and ET-01 through ET-15
-  taxonomy are delivered; formal ratification of AIES-ECM-01 and integration
-  into the five-module standards architecture remain open governance work.
-- **Public-release readiness:** The repository has a fail-closed preflight,
-  ownership routing, automated dependency-update discovery, checksum-pinned
-  full-history secret scanning, Python security analysis, dependency auditing,
-  GitHub CodeQL, private vulnerability reporting, an active `main` ruleset, and
-  retained machine-readable security evidence. The source repository is public
-  for development and review; a signed, immutable preview distribution is not
-  yet being claimed. Run
-  `python platform/scripts/check_public_release.py .` from the repository root
-  to see the remaining local and externally verified gates. Path-based open
-  licensing and the dedicated security contact are complete. Independent
-  review enforcement, historical Actions/artifact review, final distribution
-  trust, and signed immutable release evidence remain explicit gates. At
-  release time, a named and timestamped
-  external-evidence document is supplied with `--external-evidence`, followed
-  by `--gate`; the preflight never enables those settings or authorizes
-  publication itself. Start from
-  [`templates/public-release-external-evidence.json`](templates/public-release-external-evidence.json);
-  unconfirmed or incomplete entries continue to fail closed.
-- **Status:** Active Development.
+- **Assessment corpus:** the validated scope and structural health are stated
+  once in [Evidence scope and honest claims](#evidence-scope-and-honest-claims).
+  Empirical panel calibration and an independently reproduced pilot remain
+  open.
+- **ECM:** the implementation and ET-01 through ET-15 taxonomy are delivered;
+  formal ratification of AIES-ECM-01 and five-module standards integration are
+  still governance work.
+- **Subject support:** AI deployments and repositories have executable paths.
+  Additional subject-neutral contracts exist, but agents, MCP servers, RAG
+  systems, pipelines, platforms, and composite systems remain experimental or
+  planned until dedicated executors and instruments are validated.
+- **Publication:** the source repository is already public under its path-based
+  open licenses. A signed, immutable preview distribution and the separately
+  governed v1.0 standards release are not yet claimed.
+
+<details>
+<summary><strong>Public-release verification boundary</strong></summary>
+
+The repository includes ownership routing, dependency-update automation,
+full-history secret scanning, Python security analysis, dependency auditing,
+CodeQL, private vulnerability reporting, an active `main` ruleset, retained
+machine-readable evidence, and a fail-closed preflight. From the repository
+root, run:
+
+```bash
+python platform/scripts/check_public_release.py .
+```
+
+Independent review evidence, historical Actions/artifact review, distribution
+trust, and signed immutable release evidence remain explicit external gates.
+At release time, supply a named and timestamped copy of
+[`templates/public-release-external-evidence.json`](templates/public-release-external-evidence.json)
+with `--external-evidence`, followed by `--gate`. The preflight verifies; it
+never changes repository settings or authorizes publication.
+
+</details>
 
 ## License
 

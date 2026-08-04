@@ -58,9 +58,23 @@ No — and the distinction is deliberate. **Certification** is for humans: [AECT
 
 Through [AECT](../AECT/README.md), the Certification & Training module, which defines learning paths, labs, examinations, and credentials aligned to the competency levels CL1–CL4 in the [Taxonomy](../Shared/Taxonomy/README.md). The certification program is not yet operational: AECT is in drafting (see [ROADMAP.md](../ROADMAP.md)), and the charter targets at least one examinable credential within 18 months of the v1.0 release (SC-4). Until then, the best preparation is the material itself — start with [AEBOK](../AEBOK/README.md), which defines the knowledge the examinations will cover.
 
-## 10. What does v0.3.1 mean?
+## 10. What version is AIES currently?
 
-The standard as a whole follows Semantic Versioning ([GOVERNANCE.md §6.1](../GOVERNANCE.md#6-releases)). The **0.x** major version means the standard is in its research-and-draft phase: content is substantive but not yet ratified, and minor versions may still contain breaking changes (each still requiring the full Class 3 process). v0.3.1 specifically is the **Repository Foundation** release — the phase that establishes the structure, shared vocabulary, conventions, governance, and templates on which the five modules are being drafted. Individual documents additionally carry their own status (Draft → Review → Approved → Deprecated) per the [Review Standard (AIES-STD-06 — Review Standard)](standards/review-standard.md).
+There is no single undifferentiated version. The governed **standards corpus is
+v0.4.0** and its five modules are content-complete at Review, not yet ratified
+as Approved. The executable distribution is independently versioned as
+**`aies-platform 0.1.0`**, a public development preview. Artifact schemas and
+interfaces carry their own contract versions. Consequently, a `v1`, `v1.0`, or
+schema `1` label on an interface does not claim that either the standards or
+software has reached its pending 1.0 release.
+
+The earlier v0.3.1 tag remains the completed **Repository Foundation** release
+recorded in the roadmap; it is not the current standards identity. Run
+`aies version` for the installed inventory and see
+[Versioning and Release Identity](VERSIONING_AND_RELEASES.md) for the
+authoritative distinctions. Individual standards documents carry their own
+lifecycle status (Draft → Review → Approved → Deprecated) under
+[AIES-STD-06 — Review Standard](standards/review-standard.md).
 
 ## 11. How is the mixed standards-and-software repository licensed?
 

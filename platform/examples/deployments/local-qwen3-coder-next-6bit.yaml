@@ -1,0 +1,16 @@
+# Local OpenAI-compatible deployment template. Before registration, verify the
+# served model id, endpoint, context window, and provenance for your runtime.
+# The advisory role identifies this example as an evaluation subject.
+
+id: local-qwen3-coder-next-6bit
+family: qwen
+model: Qwen3-Coder-Next-MLX-6bit
+runtime: openai-compat
+roles: [subject]
+context_window: 32768
+runtime_config:
+  base_url: http://localhost:8000/v1     # e.g. Ollama / vLLM / LM Studio
+  model: Qwen3-Coder-Next-MLX-6bit
+provenance:
+  source: "served locally"
+  checksum: "sha256:endpoint-served"

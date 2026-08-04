@@ -1,4 +1,4 @@
-# Deployments — Qualify Deployments, Not Models
+# Deployments — Evaluate Deployments, Not Bare Models
 
 | | |
 |---|---|
@@ -6,16 +6,18 @@
 | **Status** | Draft |
 | **Audience** | Engineers · Platform teams · Assessors & qualification authorities |
 
-The platform qualifies **deployments**, not bare models. This is design
-decision **D11** in the [platform specification](../docs/PLATFORM.md), and it
-is one of the load-bearing ideas of the whole project.
+The platform evaluates **deployments**, not bare models. The same deployment
+identity is used when formal qualification is explicitly requested. This is
+[D11 — Qualify deployments, not bare models](../docs/PLATFORM.md) in the
+platform specification and one of the load-bearing ideas of the project.
 
 ## Why not "the model"?
 
 A model's behavior is not a property of the weights alone. The same checkpoint
 answers differently at a different quantization, under a different runtime, with
-different generation settings, on different hardware. "Is Qwen3.5 qualified as
-an RT2 — Moderate engineer?" is not answerable. **"Is *this deployment* qualified?"** is:
+different generation settings, on different hardware. "How capable is
+Qwen3.5?" is not answerable without deployment context. **"What did this
+deployment demonstrate under this scope?"** is:
 
 ```
         deployment: local-qwen
@@ -27,10 +29,11 @@ an RT2 — Moderate engineer?" is not answerable. **"Is *this deployment* qualif
 ```
 
 A deployment is the named tuple **model × runtime × config × endpoint**. It is
-exactly the thing whose behavior the environment fingerprint captures — so
-qualifying deployments is the [environment-as-provenance rule (D7)](../docs/PLATFORM.md)
-made into a first-class object. Two ways of serving the same checkpoint are two
-deployments and two separate qualification subjects, each with its own record.
+exactly the thing whose behavior the environment fingerprint captures—so
+evaluating deployments is the
+[D7 — Environment as provenance](../docs/PLATFORM.md) rule made into a
+first-class object. Two ways of serving the same checkpoint are two deployments
+with separate evidence and, if invoked, separate formal qualification records.
 
 This is the Docker mental model: an image (the model artifact) is not a running
 container (the deployment). You qualify what actually runs.
@@ -38,17 +41,18 @@ container (the deployment). You qualify what actually runs.
 ## The registry chain
 
 ```
-Registry  ──►  Deployments  ──►  Profiles  ──►  Qualifications
-(what's      (model×runtime    (how to weigh   (the QUAL-… manifest:
- available)   ×config×endpoint)  the evaluation) a human-recorded grant)
+Registry  ──►  Deployments  ──►  Assessment scope  ──►  Evidence products
+(what's      (model×runtime    (how to compose     (ECM, fit, reports,
+ available)   ×config×endpoint)  and weight)         comparison)
 ```
 
 - **Registry** holds deployment manifests (YAML). Ids are stable and never reused.
 - **`aies discover`** populates it by probing installed runtimes — you rarely
   hand-author one for a local runtime on its default port.
-- **`aies qualify <deployment> --profile <p>`** runs the pipeline; the human
-  grant produces a **Qualification Record** (`QUAL-YYYY-NNN`) — the audit
-  manifest that ties a scoped grant to the exact deployment and environment.
+- **`aies evaluate <deployment> --judge <reviewer>`** runs the default
+  non-blocking engineering pipeline. An explicitly requested formal
+  qualification can later produce a human-recorded **Qualification Record**
+  (`QUAL-YYYY-NNN`) tied to the exact deployment and environment.
 
 ## The deployment manifest
 
