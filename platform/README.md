@@ -6,8 +6,11 @@
 | **Status** | Draft |
 | **Audience** | Engineers · Platform teams · Contributors & maintainers |
 
-The `aies` command-line tool: the executable reference implementation of the
-[AESQS](../AESQS/README.md) qualification methodology. Specification:
+The `aies` command-line tool is the executable reference implementation of the
+AIES evidence architecture. It operationalizes the
+[AESQS](../AESQS/README.md) assessment methodology without reducing the
+platform to qualification. Engineering Evaluation is the default; formal
+qualification is a separate, explicitly governed path. Specification:
 [AIES-DOC-06 — Engineering Assessment Platform Specification](../docs/PLATFORM.md). Platform-identity
 proposal: [ADR-0009](../adr/ADR-0009-Engineering-Assessment-Platform-Identity.md).
 
@@ -81,7 +84,7 @@ assessment coverage,
 evidence remediation, executive summary, evaluation, and bundle artifacts have dedicated read-only
 endpoints; missing artifacts remain explicitly unavailable.
 All twelve competency areas
-(CA-01…CA-12) ship demonstration suites; six weighting profiles; a
+(CA-01…CA-12) ship validated assessment suites; six weighting profiles; a
 frozen v1.0 runtime-adapter contract with an
 [out-of-tree adapter example](examples/external_adapter/README.md);
 conformance tests run in CI.
@@ -92,7 +95,7 @@ component wiring, and step-by-step setup + real-model run instructions.
 documents every command, subcommand, positional parameter, option, default,
 choice, prerequisite, interaction, result/side effect, recommended next step,
 and common command sequence.
-See also [DEPLOYMENTS.md](DEPLOYMENTS.md) (qualify deployments, not models),
+See also [DEPLOYMENTS.md](DEPLOYMENTS.md) (evaluate deployments, not bare models),
 [PROFILES.md](PROFILES.md) (the weighting presets),
 [RUNTIMES.md](RUNTIMES.md) (the runtime interface and shipped adapters), and
 [JOURNEYS.md](JOURNEYS.md) (multi-phase scenarios that test lifecycle depth),
@@ -112,7 +115,7 @@ a human decides).
 Hit a snag? [TROUBLESHOOTING.md](TROUBLESHOOTING.md) covers the common
 endpoint, TLS, auth, performance, and judge issues.
 
-**Default engineering cycle:** `discover` → `qualify --judge` → completed
+**Default engineering cycle:** `discover` → `evaluate --judge` → completed
 Engineering Assessment Result + ECM + diagnostics + Engineering Fit Guidance +
 coverage + remediation plan + reports. No human step is required. `score`, `review --model-reviewer`, and
 `import` also refresh the complete bundle in their own command.
@@ -144,24 +147,30 @@ aies demo --open
 ```
 
 The installed command is cross-platform and needs no API key, model server,
-Make, or Bash. For a real deployment, use the guided path:
+Make, or Bash. For a real deployment, connect or create the deployment before
+evaluation:
 
 ```
 aies init
 aies support
 aies starter show understand-deployment
 aies discover
+aies deployment list
+aies deployment inspect <deployment>
 aies evaluate <deployment> --judge <reviewer> --plan-only
 aies evaluate <deployment> --judge <reviewer> --parallel 4
 aies snapshot latest
 aies open latest
 ```
 
+If discovery does not find the endpoint, generate a no-secret manifest with
+`aies init --starter deployment` or adapt a checked
+[deployment example](examples/deployments/README.md), then register it with
+`aies deployment add FILE`.
+
 The warm-cache full-suite performance budget on the recorded Windows reference
-workstation is **180 seconds**. The latest security-expanded baseline is **373
-passed, one skipped in 143.09 seconds**, 20.5% below that budget; the preceding
-372-test run took 126.28 seconds. A run above budget or a greater-than-25%
-regression
+workstation is **180 seconds**. CI is the source of truth for the current test
+count and timing; a run above budget or a greater-than-25% regression
 should be profiled before merge; use the ranked durations rather than guessing.
 Scenario YAML and suite digests are cached by path, modification time, and size,
 return isolated values, and invalidate automatically when an instrument changes.

@@ -108,3 +108,31 @@ def test_remove_frees_id_retire_reserves_it(ws, tmp_path):
         registry.remove("dep")            # second remove fails cleanly
     registry.add(_manifest(tmp_path))     # id reusable now
     assert registry.get("dep")["id"] == "dep"
+
+
+def test_bundled_deployment_examples_are_valid_and_unique():
+    from aies import registry
+
+    examples = Path(__file__).resolve().parents[1] / "examples" / "deployments"
+    manifests = sorted(examples.glob("*.yaml"))
+    assert manifests, "deployment example directory must not be empty"
+    catalog = (examples / "README.md").read_text(encoding="utf-8")
+
+    seen: dict[str, Path] = {}
+    for manifest in manifests:
+        entry = yaml.safe_load(manifest.read_text(encoding="utf-8"))
+        assert isinstance(entry, dict), f"{manifest.name} must contain a mapping"
+        assert registry.validate_entry(entry) == [], manifest.name
+        assert f"]({manifest.name})" in catalog, (
+            f"{manifest.name} is missing from the deployment example catalogue"
+        )
+        deployment_id = entry["id"]
+        if manifest.name.lower().startswith("local-"):
+            assert f"`{deployment_id}`" in catalog, (
+                f"{deployment_id} is missing from the local example table"
+            )
+        assert deployment_id not in seen, (
+            f"duplicate deployment id {deployment_id!r} in "
+            f"{seen[deployment_id].name} and {manifest.name}"
+        )
+        seen[deployment_id] = manifest

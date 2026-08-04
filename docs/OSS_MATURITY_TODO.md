@@ -253,10 +253,10 @@ close a named-human or external-verification gate.
 | Chunk | Lane | Status | Scope | Required evidence / exit signal |
 |---|---|---|---|---|
 | **PR-01 — Release control plane** | Build now | Done | Consolidate this plan; add fail-closed public-release preflight, CODEOWNERS review routing, dependency-update automation, least-privilege CI permissions, and a retained non-blocking readiness artifact | `check_public_release.py` reports every local blocker and external confirmation without granting authority; tests cover pending and locally complete states |
-| **PR-02 — Security and history assurance** | Build now + external confirmation | In progress | Add CodeQL/SAST, dedicated full-history secret scanning, dependency/container scanning, explicit workflow permissions, retained machine-readable results, and a review procedure for historical Actions logs/artifacts | Local scanners pass across source, dependencies, and all reachable history without leaking matched values; CodeQL, historical Actions review, and Private Vulnerability Reporting remain external confirmations |
+| **PR-02 — Security and history assurance** | Build now + external confirmation | In progress | Full-history secret scanning, SAST, dependency checks, CodeQL, Private Vulnerability Reporting, least-privilege workflow permissions, and retained machine-readable results are present. Remaining work is the named historical Actions/artifact review and release-container coverage | Local scanners and CodeQL pass without leaking matched values; the historical Actions/artifact review remains an external confirmation |
 | **PR-03 — License ratification and implementation** | Human governance, then build | Done | ADR-0014 records named acceptance and the private-repository bootstrap-review limitation; official texts, authoritative path scope, package metadata, contribution/badge notices, and CI boundary verification are installed | Accepted ADR, effective path-based licenses, exact official texts, and CI proving every distributed path resolves to exactly one applicable license |
 | **PR-04 — Version and distribution trust** | Build after PR-03 | In progress | Version axes and `aies version` are documented; wheel/sdist content, Apache metadata, hashes, and a limitation-explicit release manifest are CI-validated and retained. Remaining: choose the preview version; lock release dependencies; publish a multi-arch image; generate SBOM/AI-BOM and SLSA provenance; sign/attest artifacts | Clean-machine Windows/macOS/Linux verification, prior-version upgrade evidence, signed artifacts, independently verified provenance, and release notes |
-| **PR-05 — Repository protection and publication decision** | External repository settings + human release authority | Open | Protect `main`; require current CI and CODEOWNER/human review; restrict bypasses and workflow permissions; enable security features; review retained logs/artifacts; run the readiness gate; record the named-human visibility decision | GitHub settings evidence, zero unresolved release blockers, signed preview tag, immutable release bundle, and recorded publication decision |
+| **PR-05 — Repository protection and publication decision** | External repository settings + human release authority | In progress | Public visibility, an active `main` ruleset, required CI, CodeQL, and Private Vulnerability Reporting are enabled. Remaining work is independently enforceable human/CODEOWNER review, bypass verification, historical log/artifact review, and the signed immutable distribution decision | GitHub settings evidence, zero unresolved release blockers, signed preview tag, immutable release bundle, and recorded distribution decision |
 | **PR-06 — Public preview conversion loop** | Public adoption | Open | Publish the 60-second proof, ten-minute trial, persona paths, example bundles, Discussions categories, first issues, launch article/video/social assets, and a claim-reviewed announcement | Five unfamiliar users complete first use; failures and comprehension findings are published and fixed; first local and hosted reproducibility pilots are retained |
 | **PR-07 — Evidence credibility and v1.0 governance** | External evidence and governance | Blocked | Execute the preregistered representative panel, validate judges against independent human labels, publish comparative cases and null findings, complete two independent reviews per approval candidate, run v0.5 comment, and ratify v1.0 | Measurement-validity report, independent pilot evidence, disposition ledger, Approved documents, signed v1.0 release, and maintenance cadence |
 
@@ -284,9 +284,9 @@ to report them until a repository administrator supplies that evidence.
 | Done | Pin CI action identities and minimize authority | Maintainer | Checkout, Python setup, and artifact upload use immutable action commit SHAs; workflows default to read-only contents permission |
 | Done | Retain redacted, machine-readable evidence | Platform | CI uploads Gitleaks JSON, SARIF, dependency JSON, tool versions, distribution checksum, source revision, scope, and redaction metadata even when a scanner fails |
 | Done | Provide a repeatable local security command | Platform | Canonical `aies security` works on macOS, Linux, and Windows; it automatically downloads the platform-specific Gitleaks 8.30.1 archive, verifies its published SHA-256, uses a tamper-checked user-local cache without modifying Homebrew/PATH, and runs full-history secret scanning, Python security rules, and dependency audit. `make security` is only an optional alias |
-| Open | Publish a dedicated security contact | Named maintainer | Replace the placeholder fallback in `SECURITY.md` with the approved monitored address and optional public key |
-| Open | Enable and test Private Vulnerability Reporting | Repository administrator | A harmless test report verifies private intake, maintainer notification, acknowledgement, and closure without exposing sensitive content |
-| Open | Enable CodeQL default setup after eligibility | Repository administrator | After public visibility, Python CodeQL default setup completes and its first successful result is retained; local Ruff remains complementary rather than being relabelled CodeQL |
+| Done | Publish a dedicated security contact | Named maintainer | `SECURITY.md` names the monitored fallback address; an optional public encryption key remains a future enhancement |
+| In progress | Enable and test Private Vulnerability Reporting | Repository administrator | Private Vulnerability Reporting is enabled; a harmless test report still needs to verify intake, notification, acknowledgement, and closure without exposing sensitive content |
+| Done | Enable CodeQL default setup after eligibility | Repository administrator | Public-repository CodeQL analysis is enabled and successful for Python and workflow code; local Ruff remains complementary rather than being relabelled CodeQL |
 | Open | Review historical Actions logs and artifacts | Named maintainer | Review retained workflow logs/artifacts for credentials or private data, revoke anything exposed, and record the named/time-stamped external confirmation used by the readiness gate |
 
 ### Next executable tranche
@@ -553,28 +553,28 @@ included before public release.
 | Open | Add documentation governance checks | CI detects duplicate document/requirement IDs, missing meaningful titles, broken links, invalid metadata/status transitions, and stale references |
 | Open | Add code-quality checks | Formatting, linting, type checking, and coverage thresholds run in CI |
 | In progress | Add supply-chain controls | Dependabot, immutable action pins, full-history Gitleaks, Ruff security analysis, pip-audit, retained scanner evidence, and the public-release readiness inventory are implemented. Remaining work locks dependencies; scans release containers; emits SPDX 3 Software/AI/Dataset/Build profiles where applicable; generates SLSA provenance for packages, containers, and conformance bundles; signs or attests release artifacts with Sigstore/Cosign or an equivalently verifiable mechanism; CI verifies identity, digest, source revision, builder, and provenance before publication and states that provenance does not prove safety or correctness |
-| Open | Publish a real security contact | Dedicated email and optional encryption key replace the placeholder fallback; private vulnerability reporting remains preferred |
+| Done | Publish a real security contact | `SECURITY.md` publishes the monitored fallback email and keeps Private Vulnerability Reporting preferred; an encryption key is optional future hardening |
 | In progress | Add ownership and protected-branch evidence | CODEOWNERS now routes default and high-impact paths to the Maintainer. GitHub-protected-branch settings, required CODEOWNER/human review, restricted bypasses, and retained external evidence still need repository-administrator completion |
-| Open | Align versions | Package version, standards milestone, artifact versions, changelog, tags, and release names answer different versioning questions explicitly and consistently |
-| Done | Establish the public-release readiness gate | The versioned text/JSON preflight, `--gate` failure behavior, Make target, tests, and retained CI artifact are implemented. Licensing now passes; readiness remains false until the security contact, external settings, history/log review, distribution trust, and signed release evidence are complete |
+| In progress | Align versions | README, FAQ, release guide, stability boundary, CLI inventory, package metadata, standards identity, and artifact references now distinguish `v0.4.0`, `aies-platform 0.1.0`, and contract versions. Preview-version selection, signed tag, and immutable release naming remain under PR-04 |
+| Done | Establish the public-release readiness gate | The versioned text/JSON preflight, `--gate` failure behavior, Make target, tests, and retained CI artifact are implemented. Licensing and the security contact pass; external review enforcement, history/log review, distribution trust, and signed release evidence remain |
 | Done | Correct current CI identity wording | Workflow and active docs say Engineering Assessment Platform rather than Qualification Platform |
 
 ## 5. Current Verified Baseline
 
-Last verified on 2026-07-27:
+Last verified on 2026-08-04:
 
-- `pytest platform/tests -q`: **373 passed, 1 skipped in 143.09 seconds** on the
-  latest Windows run, **36.91 seconds / 20.5% below** the documented
-  180-second budget. An immediately preceding 372-test run completed in
-  126.28 seconds; reproducible 25% headroom remains open.
+- `pytest platform/tests -q`: **400 passed in 162.75 seconds** on the current
+  Windows tree, **17.25 seconds / 9.6% below** the documented 180-second
+  warm-cache budget. Reproducible 25% headroom remains open.
 - `aies suites validate`: **484 scenarios, 12 areas, 0 warnings, 0 errors**;
   **268 effective hash-bound ledger acceptances, 0 stale, 0 unknown**.
 - Decision-engine conformance: **8/8 cases passed**, semantics 1.0.
 - Release hygiene: **PASS**.
 - Local distribution verification: wheel and sdist build; isolated wheel
   install runs suite validation and the offline demo; isolated sdist install,
-  validation, and uninstall pass on Windows. Cross-platform package/demo CI is
-  now defined and awaits hosted-run evidence.
+  validation, and uninstall pass on Windows. Public PR checks have also
+  exercised the cross-platform install and demo jobs; signed distribution and
+  independent upgrade evidence remain open.
 - Repository audit at RT2 — Moderate: **PASS**, with **21 verified controls and
   5 gaps**. CODEOWNERS and dependency-update automation are now detected;
   protected-branch enforcement remains correctly external.

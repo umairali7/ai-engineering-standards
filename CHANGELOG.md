@@ -2,11 +2,25 @@
 
 All notable changes to the AI Engineering Standards (AIES) project are documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) for the standard as a whole (see [GOVERNANCE.md §6](GOVERNANCE.md#6-releases)). Individual documents carry their own version and status per the [Shared conventions](Shared/README.md).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) for the standards corpus as a whole (see [GOVERNANCE.md §6](GOVERNANCE.md#6-releases)). Individual standards documents carry lifecycle status; git history is their version record under the [Shared conventions](Shared/README.md).
 
 ## [Unreleased]
 
 ### Added
+
+- **Deployment-first onboarding and unambiguous release identity**: the root
+  and platform READMEs now place discovery or no-secret manifest creation before
+  planning a real evaluation, link one maintained example catalogue, and avoid
+  duplicating the complete CLI workflow. Eleven local OpenAI-compatible
+  deployment examples are indexed, syntactically regression-tested, corrected
+  from inherited Mixtral/judge metadata, and tagged by their intended advisory
+  subject or reviewer role. The README information architecture consolidates
+  repeated vision, evidence-flow, project-navigation, platform-capability, and
+  status material. The standards corpus (`v0.4.0`), Python distribution
+  (`aies-platform 0.1.0`), and independently versioned artifact contracts are
+  stated separately across the README, FAQ, release guide, and stability
+  boundary; a contract `v1`/`v1.0` label is explicitly not the pending AIES
+  v1.0 standards release.
 
 - **Public README conversion pass**: the repository front page
   now leads with the engineering-selection problem, concrete evidence products,

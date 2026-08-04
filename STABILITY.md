@@ -1,4 +1,4 @@
-# AIES v1.0 Architecture Freeze & Stable Interfaces
+# AIES Artifact-Contract Architecture Freeze (v1.0 Contract Set)
 
 | | |
 |---|---|
@@ -16,6 +16,11 @@ change is driven by implementation experience rather than design speculation.
 > **The stable API of AIES is not Python — it is the artifacts.** Integrators
 > build against the *schemas* (Assessment YAML, Evidence Package JSON, Canonical
 > Assessment Result JSON), not against class names. The schemas are the contract.
+
+> **Version boundary:** “v1.0” in this document names the frozen contract set.
+> It is not the current AIES standards-corpus version, the Python platform
+> version, or a claim that the separately governed v1.0 standards release has
+> occurred. See [Versioning and Release Identity](docs/VERSIONING_AND_RELEASES.md).
 
 ## 1. Normative vs Reference
 
@@ -49,7 +54,7 @@ One is software; the other is the arbiter. The conformance suite is **data-first
 including a third-party decision engine. The platform's own tests are merely
 *one consumer* of that corpus.
 
-## 3. Frozen contracts (v1.0)
+## 3. Frozen contracts (v1.0 contract set)
 
 Each contract is frozen **at the stated version**. "Frozen" means: existing
 fields and their meaning do not change; only additive, backward-compatible
@@ -61,12 +66,12 @@ extension is permitted (see COMPATIBILITY.md). A breaking change requires an ADR
 | **RuntimeAdapter** (semantic core) | Platform | `v1.0` | `platform/src/aies/adapters/base.py` |
 | **Assessment schema** | Standard | `1` | `assessments.SUPPORTED_SCHEMA` |
 | **Profile schema** | Standard | `1` | `platform/profiles/*.yaml` |
-| **Evidence Package schema** | Platform | `5` | `constants.EVIDENCE_SCHEMA` |
+| **Evidence Package schema** | Platform | `6` | `constants.EVIDENCE_SCHEMA` |
 | **Canonical Assessment Result schema** | Platform | `1` | `decision.RESULT_SCHEMA` |
 | **Decision semantics** | Standard (AESQS) | `1.0` | `decision.DECISION_SEMANTICS_VERSION` |
 | **Report Renderer contract** (view-only) | Platform | `v1.0` | `decision.render_*`, `report_html` |
 | **Workspace Overview consumer view** (read-only) | Platform | `1` | `overview.SCHEMA_VERSION` |
-| **Run Detail consumer view** (read-only) | Platform | `1` | `run_view.SCHEMA_VERSION` |
+| **Run Detail consumer view** (read-only) | Platform | `2` | `run_view.SCHEMA_VERSION` |
 | **Run Report consumer view** (read-only) | Platform | `1` | `report_view.SCHEMA_VERSION` |
 
 The Engineering Capability Matrix (`ecm_schema: 2`), Engineering Task Mapping
