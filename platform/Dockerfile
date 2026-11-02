@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM python:3.12-slim
+FROM python:3.15-slim
 
 ARG AIES_REVISION=uncommitted
 LABEL org.opencontainers.image.title="AIES Engineering Assessment Platform" \
